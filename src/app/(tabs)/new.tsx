@@ -1,0 +1,142 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Image, Platform, Pressable, Text, View } from 'react-native';
+
+import { getAI, guessJobType } from '@/engine/ai';
+import { defaultAnswers, JOB_TYPES, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
+import type { EstimateMode, JobTypeId } from '@/engine/types';
+import { useApp } from '@/store/AppContext';
+import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
+
+export default function NewEstimate() {
+  const { profile, setDraft } = useApp();
+  const [showAll, setShowAll] = useState(false);
+  const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(null);
+  const [mode, setMode] = useState<EstimateMode>('detailed');
+  const [title, setTitle] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [address, setAddress] = useState('');
+  const [description, setDescription] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const mine = profile?.specialties ?? [];
+  const types = JOB_TYPES.filter((j) => showAll || mine.includes(j.id));
+  const guessed = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
+  const effectiveType = jobTypeId ?? guessed ?? null;
+  const detailedAllowed = effectiveType ? JOB_TYPE_BY_ID[effectiveType].detailed : true;
+
+  const addPhotos = async (camera: boolean) => {
+    try {
+      if (camera) {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) return Alert.alert('Camera access needed', 'Allow camera access in Settings to take job photos.');
+      }
+      const res = camera
+        ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.6 });
+      if (!res.canceled) setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, 20));
+    } catch {
+      Alert.alert('Photos unavailable', 'Could not open photos on this device.');
+    }
+  };
+
+  const next = async () => {
+    const type = effectiveType;
+    if (!type) return;
+    setBusy(true);
+    const ai = getAI();
+    const parsed = description.trim() ? await ai.parseScope(description, type) : { answers: {}, heard: [] };
+    setBusy(false);
+    const jt = JOB_TYPE_BY_ID[type];
+    setDraft({
+      jobTypeId: type,
+      mode: jt.detailed ? mode : 'quick',
+      title: title.trim() || `${clientName.trim() ? `${clientName.trim()} — ` : ''}${jt.name}`,
+      clientName, address, description, photos,
+      finish: 'mid',
+      answers: { ...defaultAnswers(type), ...parsed.answers },
+      customItems: [],
+      heard: parsed.heard,
+    });
+    router.push('/questions');
+    // Clear the form so the next estimate starts fresh (the draft keeps everything).
+    setJobTypeId(null); setTitle(''); setClientName(''); setAddress(''); setDescription(''); setPhotos([]);
+  };
+
+  return (
+    <Screen footer={<Button title={busy ? 'Reading your notes…' : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
+      <Label>Project type</Label>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {types.map((j) => (
+          <Chip key={j.id} label={j.name} selected={effectiveType === j.id} onPress={() => setJobTypeId(j.id)} />
+        ))}
+        <Chip label={showAll ? 'Show mine only' : 'Other types…'} onPress={() => setShowAll(!showAll)} />
+      </View>
+      {guessed && !jobTypeId ? <Muted style={{ fontSize: 13 }}>Picked {JOB_TYPE_BY_ID[guessed].name} from your description. Tap another to change.</Muted> : null}
+
+      <H2 style={{ marginTop: 6 }}>Describe the job</H2>
+      <Field
+        label="Talk or type"
+        multiline
+        value={description}
+        onChangeText={setDescription}
+        placeholder="e.g. Basement, 3 rooms to 4 bedrooms, 45 ft of new walls, 2 new showers, washer, range and dryer, 100 sf tile…"
+        help={Platform.OS === 'web' ? undefined : 'Tap the microphone on your keyboard to talk. Sizes and counts you say get filled in for you.'}
+      />
+
+      <Label>Photos</Label>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <PhotoButton icon="camera-outline" label="Take photo" onPress={() => addPhotos(true)} />
+        <PhotoButton icon="images-outline" label="From library" onPress={() => addPhotos(false)} />
+      </View>
+      {photos.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {photos.map((uri) => (
+            <Pressable key={uri} accessibilityLabel="Remove photo" onLongPress={() => setPhotos((p) => p.filter((x) => x !== uri))}>
+              <Image source={{ uri }} style={{ width: 72, height: 72, borderRadius: 8 }} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      <Muted style={{ fontSize: 13 }}>Photos are saved with the job. AI photo analysis comes with the Claude connection.</Muted>
+
+      <H2 style={{ marginTop: 6 }}>Client</H2>
+      <Field label="Client name" value={clientName} onChangeText={setClientName} />
+      <Field label="Job address" value={address} onChangeText={setAddress} />
+      <Field label="Estimate name (optional)" value={title} onChangeText={setTitle} placeholder="Defaults to client + job type" />
+
+      <Label>Estimate detail</Label>
+      <Segmented<EstimateMode>
+        value={detailedAllowed ? mode : 'quick'}
+        onChange={setMode}
+        options={[
+          { value: 'quick', label: 'Quick ($/SF)' },
+          { value: 'detailed', label: 'Detailed', disabled: !detailedAllowed },
+        ]}
+      />
+      {!detailedAllowed ? (
+        <Banner tone="info" title="Quick estimate only for now">Detailed takeoffs for new builds and ADUs are coming in a later version.</Banner>
+      ) : (
+        <Muted style={{ fontSize: 13 }}>
+          {mode === 'quick' ? 'Size × your price per SF. Fast ballpark for a first call.' : 'Trade-by-trade price, material list and code checks.'}
+        </Muted>
+      )}
+    </Screen>
+  );
+}
+
+function PhotoButton({ icon, label, onPress }: { icon: 'camera-outline' | 'images-outline'; label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => ({ flex: 1, height: 72, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
+        alignItems: 'center', justifyContent: 'center', gap: 4, opacity: pressed ? 0.7 : 1 })}>
+      <Ionicons name={icon} size={24} color={C.ink} />
+      <Text style={{ fontSize: 14, color: C.ink }}>{label}</Text>
+    </Pressable>
+  );
+}
