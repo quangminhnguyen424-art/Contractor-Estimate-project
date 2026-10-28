@@ -8,18 +8,18 @@
     "scheme": "estimatingapp",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.ymllc.estimator",
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos of the job to attach to your estimate.",
-        "NSPhotoLibraryUsageDescription": "Attach job photos to your estimate."
-      }
+        "NSPhotoLibraryUsageDescription": "Attach job photos to your estimate.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#F4F3EF",
+        "backgroundColor": "#C2410C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -36,7 +36,7 @@
         {
           "backgroundColor": "#F4F3EF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
       ],
       "expo-sharing"
