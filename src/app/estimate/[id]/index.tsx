@@ -14,6 +14,7 @@ export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { estimates, updateEstimate, deleteEstimate, setDraft, profile } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
+  const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const est = estimates.find((e) => e.id === id);
 
   if (!est || !profile) {
@@ -40,8 +41,12 @@ export default function EstimateScreen() {
 
   const changeMarkup = (n: number) => {
     const go = () => updateEstimate(est.id, { markupPct: n });
-    if (est.status === 'draft') return go();
-    confirmAction('Change the price on a sent quote?', 'The client already has this quote. Changing markup changes the price.', 'Change', go);
+    if (est.status === 'draft' || okToRepriceSent) return go();
+    // Ask once per visit, not on every tap of the stepper.
+    confirmAction('Change the price on a sent quote?', 'The client already has this quote. Changing markup changes the price.', 'Change', () => {
+      setOkToRepriceSent(true);
+      go();
+    });
   };
 
   const remove = () => {

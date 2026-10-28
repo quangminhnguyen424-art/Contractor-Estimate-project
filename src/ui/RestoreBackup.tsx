@@ -32,7 +32,7 @@ export function RestoreBackup() {
       {Platform.OS === 'web' ? <Button kind="ghost" title="Choose backup file…" onPress={pickFile} /> : null}
       <Field label="Backup text" multiline value={text} onChangeText={(v) => { setText(v); setError(null); }}
         placeholder="Paste the backup text here" autoCapitalize="none" autoCorrect={false} />
-      <Button kind="secondary" title="Restore backup" disabled={text.trim().length < 10} onPress={() => setError(importData(text))} />
+      <Button kind="secondary" title="Restore backup" disabled={text.trim().length < 10} onPress={() => { const r = importData(text); setError(r.ok ? null : r.message); }} />
       {error ? <Banner tone="warn" title={error} /> : null}
     </Card>
   );

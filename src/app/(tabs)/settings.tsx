@@ -52,6 +52,16 @@ export default function Settings() {
     const json = exportData();
     const name = `estimator-backup-${new Date().toISOString().slice(0, 10)}.json`;
     if (Platform.OS === 'web') {
+      // On iPhone home-screen apps a plain download can silently do nothing, so use the share sheet when available.
+      try {
+        const file = new File([json], name, { type: 'application/json' });
+        if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: name });
+          return;
+        }
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return; // the user closed the share sheet
+      }
       try {
         const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
         const a = document.createElement('a');
@@ -68,7 +78,12 @@ export default function Settings() {
         return;
       }
     }
-    await Share.share({ title: name, message: json });
+    try {
+      await Share.share({ title: name, message: json });
+    } catch {
+      setBackupText(json);
+      notify('Copy your backup', 'Sharing failed (the backup may be too large). The backup text is in the box below: copy it and save it somewhere safe.');
+    }
   };
 
   const pickBackupFile = () => {
@@ -88,11 +103,11 @@ export default function Settings() {
 
   const restore = () =>
     confirmAction('Restore this backup?', 'Everything on this device is replaced by the backup.', 'Restore', () => {
-      const err = importData(backupText);
-      if (err) notify('Could not restore', err);
+      const r = importData(backupText);
+      if (!r.ok) notify('Could not restore', r.message);
       else {
         setBackupText('');
-        notify('Backup restored');
+        notify(r.message);
       }
     });
 

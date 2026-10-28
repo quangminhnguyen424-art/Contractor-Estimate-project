@@ -217,6 +217,15 @@ export function claudeAI(baseUrl: string): EstimatorAI {
 
 export const CLAUDE_MODEL = 'claude-sonnet-5-5';
 
+/** Upper limits that stop an impossible AI answer (e.g. 50,000 lights) from reaching the price. */
+function maxFor(id: string, unit?: string): number {
+  if (id === 'yearBuilt') return 2100;
+  if (unit === 'SF') return 20000;
+  if (unit === 'LF') return 2000;
+  if (unit === 'ft') return 500;
+  return 200; // counts: doors, lights, outlets, fixtures…
+}
+
 /** Keep only answers that match a real question and a valid value for it. Never trust model output blindly. */
 export function cleanAnswers(jobTypeId: JobTypeId, raw: unknown): Answers {
   const out: Answers = {};
@@ -228,7 +237,7 @@ export function cleanAnswers(jobTypeId: JobTypeId, raw: unknown): Answers {
     let clean: AnswerValue | undefined;
     if (q.kind === 'number') {
       const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v.replace(/,/g, '')) : NaN;
-      if (Number.isFinite(n) && n >= 0 && n < 1_000_000) clean = n;
+      if (Number.isFinite(n) && n >= 0 && n <= maxFor(q.id, q.unit)) clean = n;
     } else if (q.kind === 'yesno') {
       if (typeof v === 'boolean') clean = v;
       else if (v === 'yes' || v === 'true') clean = true;
@@ -300,11 +309,16 @@ function questionsFor(jobTypeId?: JobTypeId) {
   }));
 }
 
+const CLAUDE_TIMEOUT_MS = 60_000;
+
 async function callClaude(apiKey: string, system: string, content: unknown[], maxTokens: number): Promise<string> {
   let res: Response;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
   try {
     res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         'content-type': 'application/json',
         'x-api-key': apiKey,
@@ -315,8 +329,11 @@ async function callClaude(apiKey: string, system: string, content: unknown[], ma
       body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] }),
     });
   } catch {
+    clearTimeout(timer);
+    if (controller.signal.aborted) throw new Error('Claude took too long to answer (weak signal?). Try again with fewer photos.');
     throw new Error('Could not reach Claude. Check your internet connection.');
   }
+  clearTimeout(timer);
   if (!res.ok) {
     let detail = '';
     try { detail = ((await res.json()) as { error?: { message?: string } }).error?.message ?? ''; } catch { /* ignore */ }
@@ -325,8 +342,18 @@ async function callClaude(apiKey: string, system: string, content: unknown[], ma
     if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
     throw new Error(`Claude error (${res.status})${detail ? `: ${detail}` : ''}`);
   }
-  const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+  const data = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
+  if (data.stop_reason === 'max_tokens') throw new Error("Claude's answer was cut off. Try a shorter description or fewer photos.");
   return (data.content ?? []).map((c) => c.text ?? '').join('');
+}
+
+/** Parse Claude's JSON reply, turning parser errors into a message a contractor can act on. */
+function parseReply(reply: string): unknown {
+  try {
+    return extractJson(reply);
+  } catch {
+    throw new Error("Claude's answer couldn't be read. Try again, or fill in the questions yourself.");
+  }
 }
 
 export function directClaudeAI(apiKey: string): EstimatorAI {
@@ -343,7 +370,7 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
       });
       try {
         const reply = await callClaude(apiKey, SCOPE_SYSTEM, content, 1500);
-        return cleanScopeResult(extractJson(reply), jt);
+        return cleanScopeResult(parseReply(reply), jt);
       } catch (e) {
         const fallback = await demoAI.parseScope(text, jt);
         return { ...fallback, error: e instanceof Error ? e.message : 'Claude request failed' };
@@ -352,7 +379,7 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
     async extractPastJob(text) {
       try {
         const reply = await callClaude(apiKey, PAST_JOB_SYSTEM, [{ type: 'text', text }], 300);
-        return cleanPastJob(extractJson(reply));
+        return cleanPastJob(parseReply(reply));
       } catch (e) {
         return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
       }

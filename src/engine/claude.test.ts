@@ -11,10 +11,10 @@ afterEach(() => vi.unstubAllGlobals());
 describe('cleaning Claude output', () => {
   it('keeps only real questions with valid values', () => {
     const a = cleanAnswers('basement', {
-      newWallLf: '45', showers: 2, washer: 'yes', foundation: 'basement', egress: 'maybe',
-      bogus: 5, lights: -3, doors: 'five', panelDistanceFt: '1,200',
+      newWallLf: '1,200', showers: 2, washer: 'yes', foundation: 'basement', egress: 'maybe',
+      bogus: 5, lights: -3, doors: 'five', panelDistanceFt: 9000,
     });
-    expect(a).toEqual({ newWallLf: 45, showers: 2, washer: true, foundation: 'basement', panelDistanceFt: 1200 });
+    expect(a).toEqual({ newWallLf: 1200, showers: 2, washer: true, foundation: 'basement' });
   });
   it('ignores an unknown job type and junk lists', () => {
     const r = cleanScopeResult({ jobTypeId: 'spaceship', answers: { sizeSf: 10 }, heard: ['ok', 3, ''], notes: 'x' });

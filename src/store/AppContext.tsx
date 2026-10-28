@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
+import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
   Answers, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, Presets, PriceBook, Profile, ScopeItem,
 } from '@/engine/types';
@@ -29,22 +30,7 @@ export interface Draft {
   markupPct?: number;
 }
 
-interface Persisted {
-  profile: Profile | null;
-  presets: Presets;
-  priceBook: PriceBook;
-  pastJobs: PastJob[];
-  estimates: Estimate[];
-}
-
-const EMPTY: Persisted = { profile: null, presets: {}, priceBook: { labor: {}, materials: {} }, pastJobs: [], estimates: [] };
-
-export const DEFAULT_SCHEDULE = [
-  { label: 'Deposit at signing', pct: 10 },
-  { label: 'Rough-in complete', pct: 40 },
-  { label: 'Finishes complete', pct: 40 },
-  { label: 'Final walkthrough', pct: 10 },
-];
+export { DEFAULT_SCHEDULE };
 
 interface Ctx extends Persisted {
   ready: boolean;
@@ -64,8 +50,8 @@ interface Ctx extends Persisted {
   saveApiKey: (key: string) => void;
   /** JSON backup of everything except the Claude key. */
   exportData: () => string;
-  /** Replace all data with a backup. Returns an error message, or null when it worked. */
-  importData: (json: string) => string | null;
+  /** Replace all data with a backup. */
+  importData: (json: string) => { ok: boolean; message: string };
 }
 
 const AppContext = createContext<Ctx | null>(null);
@@ -82,7 +68,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(KEY);
         if (raw) {
-          const loaded = { ...EMPTY, ...(JSON.parse(raw) as Partial<Persisted>) };
+          // Checked so damaged saved data can never crash the app on launch.
+          const loaded = sanitizePersisted(JSON.parse(raw)).data;
           dataRef.current = loaded;
           setData(loaded);
         }
@@ -179,21 +166,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         try {
           parsed = JSON.parse(json.trim());
         } catch {
-          return 'That text is not a backup. Paste the whole backup exactly as it was exported.';
+          return { ok: false, message: 'That text is not a backup. Paste the whole backup exactly as it was exported.' };
         }
-        const d = (parsed as { app?: string; data?: Partial<Persisted> }) ?? {};
-        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return 'That text is not an Estimator backup.';
-        const next: Persisted = {
-          profile: d.data.profile ?? null,
-          presets: d.data.presets ?? {},
-          priceBook: { labor: d.data.priceBook?.labor ?? {}, materials: d.data.priceBook?.materials ?? {} },
-          pastJobs: Array.isArray(d.data.pastJobs) ? d.data.pastJobs : [],
-          estimates: Array.isArray(d.data.estimates) ? d.data.estimates : [],
-        };
-        if (!next.profile) return 'This backup has no company profile.';
+        const d = (parsed ?? {}) as { app?: string; data?: unknown };
+        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return { ok: false, message: 'That text is not an Estimator backup.' };
+        const { data: next, dropped } = sanitizePersisted(d.data);
+        if (!next.profile) return { ok: false, message: 'This backup has no company profile.' };
         setDraft(null);
         update(() => next);
-        return null;
+        return {
+          ok: true,
+          message: dropped > 0 ? `Backup restored. ${dropped} damaged item${dropped > 1 ? 's were' : ' was'} left out.` : 'Backup restored.',
+        };
       },
     }),
     [data, ready, draft, update, commitDraft, apiKey],

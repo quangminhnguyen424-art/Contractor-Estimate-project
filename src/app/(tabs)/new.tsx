@@ -10,7 +10,7 @@ import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
 import { notify } from '@/ui/notify';
-import { toAiImage } from '@/ui/photos';
+import { toAiImages } from '@/ui/photos';
 
 export default function NewEstimate() {
   const { profile, setDraft, apiKey } = useApp();
@@ -55,13 +55,17 @@ export default function NewEstimate() {
     const ai = getAI({ apiKey });
     // Claude also looks at the photos; the offline demo only reads the text.
     let images: ImageInput[] = [];
+    let skipped = 0;
     if (claudeOn && photos.length > 0) {
-      images = (await Promise.all(photos.slice(0, 8).map(toAiImage))).filter((x): x is ImageInput => !!x);
+      const r = await toAiImages(photos, 8);
+      images = r.images;
+      skipped = r.failed + Math.max(0, photos.length - 8);
     }
     let parsed: ScopeResult = { answers: {}, heard: [] };
     if (description.trim() || images.length > 0) parsed = await ai.parseScope(description, type, images);
     setBusy(false);
     if (parsed.error) notify('Claude could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
+    else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Claude`, photos.length > 8 ? 'Claude looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
     const jt = JOB_TYPE_BY_ID[type];
     setDraft({
       jobTypeId: type,
