@@ -31,9 +31,16 @@ All data is stored on the phone. Nothing is sent anywhere unless the Claude back
    ```
 3. Scan the QR code with your phone camera (iPhone) or the Expo Go app (Android).
 
-## Connect Claude (later)
+## Use it yourself on an iPhone (free)
 
-The API key must never go inside the app. A tiny backend is included:
+1. Host the web version on Netlify (free): sign in with GitHub, **Import an existing project**, pick this repo, **Deploy**. `netlify.toml` already has the build settings, and every push redeploys.
+2. Open the Netlify link in **Safari** → Share → **Add to Home Screen**.
+3. In the app: **Settings → Claude AI**, paste your own key from console.anthropic.com and tap **Save and test key**. The key stays on that device and is never in backups. Set a monthly spending limit in the Anthropic Console.
+4. **Settings → Export backup** regularly; data lives on the device. Restore on another device from Settings or on first launch.
+
+## Connect Claude for other users (later)
+
+For an app other contractors use, the shared API key must never go inside the app. A tiny backend is included:
 
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... node server/index.mjs

@@ -1,31 +1,100 @@
 import { useState } from 'react';
-import { Alert, Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Share, Text, View } from 'react-native';
 
-import { getAI } from '@/engine/ai';
+import { CLAUDE_MODEL, testClaudeKey } from '@/engine/ai';
 import { JOB_TYPES } from '@/engine/jobTypes';
 import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { confirmAction, notify } from '@/ui/notify';
 
 export default function Settings() {
-  const { profile, saveProfile, resetAll } = useApp();
+  const { profile, saveProfile, resetAll, apiKey, saveApiKey, exportData, importData } = useApp();
   const [p, setP] = useState<Profile>(profile!);
+  const [base, setBase] = useState(profile);
   const [saved, setSaved] = useState(false);
+  const [keyText, setKeyText] = useState(apiKey);
+  const [keyStatus, setKeyStatus] = useState<{ tone: 'ok' | 'warn' | 'info'; text: string } | null>(null);
+  const [backupText, setBackupText] = useState('');
+  // A restored backup replaces the profile: show the restored values.
+  if (profile !== base) {
+    setBase(profile);
+    if (profile) setP(profile);
+  }
   if (!profile) return null;
 
   const set = <K extends keyof Profile>(k: K, v: Profile[K]) => { setP({ ...p, [k]: v }); setSaved(false); };
   const toggle = (id: JobTypeId) => set('specialties', p.specialties.includes(id) ? p.specialties.filter((x) => x !== id) : [...p.specialties, id]);
   const setMilestone = (i: number, patch: Partial<PaymentMilestone>) => set('schedule', p.schedule.map((m, j) => (j === i ? { ...m, ...patch } : m)));
   const schedTotal = p.schedule.reduce((t, m) => t + m.pct, 0);
-  const ai = getAI();
 
-  const reset = () => {
-    const go = () => resetAll();
-    if (Platform.OS === 'web') return go();
-    Alert.alert('Erase everything?', 'Deletes your profile, prices, past jobs and estimates on this phone.', [
-      { text: 'Cancel', style: 'cancel' }, { text: 'Erase', style: 'destructive', onPress: go },
-    ]);
+  const reset = () =>
+    confirmAction('Erase everything?', 'Deletes your profile, prices, past jobs and estimates on this device. Export a backup first if you want to keep them.', 'Erase', resetAll);
+
+  const saveKey = async () => {
+    const k = keyText.trim();
+    if (!k) {
+      saveApiKey('');
+      setKeyStatus({ tone: 'info', text: 'Claude key removed. The app uses the offline reader.' });
+      return;
+    }
+    setKeyStatus({ tone: 'info', text: 'Checking the key with Claude…' });
+    const err = await testClaudeKey(k);
+    if (err) {
+      setKeyStatus({ tone: 'warn', text: err });
+      return;
+    }
+    saveApiKey(k);
+    setKeyStatus({ tone: 'ok', text: 'Connected. Claude now reads your job notes and photos.' });
   };
+
+  const exportBackup = async () => {
+    const json = exportData();
+    const name = `estimator-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    if (Platform.OS === 'web') {
+      try {
+        const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        return;
+      } catch {
+        setBackupText(json);
+        notify('Copy your backup', 'The backup text is in the box below. Copy it and save it somewhere safe.');
+        return;
+      }
+    }
+    await Share.share({ title: name, message: json });
+  };
+
+  const pickBackupFile = () => {
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json,.json,text/plain';
+      input.onchange = async () => {
+        const f = input.files?.[0];
+        if (f) setBackupText(await f.text());
+      };
+      input.click();
+    } catch {
+      notify('Could not open files', 'Paste the backup text into the box instead.');
+    }
+  };
+
+  const restore = () =>
+    confirmAction('Restore this backup?', 'Everything on this device is replaced by the backup.', 'Restore', () => {
+      const err = importData(backupText);
+      if (err) notify('Could not restore', err);
+      else {
+        setBackupText('');
+        notify('Backup restored');
+      }
+    });
 
   return (
     <Screen footer={<Button title={saved ? 'Saved ✓' : 'Save settings'} disabled={schedTotal !== 100}
@@ -74,15 +143,32 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <H2>AI</H2>
-        <Text style={{ color: C.ink }}>Using: {ai.name}</Text>
+        <H2>Claude AI</H2>
+        <Text style={{ color: C.ink }}>{apiKey ? `Connected · ${CLAUDE_MODEL}` : 'Not connected · using the offline reader'}</Text>
         <Muted style={{ fontSize: 13 }}>
-          Demo AI reads sizes and counts from your description on the phone. Connecting Claude adds photo analysis, smarter questions and reading quote photos.
+          For your own use. Create a key at console.anthropic.com (API Keys), paste it here, and set a monthly spending limit there.
+          The key is saved only on this device and is never included in backups. Job notes and photos you send go to Anthropic to be read.
         </Muted>
+        <Field label="Claude API key" value={keyText} onChangeText={(v) => { setKeyText(v); setKeyStatus(null); }}
+          placeholder="sk-ant-…" autoCapitalize="none" autoCorrect={false} secureTextEntry />
+        <Button kind="secondary" title={keyText.trim() ? 'Save and test key' : 'Remove key'} onPress={saveKey} />
+        {keyStatus ? <Banner tone={keyStatus.tone} title={keyStatus.text} /> : null}
+      </Card>
+
+      <Card>
+        <H2>Backup</H2>
+        <Muted style={{ fontSize: 13 }}>
+          Your data lives only on this device. Export a backup now and then, and to move your prices and estimates to another phone or computer, restore it there.
+        </Muted>
+        <Button kind="secondary" title="Export backup" onPress={exportBackup} />
+        {Platform.OS === 'web' ? <Button kind="ghost" title="Choose backup file…" onPress={pickBackupFile} /> : null}
+        <Field label="Restore from backup" multiline value={backupText} onChangeText={setBackupText}
+          placeholder="Paste the backup text here" autoCapitalize="none" autoCorrect={false} />
+        <Button kind="secondary" title="Restore backup" disabled={backupText.trim().length < 10} onPress={restore} />
       </Card>
 
       <Pressable accessibilityRole="button" onPress={reset} style={{ alignSelf: 'center', padding: 12 }}>
-        <Text style={{ color: '#B42318', fontWeight: '600' }}>Erase all data on this phone</Text>
+        <Text style={{ color: '#B42318', fontWeight: '600' }}>Erase all data on this device</Text>
       </Pressable>
     </Screen>
   );

@@ -1,0 +1,8 @@
+# Free hosting on Netlify: every push to GitHub rebuilds and updates the web app.
+[build]
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  EXPO_NO_TELEMETRY = "1"

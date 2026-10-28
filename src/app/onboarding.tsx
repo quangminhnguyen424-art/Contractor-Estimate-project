@@ -6,6 +6,7 @@ import { JOB_TYPES, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
 import type { FinishLevel, JobTypeId, Presets } from '@/engine/types';
 import { DEFAULT_SCHEDULE, useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, Field, H1, H2, Muted, NumberField, Screen } from '@/ui/kit';
+import { RestoreBackup } from '@/ui/RestoreBackup';
 
 const PICKABLE = JOB_TYPES.filter((j) => j.id !== 'small');
 
@@ -74,6 +75,7 @@ export default function Onboarding() {
             <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
             <Field label="Contractor registration #" value={license} onChangeText={setLicense} autoCapitalize="characters"
               help="Washington requires it on bids and contracts." />
+            <RestoreBackup />
           </>
         )}
 

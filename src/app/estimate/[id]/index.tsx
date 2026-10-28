@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { TRADE_NAMES } from '@/engine/catalog';
 import { money, qtyFmt } from '@/engine/format';
@@ -8,6 +8,7 @@ import { FINISH_LABELS, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
 import type { EstimateStatus, Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, H2, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
+import { confirmAction } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,7 +32,7 @@ export default function EstimateScreen() {
   const edit = () => {
     setDraft({
       id: est.id, jobTypeId: est.jobTypeId, mode: est.mode, title: est.title, clientName: est.clientName, address: est.address,
-      description: est.description, scopeNote: est.scopeNote ?? '', photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
+      description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
       heard: [], markupPct: est.markupPct,
     });
     router.push('/questions');
@@ -39,19 +40,12 @@ export default function EstimateScreen() {
 
   const changeMarkup = (n: number) => {
     const go = () => updateEstimate(est.id, { markupPct: n });
-    if (est.status === 'draft' || Platform.OS === 'web') return go();
-    Alert.alert('Change the price on a sent quote?', 'The client already has this quote. Changing markup changes the price.', [
-      { text: 'Cancel', style: 'cancel' }, { text: 'Change', onPress: go },
-    ]);
+    if (est.status === 'draft') return go();
+    confirmAction('Change the price on a sent quote?', 'The client already has this quote. Changing markup changes the price.', 'Change', go);
   };
 
   const remove = () => {
-    const go = () => { deleteEstimate(est.id); router.replace('/'); };
-    if (Platform.OS === 'web') return go();
-    Alert.alert('Delete estimate?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: go },
-    ]);
+    confirmAction('Delete estimate?', 'This cannot be undone.', 'Delete', () => { deleteEstimate(est.id); router.replace('/'); });
   };
 
   return (
@@ -120,6 +114,13 @@ export default function EstimateScreen() {
               </View>
             </View>
           ))}
+        </Card>
+      ) : null}
+
+      {est.aiNotes && est.aiNotes.length > 0 ? (
+        <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
+          <Text style={{ fontWeight: '700', fontSize: 15, color: C.infoInk }}>Claude noticed (from notes and photos)</Text>
+          {est.aiNotes.map((n, i) => <Text key={i} style={{ color: C.infoInk, fontSize: 13, lineHeight: 19 }}>• {n}</Text>)}
         </Card>
       ) : null}
 

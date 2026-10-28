@@ -208,6 +208,7 @@ export interface Estimate {
   address: string;
   description: string; // private job notes — never shown to the client
   scopeNote: string; // optional scope summary shown on the client quote
+  aiNotes?: string[]; // internal: things Claude noticed in the notes/photos
   photos: string[];
   finish: FinishLevel;
   answers: Answers;

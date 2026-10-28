@@ -54,9 +54,16 @@ export default function Questions() {
         <Muted>{jt.name} · {quick ? 'Quick ($/SF)' : 'Detailed'}</Muted>
       </View>
 
+      {draft.aiNotes && draft.aiNotes.length > 0 ? (
+        <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
+          <Text style={{ fontWeight: '700', color: C.infoInk }}>Claude noticed</Text>
+          {draft.aiNotes.map((n, i) => <Text key={i} style={{ color: C.infoInk, lineHeight: 20 }}>• {n}</Text>)}
+        </Card>
+      ) : null}
+
       {draft.heard.length > 0 ? (
         <Card style={{ backgroundColor: C.okBg, borderColor: C.okBg }}>
-          <Text style={{ fontWeight: '700', color: C.okInk }}>Filled in from your description</Text>
+          <Text style={{ fontWeight: '700', color: C.okInk }}>Filled in for you</Text>
           <Text style={{ color: C.okInk, lineHeight: 20 }}>{draft.heard.join(' · ')}</Text>
         </Card>
       ) : (

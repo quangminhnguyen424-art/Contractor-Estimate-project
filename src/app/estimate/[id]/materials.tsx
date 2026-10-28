@@ -1,12 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { money, money2 } from '@/engine/format';
 import { materialsHtml } from '@/engine/quote';
 import type { MaterialLine } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, H2, Muted, Screen, mono } from '@/ui/kit';
+import { notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 
 export default function MaterialsScreen() {
@@ -24,7 +25,7 @@ export default function MaterialsScreen() {
     try {
       await sharePdf(materialsHtml(est, profile), `Materials — ${est.title}`);
     } catch {
-      Alert.alert('Could not create the PDF', 'Please try again.');
+      notify('Could not create the PDF', 'Please try again.');
     } finally {
       setBusy(false);
     }

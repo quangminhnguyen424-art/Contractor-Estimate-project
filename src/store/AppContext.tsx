@@ -8,6 +8,8 @@ import type {
 } from '@/engine/types';
 
 const KEY = 'estimating-app/v1';
+// The Claude key lives in its own slot so it is never included in a data backup.
+const AI_KEY = 'estimating-app/claude-key';
 
 export interface Draft {
   id?: string; // set when editing an existing estimate
@@ -18,6 +20,7 @@ export interface Draft {
   address: string;
   description: string;
   scopeNote: string;
+  aiNotes?: string[];
   photos: string[];
   finish: FinishLevel;
   answers: Answers;
@@ -57,6 +60,12 @@ interface Ctx extends Persisted {
   updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number }) => void;
   deleteEstimate: (id: string) => void;
   resetAll: () => void;
+  apiKey: string;
+  saveApiKey: (key: string) => void;
+  /** JSON backup of everything except the Claude key. */
+  exportData: () => string;
+  /** Replace all data with a backup. Returns an error message, or null when it worked. */
+  importData: (json: string) => string | null;
 }
 
 const AppContext = createContext<Ctx | null>(null);
@@ -66,6 +75,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const dataRef = useRef<Persisted>(EMPTY);
+  const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -78,6 +88,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {
         // Corrupt or unavailable storage: start fresh rather than crash.
+      }
+      try {
+        setApiKey((await AsyncStorage.getItem(AI_KEY)) ?? '');
+      } catch {
+        // No key available; the app uses the offline demo AI.
       }
       setReady(true);
     })();
@@ -104,7 +119,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: existing?.id ?? newId(), createdAt: existing?.createdAt ?? now, updatedAt: now,
         status: existing?.status ?? 'draft', mode: d.mode, jobTypeId: d.jobTypeId,
         title: d.title.trim() || 'Untitled estimate', clientName: d.clientName.trim(), address: d.address.trim(),
-        description: d.description.trim(), scopeNote: d.scopeNote.trim(), photos: d.photos, finish: d.finish, answers: d.answers,
+        description: d.description.trim(), scopeNote: d.scopeNote.trim(), aiNotes: d.aiNotes ?? existing?.aiNotes ?? [], photos: d.photos, finish: d.finish, answers: d.answers,
         customItems: d.customItems, markupPct, salesTaxPct: profile.salesTaxPct, ...r,
       };
     },
@@ -152,8 +167,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setDraft(null);
         update(() => EMPTY);
       },
+      apiKey,
+      saveApiKey: (key: string) => {
+        const k = key.trim();
+        setApiKey(k);
+        (k ? AsyncStorage.setItem(AI_KEY, k) : AsyncStorage.removeItem(AI_KEY)).catch(() => {});
+      },
+      exportData: () => JSON.stringify({ app: 'estimator', version: 1, exportedAt: new Date().toISOString(), data: dataRef.current }),
+      importData: (json: string) => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(json.trim());
+        } catch {
+          return 'That text is not a backup. Paste the whole backup exactly as it was exported.';
+        }
+        const d = (parsed as { app?: string; data?: Partial<Persisted> }) ?? {};
+        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return 'That text is not an Estimator backup.';
+        const next: Persisted = {
+          profile: d.data.profile ?? null,
+          presets: d.data.presets ?? {},
+          priceBook: { labor: d.data.priceBook?.labor ?? {}, materials: d.data.priceBook?.materials ?? {} },
+          pastJobs: Array.isArray(d.data.pastJobs) ? d.data.pastJobs : [],
+          estimates: Array.isArray(d.data.estimates) ? d.data.estimates : [],
+        };
+        if (!next.profile) return 'This backup has no company profile.';
+        setDraft(null);
+        update(() => next);
+        return null;
+      },
     }),
-    [data, ready, draft, update, commitDraft],
+    [data, ready, draft, update, commitDraft, apiKey],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

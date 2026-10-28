@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { dateFmt, money } from '@/engine/format';
 import { FINISH_LABELS, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
@@ -8,6 +8,7 @@ import { QUOTE_TEXT, quoteHtml, quoteSections, scheduleAmounts } from '@/engine/
 import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Muted, Screen, Segmented, mono } from '@/ui/kit';
+import { notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 
 export default function QuoteScreen() {
@@ -31,7 +32,7 @@ export default function QuoteScreen() {
       await sharePdf(quoteHtml(est, profile, lang), `${T.quote} — ${est.title}`);
       if (est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
     } catch {
-      Alert.alert('Could not create the PDF', 'Please try again.');
+      notify('Could not create the PDF', 'Please try again.');
     } finally {
       setBusy(false);
     }

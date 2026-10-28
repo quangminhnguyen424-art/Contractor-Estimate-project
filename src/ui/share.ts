@@ -1,6 +1,8 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
+
+import { notify } from './notify';
 
 /** Turns HTML into a PDF and opens the share sheet (print dialog on web). */
 export async function sharePdf(html: string, name: string) {
@@ -12,7 +14,7 @@ export async function sharePdf(html: string, name: string) {
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: name, UTI: 'com.adobe.pdf' });
   } else {
-    Alert.alert('PDF saved', uri);
+    notify('PDF saved', uri);
   }
   return true;
 }

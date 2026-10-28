@@ -2,16 +2,19 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Image, Platform, Pressable, Text, View } from 'react-native';
+import { Image, Platform, Pressable, Text, View } from 'react-native';
 
-import { getAI, guessJobType } from '@/engine/ai';
+import { getAI, guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { defaultAnswers, JOB_TYPES, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
+import { notify } from '@/ui/notify';
+import { toAiImage } from '@/ui/photos';
 
 export default function NewEstimate() {
-  const { profile, setDraft } = useApp();
+  const { profile, setDraft, apiKey } = useApp();
+  const claudeOn = !!apiKey;
   const [showAll, setShowAll] = useState(false);
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(null);
   const [mode, setMode] = useState<EstimateMode>('detailed');
@@ -34,14 +37,14 @@ export default function NewEstimate() {
     try {
       if (camera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) return Alert.alert('Camera access needed', 'Allow camera access in Settings to take job photos.');
+        if (!perm.granted) return notify('Camera access needed', 'Allow camera access in Settings to take job photos.');
       }
       const res = camera
         ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.6 });
       if (!res.canceled) setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, 20));
     } catch {
-      Alert.alert('Photos unavailable', 'Could not open photos on this device.');
+      notify('Photos unavailable', 'Could not open photos on this device.');
     }
   };
 
@@ -49,9 +52,16 @@ export default function NewEstimate() {
     const type = effectiveType;
     if (!type) return;
     setBusy(true);
-    const ai = getAI();
-    const parsed = description.trim() ? await ai.parseScope(description, type) : { answers: {}, heard: [] };
+    const ai = getAI({ apiKey });
+    // Claude also looks at the photos; the offline demo only reads the text.
+    let images: ImageInput[] = [];
+    if (claudeOn && photos.length > 0) {
+      images = (await Promise.all(photos.slice(0, 8).map(toAiImage))).filter((x): x is ImageInput => !!x);
+    }
+    let parsed: ScopeResult = { answers: {}, heard: [] };
+    if (description.trim() || images.length > 0) parsed = await ai.parseScope(description, type, images);
     setBusy(false);
+    if (parsed.error) notify('Claude could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
     const jt = JOB_TYPE_BY_ID[type];
     setDraft({
       jobTypeId: type,
@@ -62,6 +72,7 @@ export default function NewEstimate() {
       answers: { ...defaultAnswers(type), ...parsed.answers },
       customItems: [],
       heard: parsed.heard,
+      aiNotes: parsed.notes ?? [],
     });
     router.push('/questions');
     // Clear the form so the next estimate starts fresh (the draft keeps everything).
@@ -69,7 +80,7 @@ export default function NewEstimate() {
   };
 
   return (
-    <Screen footer={<Button title={busy ? 'Reading your notes…' : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
+    <Screen footer={<Button title={busy ? (claudeOn ? 'Claude is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
       <Label>Project type</Label>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {types.map((j) => (
@@ -103,7 +114,11 @@ export default function NewEstimate() {
           ))}
         </View>
       ) : null}
-      <Muted style={{ fontSize: 13 }}>Photos are saved with the job. AI photo analysis comes with the Claude connection.</Muted>
+      <Muted style={{ fontSize: 13 }}>
+        {claudeOn
+          ? 'Claude looks at up to 8 photos for conditions, code issues and quantities.'
+          : 'Photos are saved with the job. Add your Claude key in Settings to have them analyzed.'}
+      </Muted>
 
       <H2 style={{ marginTop: 6 }}>Client</H2>
       <Field label="Client name" value={clientName} onChangeText={setClientName} />

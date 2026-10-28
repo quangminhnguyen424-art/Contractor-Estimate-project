@@ -1,15 +1,25 @@
-import { JOB_TYPE_BY_ID } from './jobTypes';
-import type { Answers, FinishLevel, JobTypeId } from './types';
+import { JOB_TYPES, JOB_TYPE_BY_ID } from './jobTypes';
+import type { Answers, AnswerValue, FinishLevel, JobTypeId } from './types';
 
 /**
- * The AI layer. Phase 1 ships with DemoAI (runs on the phone, no internet).
- * ClaudeAI calls our own backend, which holds the Anthropic API key —
- * the key must never be put inside the app.
+ * The AI layer.
+ * - demoAI: offline rules, runs on the phone, free.
+ * - directClaudeAI: calls Claude straight from the device with the contractor's OWN API key
+ *   (personal use only — the key is stored on that device and never shipped inside the app).
+ * - claudeAI: calls our backend (server/), which holds a shared key — for when the app has other users.
  */
+export interface ImageInput {
+  mediaType: 'image/jpeg' | 'image/png';
+  base64: string;
+}
+
 export interface ScopeResult {
   jobTypeId?: JobTypeId;
   answers: Answers;
   heard: string[]; // human-readable list of what was picked up
+  notes?: string[]; // things Claude noticed (conditions, risks, questions to ask)
+  source?: 'claude' | 'demo';
+  error?: string; // set when Claude was asked but failed and the demo result was used instead
 }
 
 export interface PastJobResult {
@@ -18,11 +28,12 @@ export interface PastJobResult {
   price?: number;
   finish?: FinishLevel;
   title?: string;
+  error?: string;
 }
 
 export interface EstimatorAI {
   name: string;
-  parseScope(text: string, jobTypeId?: JobTypeId): Promise<ScopeResult>;
+  parseScope(text: string, jobTypeId?: JobTypeId, images?: ImageInput[]): Promise<ScopeResult>;
   extractPastJob(text: string): Promise<PastJobResult>;
 }
 
@@ -150,7 +161,7 @@ export const demoAI: EstimatorAI = {
     const year = grab(t, `(?:built|year)[^.\\d]{0,12}((?:18|19|20)\\d\\d)`);
     if (year) set('yearBuilt', year, `built ${year}`);
 
-    return { jobTypeId: jt, answers, heard };
+    return { jobTypeId: jt, answers, heard, source: 'demo' };
   },
 
   async extractPastJob(text) {
@@ -183,17 +194,18 @@ export function claudeAI(baseUrl: string): EstimatorAI {
     return (await res.json()) as T;
   };
   return {
-    name: 'Claude',
+    name: 'Claude (server)',
     async parseScope(text, jobTypeId) {
       try {
-        return await post<ScopeResult>('/parse-scope', { text, jobTypeId, questions: jobTypeId ? JOB_TYPE_BY_ID[jobTypeId].questions : undefined });
+        const raw = await post<ScopeResult>('/parse-scope', { text, jobTypeId, questions: jobTypeId ? JOB_TYPE_BY_ID[jobTypeId].questions : undefined });
+        return cleanScopeResult(raw, jobTypeId);
       } catch {
         return demoAI.parseScope(text, jobTypeId); // fall back so the contractor is never stuck
       }
     },
     async extractPastJob(text) {
       try {
-        return await post<PastJobResult>('/extract-past-job', { text });
+        return cleanPastJob(await post<PastJobResult>('/extract-past-job', { text }));
       } catch {
         return demoAI.extractPastJob(text);
       }
@@ -201,7 +213,165 @@ export function claudeAI(baseUrl: string): EstimatorAI {
   };
 }
 
-export function getAI(): EstimatorAI {
+// ---------- Claude called directly from the device (personal use) ----------
+
+export const CLAUDE_MODEL = 'claude-sonnet-5-5';
+
+/** Keep only answers that match a real question and a valid value for it. Never trust model output blindly. */
+export function cleanAnswers(jobTypeId: JobTypeId, raw: unknown): Answers {
+  const out: Answers = {};
+  if (!raw || typeof raw !== 'object') return out;
+  const r = raw as Record<string, unknown>;
+  for (const q of JOB_TYPE_BY_ID[jobTypeId].questions) {
+    if (!(q.id in r)) continue;
+    const v = r[q.id];
+    let clean: AnswerValue | undefined;
+    if (q.kind === 'number') {
+      const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v.replace(/,/g, '')) : NaN;
+      if (Number.isFinite(n) && n >= 0 && n < 1_000_000) clean = n;
+    } else if (q.kind === 'yesno') {
+      if (typeof v === 'boolean') clean = v;
+      else if (v === 'yes' || v === 'true') clean = true;
+      else if (v === 'no' || v === 'false') clean = false;
+    } else if (q.kind === 'choice') {
+      if (typeof v === 'string' && q.options?.some((o) => o.value === v)) clean = v;
+    }
+    if (clean !== undefined) out[q.id] = clean;
+  }
+  return out;
+}
+
+const isJobType = (v: unknown): v is JobTypeId => typeof v === 'string' && v in JOB_TYPE_BY_ID;
+const strList = (v: unknown, max: number) =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map((x) => x.trim().slice(0, 240)).slice(0, max) : [];
+
+export function cleanScopeResult(raw: unknown, jobTypeId?: JobTypeId): ScopeResult {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const jt = jobTypeId ?? (isJobType(r.jobTypeId) ? r.jobTypeId : undefined);
+  return {
+    jobTypeId: jt,
+    answers: jt ? cleanAnswers(jt, r.answers) : {},
+    heard: strList(r.heard, 30),
+    notes: strList(r.notes, 10),
+    source: 'claude',
+  };
+}
+
+export function cleanPastJob(raw: unknown): PastJobResult {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const pos = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
+  const finish = r.finish === 'basic' || r.finish === 'mid' || r.finish === 'high' ? r.finish : undefined;
+  return {
+    jobTypeId: isJobType(r.jobTypeId) ? r.jobTypeId : undefined,
+    sizeSf: pos(r.sizeSf), price: pos(r.price), finish,
+    title: typeof r.title === 'string' ? r.title.slice(0, 60) : undefined,
+  };
+}
+
+/** Pull the first JSON object out of a model reply (it may wrap it in text or ```json fences). */
+export function extractJson(text: string): unknown {
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error('No JSON in reply');
+  return JSON.parse(text.slice(start, end + 1));
+}
+
+const SCOPE_SYSTEM = `You are an experienced Washington State general contractor helping another contractor fill in an estimate.
+You get the contractor's notes about a job (typed or dictated, may be informal or mixed Vietnamese/English) and sometimes site photos.
+Fill in answers ONLY for the listed questions, and only when the notes or photos actually support the value. Never guess.
+- Numbers are plain numbers in the question's unit (no text). Yes/no answers are true or false. Choice answers must be one of the listed option values.
+- "heard": short English phrases of what you picked up, e.g. "45 LF new wall", "2 showers".
+- "notes": up to 8 short, concrete observations a GC would flag from the notes or photos: visible damage (water stains, rot, mold), code issues (no GFCI near water, missing egress, ungrounded outlets, double-tapped breakers), access problems, items to confirm with the owner, likely hidden conditions. Do not repeat the answers. Empty list if nothing.
+Reply with ONLY a JSON object: {"jobTypeId": string, "answers": {questionId: value}, "heard": [string], "notes": [string]}`;
+
+const PAST_JOB_SYSTEM = `Extract a completed construction job from pasted quote or invoice text.
+Use the pre-tax contract price, not a total that includes sales tax. sizeSf is the project floor area in square feet if stated.
+Reply with ONLY a JSON object: {"jobTypeId": one of ${JOB_TYPES.filter((j) => j.id !== 'small').map((j) => j.id).join('|')} or null, "sizeSf": number or null, "price": number or null, "finish": "basic"|"mid"|"high" or null, "title": short job name}`;
+
+function questionsFor(jobTypeId?: JobTypeId) {
+  const types = jobTypeId ? [JOB_TYPE_BY_ID[jobTypeId]] : JOB_TYPES.filter((j) => j.id !== 'small');
+  return types.map((jt) => ({
+    jobTypeId: jt.id,
+    name: jt.name,
+    questions: jt.questions.map((q) => ({
+      id: q.id, label: q.label, kind: q.kind, unit: q.unit,
+      options: q.options?.map((o) => o.value),
+    })),
+  }));
+}
+
+async function callClaude(apiKey: string, system: string, content: unknown[], maxTokens: number): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        // Required for calls made from a browser; harmless in the phone app.
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] }),
+    });
+  } catch {
+    throw new Error('Could not reach Claude. Check your internet connection.');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try { detail = ((await res.json()) as { error?: { message?: string } }).error?.message ?? ''; } catch { /* ignore */ }
+    if (res.status === 401) throw new Error('Claude API key is not valid. Check it in Settings.');
+    if (res.status === 429) throw new Error('Claude is busy or your rate limit was reached. Try again in a minute.');
+    if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
+    throw new Error(`Claude error (${res.status})${detail ? `: ${detail}` : ''}`);
+  }
+  const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+  return (data.content ?? []).map((c) => c.text ?? '').join('');
+}
+
+export function directClaudeAI(apiKey: string): EstimatorAI {
+  return {
+    name: `Claude (${CLAUDE_MODEL})`,
+    async parseScope(text, jobTypeId, images) {
+      const jt = jobTypeId ?? guessJobType(text);
+      const content: unknown[] = (images ?? []).slice(0, 8).map((img) => ({
+        type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+      }));
+      content.push({
+        type: 'text',
+        text: `Job type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${images?.length ? `${images.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`,
+      });
+      try {
+        const reply = await callClaude(apiKey, SCOPE_SYSTEM, content, 1500);
+        return cleanScopeResult(extractJson(reply), jt);
+      } catch (e) {
+        const fallback = await demoAI.parseScope(text, jt);
+        return { ...fallback, error: e instanceof Error ? e.message : 'Claude request failed' };
+      }
+    },
+    async extractPastJob(text) {
+      try {
+        const reply = await callClaude(apiKey, PAST_JOB_SYSTEM, [{ type: 'text', text }], 300);
+        return cleanPastJob(extractJson(reply));
+      } catch (e) {
+        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
+      }
+    },
+  };
+}
+
+/** Quick check that a key works. Returns null when OK, or a message to show. */
+export async function testClaudeKey(apiKey: string): Promise<string | null> {
+  try {
+    await callClaude(apiKey, 'Reply with the single word OK.', [{ type: 'text', text: 'ping' }], 5);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : 'Claude request failed';
+  }
+}
+
+export function getAI(opts: { apiKey?: string } = {}): EstimatorAI {
+  if (opts.apiKey?.trim()) return directClaudeAI(opts.apiKey.trim());
   const url = typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_AI_URL : undefined;
   return url ? claudeAI(url) : demoAI;
 }

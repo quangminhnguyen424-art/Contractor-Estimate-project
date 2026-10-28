@@ -12,6 +12,7 @@
     "expo-font": "~58.0.11",
     "expo-glass-effect": "~58.0.5",
     "expo-image": "~58.0.18",
+    "expo-image-manipulator": "~58.0.16",
     "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.15",
     "expo-print": "~58.0.8",
@@ -47,7 +48,8 @@
     "lint": "expo lint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build:web-single": "node scripts/build-web-single.mjs"
+    "build:web-single": "node scripts/build-web-single.mjs",
+    "build:web": "expo export --platform web"
   },
   "private": true
 }
