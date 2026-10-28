@@ -24,19 +24,20 @@ export interface EstimateInput {
 
 export function laborRate(assemblyId: string, pb: PriceBook): number {
   const o = pb.labor[assemblyId];
-  return typeof o === 'number' ? o : ASSEMBLY_BY_ID[assemblyId]?.labor ?? 0;
+  return typeof o === 'number' && Number.isFinite(o) && o >= 0 ? o : ASSEMBLY_BY_ID[assemblyId]?.labor ?? 0;
 }
 
 export function materialPrice(materialId: string, pb: PriceBook, finish: FinishLevel): number {
   const mat = MATERIAL_BY_ID[materialId];
   if (!mat) return 0;
   const o = pb.materials[materialId];
-  const base = typeof o === 'number' ? o : mat.price;
+  const base = typeof o === 'number' && Number.isFinite(o) && o >= 0 ? o : mat.price;
   return mat.finishSensitive ? base * FINISH_FACTOR[finish] : base;
 }
 
 export function presetFor(jobTypeId: JobTypeId, finish: FinishLevel, presets: Presets): number {
-  return presets[jobTypeId]?.[finish] ?? JOB_TYPE_BY_ID[jobTypeId].defaultPreset[finish];
+  const v = presets[jobTypeId]?.[finish];
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : JOB_TYPE_BY_ID[jobTypeId].defaultPreset[finish];
 }
 
 /** Merge duplicate scope items so the same assembly appears once. */
@@ -67,7 +68,8 @@ export function comparePrice(
   const presetPerSf = preset > 0 ? preset : null;
   if (!(sizeSf > 0) || !(price > 0)) {
     return { sizeSf, pricePerSf: 0, presetPerSf, historyPerSf: hist.perSf, historyCount: hist.count, flag: 'none',
-      message: 'Add the project size to compare with how you normally charge.' };
+      message: !(sizeSf > 0) ? 'Add the project size to compare with how you normally charge.'
+        : 'No price yet. Set your $/SF for this job type or add work items.' };
   }
   const pricePerSf = round2(price / sizeSf);
   const ref = hist.perSf ?? presetPerSf;
@@ -109,9 +111,11 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
   const markupRate = Math.max(0, input.markupPct) / 100;
 
   // ---- Quick mode: size x $/SF ----
-  if (input.mode === 'quick' || !jt.detailed) {
+  // Small jobs are always itemized; Quick ($/SF) makes no sense for them.
+  if ((input.mode === 'quick' && input.jobTypeId !== 'small') || !jt.detailed) {
+    // Quick mode: the $/SF preset IS the client price. Markup doesn't change it (cost is shown as an estimate only).
     const perSf = presetFor(input.jobTypeId, input.finish, input.presets);
-    const price = round2(sizeSf * perSf);
+    const price = Math.round(sizeSf * perSf);
     const cost = round2(price / (1 + markupRate));
     const markup = round2(price - cost);
     const tax = round2(price * input.salesTaxPct / 100);
@@ -120,7 +124,7 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
       lines: [], materials: [],
       trades: [{ trade: 'general', labor: 0, materials: 0, cost, price }],
       laborTotal: 0, materialTotal: 0, cost, markup, price, tax, total: round2(price + tax),
-      checks: runChecks({ ...input, scope: [] }),
+      checks: runChecks({ ...input, mode: 'quick', scope: [] }),
       comparison,
     };
   }
@@ -169,18 +173,51 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
   const trades = TRADE_ORDER.filter((t) => tradeMap.has(t)).map((t) => {
     const x = tradeMap.get(t)!;
     const cost = round2(x.labor + x.materials);
-    return { trade: t, labor: round2(x.labor), materials: round2(x.materials), cost, price: round2(cost * (1 + markupRate)) };
+    // Client-facing amounts are whole dollars so every section adds up exactly to the quote total.
+    return { trade: t, labor: round2(x.labor), materials: round2(x.materials), cost, price: Math.round(cost * (1 + markupRate)) };
   });
 
   const laborTotal = round2(lines.reduce((t, l) => t + l.labor, 0));
   const cost = round2(laborTotal + materialTotal);
-  const price = round2(trades.reduce((t, x) => t + x.price, 0));
+  const price = trades.reduce((t, x) => t + x.price, 0);
   const markup = round2(price - cost);
   const tax = round2(price * input.salesTaxPct / 100);
 
   return {
     lines, materials, trades, laborTotal, materialTotal, cost, markup, price, tax, total: round2(price + tax),
-    checks: runChecks({ ...input, scope }),
+    checks: runChecks({ ...input, mode: 'detailed', scope }),
     comparison: comparePrice(input.jobTypeId, input.finish, sizeSf, price, input.presets, input.pastJobs),
   };
+}
+
+/**
+ * Change only the markup on an existing estimate, keeping its saved costs, tax rate and quantities.
+ * (Rebuilding would silently pull in today's price book and tax rate.)
+ */
+export function applyMarkup<T extends EstimateResult & { mode: 'quick' | 'detailed'; salesTaxPct: number; markupPct: number }>(
+  est: T, markupPct: number, minMarkupPct: number,
+): T {
+  if (est.mode === 'quick') return est; // Quick price comes from $/SF, not markup.
+  const rate = Math.max(0, markupPct) / 100;
+  const trades = est.trades.map((t) => ({ ...t, price: Math.round(t.cost * (1 + rate)) }));
+  const price = trades.reduce((t, x) => t + x.price, 0);
+  const tax = round2(price * est.salesTaxPct / 100);
+  const checks = est.checks.filter((c) => c.id !== 'margin');
+  if (markupPct < minMarkupPct) {
+    checks.unshift({ id: 'margin', level: 'warn', title: `Markup ${markupPct}% is below your ${minMarkupPct}% minimum`,
+      detail: 'Raise the markup or confirm this job is worth doing at a lower margin.' });
+  }
+  const sizeSf = est.comparison.sizeSf;
+  const pricePerSf = sizeSf > 0 ? round2(price / sizeSf) : 0;
+  const ref = est.comparison.historyPerSf ?? est.comparison.presetPerSf;
+  let comparison = { ...est.comparison, pricePerSf };
+  if (ref && pricePerSf > 0) {
+    const diff = (pricePerSf - ref) / ref;
+    const pct = Math.round(Math.abs(diff) * 100);
+    const refLabel = est.comparison.historyPerSf ? `your average from ${est.comparison.historyCount} past job${est.comparison.historyCount === 1 ? '' : 's'}` : 'your preset';
+    comparison = diff > 0.2 ? { ...comparison, flag: 'high', message: `${pct}% above ${refLabel} ($${ref.toFixed(0)}/SF). Check scope or quantities.` }
+      : diff < -0.2 ? { ...comparison, flag: 'low', message: `${pct}% below ${refLabel} ($${ref.toFixed(0)}/SF). Make sure nothing is missing.` }
+      : { ...comparison, flag: 'ok', message: `In line with ${refLabel} ($${ref.toFixed(0)}/SF).` };
+  }
+  return { ...est, markupPct, trades, price, markup: round2(price - est.cost), tax, total: round2(price + tax), checks, comparison };
 }

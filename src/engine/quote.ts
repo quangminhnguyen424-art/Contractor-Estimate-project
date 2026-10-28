@@ -40,7 +40,7 @@ export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
   if (est.mode === 'quick' || est.lines.length === 0) {
     const jt = JOB_TYPE_BY_ID[est.jobTypeId];
     return [{ trade: 'general', title: lang === 'vi' ? jt.vi : jt.name,
-      items: [est.description || (lang === 'vi' ? jt.vi : jt.name)], price: est.price }];
+      items: [est.scopeNote?.trim() || (lang === 'vi' ? jt.vi : jt.name)], price: est.price }];
   }
   return est.trades.map((t) => ({
     trade: t.trade,
@@ -53,8 +53,16 @@ export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
   }));
 }
 
+/** Whole-dollar milestones; the last one takes the remainder so they always add up to the price exactly. */
 export function scheduleAmounts(est: Estimate, profile: Profile) {
-  return profile.schedule.map((s) => ({ label: s.label, pct: s.pct, amount: Math.round(est.price * s.pct) / 100 }));
+  const price = Math.round(est.price);
+  let used = 0;
+  return profile.schedule.map((s, i) => {
+    const last = i === profile.schedule.length - 1;
+    const amount = last ? price - used : Math.round((price * s.pct) / 100);
+    used += amount;
+    return { label: s.label, pct: s.pct, amount };
+  });
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -86,7 +94,7 @@ ${profile.license ? `<div class="muted">${T.registration} ${esc(profile.license)
 <div>${dateFmt(est.updatedAt, lang)}</div><div class="muted">${T.validFor} ${profile.quoteValidDays} ${T.days}</div></div></div>
 <h2>${T.preparedFor}</h2><div><b>${esc(est.clientName || '—')}</b>${est.address ? ` · ${esc(est.address)}` : ''}</div>
 <h2>${T.project}</h2><div><b>${esc(est.title)}</b> · ${T.finish}: ${FINISH_LABELS[est.finish][lang]}</div>
-${est.description ? `<div class="muted">${esc(est.description)}</div>` : ''}
+${est.scopeNote?.trim() ? `<div class="muted">${esc(est.scopeNote).replace(/\n/g, '<br>')}</div>` : ''}
 <h2>${T.scope}</h2><table>
 ${sections.map((s) => `<tr class="sec"><td>${esc(s.title)}<ul>${s.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></td><td class="r">${money(s.price)}</td></tr>`).join('')}
 ${row(T.subtotal, money(est.price))}

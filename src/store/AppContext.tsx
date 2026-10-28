@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { buildEstimate } from '@/engine/estimator';
+import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import type {
   Answers, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, Presets, PriceBook, Profile, ScopeItem,
@@ -17,6 +17,7 @@ export interface Draft {
   clientName: string;
   address: string;
   description: string;
+  scopeNote: string;
   photos: string[];
   finish: FinishLevel;
   answers: Answers;
@@ -103,7 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: existing?.id ?? newId(), createdAt: existing?.createdAt ?? now, updatedAt: now,
         status: existing?.status ?? 'draft', mode: d.mode, jobTypeId: d.jobTypeId,
         title: d.title.trim() || 'Untitled estimate', clientName: d.clientName.trim(), address: d.address.trim(),
-        description: d.description.trim(), photos: d.photos, finish: d.finish, answers: d.answers,
+        description: d.description.trim(), scopeNote: d.scopeNote.trim(), photos: d.photos, finish: d.finish, answers: d.answers,
         customItems: d.customItems, markupPct, salesTaxPct: profile.salesTaxPct, ...r,
       };
     },
@@ -138,11 +139,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...d,
           estimates: d.estimates.map((e) => {
             if (e.id !== id) return e;
-            if (patch.markupPct != null && patch.markupPct !== e.markupPct) {
-              const rebuilt = compute({ ...e, heard: [], markupPct: patch.markupPct }, d, e);
-              return { ...rebuilt, status: patch.status ?? e.status };
+            let next = { ...e, status: patch.status ?? e.status };
+            if (patch.markupPct != null && patch.markupPct !== e.markupPct && d.profile) {
+              // Re-price markup only; saved costs and tax rate stay as quoted.
+              next = { ...applyMarkup(next, patch.markupPct, d.profile.minMarkupPct), updatedAt: new Date().toISOString() };
             }
-            return { ...e, ...patch, updatedAt: new Date().toISOString() };
+            return next;
           }),
         })),
       deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id) })),
@@ -151,7 +153,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         update(() => EMPTY);
       },
     }),
-    [data, ready, draft, update, commitDraft, compute],
+    [data, ready, draft, update, commitDraft],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

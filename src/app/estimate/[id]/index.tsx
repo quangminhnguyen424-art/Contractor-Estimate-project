@@ -31,10 +31,18 @@ export default function EstimateScreen() {
   const edit = () => {
     setDraft({
       id: est.id, jobTypeId: est.jobTypeId, mode: est.mode, title: est.title, clientName: est.clientName, address: est.address,
-      description: est.description, photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
+      description: est.description, scopeNote: est.scopeNote ?? '', photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
       heard: [], markupPct: est.markupPct,
     });
     router.push('/questions');
+  };
+
+  const changeMarkup = (n: number) => {
+    const go = () => updateEstimate(est.id, { markupPct: n });
+    if (est.status === 'draft' || Platform.OS === 'web') return go();
+    Alert.alert('Change the price on a sent quote?', 'The client already has this quote. Changing markup changes the price.', [
+      { text: 'Cancel', style: 'cancel' }, { text: 'Change', onPress: go },
+    ]);
   };
 
   const remove = () => {
@@ -68,18 +76,29 @@ export default function EstimateScreen() {
           <Text style={{ color: C.darkMuted, fontSize: 14 }}>Client price</Text>
           <Text style={{ color: '#fff', fontSize: 30, fontFamily: mono, fontWeight: '600' }}>{money(est.price)}</Text>
         </View>
-        <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
-          <DarkStat label={est.mode === 'quick' ? 'Est. cost' : 'Labor'} value={money(est.mode === 'quick' ? est.cost : est.laborTotal)} />
-          <DarkStat label={est.mode === 'quick' ? '' : 'Materials'} value={est.mode === 'quick' ? '' : money(est.materialTotal)} />
-          <DarkStat label={`Markup ${est.markupPct}%`} value={money(est.markup)} accent />
-        </View>
+        {est.mode === 'quick' ? (
+          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
+            <DarkStat label="Size" value={`${cmp.sizeSf} SF`} />
+            <DarkStat label="Your price" value={`${money(cmp.pricePerSf)}/SF`} accent />
+          </View>
+        ) : (
+          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
+            <DarkStat label="Labor" value={money(est.laborTotal)} />
+            <DarkStat label="Materials" value={money(est.materialTotal)} />
+            <DarkStat label={`Markup ${est.markupPct}%`} value={money(est.markup)} accent />
+          </View>
+        )}
         <Text style={{ color: C.darkMuted, fontSize: 13 }}>+ {est.salesTaxPct}% sales tax {money(est.tax)} = {money(est.total)} total</Text>
       </View>
 
-      <Card>
-        <Stepper label={`Markup ${est.markupPct}%`} value={est.markupPct} onChange={(n) => updateEstimate(est.id, { markupPct: n })} />
-        <Muted style={{ fontSize: 13 }}>Your minimum is {profile.minMarkupPct}%.</Muted>
-      </Card>
+      {est.mode === 'detailed' ? (
+        <Card>
+          <Stepper label={`Markup ${est.markupPct}%`} value={est.markupPct} onChange={changeMarkup} />
+          <Muted style={{ fontSize: 13 }}>Your minimum is {profile.minMarkupPct}%. Changing markup keeps your saved costs and tax rate.</Muted>
+        </Card>
+      ) : (
+        <Muted style={{ fontSize: 13 }}>Quick estimates use your price per SF. Change it in Pricing, or switch to Detailed for markup and a trade breakdown.</Muted>
+      )}
 
       <Banner
         tone={cmp.flag === 'ok' ? 'ok' : cmp.flag === 'none' ? 'info' : 'warn'}

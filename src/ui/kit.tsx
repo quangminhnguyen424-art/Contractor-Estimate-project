@@ -118,7 +118,7 @@ export function NumberField({ label, value, onChange, suffix, help, style, decim
   const [text, setText] = React.useState(Number.isFinite(value) ? String(value) : '');
   const [lastValue, setLastValue] = React.useState(value);
   // When the value changes from outside (not from typing here), show the new value.
-  if (value !== lastValue) {
+  if (value !== lastValue && !(Number.isNaN(value) && Number.isNaN(lastValue))) {
     setLastValue(value);
     if (parseFloat(text) !== value) setText(Number.isFinite(value) ? String(value) : '');
   }

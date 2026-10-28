@@ -30,23 +30,29 @@ const WORD_NUMS: Record<string, number> = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   twelve: 12, fifteen: 15, twenty: 20,
 };
-const NUM = '(\\d+(?:\\.\\d+)?|a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve|fifteen|twenty)';
+// \b on both sides so "a" inside "pella" or "area" is never read as a number.
+const NUM = '\\b(\\d+(?:\\.\\d+)?|a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve|fifteen|twenty)\\b';
 const toNum = (s: string) => (WORD_NUMS[s.toLowerCase()] ?? parseFloat(s));
+const AREA = '(?:sf|sq\\.?\\s*f(?:ee)?t|sqft|square\\s*f(?:ee|oo)t)';
+const LEN = '(?:lf|linear\\s*f(?:ee|oo)t|ft|feet|foot)';
 
 function grab(text: string, pattern: string): number | undefined {
   const m = new RegExp(pattern, 'i').exec(text);
   return m ? toNum(m[1]) : undefined;
 }
 
+/** "1,200" -> "1200" so thousands separators don't split numbers. */
+const normalize = (text: string) => ` ${text.replace(/(\d),(?=\d{3}\b)/g, '$1')} `;
+
 export function guessJobType(text: string): JobTypeId | undefined {
   const t = text.toLowerCase();
-  if (/basement|adu conversion|convert|garage conversion|bedrooms?\b.*(to|into)/.test(t)) return 'basement';
+  if (/basement|adu conversion|garage conversion|convert (?:the |a |my )?(?:garage|basement|attic)|\d+ rooms? (?:to|into) \d+ bed/.test(t)) return 'basement';
   if (/dadu|new adu|detached adu|backyard cottage/.test(t)) return 'adu';
-  if (/new (home|house|build|construction)/.test(t)) return 'newbuild';
+  if (/new (?:home|house|build|construction)/.test(t)) return 'newbuild';
   if (/kitchen/.test(t) && !/bath/.test(t)) return 'kitchen';
-  if (/bath|shower|tub|vanity/.test(t)) return 'bathroom';
-  if (/floor|lvp|laminate|hardwood/.test(t)) return 'flooring';
+  if (/bath|shower|\btub\b|vanity|toilet/.test(t)) return 'bathroom';
   if (/paint/.test(t)) return 'painting';
+  if (/floor|lvp|laminate|hardwood/.test(t)) return 'flooring';
   return undefined;
 }
 
@@ -59,23 +65,37 @@ export const demoAI: EstimatorAI = {
     const heard: string[] = [];
     const set = (id: string, v: number | string | boolean, label: string) => {
       if (jt && !JOB_TYPE_BY_ID[jt].questions.some((q) => q.id === id)) return;
+      if (id in answers) return; // first (most specific) match wins
       answers[id] = v;
       heard.push(label);
     };
-    const t = ` ${text} `;
+    let t = normalize(text);
 
-    const wall = grab(t, `${NUM}\\s*(?:lf|linear\\s*f(?:ee|oo)t|ft|feet|foot)\\s*(?:of\\s*)?(?:new\\s*)?walls?`)
-      ?? grab(t, `walls?[^.\\d]{0,20}${NUM}\\s*(?:lf|ft|feet)`);
+    // Walls being removed first, then cut them out so they aren't read as new walls.
+    const demoRe = new RegExp(`(?:remove|demo(?:lish)?|tear\\s*out|take\\s*out|open\\s*up)[^.\\d]{0,15}${NUM}\\s*${LEN}\\s*(?:of\\s*)?(?:the\\s*)?walls?`, 'i');
+    const demoM = demoRe.exec(t);
+    if (demoM) {
+      set('demoWallLf', toNum(demoM[1]), `${toNum(demoM[1])} LF wall removed`);
+      t = t.replace(demoM[0], ' ');
+    }
+    const wall = grab(t, `${NUM}\\s*${LEN}\\s*(?:of\\s*)?(?:new\\s*)?walls?`) ?? grab(t, `walls?[^.\\d]{0,20}${NUM}\\s*(?:lf|ft|feet)`);
     if (wall) set('newWallLf', wall, `${wall} LF new wall`);
 
-    // Project size: an area NOT followed by "of tile" / "tile" (that's the tile area).
-    const size = grab(t, `${NUM}\\s*(?:sf|sq\\.?\\s*ft|sqft|square\\s*f(?:ee|oo)t)(?!\\s*(?:of\\s*)?(?:new\\s*)?(?:floor\\s*)?tile)`);
-    if (size) set('sizeSf', size, `${size} SF`);
-
-    const tile = grab(t, `tiles?[^.\\d]{0,30}${NUM}\\s*(?:sf|sq|square)`) ?? grab(t, `${NUM}\\s*(?:sf|sq\\.?\\s*ft|sqft|square\\s*feet)\\s*(?:of\\s*)?tile`);
+    // Specific areas first: shower walls, backsplash, floor tile, tile.
+    const showerWall = grab(t, `${NUM}\\s*${AREA}\\s*(?:of\\s*)?(?:tile\\s*)?(?:on\\s*)?(?:the\\s*)?shower\\s*walls?`)
+      ?? grab(t, `shower\\s*walls?[^.\\d]{0,15}${NUM}\\s*${AREA}`);
+    if (showerWall) set('showerWallSf', showerWall, `${showerWall} SF shower walls`);
+    const backsplash = grab(t, `${NUM}\\s*${AREA}\\s*(?:of\\s*)?(?:tile\\s*)?backsplash`) ?? grab(t, `backsplash[^.\\d]{0,15}${NUM}\\s*${AREA}`);
+    if (backsplash) set('backsplashSf', backsplash, `${backsplash} SF backsplash`);
+    const floorTile = grab(t, `${NUM}\\s*${AREA}\\s*(?:of\\s*)?(?:tile\\s*)?floor`);
+    if (floorTile) { set('floorTileSf', floorTile, `${floorTile} SF floor tile`); set('tileSf', floorTile, `${floorTile} SF tile`); }
+    const tile = grab(t, `${NUM}\\s*${AREA}\\s*(?:of\\s*)?tile`) ?? grab(t, `tiles?[^.\\d]{0,30}${NUM}\\s*${AREA}`);
     if (tile) { set('tileSf', tile, `${tile} SF tile`); set('floorTileSf', tile, `${tile} SF floor tile`); }
+    // Project size: an area that isn't one of the above.
+    const size = grab(t, `${NUM}\\s*${AREA}(?!\\s*(?:of\\s*)?(?:new\\s*)?(?:tile|floor|shower|backsplash|counter|wall))`);
+    if (size && size !== showerWall && size !== backsplash && size !== floorTile && size !== tile) set('sizeSf', size, `${size} SF`);
 
-    const showers = grab(t, `${NUM}\\s*(?:new\\s*)?(?:\\d+\\s*x\\s*\\d+\\s*)?showers?`);
+    const showers = grab(t, `${NUM}\\s*(?:new\\s*)?(?:\\d+\\s*x\\s*\\d+\\s*)?(?:tiled?\\s*|walk-?in\\s*)?showers?`);
     if (showers) set('showers', showers, `${showers} shower${showers > 1 ? 's' : ''}`);
     else if (/shower/i.test(t)) set('showers', 1, '1 shower');
 
@@ -89,34 +109,44 @@ export const demoAI: EstimatorAI = {
     const fromRooms = grab(t, `${NUM}\\s*rooms?\\s*(?:to|into)`);
     if (bedrooms && fromRooms && bedrooms > fromRooms) set('newBedrooms', bedrooms - fromRooms, `${bedrooms - fromRooms} new bedroom`);
 
-    const doors = grab(t, `${NUM}\\s*(?:new\\s*)?(?:\\d+"?\\s*)?doors?`);
+    const doors = grab(t, `${NUM}\\s*(?:new\\s*)?(?:interior\\s*)?(?:\\d+"?\\s*)?doors?`);
     if (doors) set('doors', doors, `${doors} doors`);
     if (/bi-?fold/i.test(t)) set('bifolds', grab(t, `${NUM}\\s*bi-?folds?`) ?? 1, 'bifold door');
-    const lights = grab(t, `${NUM}\\s*(?:new\\s*)?(?:recessed\\s*|can\\s*)?lights?`);
+    const lights = grab(t, `${NUM}\\s*(?:new\\s*)?(?:recessed\\s*|can\\s*|led\\s*)?lights?`);
     if (lights) set('lights', lights, `${lights} lights`);
-    const switches = grab(t, `${NUM}\\s*switch(?:es)?`);
+    const switches = grab(t, `${NUM}\\s*(?:new\\s*)?switch(?:es)?`);
     if (switches) set('switches', switches, `${switches} switches`);
     const outlets = grab(t, `${NUM}\\s*(?:new\\s*)?(?:outlets?|receptacles?|plugs?)`);
     if (outlets) set('outlets', outlets, `${outlets} outlets`);
-    const cab = grab(t, `${NUM}\\s*(?:lf|linear\\s*feet|ft|feet)\\s*(?:of\\s*)?cabinets?`);
+    const cab = grab(t, `${NUM}\\s*${LEN}\\s*(?:of\\s*)?cabinets?`);
     if (cab) set('cabinetLf', cab, `${cab} LF cabinets`);
-    const drain = grab(t, `(?:drain|main)[^.\\d]{0,25}${NUM}\\s*(?:ft|feet)`);
+    const counter = grab(t, `${NUM}\\s*${AREA}\\s*(?:of\\s*)?(?:quartz\\s*|granite\\s*)?counter(?:top)?s?`);
+    if (counter) set('countertopSf', counter, `${counter} SF countertop`);
+    const drain = grab(t, `(?:main\\s*drain|drain|sewer(?:\\s*line)?)[^.\\d]{0,25}${NUM}\\s*(?:ft|feet)`);
     if (drain) set('drainDistanceFt', drain, `${drain} ft to main drain`);
-    const panel = grab(t, `panel[^.\\d]{0,25}${NUM}\\s*(?:ft|feet)`);
+    const panel = grab(t, `panel[^.\\d]{0,25}${NUM}\\s*(?:ft|feet)`) ?? grab(t, `${NUM}\\s*(?:ft|feet)\\s*(?:from|to)\\s*(?:the\\s*)?(?:electrical\\s*)?panel`);
     if (panel) set('panelDistanceFt', panel, `${panel} ft from panel`);
 
     if (/basement/i.test(t)) set('foundation', 'basement', 'basement slab');
     else if (/\bslab\b/i.test(t)) set('foundation', 'slab', 'slab foundation');
     else if (/crawl/i.test(t)) set('foundation', 'crawl', 'crawlspace');
-    if (/laundry|washer/i.test(t)) set('washer', true, 'washer hookup');
-    if (/dryer/i.test(t)) set('dryer30a', true, '30A dryer circuit');
-    if (/range|stove/i.test(t)) set('range50a', true, '50A range circuit');
+    if (/dishwasher/i.test(t)) set('dishwasher', true, 'dishwasher');
+    if (/\b(?:washer|laundry)\b/i.test(t)) set('washer', true, 'washer hookup');
+    if (/\bdryer\b/i.test(t)) set('dryer30a', true, '30A dryer circuit');
+    if (/gas\s*(?:range|stove|cooktop)/i.test(t)) set('range', 'gas', 'gas range');
+    else if (/\b(?:range|stove|cooktop)\b/i.test(t)) { set('range50a', true, '50A range circuit'); set('range', 'electric', 'electric range'); }
     if (/ice\s*maker|fridge|refrigerator/i.test(t)) set('iceMaker', true, 'ice maker line');
     if (/kitchen/i.test(t) && jt === 'basement') set('kitchenSink', true, 'kitchen sink');
-    if (/stall/i.test(t)) set('showerType', 'stall', 'shower stall');
-    if (/\btub\b/i.test(t)) set('showerType', 'tub', 'tub');
-    if (/lvp|vinyl/i.test(t)) set('floorType', 'lvp', 'LVP flooring');
-    if (/owner (?:supplies|supplied|buys)|client (?:supplies|supplied|buys)/i.test(t)) set('fixturesBy', 'owner', 'owner supplies fixtures');
+    if (/walk-?in|tiled?\s*shower|tile\s*shower/i.test(t)) set('showerType', 'tile', 'tiled shower');
+    else if (/stall/i.test(t)) set('showerType', 'stall', 'shower stall');
+    else if (/\btub\b/i.test(t) && !/(?:remove|replace|convert|rip\s*out)[^.]{0,15}\btub\b|\btub\s*(?:to|into)\b/i.test(t)) set('showerType', 'tub', 'tub');
+    if (/\b(?:lvp|vinyl\s*plank|vinyl)\b/i.test(t)) set('floorType', 'lvp', 'LVP flooring');
+    const supplies = /(?:owner|client|customer|homeowner)s?\s*(?:will\s*)?(?:supplies|supplied|supply|buys|buying|provides|providing)\s*([^.;]{0,40})/i.exec(t);
+    if (supplies) {
+      const what = supplies[1].toLowerCase();
+      if (/cabinet/.test(what)) set('cabinetsBy', 'owner', 'owner supplies cabinets');
+      if (/fixture|toilet|vanit|shower|sink|faucet|tub/.test(what) || !/cabinet/.test(what)) set('fixturesBy', 'owner', 'owner supplies fixtures');
+    }
     const year = grab(t, `(?:built|year)[^.\\d]{0,12}((?:18|19|20)\\d\\d)`);
     if (year) set('yearBuilt', year, `built ${year}`);
 
@@ -124,14 +154,21 @@ export const demoAI: EstimatorAI = {
   },
 
   async extractPastJob(text) {
-    const t = text.replace(/,/g, '');
-    const prices = [...t.matchAll(/\$\s*(\d+(?:\.\d+)?)/g)].map((m) => parseFloat(m[1]));
-    const totalMatch = /total[^$\d]{0,20}\$?\s*(\d+(?:\.\d+)?)/i.exec(t);
-    const price = totalMatch ? parseFloat(totalMatch[1]) : prices.length ? Math.max(...prices) : undefined;
-    const size = grab(t, `${NUM}\\s*(?:sf|sq\\.?\\s*ft|sqft|square\\s*f(?:ee|oo)t)`);
-    const finish: FinishLevel | undefined = /high[- ]?end|luxury|premium|custom/i.test(t) ? 'high'
-      : /basic|builder[- ]grade|economy|budget/i.test(t) ? 'basic' : /mid/i.test(t) ? 'mid' : undefined;
-    const firstLine = text.split('\n').map((s) => s.trim()).find((s) => s.length > 3);
+    const t = normalize(text);
+    // Prices: prefer a pre-tax contract price / subtotal, then a total that isn't a tax line.
+    const lines = t.split('\n');
+    const amountsOn = (line: string) => [...line.matchAll(/\$\s*(\d+(?:\.\d+)?)/g)].map((m) => parseFloat(m[1]));
+    const isTaxLine = (l: string) => /tax/i.test(l) && !/before\s*tax|pre-?tax|excl/i.test(l);
+    const pick = (re: RegExp) => {
+      for (const l of lines) if (re.test(l) && !isTaxLine(l) && amountsOn(l).length) return amountsOn(l)[0];
+      return undefined;
+    };
+    const anyAmounts = lines.filter((l) => !isTaxLine(l)).flatMap(amountsOn);
+    const price = pick(/sub-?total|contract|price|before\s*tax|pre-?tax/i) ?? pick(/\btotal\b/i) ?? (anyAmounts.length ? Math.max(...anyAmounts) : undefined);
+    const size = grab(t, `${NUM}\\s*${AREA}`);
+    const finish: FinishLevel | undefined = /high[- ]?end|luxury|premium|\bcustom\b/i.test(t) ? 'high'
+      : /\bbasic\b|builder[- ]grade|economy|budget/i.test(t) ? 'basic' : /\bmid\b|mid[- ]?grade|mid[- ]?range/i.test(t) ? 'mid' : undefined;
+    const firstLine = text.split('\n').map((x) => x.trim()).find((x) => x.length > 3);
     return { jobTypeId: guessJobType(text), sizeSf: size, price, finish, title: firstLine?.slice(0, 60) };
   },
 };

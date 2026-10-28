@@ -69,7 +69,7 @@ export default function QuoteScreen() {
         <View style={{ gap: 2 }}>
           <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }}>{est.title}</Text>
           <Text style={{ fontSize: 13, color: C.ink2 }}>{T.finish}: {FINISH_LABELS[est.finish][lang]}</Text>
-          {est.description ? <Text style={{ fontSize: 13, color: C.ink2, lineHeight: 19 }}>{est.description}</Text> : null}
+          {est.scopeNote ? <Text style={{ fontSize: 13, color: C.ink2, lineHeight: 19 }}>{est.scopeNote}</Text> : null}
         </View>
 
         <View>
@@ -79,7 +79,7 @@ export default function QuoteScreen() {
                 <Text style={{ fontWeight: '600', color: C.ink, flex: 1 }}>{s.title}</Text>
                 <Text style={{ fontFamily: mono, color: C.ink }}>{money(s.price)}</Text>
               </View>
-              {s.items.map((i) => <Text key={i} style={{ fontSize: 12, color: C.muted }}>• {i}</Text>)}
+              {s.items.map((i, k) => <Text key={k} style={{ fontSize: 12, color: C.muted }}>• {i}</Text>)}
             </View>
           ))}
           <Line l={T.subtotal} r={money(est.price)} />
@@ -89,11 +89,11 @@ export default function QuoteScreen() {
 
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: C.ink }}>{T.notIncluded}</Text>
-          {excl.map((e) => <Text key={e} style={{ fontSize: 12, color: C.ink2 }}>• {e}</Text>)}
+          {excl.map((e, k) => <Text key={k} style={{ fontSize: 12, color: C.ink2 }}>• {e}</Text>)}
         </View>
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: C.ink }}>{T.schedule}</Text>
-          {sched.map((s) => <Line key={s.label} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
+          {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
         </View>
       </View>
       <Muted style={{ fontSize: 13 }}>Sharing marks the estimate as Sent. The PDF also includes terms and signature lines.</Muted>

@@ -1,56 +1,67 @@
-# Welcome to your Expo app 👋
+# Estimator — AI estimating app for contractors
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Phone app (iPhone + Android, one codebase) that turns a job description into a priced estimate, a client quote PDF and a material list. Built with Expo / React Native.
 
-## Get started
+**Status:** Phase 1 working prototype. The AI runs in offline **demo mode** until a Claude API key is connected.
 
-1. Install dependencies
+## What it does today
 
+| Area | Features |
+|---|---|
+| **Setup (first login)** | Company info and WA contractor registration #, pick the work you do (bathroom, kitchen, basement/ADU conversion, flooring, painting, new ADU/DADU, new home; small jobs always on), markup, minimum markup, sales tax, your $/SF by finish level |
+| **New estimate** | Pick job type (or let the app guess from your description), describe the job by typing or with the keyboard mic, add photos, client info, Quick ($/SF) or Detailed mode |
+| **Smart questions** | Sizes and counts you said are filled in automatically; only the questions that change the price are asked |
+| **Detailed estimate** | Built from assemblies (labor + materials per unit), trade-by-trade cost, markup you can adjust, sales tax, purchase quantities rounded to whole boxes/sheets/rolls |
+| **Check before sending** | Margin below your minimum, lead-safe (pre-1978), basement egress, panel capacity for 240V circuits, bath fans, smoke/CO detectors, 6/3 wire for 50A range, slab trenching, permits, missing tax rate |
+| **"Your price" check** | Compares the estimate's $/SF with your preset and with your own past jobs; flags anything 20%+ off |
+| **Client quote** | Branded quote, English or Vietnamese, scope by trade, exclusions, payment schedule, terms, signature lines; shared as a PDF. Never shows cost, labor or markup |
+| **Material list** | Grouped by category with quantities and prices; shared as a PDF |
+| **My pricing** | Edit $/SF presets, add past jobs (or paste an old quote and the app pulls out type, size and total), and see the $/SF it learned from your jobs |
+| **Price book** | Override any labor rate or material price with your own |
+
+All data is stored on the phone. Nothing is sent anywhere unless the Claude backend is turned on.
+
+## Run it on your phone (no app store needed)
+
+1. Install **Expo Go** from the App Store or Google Play.
+2. On a computer with Node 20+:
    ```bash
    npm install
-   ```
-
-2. Start the app
-
-   ```bash
    npx expo start
    ```
+3. Scan the QR code with your phone camera (iPhone) or the Expo Go app (Android).
 
-In the output, you'll find options to open the app in a
+## Connect Claude (later)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+The API key must never go inside the app. A tiny backend is included:
 
 ```bash
-npm run reset-project
+ANTHROPIC_API_KEY=sk-ant-... node server/index.mjs
+EXPO_PUBLIC_AI_URL=http://YOUR-COMPUTER-IP:8787 npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+If the backend is unreachable, the app falls back to the offline demo AI.
 
-### Other setup steps
+## Develop
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm test           # engine tests (includes a real basement ADU job as a "golden job")
+npm run typecheck
+npx eslint src
+```
 
-## Learn more
+| Folder | What's in it |
+|---|---|
+| `src/engine/` | Pure TypeScript estimating engine: catalog (materials, assemblies), job types and questions, estimator, checks, demo AI, quote/PDF HTML. No React — reusable on a server. |
+| `src/app/` | Screens (expo-router) |
+| `src/store/` | App state and on-phone storage |
+| `src/ui/` | Shared UI components |
+| `server/` | Optional Claude backend |
 
-To learn more about developing your project with Expo, look at the following resources:
+## Publishing to the App Store / Google Play
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Uses Expo EAS (cloud builds, no Mac required): `npx eas-cli@latest build` then `npx eas-cli@latest submit`. Needs an Apple Developer account ($99/yr) and a Google Play developer account ($25 one-time).
 
-## Join the community
+## Roadmap
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+See the product plan doc. Next up (Phase 2): driving mode (hands-free voice), 3D room scan (LiDAR), photo analysis, walkthrough mode, good/better/best options, photo restyle visualization, change orders, quote follow-ups, estimate vs. actual.

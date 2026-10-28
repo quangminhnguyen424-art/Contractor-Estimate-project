@@ -27,6 +27,8 @@ export default function NewEstimate() {
   const guessed = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
   const effectiveType = jobTypeId ?? guessed ?? null;
   const detailedAllowed = effectiveType ? JOB_TYPE_BY_ID[effectiveType].detailed : true;
+  const quickAllowed = effectiveType !== 'small';
+  const effectiveMode: EstimateMode = !detailedAllowed ? 'quick' : !quickAllowed ? 'detailed' : mode;
 
   const addPhotos = async (camera: boolean) => {
     try {
@@ -53,9 +55,9 @@ export default function NewEstimate() {
     const jt = JOB_TYPE_BY_ID[type];
     setDraft({
       jobTypeId: type,
-      mode: jt.detailed ? mode : 'quick',
+      mode: effectiveMode,
       title: title.trim() || `${clientName.trim() ? `${clientName.trim()} — ` : ''}${jt.name}`,
-      clientName, address, description, photos,
+      clientName, address, description, scopeNote: '', photos,
       finish: 'mid',
       answers: { ...defaultAnswers(type), ...parsed.answers },
       customItems: [],
@@ -79,12 +81,12 @@ export default function NewEstimate() {
 
       <H2 style={{ marginTop: 6 }}>Describe the job</H2>
       <Field
-        label="Talk or type"
+        label="Job notes (private)"
         multiline
         value={description}
         onChangeText={setDescription}
         placeholder="e.g. Basement, 3 rooms to 4 bedrooms, 45 ft of new walls, 2 new showers, washer, range and dryer, 100 sf tile…"
-        help={Platform.OS === 'web' ? undefined : 'Tap the microphone on your keyboard to talk. Sizes and counts you say get filled in for you.'}
+        help={`${Platform.OS === 'web' ? '' : 'Tap the microphone on your keyboard to talk. '}Sizes and counts get filled in for you. These notes stay private and never go on the quote.`}
       />
 
       <Label>Photos</Label>
@@ -110,10 +112,10 @@ export default function NewEstimate() {
 
       <Label>Estimate detail</Label>
       <Segmented<EstimateMode>
-        value={detailedAllowed ? mode : 'quick'}
+        value={effectiveMode}
         onChange={setMode}
         options={[
-          { value: 'quick', label: 'Quick ($/SF)' },
+          { value: 'quick', label: 'Quick ($/SF)', disabled: !quickAllowed },
           { value: 'detailed', label: 'Detailed', disabled: !detailedAllowed },
         ]}
       />
@@ -121,7 +123,7 @@ export default function NewEstimate() {
         <Banner tone="info" title="Quick estimate only for now">Detailed takeoffs for new builds and ADUs are coming in a later version.</Banner>
       ) : (
         <Muted style={{ fontSize: 13 }}>
-          {mode === 'quick' ? 'Size × your price per SF. Fast ballpark for a first call.' : 'Trade-by-trade price, material list and code checks.'}
+          {effectiveMode === 'quick' ? 'Size × your price per SF. Fast ballpark for a first call.' : 'Trade-by-trade price, material list and code checks.'}
         </Muted>
       )}
     </Screen>

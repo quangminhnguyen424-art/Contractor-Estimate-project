@@ -22,7 +22,7 @@ export function runChecks(input: CheckInput): Check[] {
   const out: Check[] = [];
   const jt = JOB_TYPE_BY_ID[input.jobTypeId];
 
-  if (input.markupPct < input.minMarkupPct) {
+  if (input.mode === 'detailed' && input.markupPct < input.minMarkupPct) {
     out.push({ id: 'margin', level: 'warn', title: `Markup ${input.markupPct}% is below your ${input.minMarkupPct}% minimum`,
       detail: 'Raise the markup or confirm this job is worth doing at a lower margin.' });
   }

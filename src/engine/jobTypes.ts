@@ -8,6 +8,9 @@ export const num = (a: Answers, k: string): number => {
 export const yes = (a: Answers, k: string): boolean => a[k] === true || a[k] === 'yes';
 export const str = (a: Answers, k: string): string => (a[k] == null ? '' : String(a[k]));
 
+/** Tile on a wood subfloor (crawlspace or upper floor) needs an uncoupling membrane. */
+const woodSubfloor = (a: Answers) => !['slab', 'basement'].includes(str(a, 'foundation'));
+
 const add = (items: ScopeItem[], assemblyId: string, qty: number) => {
   if (qty > 0) items.push({ assemblyId, qty });
 };
@@ -73,6 +76,7 @@ const bathroom: JobType = {
     add(s, 'drywall_wet_room', 1);
     if (shower === 'tile') {
       add(s, 'plumb_shower', 1);
+      add(s, 'shower_pan', 1);
       add(s, 'tile_shower_wall', num(a, 'showerWallSf'));
       if (contractor) add(s, 'supply_shower_trim', 1);
     } else if (shower === 'stall') {
@@ -85,6 +89,7 @@ const bathroom: JobType = {
       if (contractor) add(s, 'supply_tub', 1);
     }
     add(s, 'tile_floor', num(a, 'floorTileSf'));
+    if (woodSubfloor(a)) add(s, 'tile_underlayment', num(a, 'floorTileSf'));
     const toilets = num(a, 'toilets');
     const vanities = num(a, 'vanities');
     if (relocate) {
@@ -102,6 +107,7 @@ const bathroom: JobType = {
     if (yes(a, 'bathFan')) add(s, 'vent_bath_fan', 1);
     add(s, 'elec_light', num(a, 'lights'));
     add(s, 'elec_gfci', num(a, 'gfci'));
+    add(s, 'elec_20a_circuit', num(a, 'gfci') > 0 ? 1 : 0);
     add(s, 'elec_switch', num(a, 'lights') > 0 ? 1 : 0);
     add(s, 'paint_room', num(a, 'sizeSf'));
     if (yes(a, 'door')) add(s, 'door_interior', 1);
@@ -124,6 +130,7 @@ const kitchen: JobType = {
     { id: 'backsplashSf', label: 'Backsplash tile area', kind: 'number', unit: 'SF', default: 30, group: 'Scope' },
     { id: 'floorType', label: 'New flooring', kind: 'choice', default: 'lvp', group: 'Scope',
       options: [{ value: 'tile', label: 'Tile' }, { value: 'lvp', label: 'LVP' }, { value: 'none', label: 'Keep existing' }] },
+    foundation,
     { id: 'dishwasher', label: 'Dishwasher', kind: 'yesno', default: true, group: 'Plumbing' },
     { id: 'iceMaker', label: 'Ice maker line', kind: 'yesno', default: true, group: 'Plumbing' },
     { id: 'range', label: 'Range', kind: 'choice', default: 'electric', group: 'Electrical',
@@ -145,7 +152,10 @@ const kitchen: JobType = {
     add(s, 'countertop', num(a, 'countertopSf'));
     add(s, 'tile_backsplash', num(a, 'backsplashSf'));
     const floor = str(a, 'floorType');
-    if (floor === 'tile') add(s, 'tile_floor', num(a, 'sizeSf'));
+    if (floor === 'tile') {
+      add(s, 'tile_floor', num(a, 'sizeSf'));
+      if (woodSubfloor(a)) add(s, 'tile_underlayment', num(a, 'sizeSf'));
+    }
     if (floor === 'lvp') add(s, 'lvp_floor', num(a, 'sizeSf'));
     if (floor !== 'none') add(s, 'floor_transition', 2);
     add(s, 'plumb_kitchen_sink', 1);
@@ -160,6 +170,8 @@ const kitchen: JobType = {
     if (yes(a, 'rangeVent')) add(s, 'vent_range_hood', 1);
     add(s, 'elec_light', num(a, 'lights'));
     add(s, 'elec_gfci', num(a, 'gfci'));
+    // Two 20A small-appliance circuits, plus a dedicated dishwasher circuit.
+    add(s, 'elec_20a_circuit', 2 + (yes(a, 'dishwasher') ? 1 : 0));
     add(s, 'elec_switch', 2);
     add(s, 'drywall_patch', 2);
     add(s, 'paint_room', num(a, 'sizeSf'));
@@ -178,6 +190,8 @@ const basement: JobType = {
     size(600, 'Area being converted'),
     { id: 'newWallLf', label: 'New wall length', kind: 'number', unit: 'LF', default: 45, group: 'Walls' },
     { id: 'demoWallLf', label: 'Walls to remove', kind: 'number', unit: 'LF', default: 10, group: 'Walls' },
+    { id: 'perimeterWallLf', label: 'Unfinished exterior walls to finish', kind: 'number', unit: 'LF', default: 0, group: 'Walls',
+      help: 'Concrete or bare walls that need framing, insulation and drywall. 0 if already finished.' },
     { id: 'doors', label: 'New doors (30")', kind: 'number', default: 5, group: 'Walls' },
     { id: 'bifolds', label: 'Bifold doors', kind: 'number', default: 1, group: 'Walls' },
     { id: 'bedrooms', label: 'Bedrooms when done', kind: 'number', default: 4, group: 'Rooms' },
@@ -201,6 +215,8 @@ const basement: JobType = {
     { id: 'outlets', label: 'New outlets', kind: 'number', default: 10, group: 'Electrical' },
     { id: 'rangeVent', label: 'Range hood vented outside', kind: 'yesno', default: true, group: 'Electrical' },
     { id: 'tileSf', label: 'Tile floor (kitchen + baths)', kind: 'number', unit: 'SF', default: 100, group: 'Finishes' },
+    { id: 'lvpSf', label: 'LVP floor (other rooms)', kind: 'number', unit: 'SF', default: 0, group: 'Finishes' },
+    { id: 'countertopSf', label: 'Kitchen countertop', kind: 'number', unit: 'SF', default: 20, group: 'Finishes' },
     { id: 'cabinetLf', label: 'Kitchen cabinets to install', kind: 'number', unit: 'LF', default: 12, group: 'Finishes' },
     suppliedBy('cabinetsBy', 'Cabinets'),
     suppliedBy('fixturesBy', 'Showers, toilet, vanity'),
@@ -215,6 +231,7 @@ const basement: JobType = {
     const contractor = str(a, 'fixturesBy') !== 'owner';
     add(s, 'site_protection', 1);
     add(s, 'demo_wall', num(a, 'demoWallLf'));
+    add(s, 'finish_exterior_wall', num(a, 'perimeterWallLf'));
     add(s, 'frame_wall', wall);
     add(s, 'frame_opening', num(a, 'doors') + num(a, 'bifolds'));
     add(s, 'drywall_hang', wall);
@@ -233,7 +250,13 @@ const basement: JobType = {
       add(s, 'supply_toilet', toilets);
       add(s, 'supply_vanity', vanities);
     }
-    if (yes(a, 'kitchenSink')) add(s, 'plumb_kitchen_sink', 1);
+    if (yes(a, 'kitchenSink')) {
+      add(s, 'plumb_kitchen_sink', 1);
+      add(s, 'install_sink', 1);
+      if (contractor) add(s, 'supply_kitchen_sink', 1);
+      add(s, 'countertop', num(a, 'countertopSf'));
+      add(s, 'elec_20a_circuit', 2); // kitchen small-appliance circuits
+    }
     if (yes(a, 'washer')) add(s, 'plumb_washer', 1);
     if (yes(a, 'iceMaker')) add(s, 'plumb_icemaker', 1);
     const drain = num(a, 'drainDistanceFt');
@@ -258,6 +281,7 @@ const basement: JobType = {
     if (yes(a, 'rangeVent')) add(s, 'vent_range_hood', 1);
     // Finishes
     add(s, 'tile_floor', num(a, 'tileSf'));
+    add(s, 'lvp_floor', num(a, 'lvpSf'));
     const cab = num(a, 'cabinetLf');
     add(s, 'cabinet_install', cab);
     if (str(a, 'cabinetsBy') !== 'owner') add(s, 'cabinet_supply', cab);
@@ -267,8 +291,8 @@ const basement: JobType = {
     add(s, 'cleanup_final', 1);
     return s;
   },
-  exclusions: [...COMMON_EXCLUSIONS, 'Egress window cut-in unless listed', 'Electrical panel or service upgrade', 'Sewage ejector pump if drains cannot flow by gravity', 'Appliances'],
-  exclusionsVi: [...COMMON_EXCLUSIONS_VI, 'Cắt lắp cửa sổ thoát hiểm trừ khi có ghi', 'Nâng cấp tủ điện hoặc nguồn điện', 'Bơm nước thải nếu không thoát tự chảy được', 'Thiết bị gia dụng'],
+  exclusions: [...COMMON_EXCLUSIONS, 'Finishing existing exterior walls, ceilings and insulation unless listed', 'Egress window cut-in unless listed', 'Electrical panel or service upgrade', 'Sewage ejector pump if drains cannot flow by gravity', 'Appliances'],
+  exclusionsVi: [...COMMON_EXCLUSIONS_VI, 'Hoàn thiện tường ngoài, trần và cách nhiệt hiện có trừ khi có ghi', 'Cắt lắp cửa sổ thoát hiểm trừ khi có ghi', 'Nâng cấp tủ điện hoặc nguồn điện', 'Bơm nước thải nếu không thoát tự chảy được', 'Thiết bị gia dụng'],
 };
 
 // ---- Flooring ----
@@ -280,6 +304,7 @@ const flooring: JobType = {
     { id: 'floorType', label: 'New flooring', kind: 'choice', default: 'lvp', group: 'Scope',
       options: [{ value: 'lvp', label: 'LVP' }, { value: 'tile', label: 'Tile' }] },
     { id: 'removeExisting', label: 'Remove existing flooring', kind: 'yesno', default: true, group: 'Scope' },
+    foundation,
     { id: 'baseboardLf', label: 'New baseboard', kind: 'number', unit: 'LF', default: 150, group: 'Scope' },
     { id: 'transitions', label: 'Transition strips', kind: 'number', default: 3, group: 'Scope' },
     yearBuilt,
@@ -289,7 +314,9 @@ const flooring: JobType = {
     const sf = num(a, 'sizeSf');
     add(s, 'site_protection', 1);
     if (yes(a, 'removeExisting')) add(s, 'demo_floor', sf);
-    add(s, str(a, 'floorType') === 'tile' ? 'tile_floor' : 'lvp_floor', sf);
+    const isTile = str(a, 'floorType') === 'tile';
+    add(s, isTile ? 'tile_floor' : 'lvp_floor', sf);
+    if (isTile && woodSubfloor(a)) add(s, 'tile_underlayment', sf);
     add(s, 'floor_transition', num(a, 'transitions'));
     add(s, 'baseboard', num(a, 'baseboardLf'));
     add(s, 'cleanup_final', 1);

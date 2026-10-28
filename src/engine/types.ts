@@ -206,7 +206,8 @@ export interface Estimate {
   title: string;
   clientName: string;
   address: string;
-  description: string;
+  description: string; // private job notes — never shown to the client
+  scopeNote: string; // optional scope summary shown on the client quote
   photos: string[];
   finish: FinishLevel;
   answers: Answers;

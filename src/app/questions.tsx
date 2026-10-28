@@ -8,14 +8,14 @@ import { money2 } from '@/engine/format';
 import { FINISH_LABELS, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
 import type { AnswerValue, FinishLevel, Question } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented, Stepper } from '@/ui/kit';
+import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 
 export default function Questions() {
   const { draft, setDraft, commitDraft, priceBook } = useApp();
   const [search, setSearch] = useState('');
 
   const jt = draft ? JOB_TYPE_BY_ID[draft.jobTypeId] : null;
-  const quick = draft?.mode === 'quick' || (jt ? !jt.detailed : false);
+  const quick = draft?.jobTypeId !== 'small' && (draft?.mode === 'quick' || (jt ? !jt.detailed : false));
 
   const groups = useMemo(() => {
     if (!jt) return [];
@@ -35,12 +35,15 @@ export default function Questions() {
   const qtyOf = (assemblyId: string) => draft.customItems.find((i) => i.assemblyId === assemblyId)?.qty ?? 0;
   const isSmall = draft.jobTypeId === 'small';
   const q = search.trim().toLowerCase();
-  const pickable = ASSEMBLIES.filter((a) => a.labor > 0 && (!q || a.name.toLowerCase().includes(q) || TRADE_NAMES[a.trade].en.toLowerCase().includes(q)));
+  const pickable = ASSEMBLIES.filter((a) => !q || a.name.toLowerCase().includes(q) || TRADE_NAMES[a.trade].en.toLowerCase().includes(q));
 
   const build = () => {
+    const editing = !!draft.id;
     const id = commitDraft(draft);
     setDraft(null);
-    router.replace(`/estimate/${id}`);
+    // Editing: the estimate screen is already underneath, so just go back to it.
+    if (editing && router.canGoBack()) router.back();
+    else router.replace(`/estimate/${id}`);
   };
 
   return (
@@ -82,21 +85,29 @@ export default function Questions() {
           {(q || isSmall ? pickable.slice(0, 25) : draft.customItems.map((i) => ASSEMBLIES.find((a) => a.id === i.assemblyId)!))
             .filter(Boolean)
             .map((a) => (
-              <View key={a.id} style={{ gap: 2, paddingVertical: 4 }}>
-                <Stepper label={a.name} value={qtyOf(a.id)} onChange={(n) => setQty(a.id, n)} />
-                <Muted style={{ fontSize: 12 }}>{TRADE_NAMES[a.trade].en} · labor {money2(laborRate(a.id, priceBook))}/{a.unit}</Muted>
+              <View key={a.id} style={{ gap: 2, paddingVertical: 4, borderTopWidth: 1, borderColor: C.lineSoft }}>
+                <NumberField label={a.name} suffix={a.unit} value={qtyOf(a.id)} onChange={(n) => setQty(a.id, n)} />
+                <Muted style={{ fontSize: 12 }}>{TRADE_NAMES[a.trade].en}{a.labor > 0 ? ` · labor ${money2(laborRate(a.id, priceBook))}/${a.unit}` : ' · materials only'}</Muted>
               </View>
             ))}
           {!isSmall && !q && draft.customItems.length === 0 ? <Muted style={{ fontSize: 13 }}>Search to add items.</Muted> : null}
         </Card>
       ) : null}
+
+      <Card>
+        <H2>Scope summary for the client</H2>
+        <Muted>Optional. Shown on the quote in your words. Your job notes stay private.</Muted>
+        <Field label="Scope summary" multiline value={draft.scopeNote} onChangeText={(v) => setDraft({ ...draft, scopeNote: v })}
+          placeholder="e.g. Convert basement into 4 bedrooms with 2 new bathrooms, laundry and kitchenette." />
+      </Card>
     </Screen>
   );
 }
 
 function QuestionInput({ q, value, onChange }: { q: Question; value: AnswerValue | undefined; onChange: (v: AnswerValue) => void }) {
   if (q.kind === 'number') {
-    return <NumberField label={q.label} suffix={q.unit} help={q.help} value={typeof value === 'number' ? value : Number(value ?? q.default)} onChange={onChange} />;
+    const n = typeof value === 'number' ? value : Number(value ?? q.default);
+    return <NumberField label={q.label} suffix={q.unit} help={q.help} value={Number.isFinite(n) ? n : Number(q.default)} onChange={onChange} />;
   }
   if (q.kind === 'yesno') {
     const on = value === true || value === 'yes';

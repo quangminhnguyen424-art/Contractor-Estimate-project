@@ -51,7 +51,7 @@ describe('golden job: basement ADU conversion to 4 bedrooms', () => {
   it('totals add up and markup is applied', () => {
     const tradeCost = est.trades.reduce((t, x) => t + x.cost, 0);
     expect(Math.abs(tradeCost - est.cost)).toBeLessThan(1);
-    expect(Math.abs(est.price - est.cost * 1.2)).toBeLessThan(1);
+    expect(Math.abs(est.price - est.cost * 1.2)).toBeLessThanOrEqual(est.trades.length * 0.5); // whole-dollar rounding per trade
     expect(Math.abs(est.total - est.price * 1.104)).toBeLessThan(1);
     // Materials in the same range as the hand takeoff (~$7.2k before fixtures/cabinets supplied)
     expect(est.materialTotal).toBeGreaterThan(5000);
