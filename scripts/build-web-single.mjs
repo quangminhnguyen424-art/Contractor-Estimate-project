@@ -34,6 +34,8 @@ const boot = `<script>
 try { if (location.pathname !== '/') history.replaceState(null, '', '/' + location.search); } catch (e) {}
 </script>
 `;
-html = html.replace('</body>', `${boot}<script>\n${js.replace(/<\/script/g, '<\\/script')}\n</script>\n</body>`);
+// Use a function so "$&"-style patterns inside the bundle are not treated as replacement codes.
+const inline = `${boot}<script>\n${js.replace(/<\/script/g, () => '<\\/script')}\n</script>\n</body>`;
+html = html.replace('</body>', () => inline);
 fs.writeFileSync('dist-single/estimator.html', html);
 console.log(`dist-single/estimator.html (${Math.round(html.length / 1024)} KB)`);
