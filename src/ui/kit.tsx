@@ -32,7 +32,8 @@ export function Screen({ children, scroll = true, padded = true, footer }: {
   children: React.ReactNode; scroll?: boolean; padded?: boolean; footer?: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const pad = padded ? { padding: 16, gap: 14 } : null;
+  // On a computer screen, keep content at a comfortable reading width.
+  const pad = padded ? { padding: 16, gap: 14, width: '100%' as const, maxWidth: 760, alignSelf: 'center' as const } : null;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       {scroll ? (
@@ -43,8 +44,8 @@ export function Screen({ children, scroll = true, padded = true, footer }: {
         <View style={[{ flex: 1 }, pad]}>{children}</View>
       )}
       {footer ? (
-        <View style={{ padding: 16, paddingBottom: Math.max(16, insets.bottom), borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg, gap: 10 }}>
-          {footer}
+        <View style={{ padding: 16, paddingBottom: Math.max(16, insets.bottom), borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg }}>
+          <View style={{ width: '100%', maxWidth: 728, alignSelf: 'center', gap: 10 }}>{footer}</View>
         </View>
       ) : null}
     </View>
