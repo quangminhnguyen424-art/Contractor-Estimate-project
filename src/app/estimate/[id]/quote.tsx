@@ -29,8 +29,8 @@ export default function QuoteScreen() {
   const send = async () => {
     setBusy(true);
     try {
-      await sharePdf(quoteHtml(est, profile, lang), `${T.quote} — ${est.title}`);
-      if (est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
+      const shared = await sharePdf(quoteHtml(est, profile, lang), `${T.quote} — ${est.title}`);
+      if (shared && est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
     } catch {
       notify('Could not create the PDF', 'Please try again.');
     } finally {

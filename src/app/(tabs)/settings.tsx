@@ -6,6 +6,7 @@ import { JOB_TYPES } from '@/engine/jobTypes';
 import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { hostSave, inClaudeApp } from '@/ui/host';
 import { confirmAction, notify } from '@/ui/notify';
 
 export default function Settings() {
@@ -52,6 +53,10 @@ export default function Settings() {
     const json = exportData();
     const name = `estimator-backup-${new Date().toISOString().slice(0, 10)}.json`;
     if (Platform.OS === 'web') {
+      if (inClaudeApp) {
+        const r = await hostSave(name, json);
+        if (r !== 'unavailable') return;
+      }
       // On iPhone home-screen apps a plain download can silently do nothing, so use the share sheet when available.
       try {
         const file = new File([json], name, { type: 'application/json' });
@@ -159,7 +164,15 @@ export default function Settings() {
 
       <Card>
         <H2>Claude AI</H2>
-        <Text style={{ color: C.ink }}>{apiKey ? `Connected · ${CLAUDE_MODEL}` : 'Not connected · using the offline reader'}</Text>
+        <Text style={{ color: C.ink }}>
+          {apiKey ? `Connected · ${CLAUDE_MODEL}` : inClaudeApp ? 'Built in · runs on your Claude plan' : 'Not connected · using the offline reader'}
+        </Text>
+        {inClaudeApp && !apiKey ? (
+          <Muted style={{ fontSize: 13 }}>
+            You are using the app inside Claude, so Claude reads your notes and photos with no API key. The first time, Claude asks you to allow it.
+          </Muted>
+        ) : null}
+        {inClaudeApp ? null : (<>
         <Muted style={{ fontSize: 13 }}>
           For your own use. Create a key at console.anthropic.com (API Keys), paste it here, and set a monthly spending limit there.
           The key is saved only on this device and is never included in backups. Job notes and photos you send go to Anthropic to be read.
@@ -168,6 +181,7 @@ export default function Settings() {
           placeholder="sk-ant-…" autoCapitalize="none" autoCorrect={false} secureTextEntry />
         <Button kind="secondary" title={keyText.trim() ? 'Save and test key' : 'Remove key'} onPress={saveKey} />
         {keyStatus ? <Banner tone={keyStatus.tone} title={keyStatus.text} /> : null}
+        </>)}
       </Card>
 
       <Card>

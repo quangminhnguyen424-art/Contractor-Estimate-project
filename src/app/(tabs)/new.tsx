@@ -4,17 +4,18 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Image, Platform, Pressable, Text, View } from 'react-native';
 
-import { getAI, guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
+import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { defaultAnswers, JOB_TYPES, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
 import { notify } from '@/ui/notify';
+import { aiFor, inClaudeApp } from '@/ui/host';
 import { toAiImages } from '@/ui/photos';
 
 export default function NewEstimate() {
   const { profile, setDraft, apiKey } = useApp();
-  const claudeOn = !!apiKey;
+  const claudeOn = !!apiKey || inClaudeApp;
   const [showAll, setShowAll] = useState(false);
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(null);
   const [mode, setMode] = useState<EstimateMode>('detailed');
@@ -52,7 +53,7 @@ export default function NewEstimate() {
     const type = effectiveType;
     if (!type) return;
     setBusy(true);
-    const ai = getAI({ apiKey });
+    const ai = aiFor(apiKey);
     // Claude also looks at the photos; the offline demo only reads the text.
     let images: ImageInput[] = [];
     let skipped = 0;

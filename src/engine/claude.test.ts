@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanAnswers, cleanPastJob, cleanScopeResult, directClaudeAI, extractJson, getAI, testClaudeKey } from './ai';
+import { cleanAnswers, cleanPastJob, cleanScopeResult, directClaudeAI, extractJson, getAI, hostClaudeAI, testClaudeKey, type SampleFn } from './ai';
 
 const reply = (obj: unknown, status = 200) =>
   new Response(JSON.stringify(status === 200 ? { content: [{ type: 'text', text: typeof obj === 'string' ? obj : JSON.stringify(obj) }] } : obj), {
@@ -65,5 +65,32 @@ describe('direct Claude calls', () => {
   it('uses Claude only when a key is set', () => {
     expect(getAI({ apiKey: 'sk-x' }).name).toMatch(/Claude/);
     expect(getAI({ apiKey: '  ' }).name).toMatch(/Demo/);
+  });
+});
+
+describe('Claude built into claude.ai (no API key)', () => {
+  it('sends notes and photos through sample and cleans the answer', async () => {
+    const sample = vi.fn(async () => ({ text: 'Sure:\n{"jobTypeId":"bathroom","answers":{"floorTileSf":40,"bogus":1},"heard":["40 SF tile"],"notes":["Soft subfloor by toilet"]}', truncated: false }));
+    const r = await hostClaudeAI(async () => sample as unknown as SampleFn).parseScope('hall bath 40 sf tile', 'bathroom', [{ mediaType: 'image/jpeg', base64: 'AAAA' }]);
+    expect(r).toMatchObject({ source: 'claude', answers: { floorTileSf: 40 }, notes: ['Soft subfloor by toilet'] });
+    expect(r.answers).not.toHaveProperty('bogus');
+    const [prompt, opts] = sample.mock.calls[0] as unknown as [string, { images: Blob[] }];
+    expect(prompt).toContain('floorTileSf');
+    expect(opts.images[0]).toBeInstanceOf(Blob);
+    expect(opts.images[0].type).toBe('image/jpeg');
+  });
+  it('falls back to the offline reader when Claude is not allowed or missing', async () => {
+    const denied = hostClaudeAI(async () => (async () => { throw { code: 'not_granted', message: 'x' }; }) as unknown as SampleFn);
+    const r = await denied.parseScope('2 new showers', 'basement');
+    expect(r.source).toBe('demo');
+    expect(r.answers.showers).toBe(2);
+    expect(r.error).toMatch(/not allowed/);
+    const none = await hostClaudeAI(async () => null).extractPastJob('Kitchen remodel 150 sf total $30,000');
+    expect(none.error).toMatch(/not available/);
+  });
+  it('prefers your own key, then the built-in Claude', () => {
+    const host = async () => null;
+    expect(getAI({ apiKey: 'sk-x', host }).name).toMatch(/claude-/);
+    expect(getAI({ host }).name).toBe('Claude (built in)');
   });
 });

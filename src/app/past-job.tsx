@@ -2,16 +2,17 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { getAI } from '@/engine/ai';
 import { money, newId } from '@/engine/format';
 import { FINISH_LABELS, JOB_TYPES } from '@/engine/jobTypes';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { aiFor } from '@/ui/host';
 import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { notify } from '@/ui/notify';
 
 export default function PastJobScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { pastJobs, savePastJob, deletePastJob } = useApp();
+  const { pastJobs, savePastJob, deletePastJob, apiKey } = useApp();
   const existing = pastJobs.find((j) => j.id === id);
 
   const [paste, setPaste] = useState('');
@@ -24,7 +25,8 @@ export default function PastJobScreen() {
   const [date, setDate] = useState(existing?.date.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
 
   const read = async () => {
-    const r = await getAI().extractPastJob(paste);
+    const r = await aiFor(apiKey).extractPastJob(paste);
+    if (r.error) notify('Claude could not read this', `${r.error}\n\nUsed the offline reader instead.`);
     const got: string[] = [];
     if (r.jobTypeId) { setJobTypeId(r.jobTypeId); got.push('job type'); }
     if (r.sizeSf) { setSizeSf(r.sizeSf); got.push(`${r.sizeSf} SF`); }

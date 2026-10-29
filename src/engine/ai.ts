@@ -397,8 +397,83 @@ export async function testClaudeKey(apiKey: string): Promise<string | null> {
   }
 }
 
-export function getAI(opts: { apiKey?: string } = {}): EstimatorAI {
+/** The `sample` function a claude.ai artifact page gets: Claude on the viewer's own Claude account. */
+export type SampleFn = (
+  input: string,
+  options?: { images?: Blob[]; cache?: boolean },
+) => Promise<{ text: string; truncated: boolean }>;
+
+/** Turns a `sample` failure ({code, message}) into a message a contractor can act on. */
+export function sampleErrorMessage(e: unknown): string {
+  const code = typeof e === 'object' && e && 'code' in e ? String((e as { code: unknown }).code) : '';
+  switch (code) {
+    case 'not_granted':
+    case 'sampling_disabled':
+    case 'not_declared':
+    case 'capability_disabled':
+    case 'capability_removed':
+      return 'Claude is not allowed on this page. Allow it in the page permissions, then try again.';
+    case 'rate_limited':
+      return 'Claude usage limit reached for now. Try again in a little while.';
+    case 'session_expired':
+      return 'Your Claude sign-in expired. Sign in again, then try again.';
+    case 'image_rejected':
+    case 'images_unavailable':
+      return 'Claude could not use these photos. Try fewer photos, or JPG/PNG files.';
+    case 'refused':
+      return 'Claude would not answer this one. Reword the notes and try again.';
+    default:
+      return 'Claude could not answer right now. Try again.';
+  }
+}
+
+function base64ToBlob(img: ImageInput): Blob {
+  const bin = atob(img.base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: img.mediaType });
+}
+
+/** Claude built into claude.ai: no API key needed, it runs on the viewer's own Claude plan. */
+export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): EstimatorAI {
+  const ask = async (prompt: string, images?: ImageInput[]) => {
+    const sample = await getSample();
+    if (!sample) throw new Error('Claude is not available on this page.');
+    let res: { text: string; truncated: boolean };
+    try {
+      res = await sample(prompt, images?.length ? { images: images.map(base64ToBlob) } : undefined);
+    } catch (e) {
+      throw new Error(sampleErrorMessage(e));
+    }
+    if (res.truncated) throw new Error("Claude's answer was cut off. Try a shorter description or fewer photos.");
+    return res.text;
+  };
+  return {
+    name: 'Claude (built in)',
+    async parseScope(text, jobTypeId, images) {
+      const jt = jobTypeId ?? guessJobType(text);
+      const imgs = (images ?? []).slice(0, 8);
+      const prompt = `${SCOPE_SYSTEM}\n\nJob type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${imgs.length ? `${imgs.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`;
+      try {
+        return cleanScopeResult(parseReply(await ask(prompt, imgs)), jt);
+      } catch (e) {
+        const fallback = await demoAI.parseScope(text, jt);
+        return { ...fallback, error: e instanceof Error ? e.message : 'Claude request failed' };
+      }
+    },
+    async extractPastJob(text) {
+      try {
+        return cleanPastJob(parseReply(await ask(`${PAST_JOB_SYSTEM}\n\nText:\n${text}`)));
+      } catch (e) {
+        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
+      }
+    },
+  };
+}
+
+export function getAI(opts: { apiKey?: string; host?: () => Promise<SampleFn | null> } = {}): EstimatorAI {
   if (opts.apiKey?.trim()) return directClaudeAI(opts.apiKey.trim());
+  if (opts.host) return hostClaudeAI(opts.host);
   const url = typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_AI_URL : undefined;
   return url ? claudeAI(url) : demoAI;
 }
