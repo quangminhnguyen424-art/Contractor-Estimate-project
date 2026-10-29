@@ -91,6 +91,10 @@ export function comparePrice(
 ): PriceComparison {
   const jt = jobType(jobTypeId);
   const unit = jt.unit;
+  if (jobTypeId === 'small') {
+    return { unit, sizeSf, pricePerSf: 0, presetPerSf: null, historyPerSf: null, historyCount: 0, flag: 'none',
+      message: 'Small jobs are priced item by item from your price book.' };
+  }
   const preset = presetFor(jobTypeId, finish, presets);
   const hist = historyPerSf(jobTypeId, finish, pastJobs);
   const presetPerSf = preset > 0 ? preset : null;

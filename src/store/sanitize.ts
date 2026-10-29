@@ -146,6 +146,11 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     description: str(e.description), scopeNote: str(e.scopeNote),
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
+    job: isObj(e.job) && typeof e.job.name === 'string' && UNITS.includes(e.job.unit)
+      ? { name: e.job.name, vi: str(e.job.vi, e.job.name), unit: e.job.unit,
+          exclusions: Array.isArray(e.job.exclusions) ? e.job.exclusions.filter((x) => typeof x === 'string') : [],
+          exclusionsVi: Array.isArray(e.job.exclusionsVi) ? e.job.exclusionsVi.filter((x) => typeof x === 'string') : [] }
+      : undefined,
     createdAt: str(e.createdAt, new Date().toISOString()), updatedAt: str(e.updatedAt, new Date().toISOString()),
   };
 }

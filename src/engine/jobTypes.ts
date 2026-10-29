@@ -482,6 +482,14 @@ export function jobType(id: JobTypeId): JobType {
 
 export const isJobTypeId = (v: unknown): v is JobTypeId => typeof v === 'string' && v in JOB_TYPE_BY_ID;
 
+/** The job type as the estimate saw it: its saved copy when the type was renamed or deleted since. */
+export function estimateJob(est: { jobTypeId: JobTypeId; job?: { name: string; vi: string; unit: PriceUnit; exclusions: string[]; exclusionsVi: string[] } }) {
+  const live = JOB_TYPE_BY_ID[est.jobTypeId];
+  if (est.job) return { ...est.job, detailed: live?.detailed ?? false, deleted: !live };
+  const jt = live ?? OTHER;
+  return { name: jt.name, vi: jt.vi, unit: jt.unit, exclusions: jt.exclusions, exclusionsVi: jt.exclusionsVi, detailed: jt.detailed, deleted: !live };
+}
+
 /** "/SF", "/LF", " each", " per job" — what a price is per. */
 export function perUnit(unit: PriceUnit | undefined, lang: 'en' | 'vi' = 'en'): string {
   switch (unit ?? 'SF') {

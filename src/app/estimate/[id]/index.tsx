@@ -4,11 +4,11 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { TRADE_NAMES } from '@/engine/catalog';
 import { money, qtyFmt } from '@/engine/format';
-import { FINISH_LABELS, jobType, perUnit, qtyWithUnit } from '@/engine/jobTypes';
+import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { EstimateStatus, Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, H2, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
-import { confirmAction } from '@/ui/notify';
+import { confirmAction, notify } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,13 +25,17 @@ export default function EstimateScreen() {
       </Screen>
     );
   }
-  const jt = jobType(est.jobTypeId);
+  const jt = estimateJob(est);
   const extras = est.extras ?? [];
+  const extrasTotal = extras.reduce((t, x) => t + x.price, 0);
   const warns = est.checks.filter((c) => c.level === 'warn');
   const infos = est.checks.filter((c) => c.level === 'info');
   const cmp = est.comparison;
 
   const edit = () => {
+    if (jt.deleted) {
+      return notify('This type of work was deleted', `Re-pricing would lose your ${jt.name} prices. The quote stays as it was sent. Make a new estimate to change it.`);
+    }
     setDraft({
       id: est.id, jobTypeId: est.jobTypeId, mode: est.mode, title: est.title, clientName: est.clientName, address: est.address,
       description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
@@ -85,7 +89,8 @@ export default function EstimateScreen() {
           <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
             <DarkStat label="Labor" value={money(est.laborTotal)} />
             <DarkStat label="Materials" value={money(est.materialTotal)} />
-            <DarkStat label={`Markup ${est.markupPct}%`} value={money(est.markup)} accent />
+            {extras.length > 0 ? <DarkStat label="Your items" value={money(extrasTotal)} /> : null}
+            <DarkStat label={`Markup ${est.markupPct}%`} value={money(est.price - est.laborTotal - est.materialTotal - extrasTotal)} accent />
           </View>
         )}
         <Text style={{ color: C.darkMuted, fontSize: 13 }}>+ {est.salesTaxPct}% sales tax {money(est.tax)} = {money(est.total)} total</Text>

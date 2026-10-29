@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
-import { setCustomJobs } from '@/engine/jobTypes';
+import { jobType, setCustomJobs } from '@/engine/jobTypes';
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
@@ -45,7 +45,7 @@ interface Ctx extends Persisted {
   savePastJob: (j: PastJob) => void;
   deletePastJob: (id: string) => void;
   /** Add or rename one of the contractor's own types of work. */
-  saveCustomType: (t: CustomJobType) => void;
+  saveCustomType: (t: CustomJobType, opts?: { resetPricing?: boolean }) => void;
   /** Remove an own type, its questions, prices and past jobs. Estimates stay (shown as "Other work"). */
   deleteCustomType: (id: string) => void;
   /** Replace the contractor's own questions for one job type. */
@@ -113,7 +113,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         priceBook: base.priceBook, presets: base.presets, pastJobs: base.pastJobs,
       });
       const now = new Date().toISOString();
+      const jt = jobType(d.jobTypeId);
       return {
+        job: { name: jt.name, vi: jt.vi, unit: jt.unit, exclusions: jt.exclusions, exclusionsVi: jt.exclusionsVi },
         id: existing?.id ?? newId(), createdAt: existing?.createdAt ?? now, updatedAt: now,
         status: existing?.status ?? 'draft', mode: d.mode, jobTypeId: d.jobTypeId,
         title: d.title.trim() || 'Untitled estimate', clientName: d.clientName.trim(), address: d.address.trim(),
@@ -129,7 +131,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const prev = dataRef.current;
       const existing = d.id ? prev.estimates.find((e) => e.id === d.id) : undefined;
       const est = compute(d, prev, existing);
-      update((cur) => ({ ...cur, estimates: [est, ...cur.estimates.filter((e) => e.id !== est.id)] }));
+      update((cur) => {
+        const estimates = [est, ...cur.estimates.filter((e) => e.id !== est.id)];
+        // An edited won job updates what the app learned from it.
+        return { ...cur, estimates, pastJobs: wonToPastJobs({ ...cur, estimates }, est.id, est.status) };
+      });
       return est.id;
     },
     [compute, update],
@@ -146,8 +152,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       savePriceBook: (p) => update((d) => ({ ...d, priceBook: p })),
       savePastJob: (j) => update((d) => ({ ...d, pastJobs: [j, ...d.pastJobs.filter((x) => x.id !== j.id)] })),
       deletePastJob: (id) => update((d) => ({ ...d, pastJobs: d.pastJobs.filter((x) => x.id !== id) })),
-      saveCustomType: (t) =>
-        update((d) => ({ ...d, customTypes: [...d.customTypes.filter((x) => x.id !== t.id), t] })),
+      saveCustomType: (t, opts) =>
+        update((d) => {
+          const customTypes = [...d.customTypes.filter((x) => x.id !== t.id), t];
+          if (!opts?.resetPricing) return { ...d, customTypes };
+          // A new price unit makes old prices and past jobs meaningless ($/SF is not $ per job).
+          const { [t.id]: _old, ...presets } = d.presets;
+          return { ...d, customTypes, presets, pastJobs: d.pastJobs.filter((j) => j.jobTypeId !== t.id) };
+        }),
       deleteCustomType: (id) =>
         update((d) => {
           const { [id]: _q, ...customQuestions } = d.customQuestions;
@@ -166,9 +178,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }),
       commitDraft,
       updateEstimate: (id, patch) =>
-        update((d) => ({
-          ...d,
-          estimates: d.estimates.map((e) => {
+        update((d) => {
+          const estimates = d.estimates.map((e) => {
             if (e.id !== id) return e;
             let next = { ...e, status: patch.status ?? e.status };
             if (patch.markupPct != null && patch.markupPct !== e.markupPct && d.profile) {
@@ -176,9 +187,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               next = { ...applyMarkup(next, patch.markupPct, d.profile.minMarkupPct), updatedAt: new Date().toISOString() };
             }
             return next;
-          }),
-          pastJobs: patch.status ? wonToPastJobs(d, id, patch.status) : d.pastJobs,
-        })),
+          });
+          const status = estimates.find((e) => e.id === id)?.status ?? 'draft';
+          // Status or markup changes on a won job keep its past job (what the app learned) in step.
+          return { ...d, estimates, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
+        }),
       deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id) })),
       resetAll: () => {
         setDraft(null);

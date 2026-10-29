@@ -242,6 +242,8 @@ export interface Estimate {
   markupPct: number;
   salesTaxPct: number;
   extras: ExtraLine[];
+  /** Copy of the job type at the time of the estimate, so a later rename or delete never changes a sent quote. */
+  job?: { name: string; vi: string; unit: PriceUnit; exclusions: string[]; exclusionsVi: string[] };
   lines: EstimateLine[];
   materials: MaterialLine[];
   trades: TradeTotal[];

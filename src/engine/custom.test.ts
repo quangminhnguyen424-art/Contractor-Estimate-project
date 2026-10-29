@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { wonToPastJobs } from '../store/learning';
 import { EMPTY, sanitizePersisted } from '../store/sanitize';
-import { cleanAnswers, demoAI, guessJobType } from './ai';
+import { cleanAnswers, cleanScopeResult, demoAI, guessJobType } from './ai';
 import { applyMarkup, buildEstimate, type EstimateInput } from './estimator';
-import { defaultAnswers, isJobTypeId, JOB_TYPES, jobType, setCustomJobs } from './jobTypes';
+import { defaultAnswers, estimateJob, isJobTypeId, JOB_TYPES, jobType, setCustomJobs } from './jobTypes';
 import { quoteHtml, quoteSections } from './quote';
 import type { Estimate, Profile, Question } from './types';
 
@@ -128,5 +128,44 @@ describe('learning from won jobs', () => {
     expect(won).toHaveLength(1);
     expect(won[0]).toMatchObject({ id: 'won_e1', jobTypeId: 'bathroom', sizeSf: 40, price: 12000, finish: 'mid' });
     expect(wonToPastJobs({ ...d, pastJobs: won }, 'e1', 'lost')).toEqual([]);
+  });
+});
+
+describe('review fixes', () => {
+  it('a sent quote keeps its own type name, unit and exclusions after the type is deleted', () => {
+    setCustomJobs([{ id: 'ct_mold', name: 'Mold remediation', unit: 'SF' }], {});
+    const r = buildEstimate(input({ jobTypeId: 'ct_mold', answers: { sizeSf: 500 }, presets: { ct_mold: { basic: 12, mid: 12, high: 12 } } }));
+    const est = asEstimate(r, { jobTypeId: 'ct_mold', job: { name: 'Mold remediation', vi: 'Mold remediation', unit: 'SF', exclusions: ['Testing'], exclusionsVi: [] } });
+    setCustomJobs([], {});
+    expect(estimateJob(est)).toMatchObject({ name: 'Mold remediation', unit: 'SF', deleted: true });
+    const html = quoteHtml(est, profile, 'en');
+    expect(html).toContain('Mold remediation (500 SF)');
+    expect(html).toContain('Testing');
+    expect(html).toContain('$6,000');
+  });
+  it('one-word own types never take over a remodel; multi-word ones win', () => {
+    setCustomJobs([{ id: 'ct_tile', name: 'Tile', unit: 'SF' }, { id: 'ct_pw', name: 'Pressure washing', unit: 'SF' }], {});
+    expect(guessJobType('Bathroom remodel with a tile shower')).toBe('bathroom');
+    expect(guessJobType('Tile 200 sf entry')).toBe('ct_tile');
+    expect(guessJobType('Pressure washing the deck and fence')).toBe('ct_pw');
+    expect(guessJobType('retile the stile')).toBeUndefined(); // whole words only
+  });
+  it('caps priced own answers and flags them for a check', () => {
+    const dump: Question = { id: 'cq_dump', label: 'Dump runs', kind: 'number', default: 0, price: 400 };
+    const area: Question = { id: 'cq_area', label: 'Extra area', kind: 'number', unit: 'sq ft', default: 0, price: 2 };
+    setCustomJobs([], { bathroom: [dump, area] });
+    expect(cleanAnswers('bathroom', { cq_dump: 200, cq_area: 600 })).toEqual({ cq_area: 600 });
+    const r = cleanScopeResult({ answers: { cq_dump: 2 } }, 'bathroom');
+    expect(r.heard[0]).toBe('Check: Dump runs = 2 (adds to the price)');
+  });
+  it('small jobs get no dead-end price check', () => {
+    const r = buildEstimate(input({ jobTypeId: 'small', mode: 'detailed', customItems: [{ assemblyId: 'elec_outlet', qty: 2 }] }));
+    expect(r.comparison.message).toMatch(/item by item/);
+  });
+  it('does not learn from a won job priced in a unit the type no longer uses', () => {
+    setCustomJobs([{ id: 'ct_x', name: 'Thing work', unit: 'JOB' }], {});
+    const r = buildEstimate(input({ jobTypeId: 'ct_x', answers: {}, presets: { ct_x: { basic: 500, mid: 500, high: 500 } } }));
+    const est = asEstimate(r, { jobTypeId: 'ct_x', comparison: { ...r.comparison, unit: 'SF', sizeSf: 100 } });
+    expect(wonToPastJobs({ ...EMPTY, estimates: [est] }, 'e1', 'won')).toEqual([]);
   });
 });

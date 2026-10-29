@@ -1,6 +1,6 @@
 import { TRADE_NAMES } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
-import { FINISH_LABELS, jobType, qtyWithUnit } from './jobTypes';
+import { estimateJob, FINISH_LABELS, qtyWithUnit } from './jobTypes';
 import type { Estimate, Lang, Profile, Trade } from './types';
 
 export const QUOTE_TEXT = {
@@ -44,7 +44,7 @@ export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
         items: extras.map((x) => (x.unit || x.qty !== 1 ? `${x.label} (${qtyFmt(x.qty)}${x.unit ? ` ${x.unit}` : ''})` : x.label)) }]
     : [];
   if (est.mode === 'quick' || est.lines.length === 0) {
-    const jt = jobType(est.jobTypeId);
+    const jt = estimateJob(est);
     const name = lang === 'vi' ? jt.vi : jt.name;
     const size = jt.unit === 'JOB' || !(est.comparison.sizeSf > 0) ? '' : ` (${qtyWithUnit(est.comparison.sizeSf, jt.unit)})`;
     return [{ trade: 'general', title: name, items: [est.scopeNote?.trim() || `${name}${size}`], price: est.price - extrasTotal }, ...extraSection];
@@ -78,7 +78,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /** HTML used for the PDF the client receives. */
 export function quoteHtml(est: Estimate, profile: Profile, lang: Lang): string {
   const T = QUOTE_TEXT[lang];
-  const jt = jobType(est.jobTypeId);
+  const jt = estimateJob(est);
   const sections = quoteSections(est, lang);
   const sched = scheduleAmounts(est, profile);
   const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;

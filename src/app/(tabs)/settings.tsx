@@ -14,17 +14,19 @@ export default function Settings() {
   const [p, setP] = useState<Profile>(profile!);
   const [base, setBase] = useState(profile);
   const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [keyText, setKeyText] = useState(apiKey);
   const [keyStatus, setKeyStatus] = useState<{ tone: 'ok' | 'warn' | 'info'; text: string } | null>(null);
   const [backupText, setBackupText] = useState('');
-  // A restored backup replaces the profile: show the restored values.
+  // The profile changed elsewhere (a restored backup, or a type of work added in Pricing). Show it, but
+  // never wipe edits not saved yet: then only the list of work you do is taken over.
   if (profile !== base) {
     setBase(profile);
-    if (profile) setP(profile);
+    if (profile) setP(dirty ? { ...p, specialties: profile.specialties } : profile);
   }
   if (!profile) return null;
 
-  const set = <K extends keyof Profile>(k: K, v: Profile[K]) => { setP({ ...p, [k]: v }); setSaved(false); };
+  const set = <K extends keyof Profile>(k: K, v: Profile[K]) => { setP({ ...p, [k]: v }); setSaved(false); setDirty(true); };
   const toggle = (id: JobTypeId) => set('specialties', p.specialties.includes(id) ? p.specialties.filter((x) => x !== id) : [...p.specialties, id]);
   const setMilestone = (i: number, patch: Partial<PaymentMilestone>) => set('schedule', p.schedule.map((m, j) => (j === i ? { ...m, ...patch } : m)));
   const schedTotal = p.schedule.reduce((t, m) => t + m.pct, 0);
@@ -108,6 +110,7 @@ export default function Settings() {
 
   const restore = () =>
     confirmAction('Restore this backup?', 'Everything on this device is replaced by the backup.', 'Restore', () => {
+      setDirty(false); // show the restored profile in full
       const r = importData(backupText);
       if (!r.ok) notify('Could not restore', r.message);
       else {
@@ -118,7 +121,7 @@ export default function Settings() {
 
   return (
     <Screen footer={<Button title={saved ? 'Saved ✓' : 'Save settings'} disabled={schedTotal !== 100}
-      onPress={() => { saveProfile({ ...p, specialties: Array.from(new Set([...p.specialties, 'small' as JobTypeId])) }); setSaved(true); }} />}>
+      onPress={() => { saveProfile({ ...p, specialties: Array.from(new Set([...p.specialties, 'small' as JobTypeId])) }); setSaved(true); setDirty(false); }} />}>
       <Card>
         <H2>Company</H2>
         <Field label="Company name" value={p.companyName} onChangeText={(v) => set('companyName', v)} />

@@ -13,7 +13,7 @@ import { describeQuestion, QuestionEditor } from '@/ui/QuestionEditor';
 /** Settings for one type of work: your own questions, and for your own types, the name and price unit. */
 export default function JobTypeScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
-  const { customTypes, customQuestions, saveCustomType, deleteCustomType, saveQuestions } = useApp();
+  const { customTypes, customQuestions, saveCustomType, deleteCustomType, saveQuestions, presets, pastJobs } = useApp();
   const own = customTypes.find((t) => t.id === id);
   const jt = jobType(id);
   const qs = customQuestions[id] ?? [];
@@ -38,7 +38,13 @@ export default function JobTypeScreen() {
           <Label>How you price it</Label>
           <Segmented<PriceUnit> value={unit} onChange={setUnit} options={UNIT_OPTIONS} />
           <Button kind="secondary" title="Save" disabled={!name.trim() || (name.trim() === own.name && unit === own.unit)}
-            onPress={() => saveCustomType({ ...own, name: name.trim(), unit })} />
+            onPress={() => {
+              const next = { ...own, name: name.trim(), unit };
+              const hasData = !!presets[id] || pastJobs.some((j) => j.jobTypeId === id);
+              if (unit === own.unit || !hasData) return saveCustomType(next, { resetPricing: unit !== own.unit });
+              confirmAction('Change how you price it?', 'Your prices and past jobs for this type were in the old unit, so they are cleared. Estimates you already made stay.',
+                'Change', () => saveCustomType(next, { resetPricing: true }));
+            }} />
         </Card>
       ) : null}
 

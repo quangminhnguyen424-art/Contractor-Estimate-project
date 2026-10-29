@@ -63,9 +63,19 @@ const normalize = (text: string) => ` ${text.replace(/(\d),(?=\d{3}\b)/g, '$1')}
 
 export function guessJobType(text: string): JobTypeId | undefined {
   const t = text.toLowerCase();
-  // The contractor's own types of work, by name.
-  const own = JOB_TYPES.find((j) => j.custom && j.name.trim().length > 2 && t.includes(j.name.trim().toLowerCase()));
-  if (own) return own.id;
+  // The contractor's own types of work, by whole name. Multi-word names ("pressure washing") win over the
+  // built-in guesses; a one-word name ("tile") only counts when nothing built-in matches.
+  const escape = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const ownMatches = JOB_TYPES.filter((j) => j.custom && j.name.trim().length > 2
+    && new RegExp(`(?:^|[^a-z0-9])${escape(j.name.trim().toLowerCase())}(?:$|[^a-z0-9])`).test(t))
+    .sort((a, b) => b.name.length - a.name.length);
+  const ownLong = ownMatches.find((j) => /\s/.test(j.name.trim()));
+  if (ownLong) return ownLong.id;
+  const builtIn = guessBuiltIn(t);
+  return builtIn ?? ownMatches[0]?.id;
+}
+
+function guessBuiltIn(t: string): JobTypeId | undefined {
   if (/basement|adu conversion|garage conversion|convert (?:the |a |my )?(?:garage|basement|attic)|\d+ rooms? (?:to|into) \d+ bed/.test(t)) return 'basement';
   if (/dadu|new adu|detached adu|backyard cottage/.test(t)) return 'adu';
   if (/new (?:home|house|build|construction)/.test(t)) return 'newbuild';
@@ -259,11 +269,13 @@ export function claudeAI(baseUrl: string): EstimatorAI {
 export const CLAUDE_MODEL = 'claude-sonnet-5-5';
 
 /** Upper limits that stop an impossible AI answer (e.g. 50,000 lights) from reaching the price. */
-function maxFor(id: string, unit?: string): number {
+function maxFor(id: string, unit?: string, priced = false): number {
   if (id === 'yearBuilt') return 2100;
-  if (unit === 'SF') return 20000;
-  if (unit === 'LF') return 2000;
-  if (unit === 'ft') return 500;
+  const u = (unit ?? '').toLowerCase().replace(/[^a-z]/g, '');
+  if (['sf', 'sqft', 'sqfeet', 'squarefeet', 'squarefoot'].includes(u)) return 20000;
+  if (['lf', 'linearfeet', 'linearfoot'].includes(u)) return 2000;
+  if (['ft', 'feet', 'foot'].includes(u)) return 500;
+  if (priced) return 50; // the contractor's own priced counts (dump runs, hours…): keep a wrong reading from adding thousands
   return 200; // counts: doors, lights, outlets, fixtures…
 }
 
@@ -278,7 +290,7 @@ export function cleanAnswers(jobTypeId: JobTypeId, raw: unknown): Answers {
     let clean: AnswerValue | undefined;
     if (q.kind === 'number') {
       const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v.replace(/,/g, '')) : NaN;
-      if (Number.isFinite(n) && n >= 0 && n <= maxFor(q.id, q.unit)) clean = n;
+      if (Number.isFinite(n) && n >= 0 && n <= maxFor(q.id, q.unit, !!(q.custom && q.price))) clean = n;
     } else if (q.kind === 'yesno') {
       if (typeof v === 'boolean') clean = v;
       else if (v === 'yes' || v === 'true') clean = true;
@@ -300,10 +312,16 @@ const strList = (v: unknown, max: number) =>
 export function cleanScopeResult(raw: unknown, jobTypeId?: JobTypeId): ScopeResult {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const jt = jobTypeId ?? (isJobType(r.jobTypeId) ? r.jobTypeId : undefined);
+  const answers = jt ? cleanAnswers(jt, r.answers) : {};
+  // Answers that add money to the quote are called out so the contractor checks them.
+  const priced = jt
+    ? jobType(jt).questions.filter((q) => q.custom && q.price && q.id in answers && answers[q.id] !== false && answers[q.id] !== 0)
+      .map((q) => `Check: ${q.label}${q.kind === 'number' ? ` = ${answers[q.id]}` : ''} (adds to the price)`)
+    : [];
   return {
     jobTypeId: jt,
-    answers: jt ? cleanAnswers(jt, r.answers) : {},
-    heard: strList(r.heard, 30),
+    answers,
+    heard: [...priced, ...strList(r.heard, 30)],
     notes: strList(r.notes, 10),
     source: 'claude',
   };

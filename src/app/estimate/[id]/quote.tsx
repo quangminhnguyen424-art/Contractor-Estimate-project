@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { dateFmt, money } from '@/engine/format';
-import { FINISH_LABELS, jobType } from '@/engine/jobTypes';
+import { estimateJob, FINISH_LABELS } from '@/engine/jobTypes';
 import { QUOTE_TEXT, quoteHtml, quoteSections, scheduleAmounts } from '@/engine/quote';
 import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -20,7 +20,7 @@ export default function QuoteScreen() {
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
 
   const T = QUOTE_TEXT[lang];
-  const jt = jobType(est.jobTypeId);
+  const jt = estimateJob(est);
   const sections = quoteSections(est, lang);
   const sched = scheduleAmounts(est, profile);
   const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;
