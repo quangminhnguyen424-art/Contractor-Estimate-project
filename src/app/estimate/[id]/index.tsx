@@ -1,13 +1,16 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
 import { TRADE_NAMES } from '@/engine/catalog';
+import { planSvg, planTotals } from '@/engine/floorplan';
 import { money, qtyFmt } from '@/engine/format';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { EstimateStatus, Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, H2, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
+import { AiNote } from '@/ui/AiNote';
 import { confirmAction, notify } from '@/ui/notify';
 
 export default function EstimateScreen() {
@@ -15,13 +18,14 @@ export default function EstimateScreen() {
   const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
+  const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === id);
 
   if (!est || !profile) {
     return (
       <Screen>
         <Muted>This estimate was deleted.</Muted>
-        <Button title="Back to jobs" onPress={() => router.replace('/')} />
+        <Button title="Back to jobs" onPress={() => router.replace('/jobs')} />
       </Screen>
     );
   }
@@ -39,7 +43,7 @@ export default function EstimateScreen() {
     setDraft({
       id: est.id, jobTypeId: est.jobTypeId, mode: est.mode, title: est.title, clientName: est.clientName, address: est.address,
       description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
-      heard: [], markupPct: est.markupPct,
+      heard: [], markupPct: est.markupPct, plan: est.plan,
     });
     router.push('/questions');
   };
@@ -55,7 +59,7 @@ export default function EstimateScreen() {
   };
 
   const remove = () => {
-    confirmAction('Delete estimate?', 'This cannot be undone.', 'Delete', () => { deleteEstimate(est.id); router.replace('/'); });
+    confirmAction('Delete estimate?', 'This cannot be undone.', 'Delete', () => { deleteEstimate(est.id); router.replace('/jobs'); });
   };
 
   return (
@@ -133,7 +137,7 @@ export default function EstimateScreen() {
       {est.aiNotes && est.aiNotes.length > 0 ? (
         <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
           <Text style={{ fontWeight: '700', fontSize: 15, color: C.infoInk }}>Claude noticed (from notes and photos)</Text>
-          {est.aiNotes.map((n, i) => <Text key={i} style={{ color: C.infoInk, fontSize: 13, lineHeight: 19 }}>• {n}</Text>)}
+          {est.aiNotes.map((n, i) => <AiNote key={i} note={n} photos={est.photos} />)}
         </Card>
       ) : null}
 
@@ -165,6 +169,16 @@ export default function EstimateScreen() {
             <Row key={x.questionId} left={x.label} sub={x.qty !== 1 || x.unit ? `${qtyFmt(x.qty)}${x.unit ? ` ${x.unit}` : ''} × ${money(x.unitPrice)}` : undefined}
               right={money(x.price)} />
           ))}
+        </Card>
+      ) : null}
+
+      {est.plan?.length ? (
+        <Card>
+          <Text style={{ fontWeight: '700', fontSize: 15, color: C.ink }}>Floor plan · {planTotals(est.plan).floorSf} SF</Text>
+          <View style={{ alignItems: 'center' }}>
+            <SvgXml xml={planSvg(est.plan, Math.min(width, 760) - 64)} width={Math.min(width, 760) - 64} />
+          </View>
+          <Muted style={{ fontSize: 12 }}>Included on the client quote.</Muted>
         </Card>
       ) : null}
 

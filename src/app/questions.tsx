@@ -5,10 +5,12 @@ import { Text, View } from 'react-native';
 import { ASSEMBLIES, TRADE_NAMES } from '@/engine/catalog';
 import { laborRate, presetFor } from '@/engine/estimator';
 import { money2 } from '@/engine/format';
+import { planTotals } from '@/engine/floorplan';
 import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { AnswerValue, FinishLevel, Question } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { AiNote } from '@/ui/AiNote';
 import { QuestionEditor } from '@/ui/QuestionEditor';
 
 export default function Questions() {
@@ -30,7 +32,12 @@ export default function Questions() {
 
   if (!draft || !jt) return <Redirect href="/new" />;
 
-  const set = (id: string, v: AnswerValue) => setDraft({ ...draft, answers: { ...draft.answers, [id]: v } });
+  // Changing an answer yourself means it's confirmed: drop the "filled by Claude" tag.
+  const set = (id: string, v: AnswerValue) => {
+    const { [id]: _was, ...aiFilled } = draft.aiFilled ?? {};
+    setDraft({ ...draft, answers: { ...draft.answers, [id]: v }, aiFilled });
+  };
+  const fromPhotos = Object.values(draft.aiFilled ?? {}).filter((s) => s === 'photo').length;
   const setQty = (assemblyId: string, qty: number) => {
     const rest = draft.customItems.filter((i) => i.assemblyId !== assemblyId);
     setDraft({ ...draft, customItems: qty > 0 ? [...rest, { assemblyId, qty }] : rest });
@@ -60,7 +67,11 @@ export default function Questions() {
       {draft.aiNotes && draft.aiNotes.length > 0 ? (
         <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
           <Text style={{ fontWeight: '700', color: C.infoInk }}>Claude noticed</Text>
-          {draft.aiNotes.map((n, i) => <Text key={i} style={{ color: C.infoInk, lineHeight: 20 }}>• {n}</Text>)}
+          {draft.aiNotes.map((n, i) => (
+            <AiNote key={`${i}-${n}`} note={n} photos={draft.photos}
+              onDismiss={() => setDraft({ ...draft, aiNotes: draft.aiNotes!.filter((_, j) => j !== i) })} />
+          ))}
+          <Text style={{ color: C.infoInk, fontSize: 12 }}>Tap × on anything that’s wrong. Only what you keep is saved with the estimate.</Text>
         </Card>
       ) : null}
 
@@ -68,10 +79,25 @@ export default function Questions() {
         <Card style={{ backgroundColor: C.okBg, borderColor: C.okBg }}>
           <Text style={{ fontWeight: '700', color: C.okInk }}>Filled in for you</Text>
           <Text style={{ color: C.okInk, lineHeight: 20 }}>{draft.heard.join(' · ')}</Text>
+          {fromPhotos > 0 ? (
+            <Text style={{ color: C.warnInk, fontSize: 13 }}>{fromPhotos} answer{fromPhotos > 1 ? 's' : ''} came from photos. They’re marked below: check them.</Text>
+          ) : null}
         </Card>
       ) : (
         <Muted>Answer what you know. Anything you skip uses a standard assumption, and it’s flagged on the estimate.</Muted>
       )}
+
+      <Card>
+        <H2>Floor plan</H2>
+        {draft.plan?.length ? (
+          <Muted style={{ fontSize: 13 }}>
+            {draft.plan.length} room{draft.plan.length > 1 ? 's' : ''} · {planTotals(draft.plan).floorSf} SF floor · {planTotals(draft.plan).wallSf} SF walls. It goes on the client quote.
+          </Muted>
+        ) : (
+          <Muted style={{ fontSize: 13 }}>For bigger jobs: scan rooms with LiDAR or measure them, and the app draws the plan and fills in the areas.</Muted>
+        )}
+        <Button kind="ghost" title={draft.plan?.length ? 'Open floor plan' : '+ Scan or measure rooms'} onPress={() => router.push('/floor-plan')} />
+      </Card>
 
       <Label>Finish level</Label>
       <Segmented<FinishLevel>
@@ -92,7 +118,16 @@ export default function Questions() {
       {groups.map(([group, qs]) => (
         <Card key={group}>
           <H2>{group}</H2>
-          {qs.map((qq) => <QuestionInput key={qq.id} q={qq} value={draft.answers[qq.id]} onChange={(v) => set(qq.id, v)} />)}
+          {qs.map((qq) => (
+            <View key={qq.id} style={{ gap: 4 }}>
+              <QuestionInput q={qq} value={draft.answers[qq.id]} onChange={(v) => set(qq.id, v)} />
+              {draft.aiFilled?.[qq.id] ? (
+                <Text style={{ fontSize: 12, fontWeight: '600', color: draft.aiFilled[qq.id] === 'photo' ? C.warnInk : C.okInk }}>
+                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Claude from a photo: check it' : '● Filled in from your notes'}
+                </Text>
+              ) : null}
+            </View>
+          ))}
         </Card>
       ))}
 

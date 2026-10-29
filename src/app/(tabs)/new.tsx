@@ -8,6 +8,7 @@ import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { historyPerSf } from '@/engine/estimator';
 import { money } from '@/engine/format';
 import { defaultAnswers, jobType, perUnit } from '@/engine/jobTypes';
+import { workSummary } from '@/engine/profile';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { JobTypeChips } from '@/ui/JobTypes';
@@ -69,6 +70,7 @@ export default function NewEstimate() {
     const h = historyPerSf(type, 'mid', pastJobs);
     const ctx = {
       about: profile?.about,
+      work: workSummary(profile?.work),
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
     };
     if (description.trim() || images.length > 0) parsed = await ai.parseScope(description, type, images, ctx);
@@ -81,11 +83,12 @@ export default function NewEstimate() {
       mode: effectiveMode,
       title: title.trim() || `${clientName.trim() ? `${clientName.trim()} — ` : ''}${jt.name}`,
       clientName, address, description, scopeNote: '', photos,
-      finish: 'mid',
+      finish: profile?.work?.finish ?? 'mid',
       answers: { ...defaultAnswers(type), ...parsed.answers },
       customItems: [],
       heard: parsed.heard,
       aiNotes: parsed.notes ?? [],
+      aiFilled: parsed.sources ?? Object.fromEntries(Object.keys(parsed.answers).map((k) => [k, 'notes' as const])),
     });
     router.push('/questions');
     // Clear the form so the next estimate starts fresh (the draft keeps everything).

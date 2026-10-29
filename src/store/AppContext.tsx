@@ -7,7 +7,7 @@ import { jobType, setCustomJobs } from '@/engine/jobTypes';
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
-  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, Presets, PriceBook, Profile,
+  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, PlanRoom, Presets, PriceBook, Profile,
   Question, ScopeItem,
 } from '@/engine/types';
 
@@ -31,6 +31,10 @@ export interface Draft {
   customItems: ScopeItem[];
   heard: string[];
   markupPct?: number;
+  /** Floor plan rooms (scanned or measured). */
+  plan?: PlanRoom[];
+  /** Answers Claude filled in, and where from, so the contractor confirms them. */
+  aiFilled?: Record<string, 'notes' | 'photo'>;
 }
 
 export { DEFAULT_SCHEDULE };
@@ -121,6 +125,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         title: d.title.trim() || 'Untitled estimate', clientName: d.clientName.trim(), address: d.address.trim(),
         description: d.description.trim(), scopeNote: d.scopeNote.trim(), aiNotes: d.aiNotes ?? existing?.aiNotes ?? [], photos: d.photos, finish: d.finish, answers: d.answers,
         customItems: d.customItems, markupPct, salesTaxPct: profile.salesTaxPct, ...r,
+        plan: d.plan?.length ? d.plan : undefined,
       };
     },
     [],

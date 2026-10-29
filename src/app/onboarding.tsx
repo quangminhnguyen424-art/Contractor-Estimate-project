@@ -4,15 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { newId } from '@/engine/format';
 import { jobType } from '@/engine/jobTypes';
-import type { FinishLevel, JobTypeId, Presets } from '@/engine/types';
+import { EMPTY_WORK } from '@/engine/profile';
+import type { FinishLevel, JobTypeId, Presets, WorkProfile } from '@/engine/types';
 import { DEFAULT_SCHEDULE, useApp } from '@/store/AppContext';
 import { AddOwnType, JobTypeChips, priceSuffix } from '@/ui/JobTypes';
 import { Banner, Button, C, Card, Field, H1, H2, Muted, NumberField, Screen } from '@/ui/kit';
 import { RestoreBackup } from '@/ui/RestoreBackup';
+import { WorkProfileForm } from '@/ui/WorkProfileForm';
 
 export default function Onboarding() {
   const { saveProfile, savePresets, saveCustomType } = useApp();
   const [about, setAbout] = useState('');
+  const [work, setWork] = useState<WorkProfile>(EMPTY_WORK);
   const [step, setStep] = useState(1);
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
@@ -39,7 +42,7 @@ export default function Onboarding() {
     saveProfile({
       companyName: companyName.trim(), contactName: contactName.trim(), phone: phone.trim(), email: email.trim(),
       license: license.trim(), specialties: [...specialties, 'small'], markupPct, minMarkupPct, salesTaxPct,
-      quoteValidDays: 30, quoteLanguage: 'en', schedule: DEFAULT_SCHEDULE, about: about.trim(),
+      quoteValidDays: 30, quoteLanguage: 'en', schedule: DEFAULT_SCHEDULE, about: about.trim(), work,
     });
   };
 
@@ -49,7 +52,7 @@ export default function Onboarding() {
         footer={
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {step > 1 ? <Button kind="secondary" title="Back" onPress={() => setStep(step - 1)} style={{ flex: 1 }} /> : null}
-            {step < 3 ? (
+            {step < 4 ? (
               <Button
                 title="Continue"
                 style={{ flex: 2 }}
@@ -61,9 +64,9 @@ export default function Onboarding() {
             )}
           </View>
         }>
-        <Muted>Step {step} of 3</Muted>
+        <Muted>Step {step} of 4</Muted>
         <View style={{ height: 4, borderRadius: 2, backgroundColor: C.line }}>
-          <View style={{ width: `${(step / 3) * 100}%`, height: 4, borderRadius: 2, backgroundColor: C.accent }} />
+          <View style={{ width: `${(step / 4) * 100}%`, height: 4, borderRadius: 2, backgroundColor: C.accent }} />
         </View>
 
         {step === 1 && (
@@ -95,16 +98,20 @@ export default function Onboarding() {
                 setSpecialties((cur) => [...cur, id]);
               }} />
             </Card>
-            <Card>
-              <H2>Tell Claude how you work (optional)</H2>
-              <Field label="About your business" multiline value={about} onChangeText={setAbout} maxLength={2000}
-                placeholder="e.g. I do mid-range bathroom and kitchen remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin."
-                help="Claude reads this with every job, so its questions and notes fit how you work. Change it anytime in Settings." />
-            </Card>
           </>
         )}
 
         {step === 3 && (
+          <>
+            <H1>Your typical jobs</H1>
+            <Muted>A few questions so Claude learns how you work. It reads your answers with every job. Skip anything; change it anytime in Settings.</Muted>
+            <WorkProfileForm value={work} onChange={setWork} />
+            <Field label="Anything else Claude should know? (optional)" multiline value={about} onChangeText={setAbout} maxLength={2000}
+              placeholder="e.g. Most of my work is basement ADU conversions for investors. I aim for 25% margin. I use LVP, not carpet." />
+          </>
+        )}
+
+        {step === 4 && (
           <>
             <H1>How you charge</H1>
             <Card>

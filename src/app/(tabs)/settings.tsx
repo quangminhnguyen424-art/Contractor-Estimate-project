@@ -6,7 +6,9 @@ import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types'
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 import { hostSave, inClaudeApp } from '@/ui/host';
+import { EMPTY_WORK } from '@/engine/profile';
 import { JobTypeChips } from '@/ui/JobTypes';
+import { WorkProfileForm } from '@/ui/WorkProfileForm';
 import { confirmAction, notify } from '@/ui/notify';
 
 export default function Settings() {
@@ -135,6 +137,12 @@ export default function Settings() {
         <H2>Work you do</H2>
         <JobTypeChips selected={p.specialties} onToggle={toggle} />
         <Muted style={{ fontSize: 13 }}>Add your own types of work and questions in Pricing.</Muted>
+      </Card>
+
+      <Card>
+        <H2>Your typical jobs</H2>
+        <Muted style={{ fontSize: 13 }}>Claude reads this with every job so its questions, notes and answers fit how you work.</Muted>
+        <WorkProfileForm value={p.work ?? EMPTY_WORK} onChange={(w) => set('work', w)} />
       </Card>
 
       <Card>

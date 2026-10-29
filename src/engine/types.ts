@@ -96,6 +96,29 @@ export interface CustomJobType {
   unit: PriceUnit;
 }
 
+/** A line on the floor plan, in feet. */
+export interface PlanSegment { x1: number; y1: number; x2: number; y2: number }
+
+export interface PlanOpening extends Partial<PlanSegment> {
+  kind: 'door' | 'window' | 'opening';
+  widthFt: number;
+  heightFt: number;
+}
+
+/** One room, from a LiDAR scan (real wall positions) or measured by hand (a rectangle). */
+export interface PlanRoom {
+  id: string;
+  name: string;
+  source: 'scan' | 'manual';
+  lengthFt: number;
+  widthFt: number;
+  heightFt: number;
+  walls: (PlanSegment & { heightFt: number })[]; // scans only
+  openings: PlanOpening[];
+  floorSf?: number; // measured floor area from the scan
+  lowConfidence?: number; // surfaces the scanner wasn't sure about
+}
+
 /** A priced answer to a contractor's own question, e.g. "Haul-away" or "Extra outlets × 3". */
 export interface ExtraLine {
   questionId: string;
@@ -141,6 +164,17 @@ export interface PaymentMilestone {
   pct: number; // 0-100
 }
 
+/** What the contractor told us about their usual work, from the setup interview. */
+export interface WorkProfile {
+  clients: string[]; // homeowners, investors, property managers, commercial, other contractors
+  jobSizes: string[]; // under10, 10to50, 50to150, over150 (thousand dollars)
+  finish: FinishLevel; // the finish level they usually build
+  subOut: string[]; // trades they sub out
+  area: string; // where they work
+  alwaysInclude: string;
+  neverDo: string;
+}
+
 export interface Profile {
   companyName: string;
   contactName: string;
@@ -156,6 +190,7 @@ export interface Profile {
   schedule: PaymentMilestone[];
   /** In the contractor's words: how they work, what they include, their goals. Sent to Claude with every job. */
   about: string;
+  work?: WorkProfile;
 }
 
 export interface PastJob {
@@ -242,6 +277,7 @@ export interface Estimate {
   markupPct: number;
   salesTaxPct: number;
   extras: ExtraLine[];
+  plan?: PlanRoom[];
   /** Copy of the job type at the time of the estimate, so a later rename or delete never changes a sent quote. */
   job?: { name: string; vi: string; unit: PriceUnit; exclusions: string[]; exclusionsVi: string[] };
   lines: EstimateLine[];

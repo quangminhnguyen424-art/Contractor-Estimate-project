@@ -37,6 +37,7 @@ function RootStack() {
         <Stack.Screen name="past-job" options={{ title: 'Past job', presentation: 'modal' }} />
         <Stack.Screen name="price-book" options={{ title: 'Price book' }} />
         <Stack.Screen name="job-type" options={{ title: 'Type of work' }} />
+        <Stack.Screen name="floor-plan" options={{ title: 'Floor plan' }} />
       </Stack.Protected>
     </Stack>
   );

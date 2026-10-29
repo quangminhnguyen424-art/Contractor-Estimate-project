@@ -1,7 +1,7 @@
 // Checks saved or restored data before the app uses it, so a damaged or partial backup
 // can never crash the app (and can't lock the user out on every launch).
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
-import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, Presets, PriceBook, PriceUnit, Profile, Question } from '../engine/types';
+import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, WorkProfile } from '../engine/types';
 
 export interface Persisted {
   profile: Profile | null;
@@ -37,6 +37,16 @@ function numberMap(v: unknown): Record<string, number> {
   return Object.fromEntries(Object.entries(v).filter(([, x]) => typeof x === 'number' && Number.isFinite(x) && x >= 0)) as Record<string, number>;
 }
 
+const strArr = (v: unknown, max = 20) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, max) : []);
+
+function sanitizeWork(w: Record<string, unknown>): WorkProfile {
+  return {
+    clients: strArr(w.clients), jobSizes: strArr(w.jobSizes), subOut: strArr(w.subOut),
+    finish: w.finish === 'basic' || w.finish === 'high' ? w.finish : 'mid',
+    area: str(w.area).slice(0, 120), alwaysInclude: str(w.alwaysInclude).slice(0, 300), neverDo: str(w.neverDo).slice(0, 300),
+  };
+}
+
 export function sanitizeProfile(v: unknown): Profile | null {
   if (!isObj(v) || !str(v.companyName).trim()) return null;
   const schedule = Array.isArray(v.schedule)
@@ -51,6 +61,7 @@ export function sanitizeProfile(v: unknown): Profile | null {
     quoteValidDays: num(v.quoteValidDays, 30), quoteLanguage: v.quoteLanguage === 'vi' ? 'vi' : 'en',
     schedule: scheduleOk ? schedule : DEFAULT_SCHEDULE,
     about: str(v.about).slice(0, 2000),
+    ...(isObj(v.work) ? { work: sanitizeWork(v.work) } : {}),
   };
 }
 
@@ -109,6 +120,34 @@ function sanitizeCustomQuestions(v: unknown): Record<string, Question[]> {
   return out;
 }
 
+const fin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const segOk = (s: Record<string, unknown>) => fin(s.x1) && fin(s.y1) && fin(s.x2) && fin(s.y2);
+
+/** Floor plan rooms: anything malformed is dropped rather than drawn wrong. */
+export function sanitizePlan(v: unknown): PlanRoom[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const rooms = v.filter(isObj).flatMap((r): PlanRoom[] => {
+    if (typeof r.id !== 'string' || !(fin(r.lengthFt) && r.lengthFt > 0 && r.lengthFt < 1000) || !(fin(r.widthFt) && r.widthFt > 0 && r.widthFt < 1000)) return [];
+    const walls = Array.isArray(r.walls)
+      ? r.walls.filter((w): w is Record<string, number> => isObj(w) && segOk(w) && fin(w.heightFt))
+        .map((w) => ({ x1: w.x1, y1: w.y1, x2: w.x2, y2: w.y2, heightFt: w.heightFt }))
+      : [];
+    const openings = Array.isArray(r.openings)
+      ? r.openings.filter((o): o is Record<string, unknown> => isObj(o) && (o.kind === 'door' || o.kind === 'window' || o.kind === 'opening')
+          && fin(o.widthFt) && fin(o.heightFt))
+        .map((o) => ({ kind: o.kind as 'door' | 'window' | 'opening', widthFt: o.widthFt as number, heightFt: o.heightFt as number,
+          ...(segOk(o) ? { x1: o.x1 as number, y1: o.y1 as number, x2: o.x2 as number, y2: o.y2 as number } : {}) }))
+      : [];
+    return [{
+      id: r.id, name: str(r.name, 'Room').slice(0, 40), source: r.source === 'scan' && walls.length ? 'scan' : 'manual',
+      lengthFt: r.lengthFt, widthFt: r.widthFt, heightFt: fin(r.heightFt) && r.heightFt > 0 ? r.heightFt : 8, walls, openings,
+      ...(fin(r.floorSf) && r.floorSf > 0 ? { floorSf: r.floorSf } : {}),
+      ...(fin(r.lowConfidence) ? { lowConfidence: r.lowConfidence } : {}),
+    }];
+  });
+  return rooms.slice(0, 40);
+}
+
 const sanitizeExtras = (v: unknown): ExtraLine[] =>
   Array.isArray(v)
     ? v.filter((x): x is ExtraLine => isObj(x) && typeof x.label === 'string' && typeof x.price === 'number' && Number.isFinite(x.price)
@@ -146,6 +185,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     description: str(e.description), scopeNote: str(e.scopeNote),
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
+    plan: sanitizePlan(e.plan),
     job: isObj(e.job) && typeof e.job.name === 'string' && UNITS.includes(e.job.unit)
       ? { name: e.job.name, vi: str(e.job.vi, e.job.name), unit: e.job.unit,
           exclusions: Array.isArray(e.job.exclusions) ? e.job.exclusions.filter((x) => typeof x === 'string') : [],

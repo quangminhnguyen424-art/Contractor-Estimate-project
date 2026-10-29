@@ -1,7 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
+import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
 import { estimateJob, FINISH_LABELS } from '@/engine/jobTypes';
 import { QUOTE_TEXT, quoteHtml, quoteSections, scheduleAmounts } from '@/engine/quote';
@@ -17,6 +19,8 @@ export default function QuoteScreen() {
   const est = estimates.find((e) => e.id === id);
   const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
   const [busy, setBusy] = useState(false);
+  const { width } = useWindowDimensions();
+  const planWidth = Math.min(width, 760) - 80;
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
 
   const T = QUOTE_TEXT[lang];
@@ -87,6 +91,14 @@ export default function QuoteScreen() {
           <Line l={`${T.tax} (${est.salesTaxPct}%)`} r={money(est.tax)} />
           <Line l={T.total} r={money(est.total)} big />
         </View>
+
+        {est.plan?.length ? (
+          <View style={{ gap: 4 }}>
+            <Text style={{ fontWeight: '700', color: C.ink }}>{T.plan}</Text>
+            <Text style={{ fontSize: 12, color: C.ink2 }}>{T.planNote}: {planTotals(est.plan).floorSf} SF</Text>
+            <SvgXml xml={planSvg(est.plan, planWidth)} width={planWidth} />
+          </View>
+        ) : null}
 
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: C.ink }}>{T.notIncluded}</Text>

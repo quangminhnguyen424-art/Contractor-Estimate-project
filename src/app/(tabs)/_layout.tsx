@@ -22,7 +22,8 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: C.card, borderTopColor: C.line },
         sceneStyle: { backgroundColor: C.bg },
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Jobs', tabBarIcon: icon('list') }} />
+      <Tabs.Screen name="index" options={{ title: 'Assistant', tabBarLabel: 'Assistant', tabBarIcon: icon('chatbubbles-outline') }} />
+      <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarIcon: icon('list') }} />
       <Tabs.Screen name="new" options={{ title: 'New estimate', tabBarLabel: 'New', tabBarIcon: icon('add-circle-outline') }} />
       <Tabs.Screen name="pricing" options={{ title: 'My pricing', tabBarLabel: 'Pricing', tabBarIcon: icon('pricetags-outline') }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: icon('settings-outline') }} />

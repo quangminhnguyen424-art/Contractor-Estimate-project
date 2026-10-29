@@ -45,7 +45,9 @@ describe('direct Claude calls', () => {
     expect(headers['x-api-key']).toBe('sk-test');
     expect(headers['anthropic-dangerous-direct-browser-access']).toBe('true');
     const body = JSON.parse(init.body as string);
-    expect(body.messages[0].content[0]).toMatchObject({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'AAAA' } });
+    expect(body.messages[0].content[0]).toEqual({ type: 'text', text: 'Photo 1:' });
+    expect(body.messages[0].content[1]).toMatchObject({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'AAAA' } });
+    expect(body.system).toContain('Report only what is clearly visible');
     expect(body.messages[0].content.at(-1).text).toContain('showerType');
   });
   it('falls back to the offline reader with a clear message on a bad key', async () => {
@@ -104,5 +106,33 @@ describe('Claude learns the contractor', () => {
     expect(prompt).toContain('I always include haul-away.');
     expect(prompt).toContain('4 past jobs, average $10/SF');
     expect(prompt).toContain('"priceUnit":"SF"');
+  });
+});
+
+describe('photo findings you can check', () => {
+  it('keeps photo labels in order, and marks which answers came from photos', async () => {
+    const fetchMock = vi.fn(async () => reply({
+      answers: { floorTileSf: 40, toilets: 1 }, sources: { floorTileSf: 'notes', toilets: 'photo', bogus: 'photo' },
+      heard: [], notes: ['Photo 3: cracked tile by the tub'],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const r = await directClaudeAI('k').parseScope('40 sf tile', 'bathroom', [
+      { mediaType: 'image/jpeg', base64: 'A', label: 'Photo 1' }, { mediaType: 'image/jpeg', base64: 'B', label: 'Photo 3' },
+    ]);
+    expect(r.sources).toEqual({ floorTileSf: 'notes', toilets: 'photo' });
+    expect(r.notes).toEqual(['Photo 3: cracked tile by the tub']);
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body.messages[0].content[2]).toEqual({ type: 'text', text: 'Photo 3:' });
+    expect(body.messages[0].content.at(-1).text).toContain('in this order: Photo 1, Photo 3');
+  });
+  it('sends the setup interview to Claude as sentences', async () => {
+    const { workSummary } = await import('./profile');
+    const w = workSummary({ clients: ['investors'], jobSizes: ['50to150'], finish: 'high', subOut: ['electrical'], area: 'King County', alwaysInclude: 'permits', neverDo: 'asbestos' });
+    expect(w).toContain('Investors / landlords');
+    expect(w).toContain('Subs out: Electrical');
+    expect(w).toContain('Never does / always excludes: asbestos.');
+    const sample = vi.fn(async () => ({ text: '{"answers":{}}', truncated: false }));
+    await hostClaudeAI(async () => sample as unknown as SampleFn).parseScope('x', 'kitchen', [], { work: w });
+    expect((sample.mock.calls[0] as unknown as [string])[0]).toContain('setup answers');
   });
 });

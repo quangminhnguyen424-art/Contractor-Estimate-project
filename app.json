@@ -10,7 +10,7 @@
     "ios": {
       "bundleIdentifier": "com.ymllc.estimator",
       "infoPlist": {
-        "NSCameraUsageDescription": "Take photos of the job to attach to your estimate.",
+        "NSCameraUsageDescription": "Take job photos and scan rooms with LiDAR to draw floor plans for your estimate.",
         "NSPhotoLibraryUsageDescription": "Attach job photos to your estimate.",
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -39,7 +39,17 @@
           "imageWidth": 120
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Talk to the assistant and describe jobs by voice.",
+          "speechRecognitionPermission": "Turn what you say into text for the assistant and your estimates.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

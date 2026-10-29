@@ -11,13 +11,17 @@ import type { Answers, AnswerValue, FinishLevel, JobTypeId } from './types';
 export interface ImageInput {
   mediaType: 'image/jpeg' | 'image/png';
   base64: string;
+  /** Which of the contractor's photos this is ("Photo 3"), so Claude's findings point at the right picture. */
+  label?: string;
 }
 
 export interface ScopeResult {
   jobTypeId?: JobTypeId;
   answers: Answers;
   heard: string[]; // human-readable list of what was picked up
-  notes?: string[]; // things Claude noticed (conditions, risks, questions to ask)
+  notes?: string[]; // things Claude noticed (conditions, risks, questions to ask); photo findings start with "Photo N:"
+  /** Where each filled-in answer came from, so the contractor can confirm anything taken from a photo. */
+  sources?: Record<string, 'notes' | 'photo'>;
   source?: 'claude' | 'demo';
   error?: string; // set when Claude was asked but failed and the demo result was used instead
 }
@@ -34,11 +38,20 @@ export interface PastJobResult {
 /** What Claude knows about this contractor, so answers fit how they work. */
 export interface AiContext {
   about?: string; // the contractor's own words: how they work, what they include, their goals
+  work?: string; // their setup interview answers, as sentences
   history?: string; // e.g. "8 past jobs of this type, average $310/SF"
+}
+
+/** One turn of the assistant chat. */
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export interface EstimatorAI {
   name: string;
+  /** Free conversation with the assistant. Rejects with a message the contractor can act on. */
+  chat(turns: ChatTurn[], system: string): Promise<string>;
   parseScope(text: string, jobTypeId?: JobTypeId, images?: ImageInput[], ctx?: AiContext): Promise<ScopeResult>;
   extractPastJob(text: string): Promise<PastJobResult>;
 }
@@ -111,6 +124,9 @@ function guessBuiltIn(t: string): JobTypeId | undefined {
 /** Rule-based stand-in for Claude: pulls quantities out of a spoken or typed job description. */
 export const demoAI: EstimatorAI = {
   name: 'Demo AI (offline)',
+  async chat() {
+    return 'I can only answer when Claude is connected. Open this app inside the Claude app, or add your Claude key in Settings. You can still create estimates in the New tab.';
+  },
   async parseScope(text, jobTypeId) {
     const jt = jobTypeId ?? guessJobType(text);
     const answers: Answers = {};
@@ -246,6 +262,9 @@ export function claudeAI(baseUrl: string): EstimatorAI {
   };
   return {
     name: 'Claude (server)',
+    async chat(turns, system) {
+      return post<{ text: string }>('/chat', { turns, system }).then((r) => r.text).catch(() => demoAI.chat(turns, system));
+    },
     async parseScope(text, jobTypeId) {
       try {
         const raw = await post<ScopeResult>('/parse-scope', { text, jobTypeId, questions: jobTypeId ? jobType(jobTypeId).questions : undefined });
@@ -318,9 +337,12 @@ export function cleanScopeResult(raw: unknown, jobTypeId?: JobTypeId): ScopeResu
     ? jobType(jt).questions.filter((q) => q.custom && q.price && q.id in answers && answers[q.id] !== false && answers[q.id] !== 0)
       .map((q) => `Check: ${q.label}${q.kind === 'number' ? ` = ${answers[q.id]}` : ''} (adds to the price)`)
     : [];
+  const rawSources = (r.sources && typeof r.sources === 'object' ? r.sources : {}) as Record<string, unknown>;
+  const sources = Object.fromEntries(Object.keys(answers).map((k) => [k, rawSources[k] === 'photo' ? 'photo' : 'notes'])) as Record<string, 'notes' | 'photo'>;
   return {
     jobTypeId: jt,
     answers,
+    sources,
     heard: [...priced, ...strList(r.heard, 30)],
     notes: strList(r.notes, 10),
     source: 'claude',
@@ -355,7 +377,13 @@ Fill in answers ONLY for the listed questions, and only when the notes or photos
 - When the contractor describes how they work, use it: for example what they always include, sub out, or flag.
 - "heard": short English phrases of what you picked up, e.g. "45 LF new wall", "2 showers".
 - "notes": up to 8 short, concrete observations a GC would flag from the notes or photos: visible damage (water stains, rot, mold), code issues (no GFCI near water, missing egress, ungrounded outlets, double-tapped breakers), access problems, items to confirm with the owner, likely hidden conditions. Do not repeat the answers. Empty list if nothing.
-Reply with ONLY a JSON object: {"jobTypeId": string, "answers": {questionId: value}, "heard": [string], "notes": [string]}`;
+- "sources": for every answer you filled, "notes" if the contractor's notes say it, or "photo" if you took it from a photo.
+Photos — accuracy matters more than finding something:
+- Photos are labeled (Photo 1, Photo 2 …). Start every finding from a photo with its label, e.g. "Photo 2: water stain on the ceiling below the tub".
+- Report only what is clearly visible. If you are not sure, say "Possible …, check on site" — never state a guess as fact. Do not describe things that are out of frame or hidden.
+- Do not read measurements or areas from a photo unless a known-size reference is visible (a standard 80" door, a 4x8 drywall sheet, a 12" tile, a tape measure); then say which reference you used. Counts of clearly visible items (outlets, windows, fixtures) are fine.
+- If a photo disagrees with the notes, keep the contractor's number and add a note about the difference.
+Reply with ONLY a JSON object: {"jobTypeId": string, "answers": {questionId: value}, "sources": {questionId: "notes"|"photo"}, "heard": [string], "notes": [string]}`;
 
 /** Built when used, so it lists the contractor's own job types too. */
 const pastJobSystem = () => `Extract a completed construction job from pasted quote or invoice text.
@@ -364,9 +392,16 @@ Job types (id = name, price unit): ${JOB_TYPES.filter((j) => j.id !== 'small').m
 sizeSf is the job's main quantity in that type's unit (square feet, linear feet, or number of items; 1 for JOB) if stated.
 Reply with ONLY a JSON object: {"jobTypeId": one of the ids above or null, "sizeSf": number or null, "price": number or null, "finish": "basic"|"mid"|"high" or null, "title": short job name}`;
 
+/** "Attached in order: Photo 1, Photo 3." — photos that couldn't be read are skipped, so labels keep their numbers. */
+function photoLine(imgs: ImageInput[]): string {
+  if (!imgs.length) return '';
+  return `${imgs.length} site photo(s) attached, in this order: ${imgs.map((m, i) => m.label ?? `Photo ${i + 1}`).join(', ')}.\n\n`;
+}
+
 /** The contractor context added to Claude's instructions. */
 function contextText(ctx?: AiContext): string {
   const parts: string[] = [];
+  if (ctx?.work?.trim()) parts.push(`How this contractor usually works (from their setup answers): ${ctx.work.trim()}`);
   if (ctx?.about?.trim()) parts.push(`About this contractor, in their own words:\n${ctx.about.trim().slice(0, 2000)}`);
   if (ctx?.history?.trim()) parts.push(`Their pricing history for this job type: ${ctx.history.trim()}`);
   return parts.length ? `\n\n${parts.join('\n\n')}` : '';
@@ -389,6 +424,12 @@ function questionsFor(jobTypeId?: JobTypeId) {
 const CLAUDE_TIMEOUT_MS = 60_000;
 
 async function callClaude(apiKey: string, system: string, content: unknown[], maxTokens: number): Promise<string> {
+  return callClaudeTurns(apiKey, system, [{ role: 'user', content }], maxTokens);
+}
+
+async function callClaudeTurns(
+  apiKey: string, system: string, messages: { role: 'user' | 'assistant'; content: unknown }[], maxTokens: number,
+): Promise<string> {
   let res: Response;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
@@ -403,7 +444,7 @@ async function callClaude(apiKey: string, system: string, content: unknown[], ma
         // Required for calls made from a browser; harmless in the phone app.
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] }),
+      body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages }),
     });
   } catch {
     clearTimeout(timer);
@@ -436,14 +477,20 @@ function parseReply(reply: string): unknown {
 export function directClaudeAI(apiKey: string): EstimatorAI {
   return {
     name: `Claude (${CLAUDE_MODEL})`,
+    async chat(turns, system) {
+      return callClaudeTurns(apiKey, system, turns.map((t) => ({ role: t.role, content: t.content })), 1500);
+    },
     async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);
-      const content: unknown[] = (images ?? []).slice(0, 8).map((img) => ({
-        type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
-      }));
+      const imgs = (images ?? []).slice(0, 8);
+      // Each photo is preceded by its label so findings can name the right picture.
+      const content: unknown[] = imgs.flatMap((img, i) => [
+        { type: 'text', text: `${img.label ?? `Photo ${i + 1}`}:` },
+        { type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 } },
+      ]);
       content.push({
         type: 'text',
-        text: `Job type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${images?.length ? `${images.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`,
+        text: `Job type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${photoLine(imgs)}Contractor notes:\n${text || '(no notes, use the photos)'}`,
       });
       try {
         const reply = await callClaude(apiKey, SCOPE_SYSTEM + contextText(ctx), content, 1500);
@@ -476,7 +523,7 @@ export async function testClaudeKey(apiKey: string): Promise<string | null> {
 
 /** The `sample` function a claude.ai artifact page gets: Claude on the viewer's own Claude account. */
 export type SampleFn = (
-  input: string,
+  input: string | ChatTurn[],
   options?: { images?: Blob[]; cache?: boolean },
 ) => Promise<{ text: string; truncated: boolean }>;
 
@@ -527,10 +574,21 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
   };
   return {
     name: 'Claude (built in)',
+    async chat(turns, system) {
+      const sample = await getSample();
+      if (!sample) throw new Error('Claude is not available on this page.');
+      try {
+        // No system role in the page API: the standing instructions are the first user turn.
+        const res = await sample([{ role: 'user', content: system }, ...turns], { cache: false });
+        return res.text;
+      } catch (e) {
+        throw new Error(sampleErrorMessage(e));
+      }
+    },
     async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);
       const imgs = (images ?? []).slice(0, 8);
-      const prompt = `${SCOPE_SYSTEM}${contextText(ctx)}\n\nJob type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${imgs.length ? `${imgs.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`;
+      const prompt = `${SCOPE_SYSTEM}${contextText(ctx)}\n\nJob type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${photoLine(imgs)}Contractor notes:\n${text || '(no notes, use the photos)'}`;
       try {
         return cleanScopeResult(parseReply(await ask(prompt, imgs)), jt);
       } catch (e) {

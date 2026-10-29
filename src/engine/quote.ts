@@ -1,12 +1,14 @@
 import { TRADE_NAMES } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
+import { planSvg, planTotals } from './floorplan';
 import { estimateJob, FINISH_LABELS, qtyWithUnit } from './jobTypes';
 import type { Estimate, Lang, Profile, Trade } from './types';
 
 export const QUOTE_TEXT = {
   en: {
     quote: 'QUOTE', preparedFor: 'Prepared for', project: 'Project', scope: 'Scope of work', total: 'Total',
-    subtotal: 'Subtotal', tax: 'WA sales tax', extras: 'Additional items', notIncluded: 'Not included', schedule: 'Payment schedule',
+    subtotal: 'Subtotal', tax: 'WA sales tax', extras: 'Additional items', plan: 'Floor plan',
+    planNote: 'Measured on site. Total floor area',  notIncluded: 'Not included', schedule: 'Payment schedule',
     terms: 'Terms', acceptance: 'Acceptance', owner: 'Owner', date: 'Date', validFor: 'Valid for', days: 'days',
     finish: 'Finish level', registration: 'WA contractor registration #', quoteNo: 'Quote #',
     termsLines: [
@@ -17,7 +19,8 @@ export const QUOTE_TEXT = {
   },
   vi: {
     quote: 'BÁO GIÁ', preparedFor: 'Chuẩn bị cho', project: 'Dự án', scope: 'Phạm vi công việc', total: 'Tổng cộng',
-    subtotal: 'Tạm tính', tax: 'Thuế bán hàng WA', extras: 'Hạng mục bổ sung', notIncluded: 'Không bao gồm', schedule: 'Lịch thanh toán',
+    subtotal: 'Tạm tính', tax: 'Thuế bán hàng WA', extras: 'Hạng mục bổ sung', plan: 'Mặt bằng',
+    planNote: 'Đo tại công trình. Tổng diện tích sàn',  notIncluded: 'Không bao gồm', schedule: 'Lịch thanh toán',
     terms: 'Điều khoản', acceptance: 'Chấp thuận', owner: 'Chủ nhà', date: 'Ngày', validFor: 'Hiệu lực', days: 'ngày',
     finish: 'Mức hoàn thiện', registration: 'Số đăng ký nhà thầu WA', quoteNo: 'Báo giá số',
     termsLines: [
@@ -109,6 +112,7 @@ ${row(T.subtotal, money(est.price))}
 ${row(`${T.tax} (${est.salesTaxPct}%)`, money(est.tax))}
 ${row(T.total, money(est.total), 'tot')}
 </table>
+${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${planTotals(est.plan).floorSf} SF</div><div style="margin-top:6px">${planSvg(est.plan, 600)}</div>` : ''}
 <h2>${T.notIncluded}</h2><ul>${excl.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
 <h2>${T.schedule}</h2><table>${sched.map((s) => row(`${esc(s.label)} (${s.pct}%)`, money(s.amount))).join('')}</table>
 <div class="muted">${lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</div>

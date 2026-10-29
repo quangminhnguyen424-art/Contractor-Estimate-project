@@ -29,9 +29,10 @@ export async function toAiImage(uri: string): Promise<ImageInput | null> {
 export async function toAiImages(uris: string[], max = 8): Promise<{ images: ImageInput[]; failed: number }> {
   const images: ImageInput[] = [];
   let failed = 0;
-  for (const uri of uris.slice(0, max)) {
+  for (const [i, uri] of uris.slice(0, max).entries()) {
     const img = await toAiImage(uri);
-    if (img) images.push(img);
+    // Labeled by its place among the contractor's photos, so "Photo 3" always means the third photo.
+    if (img) images.push({ ...img, label: `Photo ${i + 1}` });
     else failed++;
   }
   return { images, failed };
