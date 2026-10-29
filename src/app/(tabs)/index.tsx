@@ -30,6 +30,8 @@ export default function Assistant() {
   const [starting, setStarting] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const stopRef = useRef<{ stop(): void } | null>(null);
+  const busyRef = useRef(false);
+  const sendRef = useRef<(raw: string, spoken?: boolean) => void>(() => {});
   const scrollRef = useRef<ScrollViewInstance>(null);
   const canListen = voiceInputAvailable();
   const claudeOn = inClaudeApp || !!apiKey;
@@ -38,7 +40,8 @@ export default function Assistant() {
 
   const send = async (raw: string, spoken = false) => {
     const q = raw.trim();
-    if (!q || busy || !profile) return;
+    if (!q || busyRef.current || !profile) return;
+    busyRef.current = true;
     setText('');
     stopSpeaking();
     add({ id: newId(), role: 'user', text: q });
@@ -57,9 +60,12 @@ export default function Assistant() {
     } catch (e) {
       add({ id: newId(), role: 'assistant', text: e instanceof Error ? e.message : 'Claude could not answer. Try again.', error: true });
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
+  // Keep the voice callback pointing at the latest send.
+  useEffect(() => { sendRef.current = send; });
 
   const mic = async () => {
     if (listening) {
@@ -74,7 +80,8 @@ export default function Assistant() {
     setListening(true);
     const handle = await listen(settings.lang, {
       onPartial: setText,
-      onFinal: (t) => { setText(t); send(t, true); },
+      // The latest send, not the one from when the mic was tapped (state may have changed while talking).
+      onFinal: (t) => { setText(t); sendRef.current(t, true); },
       onError: (m) => notify('Voice', m),
       onEnd: () => { setListening(false); stopRef.current = null; },
     });

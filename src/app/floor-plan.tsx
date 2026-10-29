@@ -62,7 +62,9 @@ export default function FloorPlanScreen() {
     if (Object.keys(answers).length === 0) {
       notify('Plan saved with the estimate', `${jt.name} isn't priced from floor area, so no answers were changed. The plan still goes on the quote.`);
     } else {
-      setDraft({ ...draft, answers: { ...draft.answers, ...answers }, heard: [...heard, ...draft.heard.filter((h) => !h.endsWith('(floor plan)'))] });
+      // These answers now come from the floor plan, not from Claude: drop their "check it" tags.
+      const aiFilled = Object.fromEntries(Object.entries(draft.aiFilled ?? {}).filter(([k]) => !(k in answers)));
+      setDraft({ ...draft, answers: { ...draft.answers, ...answers }, aiFilled, heard: [...heard, ...draft.heard.filter((h) => !h.endsWith('(floor plan)'))] });
     }
     router.back();
   };
@@ -135,7 +137,9 @@ export default function FloorPlanScreen() {
           <NumberField label="Doors" value={doors} onChange={setDoors} decimals={false} style={{ flex: 1 }} />
           <NumberField label="Windows" value={windows} onChange={setWindows} decimals={false} style={{ flex: 1 }} />
         </View>
-        <Button kind="secondary" title="Add room" disabled={!(lengthFt > 0 && widthFt > 0 && lengthFt < 1000 && widthFt < 1000)} onPress={addManual} />
+        <Button kind="secondary" title="Add room" onPress={addManual}
+          disabled={!(lengthFt > 0 && widthFt > 0 && lengthFt < 1000 && widthFt < 1000 && heightFt <= 30 && doors <= 50 && windows <= 50)} />
+        {heightFt > 30 || doors > 50 || windows > 50 ? <Muted style={{ fontSize: 13 }}>Check the numbers: ceiling up to 30 ft, up to 50 doors and 50 windows per room.</Muted> : null}
       </Card>
     </Screen>
   );

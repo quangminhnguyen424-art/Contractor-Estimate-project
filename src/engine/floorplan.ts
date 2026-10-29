@@ -63,11 +63,13 @@ export function roomFromScan(scan: ScanInput, name: string, id: string): PlanRoo
 
 /** A room measured by hand: a rectangle with door and window counts. */
 export function manualRoom(id: string, name: string, lengthFt: number, widthFt: number, heightFt: number, doors: number, windows: number): PlanRoom {
+  const count = (n: number) => (Number.isFinite(n) ? Math.min(50, Math.max(0, Math.floor(n))) : 0);
+  const clampFt = (n: number, max: number, d: number) => (Number.isFinite(n) && n > 0 ? Math.min(n, max) : d);
   return {
-    id, name, source: 'manual', lengthFt, widthFt, heightFt, walls: [],
+    id, name, source: 'manual', lengthFt: clampFt(lengthFt, 999, 1), widthFt: clampFt(widthFt, 999, 1), heightFt: clampFt(heightFt, 30, 8), walls: [],
     openings: [
-      ...Array.from({ length: Math.max(0, Math.floor(doors)) }, () => ({ kind: 'door' as const, ...DOOR })),
-      ...Array.from({ length: Math.max(0, Math.floor(windows)) }, () => ({ kind: 'window' as const, ...WINDOW })),
+      ...Array.from({ length: count(doors) }, () => ({ kind: 'door' as const, ...DOOR })),
+      ...Array.from({ length: count(windows) }, () => ({ kind: 'window' as const, ...WINDOW })),
     ],
   };
 }

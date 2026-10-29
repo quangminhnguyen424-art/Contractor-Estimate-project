@@ -7,6 +7,9 @@ import UIKit
 /// full screen and resolves with the room's walls, doors, windows and openings in meters,
 /// as 2D segments on the floor plane (x, z), plus the floor area when iOS can measure it.
 public class RoomScanModule: Module {
+  /// One scanner at a time: a quick double tap must not open a second one whose promise would never settle.
+  private var scanning = false
+
   public func definition() -> ModuleDefinition {
     Name("RoomScan")
 
@@ -19,13 +22,28 @@ public class RoomScanModule: Module {
         promise.reject("UNSUPPORTED", "Room scanning needs an iPhone or iPad with LiDAR (Pro models).")
         return
       }
+      guard !self.scanning else {
+        promise.reject("BUSY", "The scanner is already open.")
+        return
+      }
       guard let presenter = self.appContext?.utilities?.currentViewController() else {
         promise.reject("NO_VIEW", "Could not open the scanner.")
         return
       }
+      self.scanning = true
       let scanner = RoomScanViewController()
-      scanner.onFinish = { result in promise.resolve(result) }
-      scanner.onCancel = { promise.reject("CANCELED", "Scan canceled.") }
+      scanner.onFinish = { [weak self] result in
+        self?.scanning = false
+        promise.resolve(result)
+      }
+      scanner.onCancel = { [weak self] in
+        self?.scanning = false
+        promise.reject("CANCELED", "Scan canceled.")
+      }
+      scanner.onError = { [weak self] message in
+        self?.scanning = false
+        promise.reject("SCAN_FAILED", message)
+      }
       scanner.modalPresentationStyle = .fullScreen
       presenter.present(scanner, animated: true)
     }
@@ -36,6 +54,7 @@ public class RoomScanModule: Module {
 final class RoomScanViewController: UIViewController, RoomCaptureViewDelegate, RoomCaptureSessionDelegate {
   var onFinish: (([String: Any]) -> Void)?
   var onCancel: (() -> Void)?
+  var onError: ((String) -> Void)?
 
   private var captureView: RoomCaptureView!
   private var result: CapturedRoom?
@@ -109,6 +128,16 @@ final class RoomScanViewController: UIViewController, RoomCaptureViewDelegate, R
     doneButton.isEnabled = true
   }
 
+  // MARK: RoomCaptureSessionDelegate
+
+  /// The session ended. With an error (camera denied, not enough of the room seen) RoomPlan shows no result,
+  /// so close the scanner and report it instead of leaving "Processing…" on screen.
+  func captureSession(_ session: RoomCaptureSession, didEndWith data: CapturedRoomData, error: Error?) {
+    guard let error = error, result == nil else { return }
+    let message = "The scan could not finish (\(error.localizedDescription)). Try again with more light, or measure the room by hand."
+    settle { self.onError?(message) }
+  }
+
   // MARK: Result
 
   private func settle(_ action: @escaping () -> Void) {
@@ -155,15 +184,18 @@ final class RoomScanViewController: UIViewController, RoomCaptureViewDelegate, R
     }
   }
 
-  /// Shoelace area of a floor outline (its corners are flat in the surface's own x/y plane).
+  /// Shoelace area of a flat floor outline. The corners lie in one plane of the surface's own frame; measuring
+  /// it in both candidate planes and keeping the larger means a flat result never silently becomes 0.
   private func polygonArea(_ corners: [SIMD3<Float>]) -> Double {
     guard corners.count >= 3 else { return 0 }
-    var sum = 0.0
+    var xy = 0.0
+    var xz = 0.0
     for i in 0..<corners.count {
       let p = corners[i]
       let q = corners[(i + 1) % corners.count]
-      sum += Double(p.x) * Double(q.y) - Double(q.x) * Double(p.y)
+      xy += Double(p.x) * Double(q.y) - Double(q.x) * Double(p.y)
+      xz += Double(p.x) * Double(q.z) - Double(q.x) * Double(p.z)
     }
-    return abs(sum) / 2
+    return max(abs(xy), abs(xz)) / 2
   }
 }

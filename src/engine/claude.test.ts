@@ -136,3 +136,10 @@ describe('photo findings you can check', () => {
     expect((sample.mock.calls[0] as unknown as [string])[0]).toContain('setup answers');
   });
 });
+
+describe('setup answers the contractor skipped', () => {
+  it('are never stated to Claude as facts', async () => {
+    const { workSummary, EMPTY_WORK } = await import('./profile');
+    expect(workSummary(EMPTY_WORK)).toBe('');
+  });
+});

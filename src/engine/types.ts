@@ -168,7 +168,7 @@ export interface PaymentMilestone {
 export interface WorkProfile {
   clients: string[]; // homeowners, investors, property managers, commercial, other contractors
   jobSizes: string[]; // under10, 10to50, 50to150, over150 (thousand dollars)
-  finish: FinishLevel; // the finish level they usually build
+  finish?: FinishLevel; // the finish level they usually build (unset until they answer)
   subOut: string[]; // trades they sub out
   area: string; // where they work
   alwaysInclude: string;

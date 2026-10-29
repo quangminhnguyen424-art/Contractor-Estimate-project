@@ -69,3 +69,22 @@ describe('drawing', () => {
     expect(ftIn(8)).toBe('8\'0"');
   });
 });
+
+describe('review fixes', () => {
+  it('caps hand-entered counts and heights so a typo cannot freeze the app', () => {
+    const r = manualRoom('x', 'Big', 10, 10, 500, 99999999, -3);
+    expect(r.openings.length).toBe(50);
+    expect(r.heightFt).toBe(30);
+  });
+  it('drops impossible saved plan data', async () => {
+    const { sanitizePlan } = await import('../store/sanitize');
+    const plan = sanitizePlan([
+      { id: 'a', name: 'A', lengthFt: 10, widthFt: 10, heightFt: 8, floorSf: 1e15, walls: [], openings: [{ kind: 'door', widthFt: -3, heightFt: 7 }] },
+      { id: 'a', name: 'dup', lengthFt: 10, widthFt: 10 },
+      { id: 'b', name: 'B', lengthFt: 1e9, widthFt: 10 },
+    ])!;
+    expect(plan.map((r) => r.id)).toEqual(['a']);
+    expect(plan[0].floorSf).toBeUndefined();
+    expect(plan[0].openings).toEqual([]);
+  });
+});

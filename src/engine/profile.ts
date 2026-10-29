@@ -22,7 +22,7 @@ export const SUB_OPTIONS = [
   { value: 'roofing', label: 'Roofing' }, { value: 'concrete', label: 'Concrete' }, { value: 'flooring', label: 'Flooring' },
 ];
 
-export const EMPTY_WORK: WorkProfile = { clients: [], jobSizes: [], finish: 'mid', subOut: [], area: '', alwaysInclude: '', neverDo: '' };
+export const EMPTY_WORK: WorkProfile = { clients: [], jobSizes: [], subOut: [], area: '', alwaysInclude: '', neverDo: '' };
 
 const labels = (opts: { value: string; label: string }[], vals: string[]) =>
   vals.map((v) => opts.find((o) => o.value === v)?.label).filter(Boolean).join(', ');
@@ -33,8 +33,9 @@ export function workSummary(w?: WorkProfile): string {
   const lines = [
     w.clients.length ? `Clients: ${labels(CLIENT_OPTIONS, w.clients)}.` : '',
     w.jobSizes.length ? `Usual job size: ${labels(SIZE_OPTIONS, w.jobSizes)}.` : '',
-    `Usual finish level: ${w.finish === 'basic' ? 'basic / builder grade' : w.finish === 'high' ? 'high-end' : 'mid-grade'}.`,
-    w.subOut.length ? `Subs out: ${labels(SUB_OPTIONS, w.subOut)}. Does the other trades with their own crew.` : 'Does most trades with their own crew.',
+    // Only what they actually answered: nothing is assumed for skipped questions.
+    w.finish ? `Usual finish level: ${w.finish === 'basic' ? 'basic / builder grade' : w.finish === 'high' ? 'high-end' : 'mid-grade'}.` : '',
+    w.subOut.length ? `Subs out: ${labels(SUB_OPTIONS, w.subOut)}.` : '',
     w.area.trim() ? `Works in: ${w.area.trim()}.` : '',
     w.alwaysInclude.trim() ? `Always includes: ${w.alwaysInclude.trim()}.` : '',
     w.neverDo.trim() ? `Never does / always excludes: ${w.neverDo.trim()}.` : '',

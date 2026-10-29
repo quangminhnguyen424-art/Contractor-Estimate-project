@@ -42,7 +42,7 @@ const strArr = (v: unknown, max = 20) => (Array.isArray(v) ? v.filter((x): x is 
 function sanitizeWork(w: Record<string, unknown>): WorkProfile {
   return {
     clients: strArr(w.clients), jobSizes: strArr(w.jobSizes), subOut: strArr(w.subOut),
-    finish: w.finish === 'basic' || w.finish === 'high' ? w.finish : 'mid',
+    ...(w.finish === 'basic' || w.finish === 'mid' || w.finish === 'high' ? { finish: w.finish } : {}),
     area: str(w.area).slice(0, 120), alwaysInclude: str(w.alwaysInclude).slice(0, 300), neverDo: str(w.neverDo).slice(0, 300),
   };
 }
@@ -126,22 +126,26 @@ const segOk = (s: Record<string, unknown>) => fin(s.x1) && fin(s.y1) && fin(s.x2
 /** Floor plan rooms: anything malformed is dropped rather than drawn wrong. */
 export function sanitizePlan(v: unknown): PlanRoom[] | undefined {
   if (!Array.isArray(v)) return undefined;
+  const seen = new Set<string>();
+  const dim = (n: unknown, max = 1000): n is number => fin(n) && n > 0 && n < max;
+  const coord = (n: unknown) => fin(n) && Math.abs(n) < 2000;
   const rooms = v.filter(isObj).flatMap((r): PlanRoom[] => {
-    if (typeof r.id !== 'string' || !(fin(r.lengthFt) && r.lengthFt > 0 && r.lengthFt < 1000) || !(fin(r.widthFt) && r.widthFt > 0 && r.widthFt < 1000)) return [];
+    if (typeof r.id !== 'string' || seen.has(r.id) || !dim(r.lengthFt) || !dim(r.widthFt)) return [];
+    seen.add(r.id);
     const walls = Array.isArray(r.walls)
-      ? r.walls.filter((w): w is Record<string, number> => isObj(w) && segOk(w) && fin(w.heightFt))
+      ? r.walls.slice(0, 200).filter((w): w is Record<string, number> => isObj(w) && segOk(w) && [w.x1, w.y1, w.x2, w.y2].every(coord) && dim(w.heightFt, 100))
         .map((w) => ({ x1: w.x1, y1: w.y1, x2: w.x2, y2: w.y2, heightFt: w.heightFt }))
       : [];
     const openings = Array.isArray(r.openings)
-      ? r.openings.filter((o): o is Record<string, unknown> => isObj(o) && (o.kind === 'door' || o.kind === 'window' || o.kind === 'opening')
-          && fin(o.widthFt) && fin(o.heightFt))
+      ? r.openings.slice(0, 200).filter((o): o is Record<string, unknown> => isObj(o) && (o.kind === 'door' || o.kind === 'window' || o.kind === 'opening')
+          && dim(o.widthFt, 100) && dim(o.heightFt, 100))
         .map((o) => ({ kind: o.kind as 'door' | 'window' | 'opening', widthFt: o.widthFt as number, heightFt: o.heightFt as number,
           ...(segOk(o) ? { x1: o.x1 as number, y1: o.y1 as number, x2: o.x2 as number, y2: o.y2 as number } : {}) }))
       : [];
     return [{
       id: r.id, name: str(r.name, 'Room').slice(0, 40), source: r.source === 'scan' && walls.length ? 'scan' : 'manual',
-      lengthFt: r.lengthFt, widthFt: r.widthFt, heightFt: fin(r.heightFt) && r.heightFt > 0 ? r.heightFt : 8, walls, openings,
-      ...(fin(r.floorSf) && r.floorSf > 0 ? { floorSf: r.floorSf } : {}),
+      lengthFt: r.lengthFt, widthFt: r.widthFt, heightFt: dim(r.heightFt, 100) ? r.heightFt : 8, walls, openings,
+      ...(dim(r.floorSf, 1_000_000) ? { floorSf: r.floorSf } : {}),
       ...(fin(r.lowConfidence) ? { lowConfidence: r.lowConfidence } : {}),
     }];
   });

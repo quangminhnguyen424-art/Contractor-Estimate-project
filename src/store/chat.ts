@@ -34,8 +34,10 @@ export function useChat() {
         if (Array.isArray(list)) {
           const ok = list.filter((m): m is ChatMessage => !!m && typeof m === 'object' && typeof m.id === 'string'
             && (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string');
-          ref.current = ok;
-          setMessages(ok);
+          // Keep anything said while the history was still loading.
+          const merged = [...ok, ...ref.current.filter((m) => !ok.some((x) => x.id === m.id))].slice(-MAX);
+          ref.current = merged;
+          setMessages(merged);
         }
         const s = await AsyncStorage.getItem(SETTINGS_KEY);
         if (s) {

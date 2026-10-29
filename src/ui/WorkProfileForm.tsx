@@ -32,7 +32,7 @@ export function WorkProfileForm({ value, onChange }: { value: WorkProfile; onCha
       </View>
       <View style={{ gap: 6 }}>
         <Label>What finish level do you usually build?</Label>
-        <Segmented<FinishLevel> value={value.finish} onChange={(v) => set('finish', v)}
+        <Segmented<FinishLevel> value={value.finish ?? ('' as FinishLevel)} onChange={(v) => set('finish', v)}
           options={(['basic', 'mid', 'high'] as FinishLevel[]).map((f) => ({ value: f, label: FINISH_LABELS[f].en }))} />
         <Muted style={{ fontSize: 13 }}>New estimates start at this level.</Muted>
       </View>

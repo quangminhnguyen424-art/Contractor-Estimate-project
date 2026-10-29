@@ -26,6 +26,24 @@ async function askClaude(system, user) {
   return JSON.parse(json);
 }
 
+/** The assistant chat: the app sends its instructions and the recent turns. Turns are checked before use. */
+async function chatClaude(b) {
+  const turns = (Array.isArray(b.turns) ? b.turns : [])
+    .filter((t) => (t.role === 'user' || t.role === 'assistant') && typeof t.content === 'string' && t.content.trim())
+    .slice(-16)
+    .map((t) => ({ role: t.role, content: t.content.slice(0, 8000) }));
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  if (!turns.length || turns[turns.length - 1].role !== 'user') throw new Error('Chat must end with a question');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: String(b.system ?? '').slice(0, 40000), messages: turns }),
+  });
+  if (!res.ok) throw new Error(`Anthropic API ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return { text: data.content.map((c) => c.text || '').join('') };
+}
+
 const SCOPE_SYSTEM = `You are an experienced Washington State general contractor helping fill in an estimate.
 Read the contractor's job description and fill in answers to the listed questions.
 Only answer questions the description actually covers; never guess. Numbers are plain numbers (no units).
@@ -39,6 +57,7 @@ Return ONLY JSON: {"jobTypeId": one of bathroom|kitchen|basement|flooring|painti
 const routes = {
   '/parse-scope': (b) => askClaude(SCOPE_SYSTEM, `Job type: ${b.jobTypeId ?? 'unknown'}\nQuestions: ${JSON.stringify(b.questions ?? [])}\n\nDescription:\n${b.text}`),
   '/extract-past-job': (b) => askClaude(PAST_JOB_SYSTEM, b.text),
+  '/chat': chatClaude,
 };
 
 http.createServer(async (req, res) => {
