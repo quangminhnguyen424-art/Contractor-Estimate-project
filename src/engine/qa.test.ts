@@ -10,6 +10,7 @@ const profile: Profile = {
   companyName: 'Test Co', contactName: 'A', phone: '1', email: 'a@b.c', license: 'X', specialties: [],
   markupPct: 20, minMarkupPct: 15, salesTaxPct: 10.4, quoteValidDays: 30, quoteLanguage: 'en',
   schedule: [{ label: 'Deposit', pct: 10 }, { label: 'Rough', pct: 40 }, { label: 'Finish', pct: 40 }, { label: 'Final', pct: 10 }],
+  about: '',
 };
 const input = (over: Partial<EstimateInput> = {}): EstimateInput => ({
   jobTypeId: 'bathroom', mode: 'detailed', finish: 'mid', answers: defaultAnswers('bathroom'), customItems: [],

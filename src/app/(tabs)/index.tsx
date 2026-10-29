@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { money } from '@/engine/format';
-import { JOB_TYPE_BY_ID } from '@/engine/jobTypes';
+import { jobType } from '@/engine/jobTypes';
 import type { EstimateStatus } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Badge, Banner, Button, C, Chip, H2, Muted, Screen, mono, s } from '@/ui/kit';
@@ -66,7 +66,7 @@ export default function Jobs() {
               <Badge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <Muted style={{ flex: 1 }}>{JOB_TYPE_BY_ID[e.jobTypeId].name} · {e.mode === 'quick' ? 'Quick' : 'Detailed'}{e.clientName ? ` · ${e.clientName}` : ''}</Muted>
+              <Muted style={{ flex: 1 }}>{jobType(e.jobTypeId).name} · {e.mode === 'quick' ? 'Quick' : 'Detailed'}{e.clientName ? ` · ${e.clientName}` : ''}</Muted>
               <Text style={{ fontFamily: mono, color: C.ink, fontSize: 15 }}>{money(e.price)}</Text>
             </View>
           </Pressable>

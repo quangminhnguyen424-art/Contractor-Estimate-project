@@ -3,16 +3,18 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { money, newId } from '@/engine/format';
-import { FINISH_LABELS, JOB_TYPES } from '@/engine/jobTypes';
+import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
+import { JobTypeChips } from '@/ui/JobTypes';
 import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 import { notify } from '@/ui/notify';
 
 export default function PastJobScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { pastJobs, savePastJob, deletePastJob, apiKey } = useApp();
+  const { pastJobs, savePastJob, deletePastJob, apiKey, profile } = useApp();
+  const [showAll, setShowAll] = useState(false);
   const existing = pastJobs.find((j) => j.id === id);
 
   const [paste, setPaste] = useState('');
@@ -36,9 +38,12 @@ export default function PastJobScreen() {
     setFound(got.length ? `Found: ${got.join(', ')}. Check and fix below.` : "Couldn't find a size or total. Fill them in below.");
   };
 
-  const valid = title.trim() && sizeSf > 0 && price > 0;
+  const unit = jobType(jobTypeId).unit;
+  const qty = unit === 'JOB' ? 1 : sizeSf;
+  const mine = (profile?.specialties ?? []).filter((x) => x !== 'small');
+  const valid = title.trim() && qty > 0 && price > 0;
   const save = () => {
-    savePastJob({ id: existing?.id ?? newId(), title: title.trim(), jobTypeId, sizeSf, price, finish, date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00` : new Date().toISOString() });
+    savePastJob({ id: existing?.id ?? newId(), title: title.trim(), jobTypeId, sizeSf: qty, price, finish, date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00` : new Date().toISOString() });
     router.back();
   };
 
@@ -56,16 +61,19 @@ export default function PastJobScreen() {
 
       <Field label="Job name" value={title} onChangeText={setTitle} placeholder="e.g. Kim hall bathroom" />
       <Label>Job type</Label>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {JOB_TYPES.filter((j) => j.id !== 'small').map((j) => (
-          <Chip key={j.id} label={j.name} selected={jobTypeId === j.id} onPress={() => setJobTypeId(j.id)} />
-        ))}
+      <JobTypeChips selected={[jobTypeId]} onToggle={setJobTypeId}
+        only={showAll || mine.length === 0 ? undefined : [...mine, ...(mine.includes(jobTypeId) ? [] : [jobTypeId])]} />
+      <View style={{ flexDirection: 'row' }}>
+        <Chip label={showAll ? 'Show mine only' : 'All types of work…'} onPress={() => setShowAll(!showAll)} />
       </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <NumberField label="Size" suffix="SF" value={sizeSf} onChange={setSizeSf} style={{ flex: 1 }} />
+        {unit === 'JOB' ? null : (
+          <NumberField label={unit === 'EA' ? 'How many' : unit === 'LF' ? 'Length' : 'Size'} suffix={unit === 'EA' ? undefined : unit}
+            value={sizeSf} onChange={setSizeSf} style={{ flex: 1 }} />
+        )}
         <NumberField label="Price charged" suffix="$" value={price} onChange={setPrice} style={{ flex: 1 }} help="Before tax" />
       </View>
-      {sizeSf > 0 && price > 0 ? <Text style={{ color: C.okInk, fontWeight: '600' }}>{money(price / sizeSf)}/SF</Text> : null}
+      {qty > 0 && price > 0 && unit !== 'JOB' ? <Text style={{ color: C.okInk, fontWeight: '600' }}>{money(price / qty)}{perUnit(unit)}</Text> : null}
       <Label>Finish level</Label>
       <Segmented<FinishLevel> value={finish} onChange={setFinish}
         options={(['basic', 'mid', 'high'] as FinishLevel[]).map((f) => ({ value: f, label: FINISH_LABELS[f].en }))} />

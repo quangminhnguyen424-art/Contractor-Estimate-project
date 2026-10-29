@@ -3,9 +3,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
+import { setCustomJobs } from '@/engine/jobTypes';
+import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
-  Answers, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, Presets, PriceBook, Profile, ScopeItem,
+  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, Presets, PriceBook, Profile,
+  Question, ScopeItem,
 } from '@/engine/types';
 
 const KEY = 'estimating-app/v1';
@@ -41,6 +44,12 @@ interface Ctx extends Persisted {
   savePriceBook: (p: PriceBook) => void;
   savePastJob: (j: PastJob) => void;
   deletePastJob: (id: string) => void;
+  /** Add or rename one of the contractor's own types of work. */
+  saveCustomType: (t: CustomJobType) => void;
+  /** Remove an own type, its questions, prices and past jobs. Estimates stay (shown as "Other work"). */
+  deleteCustomType: (id: string) => void;
+  /** Replace the contractor's own questions for one job type. */
+  saveQuestions: (jobTypeId: JobTypeId, qs: Question[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
   updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number }) => void;
@@ -87,6 +96,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const update = useCallback((fn: (d: Persisted) => Persisted) => {
     const next = fn(dataRef.current);
+    // Keep the job type list in step with the contractor's own types and questions before anything renders.
+    setCustomJobs(next.customTypes, next.customQuestions);
     dataRef.current = next;
     setData(next);
     AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
@@ -135,6 +146,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       savePriceBook: (p) => update((d) => ({ ...d, priceBook: p })),
       savePastJob: (j) => update((d) => ({ ...d, pastJobs: [j, ...d.pastJobs.filter((x) => x.id !== j.id)] })),
       deletePastJob: (id) => update((d) => ({ ...d, pastJobs: d.pastJobs.filter((x) => x.id !== id) })),
+      saveCustomType: (t) =>
+        update((d) => ({ ...d, customTypes: [...d.customTypes.filter((x) => x.id !== t.id), t] })),
+      deleteCustomType: (id) =>
+        update((d) => {
+          const { [id]: _q, ...customQuestions } = d.customQuestions;
+          const { [id]: _p, ...presets } = d.presets;
+          return {
+            ...d, customQuestions, presets,
+            customTypes: d.customTypes.filter((x) => x.id !== id),
+            pastJobs: d.pastJobs.filter((j) => j.jobTypeId !== id),
+            profile: d.profile ? { ...d.profile, specialties: d.profile.specialties.filter((s) => s !== id) } : d.profile,
+          };
+        }),
+      saveQuestions: (jobTypeId, qs) =>
+        update((d) => {
+          const { [jobTypeId]: _old, ...rest } = d.customQuestions;
+          return { ...d, customQuestions: qs.length ? { ...rest, [jobTypeId]: qs } : rest };
+        }),
       commitDraft,
       updateEstimate: (id, patch) =>
         update((d) => ({
@@ -148,6 +177,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
             return next;
           }),
+          pastJobs: patch.status ? wonToPastJobs(d, id, patch.status) : d.pastJobs,
         })),
       deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id) })),
       resetAll: () => {
@@ -171,7 +201,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const d = (parsed ?? {}) as { app?: string; data?: unknown };
         if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return { ok: false, message: 'That text is not an Estimator backup.' };
         const { data: next, dropped } = sanitizePersisted(d.data);
-        if (!next.profile) return { ok: false, message: 'This backup has no company profile.' };
+        if (!next.profile) {
+          setCustomJobs(dataRef.current.customTypes, dataRef.current.customQuestions); // keep the current job types
+          return { ok: false, message: 'This backup has no company profile.' };
+        }
         setDraft(null);
         update(() => next);
         return {

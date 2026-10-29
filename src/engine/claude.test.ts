@@ -94,3 +94,15 @@ describe('Claude built into claude.ai (no API key)', () => {
     expect(getAI({ host }).name).toBe('Claude (built in)');
   });
 });
+
+describe('Claude learns the contractor', () => {
+  it('sends their own words and pricing history with the job', async () => {
+    const sample = vi.fn(async () => ({ text: '{"answers":{}}', truncated: false }));
+    await hostClaudeAI(async () => sample as unknown as SampleFn)
+      .parseScope('re-roof 2000 sf', 'roofing', [], { about: 'I always include haul-away.', history: '4 past jobs, average $10/SF' });
+    const prompt = (sample.mock.calls[0] as unknown as [string])[0];
+    expect(prompt).toContain('I always include haul-away.');
+    expect(prompt).toContain('4 past jobs, average $10/SF');
+    expect(prompt).toContain('"priceUnit":"SF"');
+  });
+});

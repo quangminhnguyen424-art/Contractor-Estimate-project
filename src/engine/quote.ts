@@ -1,12 +1,12 @@
 import { TRADE_NAMES } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
-import { FINISH_LABELS, JOB_TYPE_BY_ID } from './jobTypes';
+import { FINISH_LABELS, jobType, qtyWithUnit } from './jobTypes';
 import type { Estimate, Lang, Profile, Trade } from './types';
 
 export const QUOTE_TEXT = {
   en: {
     quote: 'QUOTE', preparedFor: 'Prepared for', project: 'Project', scope: 'Scope of work', total: 'Total',
-    subtotal: 'Subtotal', tax: 'WA sales tax', notIncluded: 'Not included', schedule: 'Payment schedule',
+    subtotal: 'Subtotal', tax: 'WA sales tax', extras: 'Additional items', notIncluded: 'Not included', schedule: 'Payment schedule',
     terms: 'Terms', acceptance: 'Acceptance', owner: 'Owner', date: 'Date', validFor: 'Valid for', days: 'days',
     finish: 'Finish level', registration: 'WA contractor registration #', quoteNo: 'Quote #',
     termsLines: [
@@ -17,7 +17,7 @@ export const QUOTE_TEXT = {
   },
   vi: {
     quote: 'BÁO GIÁ', preparedFor: 'Chuẩn bị cho', project: 'Dự án', scope: 'Phạm vi công việc', total: 'Tổng cộng',
-    subtotal: 'Tạm tính', tax: 'Thuế bán hàng WA', notIncluded: 'Không bao gồm', schedule: 'Lịch thanh toán',
+    subtotal: 'Tạm tính', tax: 'Thuế bán hàng WA', extras: 'Hạng mục bổ sung', notIncluded: 'Không bao gồm', schedule: 'Lịch thanh toán',
     terms: 'Điều khoản', acceptance: 'Chấp thuận', owner: 'Chủ nhà', date: 'Ngày', validFor: 'Hiệu lực', days: 'ngày',
     finish: 'Mức hoàn thiện', registration: 'Số đăng ký nhà thầu WA', quoteNo: 'Báo giá số',
     termsLines: [
@@ -29,7 +29,7 @@ export const QUOTE_TEXT = {
 } as const;
 
 export interface QuoteSection {
-  trade: Trade;
+  trade: Trade | 'extras';
   title: string;
   items: string[];
   price: number;
@@ -37,12 +37,19 @@ export interface QuoteSection {
 
 /** Client-facing sections: trade totals with markup built in. Never shows cost, labor or markup. */
 export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
+  const extras = est.extras ?? [];
+  const extrasTotal = extras.reduce((t, x) => t + x.price, 0);
+  const extraSection: QuoteSection[] = extras.length
+    ? [{ trade: 'extras', title: QUOTE_TEXT[lang].extras, price: extrasTotal,
+        items: extras.map((x) => (x.unit || x.qty !== 1 ? `${x.label} (${qtyFmt(x.qty)}${x.unit ? ` ${x.unit}` : ''})` : x.label)) }]
+    : [];
   if (est.mode === 'quick' || est.lines.length === 0) {
-    const jt = JOB_TYPE_BY_ID[est.jobTypeId];
-    return [{ trade: 'general', title: lang === 'vi' ? jt.vi : jt.name,
-      items: [est.scopeNote?.trim() || (lang === 'vi' ? jt.vi : jt.name)], price: est.price }];
+    const jt = jobType(est.jobTypeId);
+    const name = lang === 'vi' ? jt.vi : jt.name;
+    const size = jt.unit === 'JOB' || !(est.comparison.sizeSf > 0) ? '' : ` (${qtyWithUnit(est.comparison.sizeSf, jt.unit)})`;
+    return [{ trade: 'general', title: name, items: [est.scopeNote?.trim() || `${name}${size}`], price: est.price - extrasTotal }, ...extraSection];
   }
-  return est.trades.map((t) => ({
+  const tradeSections: QuoteSection[] = est.trades.map((t) => ({
     trade: t.trade,
     title: TRADE_NAMES[t.trade][lang],
     items: est.lines.filter((l) => l.trade === t.trade).map((l) => {
@@ -51,6 +58,7 @@ export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
     }),
     price: t.price,
   }));
+  return [...tradeSections, ...extraSection];
 }
 
 /** Whole-dollar milestones; the last one takes the remainder so they always add up to the price exactly. */
@@ -70,7 +78,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /** HTML used for the PDF the client receives. */
 export function quoteHtml(est: Estimate, profile: Profile, lang: Lang): string {
   const T = QUOTE_TEXT[lang];
-  const jt = JOB_TYPE_BY_ID[est.jobTypeId];
+  const jt = jobType(est.jobTypeId);
   const sections = quoteSections(est, lang);
   const sched = scheduleAmounts(est, profile);
   const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;

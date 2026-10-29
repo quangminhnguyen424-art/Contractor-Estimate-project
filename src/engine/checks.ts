@@ -1,5 +1,8 @@
-import { JOB_TYPE_BY_ID, num, str, yes } from './jobTypes';
+import { jobType, num, perUnit, str, yes } from './jobTypes';
 import type { Answers, Check, JobTypeId, ScopeItem } from './types';
+
+/** Job types that almost always need a permit in Washington cities. */
+const PERMIT_TYPES = ['adu', 'newbuild', 'addition', 'garage', 'commercial', 'roofing', 'panel', 'rewire', 'repipe', 'waterheater', 'hvac'];
 
 export interface CheckInput {
   jobTypeId: JobTypeId;
@@ -20,7 +23,7 @@ export function runChecks(input: CheckInput): Check[] {
   const has = (id: string) => scope.some((s) => s.assemblyId === id && s.qty > 0);
   const qty = (id: string) => scope.filter((s) => s.assemblyId === id).reduce((t, s) => t + s.qty, 0);
   const out: Check[] = [];
-  const jt = JOB_TYPE_BY_ID[input.jobTypeId];
+  const jt = jobType(input.jobTypeId);
 
   if (input.mode === 'detailed' && input.markupPct < input.minMarkupPct) {
     out.push({ id: 'margin', level: 'warn', title: `Markup ${input.markupPct}% is below your ${input.minMarkupPct}% minimum`,
@@ -72,14 +75,17 @@ export function runChecks(input: CheckInput): Check[] {
   }
 
   const permitTrades = scope.some((s) => /^(plumb_|elec_|frame_|vent_|slab_)/.test(s.assemblyId));
-  if (permitTrades || input.jobTypeId === 'adu' || input.jobTypeId === 'newbuild') {
+  if (permitTrades || PERMIT_TYPES.includes(input.jobTypeId)) {
     out.push({ id: 'permit', level: 'info', title: 'Permit likely required',
       detail: 'Permit fees are listed as not included. Confirm with the city before scheduling.' });
   }
 
   if (input.mode === 'quick' || !jt.detailed) {
-    out.push({ id: 'quick', level: 'info', title: 'Quick estimate based on $/SF',
-      detail: 'Uses your price per SF for this job type and finish level. Switch to Detailed for a trade breakdown and material list.' });
+    const per = perUnit(jt.unit);
+    out.push({ id: 'quick', level: 'info', title: `Quick estimate based on your price${per}`,
+      detail: jt.detailed
+        ? `Uses your price${per} for this job type and finish level. Switch to Detailed for a trade breakdown and material list.`
+        : `Uses your price${per} for this job type and finish level, plus any priced questions you added.` });
   }
 
   if (!(input.salesTaxPct > 0)) {

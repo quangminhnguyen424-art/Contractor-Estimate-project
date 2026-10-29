@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Platform, Pressable, Share, Text, View } from 'react-native';
 
 import { CLAUDE_MODEL, testClaudeKey } from '@/engine/ai';
-import { JOB_TYPES } from '@/engine/jobTypes';
 import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { Banner, Button, C, Card, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 import { hostSave, inClaudeApp } from '@/ui/host';
+import { JobTypeChips } from '@/ui/JobTypes';
 import { confirmAction, notify } from '@/ui/notify';
 
 export default function Settings() {
@@ -130,11 +130,15 @@ export default function Settings() {
 
       <Card>
         <H2>Work you do</H2>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {JOB_TYPES.filter((j) => j.id !== 'small').map((j) => (
-            <Chip key={j.id} label={j.name} selected={p.specialties.includes(j.id)} onPress={() => toggle(j.id)} />
-          ))}
-        </View>
+        <JobTypeChips selected={p.specialties} onToggle={toggle} />
+        <Muted style={{ fontSize: 13 }}>Add your own types of work and questions in Pricing.</Muted>
+      </Card>
+
+      <Card>
+        <H2>About your business (for Claude)</H2>
+        <Field label="How you work" multiline value={p.about} onChangeText={(v) => set('about', v)} maxLength={2000}
+          placeholder="e.g. Mid-range remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin."
+          help="Claude reads this with every job, so its questions and notes fit how you work." />
       </Card>
 
       <Card>

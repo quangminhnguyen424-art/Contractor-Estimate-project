@@ -5,16 +5,19 @@ import { useState } from 'react';
 import { Image, Platform, Pressable, Text, View } from 'react-native';
 
 import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
-import { defaultAnswers, JOB_TYPES, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
+import { historyPerSf } from '@/engine/estimator';
+import { money } from '@/engine/format';
+import { defaultAnswers, jobType, perUnit } from '@/engine/jobTypes';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { JobTypeChips } from '@/ui/JobTypes';
 import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
 import { notify } from '@/ui/notify';
 import { aiFor, inClaudeApp } from '@/ui/host';
 import { toAiImages } from '@/ui/photos';
 
 export default function NewEstimate() {
-  const { profile, setDraft, apiKey } = useApp();
+  const { profile, setDraft, apiKey, pastJobs } = useApp();
   const claudeOn = !!apiKey || inClaudeApp;
   const [showAll, setShowAll] = useState(false);
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(null);
@@ -27,10 +30,9 @@ export default function NewEstimate() {
   const [busy, setBusy] = useState(false);
 
   const mine = profile?.specialties ?? [];
-  const types = JOB_TYPES.filter((j) => showAll || mine.includes(j.id));
   const guessed = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
   const effectiveType = jobTypeId ?? guessed ?? null;
-  const detailedAllowed = effectiveType ? JOB_TYPE_BY_ID[effectiveType].detailed : true;
+  const detailedAllowed = effectiveType ? jobType(effectiveType).detailed : true;
   const quickAllowed = effectiveType !== 'small';
   const effectiveMode: EstimateMode = !detailedAllowed ? 'quick' : !quickAllowed ? 'detailed' : mode;
 
@@ -63,11 +65,17 @@ export default function NewEstimate() {
       skipped = r.failed + Math.max(0, photos.length - 8);
     }
     let parsed: ScopeResult = { answers: {}, heard: [] };
-    if (description.trim() || images.length > 0) parsed = await ai.parseScope(description, type, images);
+    // Claude gets the contractor's own words about how they work, and what they really charge for this work.
+    const h = historyPerSf(type, 'mid', pastJobs);
+    const ctx = {
+      about: profile?.about,
+      history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
+    };
+    if (description.trim() || images.length > 0) parsed = await ai.parseScope(description, type, images, ctx);
     setBusy(false);
     if (parsed.error) notify('Claude could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
     else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Claude`, photos.length > 8 ? 'Claude looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
-    const jt = JOB_TYPE_BY_ID[type];
+    const jt = jobType(type);
     setDraft({
       jobTypeId: type,
       mode: effectiveMode,
@@ -87,13 +95,14 @@ export default function NewEstimate() {
   return (
     <Screen footer={<Button title={busy ? (claudeOn ? 'Claude is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
       <Label>Project type</Label>
+      <JobTypeChips selected={effectiveType ? [effectiveType] : []} onToggle={(id) => setJobTypeId(id)}
+        only={showAll ? undefined : [...mine, ...(effectiveType && !mine.includes(effectiveType) ? [effectiveType] : [])]} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {types.map((j) => (
-          <Chip key={j.id} label={j.name} selected={effectiveType === j.id} onPress={() => setJobTypeId(j.id)} />
-        ))}
-        <Chip label={showAll ? 'Show mine only' : 'Other types…'} onPress={() => setShowAll(!showAll)} />
+        <Chip label={showAll ? 'Show mine only' : 'All types of work…'} onPress={() => setShowAll(!showAll)} />
+        <Chip label="Small job / repairs" selected={effectiveType === 'small'} onPress={() => setJobTypeId('small')} />
+        <Chip label="+ Add your own" onPress={() => router.push('/pricing')} />
       </View>
-      {guessed && !jobTypeId ? <Muted style={{ fontSize: 13 }}>Picked {JOB_TYPE_BY_ID[guessed].name} from your description. Tap another to change.</Muted> : null}
+      {guessed && !jobTypeId ? <Muted style={{ fontSize: 13 }}>Picked {jobType(guessed).name} from your description. Tap another to change.</Muted> : null}
 
       <H2 style={{ marginTop: 6 }}>Describe the job</H2>
       <Field
@@ -135,15 +144,15 @@ export default function NewEstimate() {
         value={effectiveMode}
         onChange={setMode}
         options={[
-          { value: 'quick', label: 'Quick ($/SF)', disabled: !quickAllowed },
+          { value: 'quick', label: `Quick (${effectiveType ? perUnit(jobType(effectiveType).unit).trim() : '$/SF'})`, disabled: !quickAllowed },
           { value: 'detailed', label: 'Detailed', disabled: !detailedAllowed },
         ]}
       />
       {!detailedAllowed ? (
-        <Banner tone="info" title="Quick estimate only for now">Detailed takeoffs for new builds and ADUs are coming in a later version.</Banner>
+        <Banner tone="info" title="Priced from your rates">This type of work uses your price per unit and your own questions. Detailed takeoffs for it are coming in a later version.</Banner>
       ) : (
         <Muted style={{ fontSize: 13 }}>
-          {effectiveMode === 'quick' ? 'Size × your price per SF. Fast ballpark for a first call.' : 'Trade-by-trade price, material list and code checks.'}
+          {effectiveMode === 'quick' ? 'Quantity × your price, plus your own priced questions. Fast price for a first call.' : 'Trade-by-trade price, material list and code checks.'}
         </Muted>
       )}
     </Screen>

@@ -19,15 +19,13 @@ export type Trade =
 
 export type FinishLevel = 'basic' | 'mid' | 'high';
 
-export type JobTypeId =
-  | 'bathroom'
-  | 'kitchen'
-  | 'basement'
-  | 'flooring'
-  | 'painting'
-  | 'adu'
-  | 'newbuild'
-  | 'small';
+/** Built-in ids ('bathroom', 'roofing', …) or a contractor's own type ('ct_…'). */
+export type JobTypeId = string;
+
+/** How a job type is priced: per square foot, per linear foot, per item, or one price per job. */
+export type PriceUnit = 'SF' | 'LF' | 'EA' | 'JOB';
+
+export type JobCategory = 'Remodel' | 'Exterior' | 'Systems & trades' | 'New construction' | 'Your own work';
 
 export type MaterialCategory =
   | 'Lumber & framing'
@@ -80,11 +78,32 @@ export interface Question {
   id: string;
   label: string;
   help?: string;
-  kind: 'number' | 'choice' | 'yesno';
+  kind: 'number' | 'choice' | 'yesno' | 'text';
   unit?: string;
   options?: ChoiceOption[];
   default: AnswerValue;
   group?: string;
+  /** Contractor-added question (saved in their settings, asked on every job of this type). */
+  custom?: boolean;
+  /** Custom questions only: what the contractor charges per unit (number) or if yes (yes/no). Client price, pre-tax. */
+  price?: number;
+}
+
+/** A contractor's own type of work, typed into the blank field. Its prices live in Presets like any other type. */
+export interface CustomJobType {
+  id: string; // 'ct_…'
+  name: string;
+  unit: PriceUnit;
+}
+
+/** A priced answer to a contractor's own question, e.g. "Haul-away" or "Extra outlets × 3". */
+export interface ExtraLine {
+  questionId: string;
+  label: string;
+  qty: number;
+  unit: string;
+  unitPrice: number;
+  price: number; // client price, whole dollars
 }
 
 export interface ScopeItem {
@@ -96,8 +115,12 @@ export interface JobType {
   id: JobTypeId;
   name: string;
   vi: string;
-  /** false = Quick ($/SF) only in Phase 1 */
+  /** false = Quick (price per unit) only for now */
   detailed: boolean;
+  /** What the quick price is per. The main quantity is always stored in answers.sizeSf. */
+  unit: PriceUnit;
+  category: JobCategory;
+  custom?: boolean;
   questions: Question[];
   scope: (a: Answers) => ScopeItem[];
   exclusions: string[];
@@ -131,13 +154,15 @@ export interface Profile {
   quoteValidDays: number;
   quoteLanguage: Lang;
   schedule: PaymentMilestone[];
+  /** In the contractor's words: how they work, what they include, their goals. Sent to Claude with every job. */
+  about: string;
 }
 
 export interface PastJob {
   id: string;
   jobTypeId: JobTypeId;
   title: string;
-  sizeSf: number;
+  sizeSf: number; // main quantity in the job type's unit (SF, LF, items; 1 for per-job types)
   finish: FinishLevel;
   price: number; // what the client paid (pre-tax)
   date: string; // ISO date
@@ -184,6 +209,7 @@ export interface Check {
 }
 
 export interface PriceComparison {
+  unit?: PriceUnit; // what sizeSf / pricePerSf are per (SF when missing, for older estimates)
   sizeSf: number;
   pricePerSf: number;
   presetPerSf: number | null;
@@ -215,6 +241,7 @@ export interface Estimate {
   customItems: ScopeItem[];
   markupPct: number;
   salesTaxPct: number;
+  extras: ExtraLine[];
   lines: EstimateLine[];
   materials: MaterialLine[];
   trades: TradeTotal[];

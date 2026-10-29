@@ -1,4 +1,4 @@
-import { JOB_TYPES, JOB_TYPE_BY_ID } from './jobTypes';
+import { isJobTypeId, JOB_TYPES, jobType } from './jobTypes';
 import type { Answers, AnswerValue, FinishLevel, JobTypeId } from './types';
 
 /**
@@ -31,9 +31,15 @@ export interface PastJobResult {
   error?: string;
 }
 
+/** What Claude knows about this contractor, so answers fit how they work. */
+export interface AiContext {
+  about?: string; // the contractor's own words: how they work, what they include, their goals
+  history?: string; // e.g. "8 past jobs of this type, average $310/SF"
+}
+
 export interface EstimatorAI {
   name: string;
-  parseScope(text: string, jobTypeId?: JobTypeId, images?: ImageInput[]): Promise<ScopeResult>;
+  parseScope(text: string, jobTypeId?: JobTypeId, images?: ImageInput[], ctx?: AiContext): Promise<ScopeResult>;
   extractPastJob(text: string): Promise<PastJobResult>;
 }
 
@@ -57,12 +63,37 @@ const normalize = (text: string) => ` ${text.replace(/(\d),(?=\d{3}\b)/g, '$1')}
 
 export function guessJobType(text: string): JobTypeId | undefined {
   const t = text.toLowerCase();
+  // The contractor's own types of work, by name.
+  const own = JOB_TYPES.find((j) => j.custom && j.name.trim().length > 2 && t.includes(j.name.trim().toLowerCase()));
+  if (own) return own.id;
   if (/basement|adu conversion|garage conversion|convert (?:the |a |my )?(?:garage|basement|attic)|\d+ rooms? (?:to|into) \d+ bed/.test(t)) return 'basement';
   if (/dadu|new adu|detached adu|backyard cottage/.test(t)) return 'adu';
   if (/new (?:home|house|build|construction)/.test(t)) return 'newbuild';
+  if (/whole[- ]?(?:house|home)\s*remodel/.test(t)) return 'wholehouse';
   if (/kitchen/.test(t) && !/bath/.test(t)) return 'kitchen';
   if (/bath|shower|\btub\b|vanity|toilet/.test(t)) return 'bathroom';
+  if (/exterior\s*paint|paint\s*(?:the\s*)?(?:outside|exterior)/.test(t)) return 'extpaint';
   if (/paint/.test(t)) return 'painting';
+  // Other trades, checked after the remodel types so "bathroom with a new window" stays a bathroom.
+  if (/re-?roof|roof(?:ing)?\b|shingles?/.test(t)) return 'roofing';
+  if (/siding|hardie/.test(t)) return 'siding';
+  if (/\bdeck\b/.test(t)) return 'deck';
+  if (/\bfenc(?:e|ing)\b/.test(t)) return 'fence';
+  if (/gutters?/.test(t)) return 'gutters';
+  if (/retaining\s*wall/.test(t)) return 'retaining';
+  if (/concrete|driveway|patio\s*slab|sidewalk/.test(t)) return 'concrete';
+  if (/landscap|hardscape|pavers?/.test(t)) return 'landscape';
+  if (/heat\s*pump|hvac|furnace|mini-?split|\bac\b/.test(t)) return 'hvac';
+  if (/water\s*heater|tankless/.test(t)) return 'waterheater';
+  if (/panel\s*(?:upgrade|replace|change)|service\s*upgrade|200\s*a(?:mp)?/.test(t)) return 'panel';
+  if (/rewir/.test(t)) return 'rewire';
+  if (/re-?pipe/.test(t)) return 'repipe';
+  if (/\baddition\b/.test(t)) return 'addition';
+  if (/tenant\s*improvement|commercial|\bti\b/.test(t)) return 'commercial';
+  if (/windows?/.test(t) && !/egress/.test(t)) return 'windows';
+  if (/insulat/.test(t)) return 'insulation';
+  if (/drywall|sheetrock/.test(t) && !/bath|kitchen|basement/.test(t)) return 'drywall';
+  if (/counter-?tops?/.test(t) && !/kitchen\s*remodel/.test(t)) return 'countertops';
   if (/floor|lvp|laminate|hardwood/.test(t)) return 'flooring';
   return undefined;
 }
@@ -75,7 +106,7 @@ export const demoAI: EstimatorAI = {
     const answers: Answers = {};
     const heard: string[] = [];
     const set = (id: string, v: number | string | boolean, label: string) => {
-      if (jt && !JOB_TYPE_BY_ID[jt].questions.some((q) => q.id === id)) return;
+      if (jt && !jobType(jt).questions.some((q) => q.id === id)) return;
       if (id in answers) return; // first (most specific) match wins
       answers[id] = v;
       heard.push(label);
@@ -158,6 +189,16 @@ export const demoAI: EstimatorAI = {
       if (/cabinet/.test(what)) set('cabinetsBy', 'owner', 'owner supplies cabinets');
       if (/fixture|toilet|vanit|shower|sink|faucet|tub/.test(what) || !/cabinet/.test(what)) set('fixturesBy', 'owner', 'owner supplies fixtures');
     }
+    // Main quantity for types priced per linear foot or per item.
+    const unit = jt ? jobType(jt).unit : undefined;
+    if (unit === 'LF') {
+      const len = grab(t, `${NUM}\\s*${LEN}`);
+      if (len) set('sizeSf', len, `${len} LF`);
+    } else if (unit === 'EA') {
+      const count = grab(t, `${NUM}\\s*(?:new\\s*)?(?:[a-z-]+\\s*)?(?:windows?|doors?|water\\s*heaters?|heat\\s*pumps?|systems?|units?|items?)`);
+      if (count) set('sizeSf', count, `${count} items`);
+    }
+
     const year = grab(t, `(?:built|year)[^.\\d]{0,12}((?:18|19|20)\\d\\d)`);
     if (year) set('yearBuilt', year, `built ${year}`);
 
@@ -197,7 +238,7 @@ export function claudeAI(baseUrl: string): EstimatorAI {
     name: 'Claude (server)',
     async parseScope(text, jobTypeId) {
       try {
-        const raw = await post<ScopeResult>('/parse-scope', { text, jobTypeId, questions: jobTypeId ? JOB_TYPE_BY_ID[jobTypeId].questions : undefined });
+        const raw = await post<ScopeResult>('/parse-scope', { text, jobTypeId, questions: jobTypeId ? jobType(jobTypeId).questions : undefined });
         return cleanScopeResult(raw, jobTypeId);
       } catch {
         return demoAI.parseScope(text, jobTypeId); // fall back so the contractor is never stuck
@@ -231,7 +272,7 @@ export function cleanAnswers(jobTypeId: JobTypeId, raw: unknown): Answers {
   const out: Answers = {};
   if (!raw || typeof raw !== 'object') return out;
   const r = raw as Record<string, unknown>;
-  for (const q of JOB_TYPE_BY_ID[jobTypeId].questions) {
+  for (const q of jobType(jobTypeId).questions) {
     if (!(q.id in r)) continue;
     const v = r[q.id];
     let clean: AnswerValue | undefined;
@@ -244,13 +285,15 @@ export function cleanAnswers(jobTypeId: JobTypeId, raw: unknown): Answers {
       else if (v === 'no' || v === 'false') clean = false;
     } else if (q.kind === 'choice') {
       if (typeof v === 'string' && q.options?.some((o) => o.value === v)) clean = v;
+    } else if (q.kind === 'text') {
+      if (typeof v === 'string' && v.trim()) clean = v.trim().slice(0, 300);
     }
     if (clean !== undefined) out[q.id] = clean;
   }
   return out;
 }
 
-const isJobType = (v: unknown): v is JobTypeId => typeof v === 'string' && v in JOB_TYPE_BY_ID;
+const isJobType = isJobTypeId;
 const strList = (v: unknown, max: number) =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map((x) => x.trim().slice(0, 240)).slice(0, max) : [];
 
@@ -288,23 +331,39 @@ export function extractJson(text: string): unknown {
 const SCOPE_SYSTEM = `You are an experienced Washington State general contractor helping another contractor fill in an estimate.
 You get the contractor's notes about a job (typed or dictated, may be informal or mixed Vietnamese/English) and sometimes site photos.
 Fill in answers ONLY for the listed questions, and only when the notes or photos actually support the value. Never guess.
-- Numbers are plain numbers in the question's unit (no text). Yes/no answers are true or false. Choice answers must be one of the listed option values.
+- Numbers are plain numbers in the question's unit (no text). Yes/no answers are true or false. Choice answers must be one of the listed option values. Text answers are short phrases.
+- "sizeSf" is always the job's main quantity in its price unit (SF, LF or number of items).
+- Questions marked custom were written by this contractor for their own way of working: answer them whenever the notes or photos support it.
+- When the contractor describes how they work, use it: for example what they always include, sub out, or flag.
 - "heard": short English phrases of what you picked up, e.g. "45 LF new wall", "2 showers".
 - "notes": up to 8 short, concrete observations a GC would flag from the notes or photos: visible damage (water stains, rot, mold), code issues (no GFCI near water, missing egress, ungrounded outlets, double-tapped breakers), access problems, items to confirm with the owner, likely hidden conditions. Do not repeat the answers. Empty list if nothing.
 Reply with ONLY a JSON object: {"jobTypeId": string, "answers": {questionId: value}, "heard": [string], "notes": [string]}`;
 
-const PAST_JOB_SYSTEM = `Extract a completed construction job from pasted quote or invoice text.
-Use the pre-tax contract price, not a total that includes sales tax. sizeSf is the project floor area in square feet if stated.
-Reply with ONLY a JSON object: {"jobTypeId": one of ${JOB_TYPES.filter((j) => j.id !== 'small').map((j) => j.id).join('|')} or null, "sizeSf": number or null, "price": number or null, "finish": "basic"|"mid"|"high" or null, "title": short job name}`;
+/** Built when used, so it lists the contractor's own job types too. */
+const pastJobSystem = () => `Extract a completed construction job from pasted quote or invoice text.
+Use the pre-tax contract price, not a total that includes sales tax.
+Job types (id = name, price unit): ${JOB_TYPES.filter((j) => j.id !== 'small').map((j) => `${j.id} = ${j.name} (${j.unit})`).join('; ')}.
+sizeSf is the job's main quantity in that type's unit (square feet, linear feet, or number of items; 1 for JOB) if stated.
+Reply with ONLY a JSON object: {"jobTypeId": one of the ids above or null, "sizeSf": number or null, "price": number or null, "finish": "basic"|"mid"|"high" or null, "title": short job name}`;
+
+/** The contractor context added to Claude's instructions. */
+function contextText(ctx?: AiContext): string {
+  const parts: string[] = [];
+  if (ctx?.about?.trim()) parts.push(`About this contractor, in their own words:\n${ctx.about.trim().slice(0, 2000)}`);
+  if (ctx?.history?.trim()) parts.push(`Their pricing history for this job type: ${ctx.history.trim()}`);
+  return parts.length ? `\n\n${parts.join('\n\n')}` : '';
+}
 
 function questionsFor(jobTypeId?: JobTypeId) {
-  const types = jobTypeId ? [JOB_TYPE_BY_ID[jobTypeId]] : JOB_TYPES.filter((j) => j.id !== 'small');
+  const types = jobTypeId ? [jobType(jobTypeId)] : JOB_TYPES.filter((j) => j.id !== 'small');
   return types.map((jt) => ({
     jobTypeId: jt.id,
     name: jt.name,
+    priceUnit: jt.unit,
     questions: jt.questions.map((q) => ({
       id: q.id, label: q.label, kind: q.kind, unit: q.unit,
       options: q.options?.map((o) => o.value),
+      ...(q.custom ? { custom: true } : {}),
     })),
   }));
 }
@@ -359,7 +418,7 @@ function parseReply(reply: string): unknown {
 export function directClaudeAI(apiKey: string): EstimatorAI {
   return {
     name: `Claude (${CLAUDE_MODEL})`,
-    async parseScope(text, jobTypeId, images) {
+    async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);
       const content: unknown[] = (images ?? []).slice(0, 8).map((img) => ({
         type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
@@ -369,7 +428,7 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
         text: `Job type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${images?.length ? `${images.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`,
       });
       try {
-        const reply = await callClaude(apiKey, SCOPE_SYSTEM, content, 1500);
+        const reply = await callClaude(apiKey, SCOPE_SYSTEM + contextText(ctx), content, 1500);
         return cleanScopeResult(parseReply(reply), jt);
       } catch (e) {
         const fallback = await demoAI.parseScope(text, jt);
@@ -378,7 +437,7 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
     },
     async extractPastJob(text) {
       try {
-        const reply = await callClaude(apiKey, PAST_JOB_SYSTEM, [{ type: 'text', text }], 300);
+        const reply = await callClaude(apiKey, pastJobSystem(), [{ type: 'text', text }], 300);
         return cleanPastJob(parseReply(reply));
       } catch (e) {
         return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
@@ -450,10 +509,10 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
   };
   return {
     name: 'Claude (built in)',
-    async parseScope(text, jobTypeId, images) {
+    async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);
       const imgs = (images ?? []).slice(0, 8);
-      const prompt = `${SCOPE_SYSTEM}\n\nJob type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${imgs.length ? `${imgs.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`;
+      const prompt = `${SCOPE_SYSTEM}${contextText(ctx)}\n\nJob type: ${jt ?? 'unknown — pick the best jobTypeId'}\nQuestions:\n${JSON.stringify(questionsFor(jt))}\n\n${imgs.length ? `${imgs.length} site photo(s) attached.\n\n` : ''}Contractor notes:\n${text || '(no notes, use the photos)'}`;
       try {
         return cleanScopeResult(parseReply(await ask(prompt, imgs)), jt);
       } catch (e) {
@@ -463,7 +522,7 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
     },
     async extractPastJob(text) {
       try {
-        return cleanPastJob(parseReply(await ask(`${PAST_JOB_SYSTEM}\n\nText:\n${text}`)));
+        return cleanPastJob(parseReply(await ask(`${pastJobSystem()}\n\nText:\n${text}`)));
       } catch (e) {
         return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
       }

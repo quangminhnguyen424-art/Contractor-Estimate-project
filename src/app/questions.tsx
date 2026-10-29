@@ -3,23 +3,26 @@ import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { ASSEMBLIES, TRADE_NAMES } from '@/engine/catalog';
-import { laborRate } from '@/engine/estimator';
+import { laborRate, presetFor } from '@/engine/estimator';
 import { money2 } from '@/engine/format';
-import { FINISH_LABELS, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
+import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { AnswerValue, FinishLevel, Question } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { QuestionEditor } from '@/ui/QuestionEditor';
 
 export default function Questions() {
-  const { draft, setDraft, commitDraft, priceBook } = useApp();
+  const { draft, setDraft, commitDraft, priceBook, customQuestions, saveQuestions, presets, savePresets } = useApp();
   const [search, setSearch] = useState('');
+  const [adding, setAdding] = useState(false);
 
-  const jt = draft ? JOB_TYPE_BY_ID[draft.jobTypeId] : null;
+  const jt = draft ? jobType(draft.jobTypeId) : null;
   const quick = draft?.jobTypeId !== 'small' && (draft?.mode === 'quick' || (jt ? !jt.detailed : false));
 
   const groups = useMemo(() => {
     if (!jt) return [];
-    const qs = quick ? jt.questions.filter((q) => q.id === 'sizeSf' || q.id === 'yearBuilt') : jt.questions;
+    // Quick estimates only need the size, the year (lead-safe check) and the contractor's own questions.
+    const qs = quick ? jt.questions.filter((q) => q.id === 'sizeSf' || q.id === 'yearBuilt' || q.custom) : jt.questions;
     const map = new Map<string, Question[]>();
     for (const q of qs) map.set(q.group ?? 'Details', [...(map.get(q.group ?? 'Details') ?? []), q]);
     return [...map.entries()];
@@ -51,7 +54,7 @@ export default function Questions() {
       disabled={isSmall && draft.customItems.length === 0} />}>
       <View style={{ gap: 4 }}>
         <H2>{draft.title}</H2>
-        <Muted>{jt.name} · {quick ? 'Quick ($/SF)' : 'Detailed'}</Muted>
+        <Muted>{jt.name} · {quick ? `Quick (your price${perUnit(jt.unit)})` : 'Detailed'}</Muted>
       </View>
 
       {draft.aiNotes && draft.aiNotes.length > 0 ? (
@@ -77,12 +80,39 @@ export default function Questions() {
         options={(['basic', 'mid', 'high'] as FinishLevel[]).map((f) => ({ value: f, label: FINISH_LABELS[f].en }))}
       />
 
+      {quick && !isSmall ? (
+        <Card>
+          <NumberField label={`Your price${perUnit(jt.unit)} · ${FINISH_LABELS[draft.finish].en}`} suffix="$"
+            value={presetFor(draft.jobTypeId, draft.finish, presets)}
+            onChange={(v) => savePresets({ ...presets, [draft.jobTypeId]: { ...jt.defaultPreset, ...presets[draft.jobTypeId], [draft.finish]: v } })}
+            help="Saved for every job of this type. The app compares it with your past jobs." />
+        </Card>
+      ) : null}
+
       {groups.map(([group, qs]) => (
         <Card key={group}>
           <H2>{group}</H2>
           {qs.map((qq) => <QuestionInput key={qq.id} q={qq} value={draft.answers[qq.id]} onChange={(v) => set(qq.id, v)} />)}
         </Card>
       ))}
+
+      <Card>
+        <H2>Your own question</H2>
+        {adding ? (
+          <QuestionEditor onAdd={(q) => {
+            saveQuestions(draft.jobTypeId, [...(customQuestions[draft.jobTypeId] ?? []), q]);
+            setDraft({ ...draft, answers: { ...draft.answers, [q.id]: q.default } });
+            setAdding(false);
+          }} />
+        ) : (
+          <>
+            <Muted style={{ fontSize: 13 }}>
+              Something you always ask on {jt.name.toLowerCase()} jobs that isn’t here? Add it once and it’s asked every time. Give it a price and it goes on the quote.
+            </Muted>
+            <Button kind="ghost" title="+ Add a question" onPress={() => setAdding(true)} />
+          </>
+        )}
+      </Card>
 
       {isSmall || !quick ? (
         <Card>
@@ -112,9 +142,13 @@ export default function Questions() {
 }
 
 function QuestionInput({ q, value, onChange }: { q: Question; value: AnswerValue | undefined; onChange: (v: AnswerValue) => void }) {
+  const priceHelp = q.price ? (q.kind === 'number' ? `You charge $${q.price} per ${q.unit || 'unit'}.` : `Adds $${q.price} if yes.`) : undefined;
   if (q.kind === 'number') {
     const n = typeof value === 'number' ? value : Number(value ?? q.default);
-    return <NumberField label={q.label} suffix={q.unit} help={q.help} value={Number.isFinite(n) ? n : Number(q.default)} onChange={onChange} />;
+    return <NumberField label={q.label} suffix={q.unit} help={q.help ?? priceHelp} value={Number.isFinite(n) ? n : Number(q.default)} onChange={onChange} />;
+  }
+  if (q.kind === 'text') {
+    return <Field label={q.label} help={q.help} value={typeof value === 'string' ? value : ''} onChangeText={onChange} maxLength={300} />;
   }
   if (q.kind === 'yesno') {
     const on = value === true || value === 'yes';
@@ -123,7 +157,7 @@ function QuestionInput({ q, value, onChange }: { q: Question; value: AnswerValue
         <Label>{q.label}</Label>
         <Segmented<'yes' | 'no'> value={on ? 'yes' : 'no'} onChange={(v) => onChange(v === 'yes')}
           options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
-        {q.help ? <Muted style={{ fontSize: 13 }}>{q.help}</Muted> : null}
+        {q.help ?? priceHelp ? <Muted style={{ fontSize: 13 }}>{q.help ?? priceHelp}</Muted> : null}
       </View>
     );
   }

@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { TRADE_NAMES } from '@/engine/catalog';
 import { money, qtyFmt } from '@/engine/format';
-import { FINISH_LABELS, JOB_TYPE_BY_ID } from '@/engine/jobTypes';
+import { FINISH_LABELS, jobType, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { EstimateStatus, Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, H2, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
@@ -12,7 +12,7 @@ import { confirmAction } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, updateEstimate, deleteEstimate, setDraft, profile } = useApp();
+  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const est = estimates.find((e) => e.id === id);
@@ -25,7 +25,8 @@ export default function EstimateScreen() {
       </Screen>
     );
   }
-  const jt = JOB_TYPE_BY_ID[est.jobTypeId];
+  const jt = jobType(est.jobTypeId);
+  const extras = est.extras ?? [];
   const warns = est.checks.filter((c) => c.level === 'warn');
   const infos = est.checks.filter((c) => c.level === 'info');
   const cmp = est.comparison;
@@ -77,8 +78,8 @@ export default function EstimateScreen() {
         </View>
         {est.mode === 'quick' ? (
           <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
-            <DarkStat label="Size" value={`${cmp.sizeSf} SF`} />
-            <DarkStat label="Your price" value={`${money(cmp.pricePerSf)}/SF`} accent />
+            <DarkStat label={cmp.unit === 'JOB' ? 'Priced' : 'Quantity'} value={qtyWithUnit(cmp.sizeSf, cmp.unit)} />
+            <DarkStat label="Your price" value={`${money(cmp.pricePerSf)}${perUnit(cmp.unit)}`} accent />
           </View>
         ) : (
           <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
@@ -96,12 +97,14 @@ export default function EstimateScreen() {
           <Muted style={{ fontSize: 13 }}>Your minimum is {profile.minMarkupPct}%. Changing markup keeps your saved costs and tax rate.</Muted>
         </Card>
       ) : (
-        <Muted style={{ fontSize: 13 }}>Quick estimates use your price per SF. Change it in Pricing, or switch to Detailed for markup and a trade breakdown.</Muted>
+        <Muted style={{ fontSize: 13 }}>
+          Quick estimates use your price{perUnit(cmp.unit)}. Change it in Pricing{jt.detailed ? ', or switch to Detailed for markup and a trade breakdown' : ''}.
+        </Muted>
       )}
 
       <Banner
         tone={cmp.flag === 'ok' ? 'ok' : cmp.flag === 'none' ? 'info' : 'warn'}
-        title={cmp.pricePerSf > 0 ? `${money(cmp.pricePerSf)}/SF on ${cmp.sizeSf} SF` : 'Your price check'}>
+        title={cmp.pricePerSf > 0 && cmp.unit !== 'JOB' ? `${money(cmp.pricePerSf)}${perUnit(cmp.unit)} on ${qtyWithUnit(cmp.sizeSf, cmp.unit)}` : 'Your price check'}>
         {cmp.message}
       </Banner>
 
@@ -150,6 +153,16 @@ export default function EstimateScreen() {
         </Card>
       ) : null}
 
+      {extras.length > 0 ? (
+        <Card style={{ paddingVertical: 6 }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted, paddingTop: 8 }}>YOUR PRICED QUESTIONS (CLIENT PRICE)</Text>
+          {extras.map((x) => (
+            <Row key={x.questionId} left={x.label} sub={x.qty !== 1 || x.unit ? `${qtyFmt(x.qty)}${x.unit ? ` ${x.unit}` : ''} × ${money(x.unitPrice)}` : undefined}
+              right={money(x.price)} />
+          ))}
+        </Card>
+      ) : null}
+
       {est.photos.length > 0 ? (
         <ScrollView horizontal contentContainerStyle={{ gap: 6 }}>
           {est.photos.map((uri) => <Image key={uri} source={{ uri }} style={{ width: 90, height: 90, borderRadius: 8 }} />)}
@@ -162,6 +175,12 @@ export default function EstimateScreen() {
           <Chip key={st} label={st[0].toUpperCase() + st.slice(1)} selected={est.status === st} onPress={() => updateEstimate(est.id, { status: st })} />
         ))}
       </View>
+      <Muted style={{ fontSize: 13 }}>
+        {est.status === 'won' && pastJobs.some((j) => j.id === `won_${est.id}`)
+          ? 'Won: saved to your past jobs, so your prices for this type of work keep learning.'
+          : est.status === 'won' ? 'Won. (Not added to past jobs: it needs a quantity and a price to learn from.)'
+          : 'Mark it Won when you get the job. It’s added to your past jobs so the app learns what you really charge.'}
+      </Muted>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Button kind="secondary" title="Edit answers" style={{ flex: 1 }} onPress={edit} />
