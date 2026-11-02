@@ -1,0 +1,149 @@
+<title>Estimator Privacy &amp; Support</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  /* Layout: one readable column, a plain document with a sticky two-link bar. Contractor's job-site orange as the only accent. */
+  :root {
+    --bg: #F6F5F1; --fg: #1D2024; --muted: #5A6068; --line: #DCD8CF; --accent: #B8410E; --panel: #FFFFFF;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #15171A; --fg: #ECEAE4; --muted: #A4A9B0; --line: #33373D; --accent: #F08A55; --panel: #1D2024; color-scheme: dark } }
+  :root[data-theme="dark"] { --bg: #15171A; --fg: #ECEAE4; --muted: #A4A9B0; --line: #33373D; --accent: #F08A55; --panel: #1D2024; color-scheme: dark }
+
+  body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 17px; line-height: 1.6; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .wrap { max-width: 44rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+  nav { position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); border-bottom: 1px solid var(--line); z-index: 5; }
+  nav .wrap { display: flex; gap: 20px; align-items: center; padding-block: 12px; flex-wrap: wrap; }
+  nav strong { font-family: var(--display); font-weight: 700; letter-spacing: .01em; margin-right: auto; }
+  nav a { font-family: var(--display); font-weight: 500; color: var(--accent); text-decoration: none; font-size: 15px; }
+  nav a:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  header { padding-block: 40px 8px; }
+  .eyebrow { font-family: var(--display); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 6vw, 42px); line-height: 1.1; margin: 6px 0 10px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: 26px; margin: 56px 0 4px; scroll-margin-top: 72px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 600; font-size: 18px; margin: 28px 0 4px; }
+  p, li { max-width: 65ch; }
+  ul { padding-left: 1.2em; display: grid; gap: 6px; }
+  .meta { color: var(--muted); font-size: 15px; }
+  .contact { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-top: 14px; }
+  .contact code { font-family: ui-monospace, Menlo, monospace; font-size: 15px; user-select: all; overflow-wrap: anywhere; min-width: 0; }
+  .contact button { font-family: var(--display); font-size: 14px; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  .contact button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  .table { overflow-x: auto; margin-top: 10px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+  th { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  details { border-bottom: 1px solid var(--line); padding-block: 10px; }
+  summary { font-family: var(--display); font-weight: 600; cursor: pointer; }
+  details p { margin: 8px 0 4px; }
+</style>
+
+<nav aria-label="Sections"><div class="wrap">
+  <strong>Estimator</strong>
+  <a href="#privacy">Privacy</a>
+  <a href="#support">Support</a>
+</div></nav>
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">YM LLC · Federal Way, Washington</div>
+    <h1>Estimator: privacy and support</h1>
+    <p class="meta">Estimator is an estimating app for construction contractors. This page explains what happens to your information and how to get help.</p>
+  </header>
+
+  <h2 id="privacy">Privacy policy</h2>
+  <p class="meta">Effective November 2, 2026</p>
+
+  <h3>The short version</h3>
+  <ul>
+    <li>Your estimates, prices, clients and photos are stored on your own phone. There is no Estimator account and we do not run a database of your data.</li>
+    <li>When you use the AI features, the text and photos you send are processed by Anthropic (the maker of Claude) to produce the answer.</li>
+    <li>No ads, no tracking across apps or websites, no analytics, and we never sell your information.</li>
+  </ul>
+
+  <h3>What stays on your device</h3>
+  <p>Your company profile, prices, past jobs, estimates, client names and addresses, job notes, photos you attach, floor plans, chat history and your Claude API key are saved only on your device. Backups are files you export and keep yourself; we do not receive them.</p>
+
+  <h3>What is sent to Anthropic, and when</h3>
+  <p>Only when you use an AI feature, the app sends the following to Anthropic’s Claude service to produce the result:</p>
+  <div class="table"><table>
+    <thead><tr><th>Feature</th><th>What is sent</th></tr></thead>
+    <tbody>
+      <tr><td>Reading a job</td><td>Your job notes, the photos you chose (resized), the questions for that type of work, and your setup answers and price history for that type</td></tr>
+      <tr><td>Assistant chat</td><td>Your recent messages, plus your company name, prices, setup answers and a short list of recent estimates (title, type, status, price) so answers fit your business</td></tr>
+      <tr><td>Reading an old quote</td><td>The quote text you pasted</td></tr>
+    </tbody>
+  </table></div>
+  <p>Anthropic processes this under its own terms and privacy policy. Requests sent with your own API key are covered by your agreement with Anthropic.</p>
+
+  <h3>Voice, camera and room scans</h3>
+  <ul>
+    <li><b>Voice:</b> speech is turned into text by your phone’s built-in speech recognition (Apple or Google, under their privacy policies). The app keeps only the text.</li>
+    <li><b>Camera and photos:</b> used only for the photos you add to a job.</li>
+    <li><b>LiDAR room scans:</b> processed on your device by Apple RoomPlan. Only the measurements are saved with the estimate.</li>
+  </ul>
+
+  <h3>Your choices</h3>
+  <ul>
+    <li>Use the app without AI features: nothing is sent anywhere.</li>
+    <li>Remove a finding Claude made, or edit any answer, before you build an estimate.</li>
+    <li>Delete everything: Settings → Erase all data on this device, or delete the app.</li>
+  </ul>
+
+  <h3>Children</h3>
+  <p>Estimator is a business tool for contractors and is not directed to children under 13.</p>
+
+  <h3>Changes</h3>
+  <p>If this policy changes, the new version will be posted here with a new effective date.</p>
+
+  <h3>Contact</h3>
+  <p>YM LLC, Federal Way, Washington, USA</p>
+  <div class="contact">
+    <code id="email-privacy">justin.ngminh@gmail.com</code>
+    <button type="button" id="copy-privacy" data-copy="email-privacy">Copy email</button>
+  </div>
+
+  <h2 id="support">Support</h2>
+  <p>Questions, a bug, or an idea for the app: email us and include your phone model and what you were doing. We answer within two business days.</p>
+  <div class="contact">
+    <code id="email-support">justin.ngminh@gmail.com</code>
+    <button type="button" id="copy-support" data-copy="email-support">Copy email</button>
+  </div>
+
+  <h3>Common questions</h3>
+  <details>
+    <summary>How do I turn on Claude AI?</summary>
+    <p>Create an API key at console.anthropic.com (API Keys), add credit and set a monthly spending limit there. In Estimator, open Settings → Claude AI, paste the key and tap Save and test key.</p>
+  </details>
+  <details>
+    <summary>Which phones can scan rooms?</summary>
+    <p>Room scanning uses LiDAR, found on iPhone Pro and Pro Max models (12 Pro and later) and iPad Pro. On other phones, measure rooms by hand on the Floor plan screen; the plan and measurements work the same way.</p>
+  </details>
+  <details>
+    <summary>How do I move my data to a new phone?</summary>
+    <p>On the old phone, open Settings → Export backup and save the file. On the new phone, choose Restore a backup during setup, or Settings → Restore from backup.</p>
+  </details>
+  <details>
+    <summary>The microphone button doesn't work.</summary>
+    <p>Allow Microphone and Speech Recognition for Estimator in your phone’s Settings. You can always tap the box and use the microphone on your keyboard instead.</p>
+  </details>
+  <details>
+    <summary>Are the prices the AI suggests final?</summary>
+    <p>No. Estimates are built from your own prices and answers, and Claude’s suggestions are marked for you to check. Always review an estimate before sending it to a client.</p>
+  </details>
+</main>
+
+<script>
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.getAttribute('data-copy'));
+      var text = el.textContent.trim();
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy email'; }, 1500); };
+      var select = function () { var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected'; };
+      try { navigator.clipboard.writeText(text).then(done, select); } catch (e) { select(); }
+    });
+  });
+</script>
