@@ -44,6 +44,30 @@ async function chatClaude(b) {
   return { text: data.content.map((c) => c.text || '').join('') };
 }
 
+/** One-off writing tasks (task lists, translations, logs), optionally with job photos. Inputs are checked. */
+async function completeClaude(b) {
+  const prompt = String(b.prompt ?? '').slice(0, 30000);
+  if (!prompt.trim()) throw new Error('Empty prompt');
+  const images = (Array.isArray(b.images) ? b.images : [])
+    .filter((im) => im && (im.mediaType === 'image/jpeg' || im.mediaType === 'image/png') && typeof im.base64 === 'string'
+      && im.base64.length < 7_000_000 && /^[A-Za-z0-9+/=]+$/.test(im.base64))
+    .slice(0, 8);
+  const content = images.flatMap((im, i) => [
+    { type: 'text', text: `${String(im.label || `Photo ${i + 1}`).slice(0, 40)}:` },
+    { type: 'image', source: { type: 'base64', media_type: im.mediaType, data: im.base64 } },
+  ]);
+  content.push({ type: 'text', text: prompt });
+  const maxTokens = Math.min(4000, Math.max(200, Number(b.maxTokens) || 1500));
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system: 'You help a construction contractor. Follow the reply format exactly.', messages: [{ role: 'user', content }] }),
+  });
+  if (!res.ok) throw new Error(`Anthropic API ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return { text: data.content.map((c) => c.text || '').join('') };
+}
+
 const SCOPE_SYSTEM = `You are an experienced Washington State general contractor helping fill in an estimate.
 Read the contractor's job description and fill in answers to the listed questions.
 Only answer questions the description actually covers; never guess. Numbers are plain numbers (no units).
@@ -58,6 +82,7 @@ const routes = {
   '/parse-scope': (b) => askClaude(SCOPE_SYSTEM, `Job type: ${b.jobTypeId ?? 'unknown'}\nQuestions: ${JSON.stringify(b.questions ?? [])}\n\nDescription:\n${b.text}`),
   '/extract-past-job': (b) => askClaude(PAST_JOB_SYSTEM, b.text),
   '/chat': chatClaude,
+  '/complete': completeClaude,
 };
 
 http.createServer(async (req, res) => {
@@ -67,7 +92,10 @@ http.createServer(async (req, res) => {
   const route = routes[req.url];
   if (req.method !== 'POST' || !route) { res.statusCode = 404; return res.end(); }
   let body = '';
-  for await (const chunk of req) body += chunk;
+  for await (const chunk of req) {
+    body += chunk;
+    if (body.length > 25_000_000) { res.statusCode = 413; return res.end(); } // photos are resized first; this is plenty
+  }
   try {
     const out = await route(JSON.parse(body || '{}'));
     res.setHeader('content-type', 'application/json');

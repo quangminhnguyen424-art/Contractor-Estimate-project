@@ -52,6 +52,8 @@ export interface EstimatorAI {
   name: string;
   /** Free conversation with the assistant. Rejects with a message the contractor can act on. */
   chat(turns: ChatTurn[], system: string): Promise<string>;
+  /** One-off writing task (step lists, translations, logs, posts). Rejects with a message the contractor can act on. */
+  complete(prompt: string, images?: ImageInput[], maxTokens?: number): Promise<string>;
   parseScope(text: string, jobTypeId?: JobTypeId, images?: ImageInput[], ctx?: AiContext): Promise<ScopeResult>;
   extractPastJob(text: string): Promise<PastJobResult>;
 }
@@ -124,6 +126,9 @@ function guessBuiltIn(t: string): JobTypeId | undefined {
 /** Rule-based stand-in for Claude: pulls quantities out of a spoken or typed job description. */
 export const demoAI: EstimatorAI = {
   name: 'Demo AI (offline)',
+  async complete() {
+    throw new Error('Claude is not connected. Open the app inside Claude, or add your Claude key in Settings.');
+  },
   async chat() {
     return 'I can only answer when Claude is connected. Open this app inside the Claude app, or add your Claude key in Settings. You can still create estimates in the New tab.';
   },
@@ -264,6 +269,12 @@ export function claudeAI(baseUrl: string): EstimatorAI {
     name: 'Claude (server)',
     async chat(turns, system) {
       return post<{ text: string }>('/chat', { turns, system }).then((r) => r.text).catch(() => demoAI.chat(turns, system));
+    },
+    async complete(prompt, images, maxTokens = 1500) {
+      const imgs = (images ?? []).slice(0, 8).map((img, i) => ({ label: img.label ?? `Photo ${i + 1}`, mediaType: img.mediaType, base64: img.base64 }));
+      return post<{ text: string }>('/complete', { prompt, images: imgs, maxTokens })
+        .then((r) => r.text)
+        .catch(() => { throw new Error('Could not reach the AI server. Try again.'); });
     },
     async parseScope(text, jobTypeId) {
       try {
@@ -480,6 +491,14 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
     async chat(turns, system) {
       return callClaudeTurns(apiKey, system, turns.map((t) => ({ role: t.role, content: t.content })), 1500);
     },
+    async complete(prompt, images, maxTokens = 1500) {
+      const content: unknown[] = (images ?? []).slice(0, 8).flatMap((img, i) => [
+        { type: 'text', text: `${img.label ?? `Photo ${i + 1}`}:` },
+        { type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 } },
+      ]);
+      content.push({ type: 'text', text: prompt });
+      return callClaude(apiKey, 'You help a construction contractor. Follow the reply format exactly.', content, maxTokens);
+    },
     async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);
       const imgs = (images ?? []).slice(0, 8);
@@ -574,6 +593,9 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
   };
   return {
     name: 'Claude (built in)',
+    async complete(prompt, images) {
+      return ask(prompt, images?.slice(0, 8));
+    },
     async chat(turns, system) {
       const sample = await getSample();
       if (!sample) throw new Error('Claude is not available on this page.');

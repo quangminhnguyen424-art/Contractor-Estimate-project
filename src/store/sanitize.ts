@@ -1,6 +1,7 @@
 // Checks saved or restored data before the app uses it, so a damaged or partial backup
 // can never crash the app (and can't lock the user out on every launch).
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
+import type { DailyLog, MarkupShape, SitePhoto, SiteProject, SiteRoom, SiteTask } from '../engine/site';
 import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, WorkProfile } from '../engine/types';
 
 export interface Persisted {
@@ -13,10 +14,13 @@ export interface Persisted {
   customTypes: CustomJobType[];
   /** Questions the contractor added, by job type id. Asked on every job of that type. */
   customQuestions: Record<string, Question[]>;
+  /** Job site projects (after a job is won): rooms, photos, tasks, logs. */
+  projects: SiteProject[];
 }
 
 export const EMPTY: Persisted = {
   profile: null, presets: {}, priceBook: { labor: {}, materials: {} }, pastJobs: [], estimates: [], customTypes: [], customQuestions: {},
+  projects: [],
 };
 
 export const DEFAULT_SCHEDULE: PaymentMilestone[] = [
@@ -159,6 +163,75 @@ const sanitizeExtras = (v: unknown): ExtraLine[] =>
       .map((x) => ({ questionId: str(x.questionId), label: x.label, qty: x.qty, unit: str(x.unit), unitPrice: num(x.unitPrice, 0), price: x.price }))
     : [];
 
+// ---- Job site ----
+const KINDS = ['arrow', 'circle', 'line', 'text'] as const;
+const COLORS = ['red', 'yellow', 'white'] as const;
+
+function sanitizeShape(v: unknown): MarkupShape | null {
+  if (!isObj(v) || typeof v.id !== 'string' || !KINDS.includes(v.kind as never)) return null;
+  const n = (x: unknown) => (fin(x) && Math.abs(x) < 20000 ? x : null);
+  const [x1, y1, x2, y2] = [n(v.x1), n(v.y1), n(v.x2), n(v.y2)];
+  if (x1 === null || y1 === null || x2 === null || y2 === null) return null;
+  return { id: v.id, kind: v.kind as MarkupShape['kind'], color: COLORS.includes(v.color as never) ? (v.color as MarkupShape['color']) : 'red',
+    x1, y1, x2, y2, ...(typeof v.text === 'string' && v.text.trim() ? { text: v.text.slice(0, 60) } : {}) };
+}
+
+/** Where a job photo may live: the app's photo folder, the browser's photo database, or an inline JPEG/PNG. */
+const PHOTO_URI = /^(app-photo:[\w.-]+|idb:[\w-]+|file:\/\/\/[^"'<>\s]+|data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+)$/;
+
+function sanitizePhoto(v: unknown): SitePhoto | null {
+  if (!isObj(v) || typeof v.id !== 'string' || typeof v.uri !== 'string' || !PHOTO_URI.test(v.uri)) return null;
+  const w = fin(v.w) && v.w > 0 && v.w < 20000 ? v.w : 1000;
+  const h = fin(v.h) && v.h > 0 && v.h < 20000 ? v.h : 750;
+  return {
+    id: v.id, uri: v.uri, w, h, kind: v.kind === 'before' || v.kind === 'after' ? v.kind : 'progress', note: str(v.note).slice(0, 1000),
+    markup: Array.isArray(v.markup) ? v.markup.map(sanitizeShape).filter((x): x is MarkupShape => !!x).slice(0, 100) : [],
+    takenAt: str(v.takenAt, new Date().toISOString()),
+  };
+}
+
+function sanitizeTask(v: unknown, photoIds: Set<string>): SiteTask | null {
+  if (!isObj(v) || typeof v.id !== 'string' || !str(v.text).trim()) return null;
+  const tr = isObj(v.tr) ? Object.fromEntries(Object.entries(v.tr).filter(([k, x]) => (k === 'vi' || k === 'es') && typeof x === 'string')) : undefined;
+  return {
+    id: v.id, text: str(v.text).trim().slice(0, 300), done: v.done === true,
+    ...(v.done === true && typeof v.doneAt === 'string' ? { doneAt: v.doneAt } : {}),
+    ...(tr && Object.keys(tr).length ? { tr } : {}),
+    ...(typeof v.photoId === 'string' && photoIds.has(v.photoId) ? { photoId: v.photoId } : {}),
+    ...(typeof v.afterPhotoId === 'string' && photoIds.has(v.afterPhotoId) ? { afterPhotoId: v.afterPhotoId } : {}),
+  };
+}
+
+function sanitizeRoom(v: unknown): SiteRoom | null {
+  if (!isObj(v) || typeof v.id !== 'string') return null;
+  const photos = Array.isArray(v.photos) ? v.photos.map(sanitizePhoto).filter((x): x is SitePhoto => !!x).slice(0, 300) : [];
+  const ids = new Set(photos.map((p) => p.id));
+  return {
+    id: v.id, name: str(v.name, 'Room').trim().slice(0, 40) || 'Room', notes: str(v.notes).slice(0, 3000), photos,
+    tasks: Array.isArray(v.tasks) ? v.tasks.map((t) => sanitizeTask(t, ids)).filter((x): x is SiteTask => !!x).slice(0, 200) : [],
+  };
+}
+
+export function sanitizeProjects(v: unknown): SiteProject[] {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set<string>();
+  return v.flatMap((p): SiteProject[] => {
+    if (!isObj(p) || typeof p.id !== 'string' || seen.has(p.id)) return [];
+    seen.add(p.id);
+    const logs = Array.isArray(p.logs)
+      ? p.logs.filter((l): l is DailyLog => isObj(l) && typeof l.id === 'string' && typeof l.date === 'string' && typeof l.text === 'string')
+        .map((l) => ({ id: l.id, date: l.date.slice(0, 10), text: l.text.slice(0, 4000) })).slice(0, 500)
+      : [];
+    return [{
+      id: p.id, ...(typeof p.estimateId === 'string' ? { estimateId: p.estimateId } : {}),
+      title: str(p.title, 'Job').trim().slice(0, 80) || 'Job', clientName: str(p.clientName).slice(0, 80), address: str(p.address).slice(0, 160),
+      status: p.status === 'done' ? 'done' : 'active', createdAt: str(p.createdAt, new Date().toISOString()),
+      rooms: Array.isArray(p.rooms) ? p.rooms.map(sanitizeRoom).filter((x): x is SiteRoom => !!x).slice(0, 60) : [],
+      logs,
+    }];
+  }).slice(0, 200);
+}
+
 function sanitizePastJob(v: unknown): PastJob | null {
   if (!isObj(v) || typeof v.id !== 'string' || !isJobType(v.jobTypeId)) return null;
   const sizeSf = num(v.sizeSf, 0);
@@ -228,6 +301,7 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
       estimates,
       customTypes,
       customQuestions,
+      projects: sanitizeProjects(raw.projects),
     },
     dropped: estimatesIn.length - estimates.length + (pastIn.length - pastJobs.length),
   };

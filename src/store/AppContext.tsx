@@ -1,9 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
+import { projectFromEstimate, type SiteProject } from '@/engine/site';
+import { deletePhotoFile } from '@/ui/photoStore';
+
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
@@ -54,6 +58,16 @@ interface Ctx extends Persisted {
   deleteCustomType: (id: string) => void;
   /** Replace the contractor's own questions for one job type. */
   saveQuestions: (jobTypeId: JobTypeId, qs: Question[]) => void;
+  /** Job site projects. `updateProject` applies a change to the latest saved copy. */
+  updateProject: (id: string, fn: (p: SiteProject) => SiteProject) => void;
+  addProject: (p: SiteProject) => void;
+  deleteProject: (id: string) => void;
+  /** Opens (or creates) the job site project for a won estimate. Returns its id. */
+  projectForEstimate: (estimateId: string) => string | null;
+  /** True when the last save failed (phone or browser storage full). */
+  saveFailed: boolean;
+  /** Deletes photo files, but only once the change that removed them has been saved. */
+  deletePhotosLater: (uris: string[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
   updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number }) => void;
@@ -75,6 +89,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const dataRef = useRef<Persisted>(EMPTY);
   const [apiKey, setApiKey] = useState('');
+  const [saveFailed, setSaveFailed] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -98,14 +113,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
+  // Saving is batched: typing in a note saves once the typing pauses (and right away when the app is put away),
+  // instead of rewriting everything on every key press.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toDelete = useRef<string[]>([]);
+  const flush = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    const doomed = toDelete.current;
+    toDelete.current = [];
+    AsyncStorage.setItem(KEY, JSON.stringify(dataRef.current)).then(
+      () => { setSaveFailed(false); doomed.forEach(deletePhotoFile); },
+      () => { setSaveFailed(true); toDelete.current.push(...doomed); },
+    );
+  }, []);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => { if (s !== 'active' && saveTimer.current) flush(); });
+    const onHide = () => { if (saveTimer.current) flush(); };
+    if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('pagehide', onHide);
+    return () => {
+      sub.remove();
+      if (typeof window !== 'undefined' && window.removeEventListener) window.removeEventListener('pagehide', onHide);
+    };
+  }, [flush]);
+
   const update = useCallback((fn: (d: Persisted) => Persisted) => {
     const next = fn(dataRef.current);
     // Keep the job type list in step with the contractor's own types and questions before anything renders.
     setCustomJobs(next.customTypes, next.customQuestions);
     dataRef.current = next;
     setData(next);
-    AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
-  }, []);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flush, 400);
+  }, [flush]);
 
   const compute = useCallback(
     (d: Draft, base: Persisted, existing?: Estimate): Estimate => {
@@ -176,6 +216,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             profile: d.profile ? { ...d.profile, specialties: d.profile.specialties.filter((s) => s !== id) } : d.profile,
           };
         }),
+      updateProject: (id, fn) =>
+        update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? fn(p) : p)) })),
+      addProject: (p) => update((d) => ({ ...d, projects: [p, ...d.projects.filter((x) => x.id !== p.id)] })),
+      deleteProject: (id) => update((d) => ({ ...d, projects: d.projects.filter((p) => p.id !== id) })),
+      projectForEstimate: (estimateId) => {
+        const cur = dataRef.current;
+        const existing = cur.projects.find((p) => p.estimateId === estimateId);
+        if (existing) return existing.id;
+        const est = cur.estimates.find((e) => e.id === estimateId);
+        if (!est) return null;
+        const p = projectFromEstimate(est, est.job?.name ?? jobType(est.jobTypeId).name, newId(), newId);
+        update((d) => ({ ...d, projects: [p, ...d.projects] }));
+        return p.id;
+      },
+      saveFailed,
       saveQuestions: (jobTypeId, qs) =>
         update((d) => {
           const { [jobTypeId]: _old, ...rest } = d.customQuestions;
@@ -200,8 +255,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id) })),
       resetAll: () => {
         setDraft(null);
+        toDelete.current.push(...dataRef.current.projects.flatMap((x) => x.rooms.flatMap((r) => r.photos.map((ph) => ph.uri))));
         update(() => EMPTY);
       },
+      deletePhotosLater: (uris) => { toDelete.current.push(...uris); },
       apiKey,
       saveApiKey: (key: string) => {
         const k = key.trim();
@@ -231,7 +288,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
       },
     }),
-    [data, ready, draft, update, commitDraft, apiKey],
+    [data, ready, draft, update, commitDraft, apiKey, saveFailed],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -15,7 +15,7 @@ import { confirmAction, notify } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs } = useApp();
+  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs, projects, projectForEstimate } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
@@ -200,6 +200,11 @@ export default function EstimateScreen() {
           : est.status === 'won' ? 'Won. (Not added to past jobs: it needs a quantity and a price to learn from.)'
           : 'Mark it Won when you get the job. It’s added to your past jobs so the app learns what you really charge.'}
       </Muted>
+
+      {est.status === 'won' ? (
+        <Button title={projects.some((x) => x.estimateId === est.id) ? 'Open job site' : 'Start job site'}
+          onPress={() => { const pid = projectForEstimate(est.id); if (pid) router.push(`/site/${pid}`); }} />
+      ) : null}
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Button kind="secondary" title="Edit answers" style={{ flex: 1 }} onPress={edit} />

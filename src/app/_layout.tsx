@@ -1,11 +1,25 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActivityIndicator, Platform, Text, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppProvider, useApp } from '@/store/AppContext';
 import { C } from '@/ui/kit';
+
+/** Shown on every screen when the app could not save (storage full), so no change is lost silently. */
+function SaveWarning() {
+  const { saveFailed } = useApp();
+  const insets = useSafeAreaInsets();
+  if (!saveFailed) return null;
+  return (
+    <View accessibilityRole="alert" pointerEvents="none"
+      style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 10, padding: 10 }}>
+      <Text style={{ color: '#fff', fontWeight: '700' }}>Could not save your latest changes</Text>
+      <Text style={{ color: '#fff', fontSize: 13 }}>Storage is full. Delete old photos or finished job sites, then try again.</Text>
+    </View>
+  );
+}
 
 function RootStack() {
   const { ready, profile } = useApp();
@@ -38,6 +52,12 @@ function RootStack() {
         <Stack.Screen name="price-book" options={{ title: 'Price book' }} />
         <Stack.Screen name="job-type" options={{ title: 'Type of work' }} />
         <Stack.Screen name="floor-plan" options={{ title: 'Floor plan' }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="site/[id]/index" options={{ title: 'Job site' }} />
+        <Stack.Screen name="site/[id]/room/[roomId]" options={{ title: 'Room' }} />
+        <Stack.Screen name="site/[id]/photo/[photoId]" options={{ title: 'Photo' }} />
+        <Stack.Screen name="site/[id]/log" options={{ title: 'Daily log' }} />
+        <Stack.Screen name="site/[id]/share" options={{ title: 'Share' }} />
       </Stack.Protected>
     </Stack>
   );
@@ -71,6 +91,7 @@ export default function RootLayout() {
       <AppProvider>
         <StatusBar style="dark" />
         <RootStack />
+        <SaveWarning />
       </AppProvider>
     </SafeAreaProvider>
   );

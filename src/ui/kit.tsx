@@ -28,8 +28,8 @@ export const C = {
 
 export const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, Menlo, monospace' });
 
-export function Screen({ children, scroll = true, padded = true, footer }: {
-  children: React.ReactNode; scroll?: boolean; padded?: boolean; footer?: React.ReactNode;
+export function Screen({ children, scroll = true, padded = true, footer, scrollEnabled = true }: {
+  children: React.ReactNode; scroll?: boolean; padded?: boolean; footer?: React.ReactNode; scrollEnabled?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   // On a computer screen, keep content at a comfortable reading width.
@@ -37,7 +37,7 @@ export function Screen({ children, scroll = true, padded = true, footer }: {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       {scroll ? (
-        <ScrollView contentContainerStyle={[pad, { paddingBottom: 32 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[pad, { paddingBottom: 32 }]} keyboardShouldPersistTaps="handled" scrollEnabled={scrollEnabled}>
           {children}
         </ScrollView>
       ) : (
