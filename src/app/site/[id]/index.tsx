@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 
 import { Text } from '@/ui/text';
+import { useToday } from '@/ui/useToday';
 import { newId } from '@/engine/format';
 import { dayLabel, upcoming } from '@/engine/schedule';
 import { beforeAfterPairs, contractLine, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
@@ -16,6 +17,7 @@ export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { projects, estimates, events, updateProject, deleteProject, deletePhotosLater } = useApp();
   const { width } = useWindowDimensions();
+  const today = useToday();
   const [roomName, setRoomName] = useState('');
   const p = projects.find((x) => x.id === id);
   if (!p) {
@@ -30,7 +32,6 @@ export default function ProjectScreen() {
   const est = estimates.find((e) => e.id === p.estimateId);
   const pairs = beforeAfterPairs(p);
   const go = (path: string) => router.push(`/site/${p.id}/${path}` as never);
-  const today = localDay();
   const nextVisit = upcoming(events.filter((e) => e.projectId === p.id), today, 60)[0];
   const thumb = Math.floor((Math.min(width, 760) - 32 - 12) / 3);
   // All photos by the day they were taken, newest first (like a feed).

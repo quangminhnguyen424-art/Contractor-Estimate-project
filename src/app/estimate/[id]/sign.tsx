@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { acceptedBlock, changedSinceSigned, hasInk, signatureSvg } from '@/engine/contract';
+import { acceptedBlock, changedSinceSigned, hasInk, signatureSvg, termsFrom } from '@/engine/contract';
 import { dateFmt, money } from '@/engine/format';
 import { quoteHtml } from '@/engine/quote';
 import type { Lang } from '@/engine/types';
@@ -41,9 +41,11 @@ export default function SignScreen() {
   const sign = () => {
     if (!name.trim()) return notify(lang === 'vi' ? 'Nhập họ tên' : 'Type your name', '');
     if (!hasInk(strokes)) return notify(lang === 'vi' ? 'Ký tên trong khung trắng' : 'Sign in the white box', '');
-    updateContract(est.id, (c) => ({
-      ...c, accepted: { name: name.trim(), strokes, w: padW, h: 170, signedAt: new Date().toISOString(), total: est.total },
-    }));
+    const sig = { name: name.trim(), strokes, w: padW, h: 170, signedAt: new Date().toISOString(), total: est.total };
+    // Keep the exact quote they signed (both languages) and freeze its terms: later edits to the estimate
+    // or to the payment schedule in Settings never change what was agreed.
+    const html = { en: quoteHtml(est, profile, 'en', acceptedBlock(sig, profile, 'en')), vi: quoteHtml(est, profile, 'vi', acceptedBlock(sig, profile, 'vi')) };
+    updateContract(est.id, (c) => ({ ...c, accepted: { ...sig, html }, terms: termsFrom(est, profile) }));
     if (est.status !== 'won') updateEstimate(est.id, { status: 'won' });
     notify(lang === 'vi' ? 'Đã ký' : 'Signed', lang === 'vi' ? 'Báo giá đã được chấp nhận. Công việc chuyển sang "Đã nhận".' : 'The quote is accepted and the job is marked Won.');
     router.replace(`/estimate/${est.id}/contract`);
@@ -53,7 +55,7 @@ export default function SignScreen() {
     if (!signed) return;
     setBusy(true);
     try {
-      await sharePdf(quoteHtml(est, profile, lang, acceptedBlock(signed, profile, lang)), `Signed quote — ${est.title}`);
+      await sharePdf(signed.html?.[lang] ?? quoteHtml(est, profile, lang, acceptedBlock(signed, profile, lang)), `Signed quote — ${est.title}`);
     } catch {
       notify('Could not create the PDF', 'Please try again.');
     } finally {
@@ -69,7 +71,7 @@ export default function SignScreen() {
         <Muted style={{ textAlign: 'center' }}>{dateFmt(signed.signedAt)} · {money(signed.total)} with tax</Muted>
         {changedSinceSigned(est, contract) ? (
           <Banner tone="warn" title="The quote changed after it was signed">
-            It was {money(signed.total)} when signed and is {money(est.total)} now. Use a change order for the difference, or have the client sign again.
+            It was {money(signed.total)} when signed and is {money(est.total)} now. The signed quote and the contract keep the signed amount. Use a change order for the difference, or remove the signature and have the client sign again.
           </Banner>
         ) : null}
         <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 12 }}>
@@ -79,7 +81,8 @@ export default function SignScreen() {
         <Button title={busy ? 'Creating PDF…' : 'Share signed quote PDF'} icon="share-outline" disabled={busy} onPress={share} />
         <Button kind="secondary" title="Contract & payments" icon="wallet-outline" onPress={() => router.replace(`/estimate/${est.id}/contract`)} />
         <Button kind="danger" title="Remove signature (client signs again)"
-          onPress={() => confirmAction('Remove the signature?', 'The client will need to sign again.', 'Remove', () => updateContract(est.id, (c) => ({ ...c, accepted: undefined })))} />
+          onPress={() => confirmAction('Remove the signature?', 'The client will need to sign again.', 'Remove',
+            () => updateContract(est.id, (c) => ({ ...c, accepted: undefined, terms: c.invoices.length ? c.terms : undefined })))} />
       </Screen>
     );
   }

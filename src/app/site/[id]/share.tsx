@@ -11,7 +11,7 @@ import { translateAll, writeClientUpdate, writePost } from '@/engine/siteAI';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
 import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
-import { notify } from '@/ui/notify';
+import { confirmAction, notify } from '@/ui/notify';
 import { photoDataUrl, resolvePhotoUri } from '@/ui/photoStore';
 import { sharePdf } from '@/ui/share';
 import { shareText } from '@/ui/shareText';
@@ -120,7 +120,11 @@ export default function ShareScreen() {
     try {
       const ids = new Set([...pairs.flatMap((x) => [x.before.id, x.after.id]), ...recent.map((ph) => ph.id)]);
       const shared = await sharePdf(clientUpdateHtml(p, text.trim(), await photoSources(p, ids), company, clientLang, recent.map((ph) => ph.id)), `Progress update — ${p.title}`);
-      if (shared) updateProject(p.id, (x) => ({ ...x, lastClientUpdateAt: new Date().toISOString() }));
+      // The share sheet can't tell us whether it was really sent, so ask before counting it as the client's update.
+      if (shared) {
+        confirmAction('Did you send it to the client?', 'Then these photos count as seen, and the home screen reminds you again when there are new ones.', 'Yes, sent',
+          () => updateProject(p.id, (x) => ({ ...x, lastClientUpdateAt: new Date().toISOString() })));
+      }
     } catch {
       notify('Could not make the PDF', 'Try again.');
     } finally {

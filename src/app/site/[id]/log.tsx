@@ -4,19 +4,20 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from '@/ui/text';
 import { dateFmt, newId } from '@/engine/format';
-import { dayActivity, localDay } from '@/engine/site';
+import { dayActivity } from '@/engine/site';
 import { writeDailyLog } from '@/engine/siteAI';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
 import { Button, C, Card, Field, H2, Muted, Screen } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
+import { useToday } from '@/ui/useToday';
 
 /** Daily logs: Claude drafts today's from the photos and finished tasks; you edit and save. */
 export default function LogScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { projects, updateProject, apiKey } = useApp();
+  const today = useToday();
   const p = projects.find((x) => x.id === id);
-  const today = localDay();
   const existing = p?.logs.find((l) => l.date === today);
   const [text, setText] = useState(existing?.text ?? '');
   const [busy, setBusy] = useState(false);

@@ -5,10 +5,11 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
-import { emptyContract, type Contract } from '@/engine/contract';
+import { emptyContract, nextInvoiceNo, termsFrom, type Contract, type Invoice } from '@/engine/contract';
 import type { CalEvent } from '@/engine/schedule';
 import { projectFromEstimate, type SiteProject } from '@/engine/site';
 import { deletePhotoFile } from '@/ui/photoStore';
+import { cancelAllReminders, scheduleReminder } from '@/ui/reminders';
 
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
@@ -68,6 +69,8 @@ interface Ctx extends Persisted {
   projectForEstimate: (estimateId: string) => string | null;
   /** The contract for a won job (signature, change orders, invoices, payments), applied to the latest saved copy. */
   updateContract: (estimateId: string, fn: (c: Contract) => Contract) => void;
+  /** Makes an invoice with the next number (never reused) and freezes the job's terms if not already frozen. */
+  issueInvoice: (estimateId: string, inv: Omit<Invoice, 'number'>) => Invoice | null;
   /** Calendar events. */
   saveEvent: (e: CalEvent) => void;
   deleteEvent: (id: string) => void;
@@ -246,6 +249,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const cur = d.contracts.find((c) => c.estimateId === estimateId) ?? emptyContract(estimateId);
           return { ...d, contracts: [fn(cur), ...d.contracts.filter((c) => c.estimateId !== estimateId)] };
         }),
+      issueInvoice: (estimateId, inv) => {
+        const cur = dataRef.current;
+        const est = cur.estimates.find((e) => e.id === estimateId);
+        if (!est || !cur.profile) return null;
+        const made: Invoice = { ...inv, number: nextInvoiceNo(cur.contracts, cur.lastInvoiceNo) };
+        const profile = cur.profile;
+        update((d) => {
+          const c = d.contracts.find((x) => x.estimateId === estimateId) ?? emptyContract(estimateId);
+          const next = { ...c, terms: c.terms ?? termsFrom(est, profile), invoices: [...c.invoices, made] };
+          return { ...d, lastInvoiceNo: Math.max(d.lastInvoiceNo ?? 1000, made.number), contracts: [next, ...d.contracts.filter((x) => x.estimateId !== estimateId)] };
+        });
+        return made;
+      },
       saveEvent: (e) => update((d) => ({ ...d, events: [e, ...d.events.filter((x) => x.id !== e.id)] })),
       deleteEvent: (id) => update((d) => ({ ...d, events: d.events.filter((x) => x.id !== id) })),
       pendingPlan,
@@ -275,6 +291,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id) })),
       resetAll: () => {
         setDraft(null);
+        cancelAllReminders();
         toDelete.current.push(...dataRef.current.projects.flatMap((x) => x.rooms.flatMap((r) => r.photos.map((ph) => ph.uri))));
         update(() => EMPTY);
       },
@@ -301,7 +318,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return { ok: false, message: 'This backup has no company profile.' };
         }
         setDraft(null);
-        update(() => next);
+        // Reminders belong to this phone: clear the old ones and set them again for what's coming up.
+        const restored = { ...next, events: next.events.map(({ notificationId: _n, ...e }) => e) };
+        update(() => restored);
+        cancelAllReminders().then(async () => {
+          for (const e of restored.events) {
+            const r = await scheduleReminder(e).catch(() => ({ id: undefined }));
+            if (r.id) update((cur) => ({ ...cur, events: cur.events.map((x) => (x.id === e.id ? { ...x, notificationId: r.id } : x)) }));
+          }
+        });
         return {
           ok: true,
           message: dropped > 0 ? `Backup restored. ${dropped} damaged item${dropped > 1 ? 's were' : ' was'} left out.` : 'Backup restored.',

@@ -4,7 +4,6 @@ import { ScrollView, View } from 'react-native';
 
 import { newId } from '@/engine/format';
 import { addDays, dayLabel, eventIcs, isYmd, KINDS, REMINDERS, type CalEvent, type EventKind } from '@/engine/schedule';
-import { localDay } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, Chip, Field, Label, Muted, Screen } from '@/ui/kit';
 import { PressScale } from '@/ui/motion';
@@ -12,6 +11,7 @@ import { confirmAction, notify } from '@/ui/notify';
 import { cancelReminder, remindersAvailable, scheduleReminder } from '@/ui/reminders';
 import { shareTextFile } from '@/ui/shareFile';
 import { Text } from '@/ui/text';
+import { useToday } from '@/ui/useToday';
 
 const HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 const MINUTES = ['00', '15', '30', '45'];
@@ -23,7 +23,7 @@ export default function EventScreen() {
   const params = useLocalSearchParams<{ id?: string; date?: string; project?: string; estimate?: string }>();
   const { events, saveEvent, deleteEvent, projects, estimates, profile } = useApp();
   const existing = events.find((e) => e.id === params.id);
-  const today = localDay();
+  const today = useToday();
   const linkedProject = projects.find((p) => p.id === (existing?.projectId ?? params.project));
   const linkedEstimate = estimates.find((e) => e.id === (existing?.estimateId ?? params.estimate));
   const [title, setTitle] = useState(existing?.title ?? '');

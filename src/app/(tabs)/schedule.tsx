@@ -6,19 +6,19 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
 import { addDays, dayLabel, eventsOn, KINDS, timeLabel, upcoming, type CalEvent } from '@/engine/schedule';
-import { localDay } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, Empty, Muted, Screen, Section } from '@/ui/kit';
 import { PressScale, Reveal } from '@/ui/motion';
 import { remindersAvailable } from '@/ui/reminders';
 import { Text } from '@/ui/text';
+import { useToday } from '@/ui/useToday';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 /** The calendar: pick a day on the strip, see what's on, add site visits, crew days, calls and inspections. */
 export default function ScheduleScreen() {
-  const { events, estimates, contracts, projects } = useApp();
-  const today = localDay();
+  const { events, estimates, contracts, projects, profile } = useApp();
+  const today = useToday();
   const [day, setDay] = useState(today);
   const days = Array.from({ length: 45 }, (_, i) => addDays(today, i - 3));
   const onDay = eventsOn(events, day);
@@ -27,8 +27,8 @@ export default function ScheduleScreen() {
   // Invoices due on the chosen day that aren't fully paid.
   const dueInvoices = contracts.flatMap((c) => {
     const est = estimates.find((e) => e.id === c.estimateId);
-    if (!est) return [];
-    const st = invoiceStates(c, today);
+    if (!est || !profile) return [];
+    const st = invoiceStates(c, today, est.salesTaxPct);
     return c.invoices.filter((v) => v.dueDate === day && st[v.id]?.state !== 'paid').map((v) => ({ v, est }));
   });
 
@@ -67,7 +67,7 @@ export default function ScheduleScreen() {
             <IconDot icon="cash-outline" color={C.okInk} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.ink, fontWeight: '700' }}>Invoice #{v.number} due · {money(v.amount + v.tax)}</Text>
-              <Text style={{ color: C.muted, fontSize: 13 }}>{est.title} · balance {money(contractTotals(est, contracts.find((c) => c.estimateId === est.id)!).balance)}</Text>
+              <Text style={{ color: C.muted, fontSize: 13 }}>{est.title} · balance {money(contractTotals(est, profile!, contracts.find((c) => c.estimateId === est.id)!).balance)}</Text>
             </View>
           </Card>
         </Pressable>

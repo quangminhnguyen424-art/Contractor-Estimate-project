@@ -4,12 +4,11 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
-  billItems, changedSinceSigned, contractTotals, emptyContract, invoiceHtml, invoiceStates, nextChangeNo, nextInvoiceNo, type BillItem,
+  billItems, changedSinceSigned, contractTotals, emptyContract, invoiceHtml, invoiceStates, termsFrom, termsOf, type BillItem, type Contract,
   type InvoiceState, type PayMethod,
 } from '@/engine/contract';
 import { dateFmt, money, newId } from '@/engine/format';
 import { addDays } from '@/engine/schedule';
-import { localDay } from '@/engine/site';
 import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Art } from '@/ui/art';
@@ -18,6 +17,7 @@ import { Progress, Reveal } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 import { Text } from '@/ui/text';
+import { useToday } from '@/ui/useToday';
 
 const METHODS: { value: PayMethod; label: string }[] = [
   { value: 'check', label: 'Check' }, { value: 'zelle', label: 'Zelle' }, { value: 'cash', label: 'Cash' },
@@ -30,7 +30,8 @@ const STATE: Record<InvoiceState, { label: string; tone: 'ok' | 'info' | 'warn' 
 /** Everything after the yes: signature, change orders, invoices and payments for one job. */
 export default function ContractScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, profile, contracts, updateContract } = useApp();
+  const { estimates, profile, contracts, updateContract, issueInvoice } = useApp();
+  const today = useToday();
   const est = estimates.find((e) => e.id === id);
   const c = contracts.find((x) => x.estimateId === id) ?? emptyContract(id ?? '');
   const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
@@ -42,21 +43,18 @@ export default function ContractScreen() {
   const [payNote, setPayNote] = useState('');
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
 
-  const today = localDay();
-  const t = contractTotals(est, c);
+  const t = contractTotals(est, profile, c);
   const items = billItems(est, profile, c);
-  const states = invoiceStates(c, today);
+  const states = invoiceStates(c, today, termsOf(est, profile, c).salesTaxPct);
 
   const invoice = async (item: BillItem) => {
     setBusy(item.key);
     try {
-      let inv = item.invoice;
-      if (!inv) {
-        inv = { id: newId(), number: nextInvoiceNo(contracts), date: today, dueDate: addDays(today, dueDays), itemKey: item.key, label: item.label, amount: item.amount, tax: item.tax };
-        const made = inv;
-        updateContract(est.id, (x) => ({ ...x, invoices: [...x.invoices, made] }));
-      }
-      await sharePdf(invoiceHtml(est, profile, { ...c, invoices: c.invoices.some((v) => v.id === inv.id) ? c.invoices : [...c.invoices, inv] }, inv, lang), `Invoice ${inv.number} — ${est.title}`);
+      const inv = item.invoice
+        ?? issueInvoice(est.id, { id: newId(), date: today, dueDate: addDays(today, dueDays), itemKey: item.key, label: item.label, amount: item.amount, tax: item.tax });
+      if (!inv) return;
+      const withInv: Contract = { ...c, terms: c.terms ?? termsFrom(est, profile), invoices: c.invoices.some((v) => v.id === inv.id) ? c.invoices : [...c.invoices, inv] };
+      await sharePdf(invoiceHtml(est, profile, withInv, inv, lang), `Invoice ${inv.number} — ${est.title}`);
     } catch {
       notify('Could not create the invoice', 'Please try again.');
     } finally {
@@ -64,11 +62,8 @@ export default function ContractScreen() {
     }
   };
 
-  const newChange = () => {
-    const co = { id: newId(), number: nextChangeNo(c), title: '', description: '', amount: 0, status: 'pending' as const, createdAt: new Date().toISOString() };
-    updateContract(est.id, (x) => ({ ...x, changeOrders: [...x.changeOrders, co] }));
-    router.push(`/estimate/${est.id}/change?co=${co.id}`);
-  };
+  // The change order is only saved once something is typed in it (backing out leaves nothing behind).
+  const newChange = () => router.push(`/estimate/${est.id}/change?co=new`);
 
   const recordPayment = () => {
     if (!(payAmount > 0)) return;
@@ -151,17 +146,17 @@ export default function ContractScreen() {
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: C.ink, fontWeight: '600' }}>{it.label}</Text>
                 <Text style={{ color: C.muted, fontSize: 12 }}>
-                  {money(it.amount)} + tax {money(it.tax)}{it.invoice ? ` · #${it.invoice.number} · due ${dateFmt(`${it.invoice.dueDate}T12:00:00`)}` : ''}
+                  {it.credit ? `${money(it.amount + it.tax)} with tax · taken off the balance` : `${money(it.amount)} + tax ${money(it.tax)}`}{it.invoice ? ` · #${it.invoice.number} · due ${dateFmt(`${it.invoice.dueDate}T12:00:00`)}` : ''}
                 </Text>
               </View>
-              {st ? <Badge label={STATE[st.state].label} tone={STATE[st.state].tone} /> : null}
-              <Pressable accessibilityRole="button" accessibilityLabel={it.invoice ? `Share invoice ${it.invoice.number}` : `Create invoice for ${it.label}`}
+              {it.credit ? <Badge label="Credit" tone="ok" /> : st ? <Badge label={STATE[st.state].label} tone={STATE[st.state].tone} /> : null}
+              {it.credit ? null : <Pressable accessibilityRole="button" accessibilityLabel={it.invoice ? `Share invoice ${it.invoice.number}` : `Create invoice for ${it.label}`}
                 disabled={!!busy} onPress={() => invoice(it)}
                 style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: it.invoice ? C.cardHi : C.accent }}>
                 <Text style={{ color: it.invoice ? C.ink : C.onAccent, fontWeight: '700', fontSize: 13 }}>
                   {busy === it.key ? '…' : it.invoice ? 'Share' : 'Invoice'}
                 </Text>
-              </Pressable>
+              </Pressable>}
             </View>
           );
         })}

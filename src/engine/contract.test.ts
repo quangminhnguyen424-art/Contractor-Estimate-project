@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { sanitizeContracts, sanitizeEvents } from '../store/sanitize';
 import {
   acceptedBlock, billItems, changedSinceSigned, changeOrderHtml, contractTotals, emptyContract, hasInk, invoiceHtml, invoiceStates,
-  nextChangeNo, nextInvoiceNo, signatureSvg, type Contract,
+  nextChangeNo, nextInvoiceNo, signatureSvg, termsFrom, type Contract,
 } from './contract';
 import { buildEstimate } from './estimator';
 import { defaultAnswers } from './jobTypes';
@@ -36,7 +36,7 @@ const contract = (): Contract => ({
 
 describe('contract money', () => {
   it('adds approved change orders (and credits) with tax, ignores pending ones', () => {
-    const t = contractTotals(est, contract());
+    const t = contractTotals(est, profile, contract());
     expect(t.changes).toBe(200);
     expect(t.total).toBe(22220);
     expect(t.pending).toBe(1);
@@ -48,7 +48,8 @@ describe('contract money', () => {
     expect(items.map((i) => i.amount)).toEqual([2000, 10000, 8000, 600, -400]);
     expect(items[0].tax).toBe(200);
     // Everything billed adds up to the contract total exactly.
-    expect(items.reduce((s, i) => s + i.amount + i.tax, 0)).toBeCloseTo(contractTotals(est, contract()).total, 2);
+    expect(items.reduce((s, i) => s + i.amount + i.tax, 0)).toBeCloseTo(contractTotals(est, profile, contract()).total, 2);
+    expect(items.filter((i) => i.credit).map((i) => i.key)).toEqual(['co:c3']);
   });
   it('applies payments to invoices oldest first and spots overdue ones', () => {
     const c = contract();
@@ -57,13 +58,29 @@ describe('contract money', () => {
       { id: 'i2', number: 1002, date: '2026-11-10', dueDate: '2026-11-12', itemKey: 'm1', label: 'Rough-in', amount: 10000, tax: 1000 },
     ];
     c.payments = [{ id: 'p1', date: '2026-11-02', amount: 5000, method: 'check', note: '' }];
-    const st = invoiceStates(c, '2026-11-20');
+    // $5,000 paid plus the $440 credit (work removed, with tax) count toward the invoices.
+    const st = invoiceStates(c, '2026-11-20', 10);
     expect(st.i1).toEqual({ state: 'paid', paid: 2200 });
-    expect(st.i2).toEqual({ state: 'partial', paid: 2800 });
-    expect(invoiceStates({ ...c, payments: [] }, '2026-11-20').i2.state).toBe('overdue');
-    expect(contractTotals(est, c).due).toBe(8200);
+    expect(st.i2).toEqual({ state: 'partial', paid: 3240 });
+    expect(invoiceStates({ ...c, payments: [], changeOrders: [] }, '2026-11-20', 10).i2.state).toBe('overdue');
+    expect(contractTotals(est, profile, c).due).toBe(7760);
     expect(nextInvoiceNo([c, emptyContract('x')])).toBe(1003);
+    expect(nextInvoiceNo([c], 1010)).toBe(1011); // a deleted job's numbers are never reused
     expect(nextChangeNo(c)).toBe(4);
+  });
+  it('keeps the signed terms when the estimate or the schedule in Settings changes later', () => {
+    const c = { ...contract(), terms: termsFrom(est, profile) };
+    const edited = { ...est, price: 25000, tax: 2500, total: 27500 };
+    const newSchedule = { ...profile, schedule: [{ label: 'Demo', pct: 20 }, { label: 'Rest', pct: 80 }] };
+    expect(contractTotals(edited, newSchedule, c).total).toBe(22220);
+    expect(billItems(edited, newSchedule, c).map((i) => i.label)[1]).toBe('Rough-in (50%)');
+  });
+  it('balance is exactly zero when every invoice is paid (no stray cents)', () => {
+    const odd = { ...est, price: 2010, tax: 206.03, total: 2216.03, salesTaxPct: 10.25 };
+    const two = { ...profile, schedule: [{ label: 'A', pct: 50 }, { label: 'B', pct: 50 }] };
+    const items = billItems(odd, two, emptyContract('e1'));
+    const t = contractTotals(odd, two, { ...emptyContract('e1'), payments: [{ id: 'p', date: '2026-11-01', amount: items.reduce((s, i) => s + i.amount + i.tax, 0), method: 'cash', note: '' }] });
+    expect(t.balance).toBe(0);
   });
   it('notices when the quote changed after it was signed', () => {
     expect(changedSinceSigned(est, contract())).toBe(false);

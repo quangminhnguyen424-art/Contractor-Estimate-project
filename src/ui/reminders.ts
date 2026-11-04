@@ -35,3 +35,8 @@ export async function scheduleReminder(e: CalEvent): Promise<{ id?: string; bloc
 export async function cancelReminder(id?: string) {
   if (id) await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
 }
+
+/** Clears every scheduled reminder (used when all data is erased or replaced by a backup). */
+export async function cancelAllReminders() {
+  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+}

@@ -8,3 +8,5 @@ export async function scheduleReminder(_e: CalEvent): Promise<{ id?: string; blo
 }
 
 export async function cancelReminder(_id?: string) {}
+
+export async function cancelAllReminders() {}

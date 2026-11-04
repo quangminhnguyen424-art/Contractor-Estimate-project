@@ -7,7 +7,7 @@ import { Text } from '@/ui/text';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
 import { estimateJob, FINISH_LABELS } from '@/engine/jobTypes';
-import { acceptedBlock } from '@/engine/contract';
+import { acceptedBlock, changedSinceSigned } from '@/engine/contract';
 import { QUOTE_TEXT, quoteHtml, quoteSections, scheduleAmounts } from '@/engine/quote';
 import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -35,8 +35,14 @@ export default function QuoteScreen() {
   const send = async () => {
     setBusy(true);
     try {
-      const signed = contracts.find((c) => c.estimateId === est.id)?.accepted;
-      const shared = await sharePdf(quoteHtml(est, profile, lang, signed ? acceptedBlock(signed, profile, lang) : undefined), `${T.quote} — ${est.title}`);
+      const c = contracts.find((x) => x.estimateId === est.id);
+      const signed = c?.accepted;
+      // A signed quote is shared exactly as signed. If the estimate changed since, share it unsigned.
+      const html = signed && !changedSinceSigned(est, c)
+        ? signed.html?.[lang] ?? quoteHtml(est, profile, lang, acceptedBlock(signed, profile, lang))
+        : quoteHtml(est, profile, lang);
+      if (signed && changedSinceSigned(est, c)) notify('Shared without the signature', 'The quote changed after the client signed, so this copy is unsigned. Have them sign again or use a change order.');
+      const shared = await sharePdf(html, `${T.quote} — ${est.title}`);
       if (shared && est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
     } catch {
       notify('Could not create the PDF', 'Please try again.');

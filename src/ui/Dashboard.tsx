@@ -5,7 +5,7 @@ import { Linking, Platform, Pressable, ScrollView, useWindowDimensions, View } f
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
 import { KINDS, timeLabel, upcoming } from '@/engine/schedule';
-import { localDay, projectProgress, type SitePhoto } from '@/engine/site';
+import { projectProgress, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
 
 import { Art } from './art';
@@ -13,6 +13,7 @@ import { Button, C, Card, Section, Tile, mono } from './kit';
 import { PressScale, Reveal } from './motion';
 import { PhotoView } from './SitePhotoView';
 import { Text } from './text';
+import { useToday } from './useToday';
 
 const DAY = 86400000;
 
@@ -30,7 +31,7 @@ export function staleUpdates(projects: ReturnType<typeof useApp>['projects'], no
 export function Dashboard({ claudeOn, onMic }: { claudeOn: boolean; onMic: () => void }) {
   const { profile, events, contracts, estimates, projects } = useApp();
   const { width } = useWindowDimensions();
-  const today = localDay();
+  const today = useToday();
   const first = (profile?.contactName ?? '').trim().split(/\s+/)[0];
   const hour = new Date().getHours();
   const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -40,10 +41,10 @@ export function Dashboard({ claudeOn, onMic }: { claudeOn: boolean; onMic: () =>
   let due = 0, overdue = 0, balance = 0;
   for (const c of contracts) {
     const est = estimates.find((e) => e.id === c.estimateId);
-    if (!est) continue;
-    const t = contractTotals(est, c);
+    if (!est || !profile) continue;
+    const t = contractTotals(est, profile, c);
     due += t.due; balance += Math.max(0, t.balance);
-    overdue += Object.values(invoiceStates(c, today)).filter((s) => s.state === 'overdue').length;
+    overdue += Object.values(invoiceStates(c, today, est.salesTaxPct)).filter((s) => s.state === 'overdue').length;
   }
   const waiting = estimates.filter((e) => e.status === 'sent').length;
   const updates = staleUpdates(projects).slice(0, 2);

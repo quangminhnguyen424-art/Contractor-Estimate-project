@@ -56,7 +56,7 @@ export default function Jobs() {
       ) : (
         shown.map((e, i) => {
           const c = contracts.find((x) => x.estimateId === e.id);
-          const t = c ? contractTotals(e, c) : null;
+          const t = c && profile ? contractTotals(e, profile, c) : null;
           return (
           <Reveal key={e.id} index={i}>
           <PressScale

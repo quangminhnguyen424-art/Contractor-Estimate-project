@@ -1,7 +1,7 @@
 // Checks saved or restored data before the app uses it, so a damaged or partial backup
 // can never crash the app (and can't lock the user out on every launch).
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
-import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, Signature } from '../engine/contract';
+import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, Signature, Terms } from '../engine/contract';
 import type { CalEvent, EventKind } from '../engine/schedule';
 import type { DailyLog, MarkupShape, SitePhoto, SiteProject, SiteRoom, SiteTask } from '../engine/site';
 import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, WorkProfile } from '../engine/types';
@@ -22,6 +22,8 @@ export interface Persisted {
   contracts: Contract[];
   /** The calendar: site visits, crew days, calls, inspections. */
   events: CalEvent[];
+  /** Highest invoice number ever issued, so numbers are never reused (even after a job is deleted). */
+  lastInvoiceNo?: number;
 }
 
 export const EMPTY: Persisted = {
@@ -311,6 +313,7 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
       projects: sanitizeProjects(raw.projects),
       contracts: sanitizeContracts(raw.contracts),
       events: sanitizeEvents(raw.events),
+      ...(typeof raw.lastInvoiceNo === 'number' && Number.isFinite(raw.lastInvoiceNo) ? { lastInvoiceNo: Math.round(raw.lastInvoiceNo) } : {}),
     },
     dropped: estimatesIn.length - estimates.length + (pastIn.length - pastJobs.length),
   };
@@ -333,6 +336,17 @@ function sanitizeSignature(v: unknown): Signature | null {
     .slice(0, 200).map((s) => s.slice(0, 2000).map((x) => Math.round(x * 10) / 10));
   if (!strokes.length) return null;
   return { name: str(v.name).trim().slice(0, 80), strokes, w, h, signedAt: str(v.signedAt, new Date().toISOString()) };
+}
+
+function sanitizeTerms(v: unknown): Terms | null {
+  if (!isObj(v) || !Array.isArray(v.schedule)) return null;
+  const price = money(v.price), total = money(v.total), pct = num(v.salesTaxPct, NaN);
+  if (price === null || total === null || !(pct >= 0 && pct < 30)) return null;
+  const schedule = v.schedule.flatMap((m) => {
+    const amount = isObj(m) ? money(m.amount) : null;
+    return isObj(m) && typeof m.label === 'string' && amount !== null ? [{ label: m.label.slice(0, 80), pct: num(m.pct, 0), amount }] : [];
+  }).slice(0, 20);
+  return schedule.length ? { price, total, salesTaxPct: pct, schedule } : null;
 }
 
 const PAY: PayMethod[] = ['check', 'cash', 'zelle', 'card', 'transfer', 'other'];
@@ -367,7 +381,16 @@ export function sanitizeContracts(v: unknown): Contract[] {
       if (!isObj(x) || typeof x.id !== 'string' || amount === null || !(amount > 0) || !YMD.test(str(x.date))) return [];
       return [{ id: x.id, date: str(x.date), amount, method: PAY.includes(x.method as PayMethod) ? (x.method as PayMethod) : 'other', note: str(x.note).slice(0, 300) }];
     }).slice(0, 500);
-    return [{ estimateId: c.estimateId, ...(accSig && accTotal !== null ? { accepted: { ...accSig, total: accTotal } } : {}), changeOrders, invoices, payments }];
+    const html = isObj(c.accepted) && isObj(c.accepted.html)
+      ? Object.fromEntries(Object.entries(c.accepted.html).filter(([k, x]) => (k === 'en' || k === 'vi') && typeof x === 'string' && x.length < 600000))
+      : undefined;
+    const terms = sanitizeTerms(c.terms);
+    return [{
+      estimateId: c.estimateId,
+      ...(accSig && accTotal !== null ? { accepted: { ...accSig, total: accTotal, ...(html && Object.keys(html).length ? { html } : {}) } } : {}),
+      ...(terms ? { terms } : {}),
+      changeOrders, invoices, payments,
+    }];
   }).slice(0, 1000);
 }
 
