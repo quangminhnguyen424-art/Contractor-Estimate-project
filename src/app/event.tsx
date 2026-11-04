@@ -101,7 +101,7 @@ export default function EventScreen() {
           const dt = new Date(`${d}T12:00:00`);
           return (
             <PressScale key={d} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={dayLabel(d, today)} onPress={() => setDate(d)}
-              style={{ width: 52, paddingVertical: 8, borderRadius: 14, alignItems: 'center', backgroundColor: on ? C.accent : C.card, borderWidth: 1, borderColor: on ? C.accent : C.line }}>
+              style={{ width: 52, paddingVertical: 8, borderRadius: 6, alignItems: 'center', backgroundColor: on ? C.accent : C.card, borderWidth: 1, borderColor: on ? C.accent : C.line }}>
               <Text style={{ color: on ? C.onAccent : C.muted, fontSize: 11 }}>{d === today ? 'Today' : dt.toLocaleDateString('en-US', { weekday: 'short' })}</Text>
               <Text style={{ color: on ? C.onAccent : C.ink, fontSize: 17, fontWeight: '800' }}>{dt.getDate()}</Text>
               <Text style={{ color: on ? C.onAccent : C.muted, fontSize: 10 }}>{dt.toLocaleDateString('en-US', { month: 'short' })}</Text>

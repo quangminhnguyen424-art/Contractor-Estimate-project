@@ -106,7 +106,7 @@ export default function ScanScreen() {
       {rooms.length ? (
         <Reveal>
           <Card>
-            <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 8, alignItems: 'center' }}>
+            <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 8, alignItems: 'center' }}>
               <SvgXml xml={planSvg(rooms, drawW - 16)} width={drawW - 16} />
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

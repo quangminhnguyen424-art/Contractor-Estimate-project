@@ -5,18 +5,23 @@ import {
 } from 'react-native';
 
 /**
- * Every piece of text in the app uses Be Vietnam Pro: clean, modern, and drawn for Vietnamese accents.
- * Custom fonts come as one file per weight, so the weight in a style is turned into the matching file here.
+ * Text uses Space Grotesk (technical, modern, with Vietnamese accents); numbers and small labels use
+ * JetBrains Mono, like the readout on a measuring tool. Custom fonts come as one file per weight, so the
+ * weight in a style is turned into the matching file here.
  */
 export const FONT = {
-  regular: 'BeVietnamPro_400Regular',
-  medium: 'BeVietnamPro_500Medium',
-  semibold: 'BeVietnamPro_600SemiBold',
-  bold: 'BeVietnamPro_700Bold',
-  heavy: 'BeVietnamPro_800ExtraBold',
+  regular: 'SpaceGrotesk_400Regular',
+  medium: 'SpaceGrotesk_500Medium',
+  semibold: 'SpaceGrotesk_600SemiBold',
+  bold: 'SpaceGrotesk_700Bold',
+  heavy: 'SpaceGrotesk_700Bold',
 } as const;
 
-/** Marker for numbers (money, sizes): the app font with equal-width digits so columns line up. */
+/** The readout font, for labels set in capitals. */
+export const MONO = 'JetBrainsMono_500Medium';
+const MONO_BOLD = 'JetBrainsMono_700Bold';
+
+/** Marker for numbers (money, sizes): the readout font, so digits line up in columns. */
 export const NUM = '__numbers__';
 
 type Weight = TextStyle['fontWeight'];
@@ -38,11 +43,12 @@ function useFontStyle(style: TextProps['style']) {
   const flat = (StyleSheet.flatten(style) ?? {}) as TextStyle;
   const { fontWeight, fontFamily, ...rest } = flat;
   const weight = fontWeight ?? inherited;
-  if (fontFamily && fontFamily !== NUM) return { style, weight }; // a deliberate other font
-  return {
-    weight,
-    style: [rest, { fontFamily: fontFor(weight) }, fontFamily === NUM ? { fontVariant: ['tabular-nums'] as TextStyle['fontVariant'] } : null],
-  };
+  if (fontFamily === NUM || fontFamily === MONO) {
+    const w = typeof weight === 'number' ? weight : parseInt(String(weight ?? '400'), 10) || (weight === 'bold' ? 700 : 400);
+    return { weight, style: [rest, { fontFamily: w >= 600 ? MONO_BOLD : MONO }] };
+  }
+  if (fontFamily) return { style, weight }; // a deliberate other font
+  return { weight, style: [rest, { fontFamily: fontFor(weight) }] };
 }
 
 export function Text({ style, children, ...props }: TextProps) {

@@ -12,7 +12,7 @@ export function celebrate() {
   listeners.forEach((l) => l());
 }
 
-const COLORS = ['#FACC15', '#FDE68A', '#38BDF8', '#34D399', '#F472B6', '#FFFFFF'];
+const COLORS = ['#FF7A1A', '#FFB37A', '#38BDF8', '#34D399', '#FACC15', '#FFFFFF'];
 
 export function ConfettiHost() {
   const [burst, setBurst] = useState(0);

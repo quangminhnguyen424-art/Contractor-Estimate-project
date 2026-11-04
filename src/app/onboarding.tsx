@@ -10,6 +10,7 @@ import type { FinishLevel, JobTypeId, Presets, WorkProfile } from '@/engine/type
 import { DEFAULT_SCHEDULE, useApp } from '@/store/AppContext';
 import { AddOwnType, JobTypeChips, priceSuffix } from '@/ui/JobTypes';
 import { Art } from '@/ui/art';
+import { IntroVideo } from '@/ui/IntroVideo';
 import { Banner, Button, C, Card, Field, H1, H2, Muted, NumberField, Screen } from '@/ui/kit';
 import { Progress, Reveal } from '@/ui/motion';
 import { RestoreBackup } from '@/ui/RestoreBackup';
@@ -20,6 +21,8 @@ export default function Onboarding() {
   const [about, setAbout] = useState('');
   const [work, setWork] = useState<WorkProfile>(EMPTY_WORK);
   const [step, setStep] = useState(1);
+  // A short welcome video plays first; "Get started" or "Skip" goes to setup.
+  const [intro, setIntro] = useState(true);
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [phone, setPhone] = useState('');
@@ -48,6 +51,8 @@ export default function Onboarding() {
       quoteValidDays: 30, quoteLanguage: 'en', schedule: DEFAULT_SCHEDULE, about: about.trim(), work,
     });
   };
+
+  if (intro) return <IntroVideo onDone={() => setIntro(false)} />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>

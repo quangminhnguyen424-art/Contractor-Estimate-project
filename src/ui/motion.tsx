@@ -55,7 +55,7 @@ export function Pulse({ children, active = true, style, min = 0.94, max = 1.04 }
 }
 
 /** A line that sweeps up and down over a picture, like a scanner. */
-export function ScanBeam({ height, color = '#FACC15' }: { height: number; color?: string }) {
+export function ScanBeam({ height, color = '#FF7A1A' }: { height: number; color?: string }) {
   const y = useSharedValue(0);
   useEffect(() => {
     y.set(withRepeat(withTiming(height - 6, { duration: 1800, easing: Easing.inOut(Easing.quad) }), -1, true));
@@ -68,7 +68,7 @@ export function ScanBeam({ height, color = '#FACC15' }: { height: number; color?
 }
 
 /** Progress bar that fills smoothly to its value (0–1). */
-export function Progress({ value, color = '#FACC15', track = '#334155', height = 8 }: { value: number; color?: string; track?: string; height?: number }) {
+export function Progress({ value, color = '#FF7A1A', track = '#1F2933', height = 8 }: { value: number; color?: string; track?: string; height?: number }) {
   const w = useSharedValue(0);
   useEffect(() => {
     w.set(withDelay(150, withTiming(Math.max(0, Math.min(1, value || 0)), { duration: 700, easing: Easing.out(Easing.cubic) })));
@@ -82,7 +82,7 @@ export function Progress({ value, color = '#FACC15', track = '#334155', height =
 }
 
 /** Three dots that bounce while Claude is thinking. */
-export function TypingDots({ color = '#FACC15' }: { color?: string }) {
+export function TypingDots({ color = '#FF7A1A' }: { color?: string }) {
   return (
     <View style={{ flexDirection: 'row', gap: 5, paddingVertical: 6 }}>
       {[0, 1, 2].map((i) => <Dot key={i} delay={i * 160} color={color} />)}
@@ -110,7 +110,7 @@ export function Float({ children, style, distance = 6, duration = 2600 }: { chil
 }
 
 /** A four-point star that twinkles (grows, glows, fades) on a loop. Position it with `style`. */
-export function Twinkle({ size = 14, color = '#FDE68A', delay = 0, style }: { size?: number; color?: string; delay?: number; style?: StyleProp<ViewStyle> }) {
+export function Twinkle({ size = 14, color = '#FFB37A', delay = 0, style }: { size?: number; color?: string; delay?: number; style?: StyleProp<ViewStyle> }) {
   const v = useSharedValue(0.3);
   useEffect(() => {
     v.set(withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) }), withTiming(0.3, { duration: 900, easing: Easing.in(Easing.quad) })), -1, false)));
@@ -127,7 +127,7 @@ export function Twinkle({ size = 14, color = '#FDE68A', delay = 0, style }: { si
 }
 
 /** A soft colored glow that slowly breathes behind something (hero cards, the + button). */
-export function Glow({ color = '#FACC15', size = 220, style }: { color?: string; size?: number; style?: StyleProp<ViewStyle> }) {
+export function Glow({ color = '#FF7A1A', size = 220, style }: { color?: string; size?: number; style?: StyleProp<ViewStyle> }) {
   const v = useSharedValue(0.35);
   useEffect(() => {
     v.set(withRepeat(withSequence(withTiming(0.6, { duration: 2200 }), withTiming(0.35, { duration: 2200 })), -1, false));

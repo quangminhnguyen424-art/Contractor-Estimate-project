@@ -131,7 +131,7 @@ export default function Assistant() {
         {messages.map((m) => (
           <View key={m.id} style={{ alignItems: m.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
             <View style={{
-              maxWidth: '88%', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10,
+              maxWidth: '88%', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10,
               backgroundColor: m.role === 'user' ? C.accent : m.error ? C.warnBg : C.card,
               borderWidth: m.role === 'user' ? 0 : 1, borderColor: C.line,
             }}>
@@ -141,7 +141,7 @@ export default function Assistant() {
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                 {m.action ? (
                   <Pressable accessibilityRole="button" disabled={!!starting} onPress={() => start(m)}
-                    style={{ backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9, opacity: starting ? 0.6 : 1 }}>
+                    style={{ backgroundColor: C.accent, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 9, opacity: starting ? 0.6 : 1 }}>
                     <Text style={{ color: C.onAccent, fontWeight: '700' }}>
                       {starting === m.id ? 'Opening…' : `Start this estimate${m.action.title ? `: ${m.action.title}` : ''}`}
                     </Text>
@@ -155,7 +155,7 @@ export default function Assistant() {
           </View>
         ))}
         {busy ? (
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: C.card, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line }}>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: C.card, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line }}>
             <TypingDots />
           </View>
         ) : null}

@@ -44,7 +44,7 @@ export default function QuickSheet() {
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Close" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(2,6,23,0.6)' }} onPress={() => router.back()} />
       <Reveal>
-        <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: C.line, padding: 18, gap: 12, paddingBottom: Math.max(18, insets.bottom + 8), width: '100%', maxWidth: 760, alignSelf: 'center' }}>
+        <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 10, borderTopRightRadius: 10, borderWidth: 1, borderColor: C.line, padding: 18, gap: 12, paddingBottom: Math.max(18, insets.bottom + 8), width: '100%', maxWidth: 760, alignSelf: 'center' }}>
           <View style={{ width: 44, height: 5, borderRadius: 3, backgroundColor: C.line, alignSelf: 'center' }} />
           {step === 'menu' ? (
             <>
@@ -65,7 +65,7 @@ export default function QuickSheet() {
               {active.map((p, i) => (
                 <Reveal key={p.id} index={i}>
                   <Pressable accessibilityRole="button" onPress={() => { setProjectId(p.id); setStep('room'); }}
-                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
+                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 6, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
                     <Ionicons name="construct-outline" size={22} color={C.accent} />
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: C.ink, fontWeight: '700' }}>{p.title}</Text>

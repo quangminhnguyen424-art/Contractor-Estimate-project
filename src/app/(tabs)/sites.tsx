@@ -97,7 +97,7 @@ function ProjectCard({ p, onPress, index }: { p: SiteProject; onPress: () => voi
   return (
     <Reveal index={index}>
       <PressScale accessibilityRole="button" accessibilityLabel={p.title} onPress={onPress} scaleTo={0.98}
-        style={{ backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+        style={{ backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
         {cover ? (
           <View style={{ height: Math.round(w * 0.5), overflow: 'hidden' }}>
             <PhotoView photo={{ ...cover, markup: [] }} width={w} />

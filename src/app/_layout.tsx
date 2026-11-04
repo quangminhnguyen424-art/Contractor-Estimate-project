@@ -1,8 +1,9 @@
-import { BeVietnamPro_400Regular } from '@expo-google-fonts/be-vietnam-pro/400Regular';
-import { BeVietnamPro_500Medium } from '@expo-google-fonts/be-vietnam-pro/500Medium';
-import { BeVietnamPro_600SemiBold } from '@expo-google-fonts/be-vietnam-pro/600SemiBold';
-import { BeVietnamPro_700Bold } from '@expo-google-fonts/be-vietnam-pro/700Bold';
-import { BeVietnamPro_800ExtraBold } from '@expo-google-fonts/be-vietnam-pro/800ExtraBold';
+import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono/500Medium';
+import { JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono/700Bold';
+import { SpaceGrotesk_400Regular } from '@expo-google-fonts/space-grotesk/400Regular';
+import { SpaceGrotesk_500Medium } from '@expo-google-fonts/space-grotesk/500Medium';
+import { SpaceGrotesk_600SemiBold } from '@expo-google-fonts/space-grotesk/600SemiBold';
+import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +12,7 @@ import { ActivityIndicator, Platform, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppProvider, useApp } from '@/store/AppContext';
+import { ConfettiHost } from '@/ui/celebrate';
 import { C } from '@/ui/kit';
 import { FONT, Text } from '@/ui/text';
 
@@ -21,7 +23,7 @@ function SaveWarning() {
   if (!saveFailed) return null;
   return (
     <View accessibilityRole="alert" pointerEvents="none"
-      style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 14, padding: 12 }}>
+      style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 6, padding: 12 }}>
       <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Could not save your latest changes</Text>
       <Text style={{ color: '#FFFFFF', fontSize: 13 }}>Storage is full. Delete old photos or finished job sites, then try again.</Text>
     </View>
@@ -31,7 +33,7 @@ function SaveWarning() {
 function RootStack() {
   const { ready, profile } = useApp();
   const [fontsLoaded, fontError] = useFonts({
-    BeVietnamPro_400Regular, BeVietnamPro_500Medium, BeVietnamPro_600SemiBold, BeVietnamPro_700Bold, BeVietnamPro_800ExtraBold,
+    SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold, JetBrainsMono_500Medium, JetBrainsMono_700Bold,
   });
   // If the font can't load, the app still opens with the phone's own font.
   if (!ready || (!fontsLoaded && !fontError)) {
@@ -71,6 +73,7 @@ function RootStack() {
         <Stack.Screen name="site/[id]/log" options={{ title: 'Daily log' }} />
         <Stack.Screen name="site/[id]/share" options={{ title: 'Share' }} />
         <Stack.Screen name="scan" options={{ title: 'Scan 3D' }} />
+        <Stack.Screen name="connections" options={{ title: 'Connected apps' }} />
         <Stack.Screen name="event" options={{ title: 'Appointment', presentation: 'modal' }} />
         <Stack.Screen name="quick" options={{ headerShown: false, presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
         <Stack.Screen name="estimate/[id]/sign" options={{ title: 'Client signature' }} />
@@ -110,6 +113,7 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <RootStack />
         <SaveWarning />
+        <ConfettiHost />
       </AppProvider>
     </SafeAreaProvider>
   );

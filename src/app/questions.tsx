@@ -10,6 +10,7 @@ import { planTotals } from '@/engine/floorplan';
 import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { AnswerValue, FinishLevel, Question } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
 import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 import { AiNote } from '@/ui/AiNote';
 import { QuestionEditor } from '@/ui/QuestionEditor';
@@ -17,6 +18,7 @@ import { QuestionEditor } from '@/ui/QuestionEditor';
 export default function Questions() {
   const { draft, setDraft, commitDraft, priceBook, customQuestions, saveQuestions, presets, savePresets } = useApp();
   const [search, setSearch] = useState('');
+  const [working, setWorking] = useState<WorkJob | null>(null);
   const [adding, setAdding] = useState(false);
 
   const jt = draft ? jobType(draft.jobTypeId) : null;
@@ -48,9 +50,29 @@ export default function Questions() {
   const q = search.trim().toLowerCase();
   const pickable = ASSEMBLIES.filter((a) => !q || a.name.toLowerCase().includes(q) || TRADE_NAMES[a.trade].en.toLowerCase().includes(q));
 
-  const build = () => {
+  const build = async () => {
+    if (working) return;
     const editing = !!draft.id;
+    // A short "Claude is working" view while the estimate is put together: longer for more detailed jobs.
+    const detailed = draft.mode === 'detailed';
+    const ms = workTime((detailed ? 2200 : 0) + (draft.plan?.length ?? 0) * 450 + draft.photos.length * 250
+      + draft.customItems.length * 250 + Object.keys(draft.answers).length * 40);
+    setWorking({
+      title: editing ? 'Updating your estimate' : 'Building your estimate',
+      steps: [
+        'Measuring quantities',
+        ...(draft.plan?.length ? [`Using the floor plan (${draft.plan.length} room${draft.plan.length > 1 ? 's' : ''})`] : []),
+        detailed ? 'Pricing labor and materials' : `Applying your price${perUnit(jt.unit)}`,
+        ...(detailed ? ['Checking code items and permits'] : []),
+        'Comparing with your past jobs',
+        'Adding markup and tax',
+      ],
+      ms,
+    });
+    const started = Date.now();
     const id = commitDraft(draft);
+    await atLeast(started, ms);
+    setWorking(null);
     setDraft(null);
     // Editing: the estimate screen is already underneath, so just go back to it.
     if (editing && router.canGoBack()) router.back();
@@ -58,8 +80,9 @@ export default function Questions() {
   };
 
   return (
-    <Screen footer={<Button title={draft.id ? 'Update estimate' : 'Build estimate'} onPress={build}
-      disabled={isSmall && draft.customItems.length === 0} />}>
+    <Screen footer={<Button title={draft.id ? 'Update estimate' : 'Build estimate'} icon="flash" onPress={build}
+      disabled={!!working || (isSmall && draft.customItems.length === 0)} />}>
+      <AiWorking job={working} />
       <View style={{ gap: 4 }}>
         <H2>{draft.title}</H2>
         <Muted>{jt.name} · {quick ? `Quick (your price${perUnit(jt.unit)})` : 'Detailed'}</Muted>

@@ -4,10 +4,10 @@ import { SvgXml } from 'react-native-svg';
 import { Float, ScanBeam, Twinkle } from './motion';
 
 /*
- * Illustrations drawn for this app (simple vector scenes in the app's colors): blueprint navy, safety yellow,
+ * Illustrations drawn for this app (simple vector scenes in the app's colors): near-black, safety orange,
  * sky blue and slate. Each is a viewBox of 320 x 200 and scales to any width.
  */
-const Y = '#FACC15', Y2 = '#FDE68A', SKY = '#38BDF8', SKY2 = '#0EA5E9', SL = '#334155', SL2 = '#475569', INK = '#0F172A', W = '#F8FAFC';
+const Y = '#FF7A1A', Y2 = '#FFB37A', SKY = '#38BDF8', SKY2 = '#0EA5E9', SL = '#1F2933', SL2 = '#3A4654', INK = '#07090C', W = '#E8EDF2';
 
 const grid = `<g stroke="${SL}" stroke-width="1" opacity=".55">${Array.from({ length: 11 }, (_, i) => `<line x1="${i * 32}" y1="0" x2="${i * 32}" y2="200"/>`).join('')}${Array.from({ length: 7 }, (_, i) => `<line x1="0" y1="${i * 32}" x2="320" y2="${i * 32}"/>`).join('')}</g>`;
 const svg = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">${body}</svg>`;
@@ -44,8 +44,8 @@ ${[66, 98, 130].map((y, i) => `<rect x="122" y="${y}" width="18" height="18" rx=
 
   /** Hard hat and camera: no job sites yet. */
   site: svg(`${grid}
-<path d="M88 132 C88 84 118 58 160 58 C202 58 232 84 232 132Z" fill="${Y}"/><rect x="70" y="128" width="180" height="16" rx="8" fill="#EAB308"/>
-<rect x="150" y="50" width="20" height="40" rx="8" fill="#EAB308"/>
+<path d="M88 132 C88 84 118 58 160 58 C202 58 232 84 232 132Z" fill="${Y}"/><rect x="70" y="128" width="180" height="16" rx="8" fill="#E2650C"/>
+<rect x="150" y="50" width="20" height="40" rx="8" fill="#E2650C"/>
 <g transform="translate(196 118)"><rect width="88" height="62" rx="12" fill="${SL}" stroke="${W}" stroke-width="3"/><rect x="14" y="-10" width="26" height="12" rx="4" fill="${SL2}"/><circle cx="44" cy="31" r="18" fill="${INK}" stroke="${SKY}" stroke-width="4"/><circle cx="44" cy="31" r="7" fill="${SKY}"/></g>
 `),
 

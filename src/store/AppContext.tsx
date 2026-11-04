@@ -5,11 +5,13 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
+import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
 import { emptyContract, nextInvoiceNo, termsFrom, type Contract, type Invoice } from '@/engine/contract';
 import type { CalEvent } from '@/engine/schedule';
 import { projectFromEstimate, type SiteProject } from '@/engine/site';
 import { deletePhotoFile } from '@/ui/photoStore';
 import { cancelAllReminders, scheduleReminder } from '@/ui/reminders';
+import { postHook } from '@/ui/webhook';
 
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
@@ -71,6 +73,10 @@ interface Ctx extends Persisted {
   updateContract: (estimateId: string, fn: (c: Contract) => Contract) => void;
   /** Makes an invoice with the next number (never reused) and freezes the job's terms if not already frozen. */
   issueInvoice: (estimateId: string, inv: Omit<Invoice, 'number'>) => Invoice | null;
+  /** Links to other apps (Zapier / Make webhook). */
+  saveConnections: (c: Connections) => void;
+  /** Tells the contractor's other apps that something happened (if a webhook link is set and the event is on). */
+  emit: (event: HookEvent, data: Record<string, unknown>) => void;
   /** Calendar events. */
   saveEvent: (e: CalEvent) => void;
   deleteEvent: (id: string) => void;
@@ -260,7 +266,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const next = { ...c, terms: c.terms ?? termsFrom(est, profile), invoices: [...c.invoices, made] };
           return { ...d, lastInvoiceNo: Math.max(d.lastInvoiceNo ?? 1000, made.number), contracts: [next, ...d.contracts.filter((x) => x.estimateId !== estimateId)] };
         });
+        const dd = dataRef.current;
+        postHook(dd.connections, 'invoice.created', { estimate: estimatePayload(est, !!dd.connections?.includeCosts), invoice: made }, profile.companyName).catch(() => {});
         return made;
+      },
+      saveConnections: (c) => update((d) => ({ ...d, connections: c })),
+      emit: (event, data) => {
+        const d = dataRef.current;
+        postHook(d.connections, event, data, d.profile?.companyName ?? '').catch(() => {});
       },
       saveEvent: (e) => update((d) => ({ ...d, events: [e, ...d.events.filter((x) => x.id !== e.id)] })),
       deleteEvent: (id) => update((d) => ({ ...d, events: d.events.filter((x) => x.id !== id) })),
@@ -273,7 +286,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return { ...d, customQuestions: qs.length ? { ...rest, [jobTypeId]: qs } : rest };
         }),
       commitDraft,
-      updateEstimate: (id, patch) =>
+      updateEstimate: (id, patch) => {
+        const before = dataRef.current.estimates.find((e) => e.id === id);
         update((d) => {
           const estimates = d.estimates.map((e) => {
             if (e.id !== id) return e;
@@ -287,7 +301,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const status = estimates.find((e) => e.id === id)?.status ?? 'draft';
           // Status or markup changes on a won job keep its past job (what the app learned) in step.
           return { ...d, estimates, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
-        }),
+        });
+        // Let the contractor's other apps know when a quote goes out or a job is won.
+        const after = dataRef.current.estimates.find((e) => e.id === id);
+        if (before && after && before.status !== after.status && (after.status === 'sent' || after.status === 'won')) {
+          const d = dataRef.current;
+          postHook(d.connections, after.status === 'sent' ? 'estimate.sent' : 'estimate.won',
+            { estimate: estimatePayload(after, !!d.connections?.includeCosts) }, d.profile?.companyName ?? '').catch(() => {});
+        }
+      },
       deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id) })),
       resetAll: () => {
         setDraft(null);

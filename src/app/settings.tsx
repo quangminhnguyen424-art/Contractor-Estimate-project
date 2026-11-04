@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Pressable, Share, View } from 'react-native';
 
@@ -125,6 +126,7 @@ export default function Settings() {
   return (
     <Screen footer={<Button title={saved ? 'Saved ✓' : 'Save settings'} disabled={schedTotal !== 100}
       onPress={() => { saveProfile({ ...p, specialties: Array.from(new Set([...p.specialties, 'small' as JobTypeId])) }); setSaved(true); setDirty(false); }} />}>
+      <Button kind="secondary" title="Connected apps: QuickBooks, Sheets, Calendar, Zapier" icon="git-network-outline" onPress={() => router.push('/connections')} />
       <Card>
         <H2>Company</H2>
         <Field label="Company name" value={p.companyName} onChangeText={(v) => set('companyName', v)} />

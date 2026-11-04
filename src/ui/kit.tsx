@@ -8,37 +8,39 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Art, type ART } from './art';
 import { PressScale, Reveal } from './motion';
-import { NUM, Text, TextInput } from './text';
+import { MONO, NUM, Text, TextInput } from './text';
+
+const MONO_LABEL = MONO;
 
 /**
- * Colors: blueprint navy with safety yellow. Dark, calm surfaces so job photos and numbers stand out,
- * and one bright color for the thing to tap.
+ * Colors: the "job-site HUD" look. Near-black surfaces so job photos and numbers stand out, safety orange for
+ * the thing to tap, sky blue for measurements and scans.
  */
 export const C = {
-  bg: '#0F172A',
-  card: '#1E293B',
-  cardHi: '#273449',
-  ink: '#F8FAFC',
-  ink2: '#CBD5E1',
-  muted: '#94A3B8',
-  line: '#334155',
-  lineSoft: '#273449',
-  accent: '#FACC15',
-  accentDark: '#FDE047', // accent used as text on a tinted background
-  accentTint: 'rgba(250,204,21,0.13)',
-  onAccent: '#0F172A', // text and icons on the yellow
+  bg: '#07090C',
+  card: '#0D1117',
+  cardHi: '#151B23',
+  ink: '#E8EDF2',
+  ink2: '#B6C0CA',
+  muted: '#7C8896',
+  line: '#1F2933',
+  lineSoft: '#161D26',
+  accent: '#FF7A1A',
+  accentDark: '#FF9A55', // accent used as text on a tinted background
+  accentTint: 'rgba(255,122,26,0.12)',
+  onAccent: '#07090C', // text and icons on the orange
   sky: '#38BDF8',
-  skyTint: 'rgba(56,189,248,0.14)',
-  warnBg: '#3A2A08',
+  skyTint: 'rgba(56,189,248,0.12)',
+  warnBg: '#2E2208',
   warnInk: '#FCD34D',
-  infoBg: '#0C2A47',
+  infoBg: '#0A2236',
   infoInk: '#93C5FD',
-  okBg: '#0B3326',
-  okInk: '#6EE7B7',
-  badBg: '#3B1219',
+  okBg: '#0A2A1E',
+  okInk: '#34D399',
+  badBg: '#331014',
   danger: '#F87171',
-  dark: '#020617',
-  darkMuted: '#94A3B8',
+  dark: '#0B0F14',
+  darkMuted: '#7C8896',
 };
 
 /** Paper colors for previews of documents the client sees (quotes, invoices): always white paper. */
@@ -207,7 +209,7 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
   } as const;
   const [bg, fg] = map[tone];
   return (
-    <View style={{ backgroundColor: bg, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 }}>
+    <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 }}>
       <Text style={{ color: fg, fontSize: 12, fontWeight: '700' }}>{label}</Text>
     </View>
   );
@@ -217,7 +219,7 @@ export function Banner({ tone, title, children }: { tone: 'warn' | 'info' | 'ok'
   const bg = tone === 'warn' ? C.warnBg : tone === 'info' ? C.infoBg : C.okBg;
   const fg = tone === 'warn' ? C.warnInk : tone === 'info' ? C.infoInk : C.okInk;
   return (
-    <View style={{ backgroundColor: bg, borderRadius: 14, padding: 14, gap: 4 }}>
+    <View style={{ backgroundColor: bg, borderRadius: 6, padding: 14, gap: 4 }}>
       <Text style={{ color: fg, fontWeight: '700', fontSize: 15 }}>{title}</Text>
       {children ? <Text style={{ color: fg, fontSize: 14, lineHeight: 20 }}>{children}</Text> : null}
     </View>
@@ -269,8 +271,8 @@ export function Tile({ icon, title, sub, onPress, tone = 'yellow', index = 0 }: 
   return (
     <Reveal index={index} style={{ flexBasis: '47%', flexGrow: 1 }}>
       <PressScale accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
-        style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, minHeight: 112 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+        style={{ backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, minHeight: 112 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 6, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={22} color={fg} />
         </View>
         <View style={{ gap: 2 }}>
@@ -314,7 +316,7 @@ export function Section({ title, link, onLink }: { title: string; link?: string;
 export function Stat({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'warn' | 'accent' }) {
   const color = tone === 'ok' ? C.okInk : tone === 'warn' ? C.warnInk : tone === 'accent' ? C.accent : C.ink;
   return (
-    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.cardHi, borderRadius: 14, padding: 12, gap: 2 }}>
+    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.cardHi, borderRadius: 6, padding: 12, gap: 2 }}>
       <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
       <Text style={{ color, fontSize: 17, fontWeight: '700', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
     </View>
@@ -322,24 +324,24 @@ export function Stat({ label, value, tone }: { label: string; value: string; ton
 }
 
 export const s = StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 },
+  card: { backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 },
   h1: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
   h2: { fontSize: 17, fontWeight: '700', color: C.ink },
-  label: { fontSize: 14, fontWeight: '600', color: C.ink2 },
+  label: { fontSize: 11, fontWeight: '600', color: C.muted, fontFamily: MONO_LABEL, letterSpacing: 1, textTransform: 'uppercase' },
   muted: { fontSize: 14, color: C.muted, lineHeight: 20 },
-  btn: { height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  btnText: { fontSize: 16, fontWeight: '700' },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingRight: 12 },
+  btn: { height: 54, borderRadius: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
+  btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 6, paddingRight: 12 },
   input: { flex: 1, minHeight: 48, paddingHorizontal: 14, fontSize: 16, color: C.ink },
   suffix: { color: C.muted, fontSize: 14 },
-  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 6, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   chipText: { fontSize: 15, color: C.ink, fontWeight: '500' },
-  seg: { flexDirection: 'row', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 4, gap: 4 },
-  segItem: { flex: 1, height: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  seg: { flexDirection: 'row', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 6, padding: 4, gap: 4 },
+  segItem: { flex: 1, height: 40, borderRadius: 2, alignItems: 'center', justifyContent: 'center' },
   segOn: { backgroundColor: C.accent, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   segText: { fontSize: 14, color: C.ink2, fontWeight: '500' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderColor: C.lineSoft },
   rowText: { fontSize: 15, color: C.ink },
-  stepBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 44, height: 44, borderRadius: 6, borderWidth: 1, borderColor: C.line, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 22, color: C.ink },
 });

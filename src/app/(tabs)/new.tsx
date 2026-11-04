@@ -13,6 +13,8 @@ import { defaultAnswers, jobType, perUnit } from '@/engine/jobTypes';
 import { workSummary } from '@/engine/profile';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { contactsAvailable, pickClient } from '@/ui/contacts';
+import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
 import { JobTypeChips } from '@/ui/JobTypes';
 import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
 import { notify } from '@/ui/notify';
@@ -31,6 +33,7 @@ export default function NewEstimate() {
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [working, setWorking] = useState<WorkJob | null>(null);
 
   const mine = profile?.specialties ?? [];
   const guessed = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
@@ -58,12 +61,28 @@ export default function NewEstimate() {
     const type = effectiveType;
     if (!type) return;
     setBusy(true);
+    // Show Claude at work: 3–8 s depending on how much there is to read.
+    const sent = claudeOn ? Math.min(8, photos.length) : 0;
+    const ms = workTime(sent * 650 + Math.min(2000, description.length * 5) + (pendingPlan?.length ?? 0) * 400);
+    setWorking({
+      title: 'Reading the job',
+      steps: [
+        description.trim() ? 'Reading your notes' : 'Starting from your job type',
+        ...(sent ? [`Looking at ${sent} photo${sent > 1 ? 's' : ''}`] : []),
+        ...(pendingPlan?.length ? ['Measuring the 3D scan'] : []),
+        `Matching ${jobType(type).name.toLowerCase()} questions`,
+        'Filling in sizes and counts',
+        'Checking your past jobs',
+      ],
+      ms,
+    });
+    const started = Date.now();
     const ai = aiFor(apiKey);
     // Claude also looks at the photos; the offline demo only reads the text.
     let images: ImageInput[] = [];
     let skipped = 0;
     if (claudeOn && photos.length > 0) {
-      const r = await toAiImages(photos, 8);
+      const r = await toAiImages(photos, 8).catch(() => ({ images: [], failed: photos.length }));
       images = r.images;
       skipped = r.failed + Math.max(0, photos.length - 8);
     }
@@ -75,7 +94,12 @@ export default function NewEstimate() {
       work: workSummary(profile?.work),
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
     };
-    if (description.trim() || images.length > 0) parsed = await ai.parseScope(description, type, images, ctx);
+    if (description.trim() || images.length > 0) {
+      parsed = await ai.parseScope(description, type, images, ctx)
+        .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Claude could not read this job.' }));
+    }
+    await atLeast(started, ms);
+    setWorking(null);
     setBusy(false);
     if (parsed.error) notify('Claude could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
     else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Claude`, photos.length > 8 ? 'Claude looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
@@ -103,13 +127,14 @@ export default function NewEstimate() {
 
   return (
     <Screen footer={<Button title={busy ? (claudeOn ? 'Claude is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
+      <AiWorking job={working} />
       {pendingPlan?.length ? (
         <Banner tone="ok" title={`Floor plan ready: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${planTotals(pendingPlan).floorSf} SF`}>
           It’s added to this estimate and fills in the areas. <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => setPendingPlan(null)}>Remove</Text>
         </Banner>
       ) : (
         <Pressable accessibilityRole="button" onPress={() => router.push('/scan')}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accent, opacity: pressed ? 0.8 : 1 })}>
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 6, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accent, opacity: pressed ? 0.8 : 1 })}>
           <Ionicons name="scan-outline" size={26} color={C.accent} />
           <View style={{ flex: 1 }}>
             <Text style={{ color: C.ink, fontWeight: '700' }}>Bigger job? Scan the rooms in 3D</Text>
@@ -159,7 +184,22 @@ export default function NewEstimate() {
       </Muted>
 
       <H2 style={{ marginTop: 6 }}>Client</H2>
-      <Field label="Client name" value={clientName} onChangeText={setClientName} />
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+        <Field label="Client name" value={clientName} onChangeText={setClientName} style={{ flex: 1 }} />
+        {contactsAvailable ? (
+          <Button kind="secondary" title="Contacts" icon="person-add-outline" style={{ height: 50 }}
+            onPress={async () => {
+              try {
+                const c = await pickClient();
+                if (!c) return;
+                if (c.name) setClientName(c.name);
+                if (c.address && !address.trim()) setAddress(c.address);
+              } catch {
+                notify('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.');
+              }
+            }} />
+        ) : null}
+      </View>
       <Field label="Job address" value={address} onChangeText={setAddress} />
       <Field label="Estimate name (optional)" value={title} onChangeText={setTitle} placeholder="Defaults to client + job type" />
 
@@ -188,7 +228,7 @@ function PhotoButton({ icon, label, onPress }: { icon: 'camera-outline' | 'image
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => ({ flex: 1, height: 72, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
+      style={({ pressed }) => ({ flex: 1, height: 72, borderRadius: 6, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
         alignItems: 'center', justifyContent: 'center', gap: 4, opacity: pressed ? 0.7 : 1 })}>
       <Ionicons name={icon} size={24} color={C.ink} />
       <Text style={{ fontSize: 14, color: C.ink }}>{label}</Text>

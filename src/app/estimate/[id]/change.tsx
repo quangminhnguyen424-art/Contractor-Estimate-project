@@ -11,12 +11,13 @@ import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Scree
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 import { SignaturePad } from '@/ui/SignaturePad';
+import { celebrate } from '@/ui/celebrate';
 import { Text } from '@/ui/text';
 
 /** One change order: what changes and the price, then the client signs to approve it. */
 export default function ChangeOrderScreen() {
   const params = useLocalSearchParams<{ id: string; co: string }>();
-  const { estimates, profile, contracts, updateContract } = useApp();
+  const { estimates, profile, contracts, updateContract, emit } = useApp();
   const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === params.id);
   const contract = contracts.find((c) => c.estimateId === params.id) ?? emptyContract(params.id ?? '');
@@ -57,7 +58,9 @@ export default function ChangeOrderScreen() {
     if (!(amount > 0)) return notify('Add the price', 'Type the price change before the client signs (a credit if work is removed).');
     if (!name.trim() || !hasInk(strokes)) return notify('Client signature needed', 'The client types their name and signs in the white box.');
     const now = new Date().toISOString();
-    persist({ status: 'approved', decidedAt: now, signature: { name: name.trim(), strokes, w: padW, h: 170, signedAt: now } });
+    const co = persist({ status: 'approved', decidedAt: now, signature: { name: name.trim(), strokes, w: padW, h: 170, signedAt: now } });
+    emit('change.approved', { estimate: { id: est.id, title: est.title, client: est.clientName }, changeOrder: { number: co.number, title: co.title, amount: co.amount, signedBy: name.trim() } });
+    celebrate();
     notify(`Change order #${number} approved`, credit ? 'The credit is taken off the contract balance.' : `${money(value(credit, amount))} + tax is added to the contract and can be invoiced.`);
   };
 
@@ -89,7 +92,7 @@ export default function ChangeOrderScreen() {
           {shown.description ? <Text style={{ color: C.ink2, lineHeight: 21 }}>{shown.description}</Text> : null}
           <Text style={{ color: C.accent, fontSize: 24, fontWeight: '800', fontFamily: '__numbers__' }}>{money(shown.amount)} <Text style={{ color: C.muted, fontSize: 14 }}>+ {money(taxOn(shown.amount, pct))} tax</Text></Text>
           {shown.signature ? (
-            <View style={{ backgroundColor: P.paper, borderRadius: 12, padding: 10, gap: 4 }}>
+            <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 10, gap: 4 }}>
               <SvgXml xml={signatureSvg(shown.signature, '#0F172A')} width={padW - 52} height={Math.round(((padW - 52) * shown.signature.h) / shown.signature.w)} />
               <Text style={{ color: P.muted, fontSize: 12 }}>{shown.signature.name} · {dateFmt(shown.signature.signedAt)}</Text>
             </View>

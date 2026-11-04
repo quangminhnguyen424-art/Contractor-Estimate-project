@@ -2,6 +2,7 @@
 // can never crash the app (and can't lock the user out on every launch).
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
 import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, Signature, Terms } from '../engine/contract';
+import { HOOK_EVENTS, NO_CONNECTIONS, validHookUrl, type Connections } from '../engine/connect';
 import type { CalEvent, EventKind } from '../engine/schedule';
 import type { DailyLog, MarkupShape, SitePhoto, SiteProject, SiteRoom, SiteTask } from '../engine/site';
 import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, WorkProfile } from '../engine/types';
@@ -22,6 +23,8 @@ export interface Persisted {
   contracts: Contract[];
   /** The calendar: site visits, crew days, calls, inspections. */
   events: CalEvent[];
+  /** Links to the contractor's other apps (Zapier / Make webhook). */
+  connections?: Connections;
   /** Highest invoice number ever issued, so numbers are never reused (even after a job is deleted). */
   lastInvoiceNo?: number;
 }
@@ -313,6 +316,7 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
       projects: sanitizeProjects(raw.projects),
       contracts: sanitizeContracts(raw.contracts),
       events: sanitizeEvents(raw.events),
+      ...(isObj(raw.connections) ? { connections: sanitizeConnections(raw.connections) } : {}),
       ...(typeof raw.lastInvoiceNo === 'number' && Number.isFinite(raw.lastInvoiceNo) ? { lastInvoiceNo: Math.round(raw.lastInvoiceNo) } : {}),
     },
     dropped: estimatesIn.length - estimates.length + (pastIn.length - pastJobs.length),
@@ -415,4 +419,14 @@ export function sanitizeEvents(v: unknown): CalEvent[] {
       done: e.done === true, createdAt: str(e.createdAt, new Date().toISOString()),
     }];
   }).slice(0, 3000);
+}
+
+function sanitizeConnections(v: Record<string, unknown>): Connections {
+  const url = str(v.webhookUrl).trim().slice(0, 500);
+  const ids = HOOK_EVENTS.map((e) => e.id);
+  return {
+    webhookUrl: validHookUrl(url) ? url : '',
+    events: Array.isArray(v.events) ? v.events.filter((e): e is Connections['events'][number] => ids.includes(e as Connections['events'][number])) : NO_CONNECTIONS.events,
+    includeCosts: v.includeCosts === true,
+  };
 }

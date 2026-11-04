@@ -14,6 +14,7 @@ import { Reveal } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 import { SignaturePad } from '@/ui/SignaturePad';
+import { celebrate } from '@/ui/celebrate';
 import { Text } from '@/ui/text';
 
 const T = {
@@ -24,7 +25,7 @@ const T = {
 /** The client reads the total and signs with a finger, on the contractor's phone. */
 export default function SignScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, profile, contracts, updateContract, updateEstimate } = useApp();
+  const { estimates, profile, contracts, updateContract, updateEstimate, emit } = useApp();
   const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === id);
   const contract = contracts.find((c) => c.estimateId === id);
@@ -47,6 +48,8 @@ export default function SignScreen() {
     const html = { en: quoteHtml(est, profile, 'en', acceptedBlock(sig, profile, 'en')), vi: quoteHtml(est, profile, 'vi', acceptedBlock(sig, profile, 'vi')) };
     updateContract(est.id, (c) => ({ ...c, accepted: { ...sig, html }, terms: termsFrom(est, profile) }));
     if (est.status !== 'won') updateEstimate(est.id, { status: 'won' });
+    emit('quote.signed', { estimate: { id: est.id, title: est.title, client: est.clientName, total: est.total }, signedBy: sig.name, signedAt: sig.signedAt });
+    celebrate();
     notify(lang === 'vi' ? 'Đã ký' : 'Signed', lang === 'vi' ? 'Báo giá đã được chấp nhận. Công việc chuyển sang "Đã nhận".' : 'The quote is accepted and the job is marked Won.');
     router.replace(`/estimate/${est.id}/contract`);
   };
@@ -74,7 +77,7 @@ export default function SignScreen() {
             It was {money(signed.total)} when signed and is {money(est.total)} now. The signed quote and the contract keep the signed amount. Use a change order for the difference, or remove the signature and have the client sign again.
           </Banner>
         ) : null}
-        <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 12 }}>
+        <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 12 }}>
           <SvgXml xml={signatureSvg(signed, '#0F172A')} width={padW - 24} height={Math.round(((padW - 24) * signed.h) / signed.w)} />
         </View>
         <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
@@ -92,7 +95,7 @@ export default function SignScreen() {
       <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
       <Muted style={{ fontSize: 13 }}>Hand the phone to your client. They check the total and sign with a finger.</Muted>
       <Reveal>
-        <View style={{ backgroundColor: P.paper, borderRadius: 18, padding: 18, gap: 10 }}>
+        <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 18, gap: 10 }}>
           <Text style={{ color: P.muted, fontSize: 13 }}>{profile.companyName}</Text>
           <Text style={{ color: P.ink, fontSize: 20, fontWeight: '800' }}>{L.title}</Text>
           <Text style={{ color: P.ink, fontSize: 15, fontWeight: '600' }}>{est.title}</Text>

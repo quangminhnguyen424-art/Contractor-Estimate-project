@@ -5,7 +5,7 @@ import { Platform, Pressable, View, type ColorValue } from 'react-native';
 
 import { C } from '@/ui/kit';
 import { Pulse } from '@/ui/motion';
-import { FONT } from '@/ui/text';
+import { FONT, MONO } from '@/ui/text';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const icon = (outline: IconName, filled: IconName) =>
@@ -18,10 +18,10 @@ function PlusButton() {
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -18 }}>
-        <Pulse min={0.98} max={1.03}>
-          <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.bg,
-            shadowColor: C.accent, shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 3 }, elevation: 6 }}>
-            <Ionicons name="add" size={32} color={C.onAccent} />
+        <Pulse min={0.97} max={1.04}>
+          <View style={{ width: 52, height: 52, transform: [{ rotate: '45deg' }], backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.bg,
+            shadowColor: C.accent, shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6 }}>
+            <View style={{ transform: [{ rotate: '-45deg' }] }}><Ionicons name="add" size={30} color={C.onAccent} /></View>
           </View>
         </Pulse>
       </Pressable>
@@ -39,7 +39,7 @@ export default function TabsLayout() {
         headerTitleStyle: { fontFamily: FONT.bold, fontSize: 18 },
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
-        tabBarLabelStyle: { fontFamily: FONT.semibold, fontSize: 11 },
+        tabBarLabelStyle: { fontFamily: MONO, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase' },
         tabBarStyle: { backgroundColor: C.card, borderTopColor: C.line, height: Platform.OS === 'web' ? 64 : undefined, paddingTop: 4 },
         sceneStyle: { backgroundColor: C.bg },
         headerRight: () => (

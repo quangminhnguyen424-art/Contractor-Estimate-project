@@ -25,7 +25,7 @@ export interface CalEvent {
 
 export const KINDS: Record<EventKind, { en: string; vi: string; icon: string; color: string }> = {
   visit: { en: 'Site visit', vi: 'Đi xem nhà', icon: 'home-outline', color: '#38BDF8' },
-  crew: { en: 'Crew day', vi: 'Thợ vào làm', icon: 'hammer-outline', color: '#FACC15' },
+  crew: { en: 'Crew day', vi: 'Thợ vào làm', icon: 'hammer-outline', color: '#FF7A1A' },
   call: { en: 'Client call', vi: 'Gọi khách', icon: 'call-outline', color: '#A78BFA' },
   inspection: { en: 'Inspection', vi: 'Kiểm tra', icon: 'shield-checkmark-outline', color: '#34D399' },
   delivery: { en: 'Delivery', vi: 'Giao vật tư', icon: 'cube-outline', color: '#FB923C' },

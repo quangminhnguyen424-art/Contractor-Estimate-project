@@ -10,8 +10,8 @@ import { useApp } from '@/store/AppContext';
 
 import { Art } from './art';
 import { Button, C, Card, Section, mono } from './kit';
-import { Gradient } from './Gradient';
-import { PressScale, Pulse, Reveal, Shine, useCountUp } from './motion';
+import { Blink, HudPanel, Radar, Readout, TypeLines } from './hud';
+import { PressScale, Reveal, Shine, useCountUp } from './motion';
 import { PhotoView } from './SitePhotoView';
 import { Text } from './text';
 import { useToday } from './useToday';
@@ -35,7 +35,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
   const today = useToday();
   const first = (profile?.contactName ?? '').trim().split(/\s+/)[0];
   const hour = new Date().getHours();
-  const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const hello = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
   const todays = upcoming(events, today, 0).slice(0, 3);
   const nextUp = todays.length ? [] : upcoming(events, today, 7).slice(0, 2);
 
@@ -52,53 +52,53 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
   const photos: { ph: SitePhoto; pid: string; rid: string }[] = projects.flatMap((p) => p.rooms.flatMap((r) => r.photos.map((ph) => ({ ph, pid: p.id, rid: r.id }))))
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
   const cardW = Math.min(width, 760) - 32;
-  const artW = Math.min(150, cardW * 0.4);
+  const summary = [`${activeJobs} job${activeJobs === 1 ? '' : 's'} live`, todays.length ? `${todays.length} on today` : '', overdue ? `${overdue} invoice${overdue > 1 ? 's' : ''} overdue` : '']
+    .filter(Boolean).join(' · ');
 
   return (
     <View style={{ gap: 16 }}>
-      <Reveal style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ color: C.muted, fontSize: 13 }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-          <Text style={{ color: C.ink, fontSize: 26, fontWeight: '800', letterSpacing: -0.4 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
+      <Reveal style={{ gap: 6 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Readout>Bidwell // field mode</Readout>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Blink color={claudeOn ? C.okInk : C.warnInk} on={claudeOn} />
+            <Readout color={claudeOn ? C.okInk : C.warnInk}>{claudeOn ? 'Claude link ok' : 'Claude offline'}</Readout>
+          </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: claudeOn ? C.okBg : C.warnBg }}>
-          <Pulse active={claudeOn}><View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: claudeOn ? C.okInk : C.warnInk }} /></Pulse>
-          <Text style={{ color: claudeOn ? C.okInk : C.warnInk, fontSize: 12, fontWeight: '700' }}>{claudeOn ? 'Claude on' : 'Claude off'}</Text>
-        </View>
+        <Text style={{ color: C.ink, fontSize: 30, fontWeight: '700', letterSpacing: -0.5 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}.</Text>
+        <Text style={{ color: C.muted, fontSize: 14 }}>{summary}</Text>
       </Reveal>
 
       {!claudeOn ? <ConnectClaude /> : null}
 
       {/* The one main action. */}
       <Reveal index={1}>
-        <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: '#2B3A55' }}>
-          <Gradient colors={['#1E293B', '#172554', '#0F172A']} glow="#FACC15" />
-          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, paddingBottom: 6, gap: 6 }}>
-            <View style={{ flex: 1, gap: 6 }}>
-              <Text style={{ color: C.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>AI ESTIMATING</Text>
-              <Text style={{ color: C.ink, fontSize: 21, fontWeight: '800', lineHeight: 27 }}>Describe a job.{'\n'}Get a price in minutes.</Text>
+        <HudPanel style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Radar size={Math.min(96, cardW * 0.26)} />
+          <View style={{ flex: 1, gap: 8, minWidth: 0 }}>
+            <Readout color={C.accentDark}>New estimate</Readout>
+            <TypeLines lines={['"hall bath, tub to tile shower…"', '"300 sf LVP in 2 bedrooms"', '"basement ADU, kitchen + 2 baths"', '"thay ống nước nóng 50 gal"']} />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1, overflow: 'hidden', borderRadius: 4 }}>
+                <Button title="Start" icon="add" onPress={() => router.push('/new')} style={{ height: 46 }} />
+                <Shine width={cardW - 200} height={46} />
+              </View>
+              <PressScale accessibilityRole="button" accessibilityLabel="Talk to Claude" onPress={onMic}
+                style={{ width: 46, height: 46, borderRadius: 4, borderWidth: 1, borderColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="mic" size={22} color={C.accent} />
+              </PressScale>
             </View>
-            <Art name="hero" width={artW} />
           </View>
-          <View style={{ flexDirection: 'row', gap: 10, padding: 16, paddingTop: 8 }}>
-            <View style={{ flex: 1, borderRadius: 16, overflow: 'hidden' }}>
-              <Button title="New estimate" icon="add" onPress={() => router.push('/new')} />
-              <Shine width={cardW - 100} height={54} />
-            </View>
-            <PressScale accessibilityRole="button" accessibilityLabel="Talk to Claude" onPress={onMic}
-              style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="mic" size={24} color={C.accent} />
-            </PressScale>
-          </View>
-        </View>
+        </HudPanel>
       </Reveal>
 
       {/* Shortcuts: one tidy row. */}
-      <Reveal index={2} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Shortcut icon="scan" label="Scan 3D" colors={['#FACC15', '#F59E0B']} onPress={() => router.push('/scan')} />
+      <Reveal index={2} style={{ flexDirection: 'row', gap: 8 }}>
+        <Shortcut icon="scan" label="Scan 3D" colors={['#FF7A1A', '#FF7A1A']} onPress={() => router.push('/scan')} />
         <Shortcut icon="camera" label="Job photo" colors={['#38BDF8', '#2563EB']} onPress={() => router.push('/quick')} />
         <Shortcut icon="calendar" label="Schedule" colors={['#A78BFA', '#7C3AED']} badge={todays.length || undefined} onPress={() => router.push('/schedule')} />
         <Shortcut icon="pricetags" label="Pricing" colors={['#34D399', '#059669']} onPress={() => router.push('/pricing')} />
+        <Shortcut icon="git-network" label="Apps" colors={['#F472B6', '#F472B6']} onPress={() => router.push('/connections')} />
       </Reveal>
 
       {/* Numbers at a glance. */}
@@ -112,7 +112,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
         <Section title={todays.length ? 'Today' : 'Coming up'} link="Schedule" onLink={() => router.push('/schedule')} />
         {todays.length || nextUp.length ? [...todays, ...nextUp].map((e) => (
           <Pressable key={e.id} accessibilityRole="button" onPress={() => router.push(`/event?id=${e.id}`)}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 6, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
             <View style={{ width: 5, alignSelf: 'stretch', borderRadius: 3, backgroundColor: KINDS[e.kind].color }} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>{e.title}</Text>
@@ -122,7 +122,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
           </Pressable>
         )) : (
           <Pressable accessibilityRole="button" onPress={() => router.push('/event')}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: C.line, borderStyle: 'dashed' }}>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 6, borderWidth: 1, borderColor: C.line, borderStyle: 'dashed' }}>
             <Ionicons name="add-circle-outline" size={20} color={C.accent} />
             <Text style={{ color: C.muted }}>Nothing scheduled. Add a visit or crew day.</Text>
           </Pressable>
@@ -132,7 +132,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
       {updates.map(({ p, newer, days }, i) => (
         <Reveal key={p.id} index={5 + i}>
           <PressScale accessibilityRole="button" onPress={() => router.push(`/site/${p.id}/share?mode=client`)} scaleTo={0.98}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: C.skyTint, borderWidth: 1, borderColor: 'rgba(56,189,248,0.5)' }}>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 6, backgroundColor: C.skyTint, borderWidth: 1, borderColor: 'rgba(56,189,248,0.5)' }}>
             <Art name="photos" width={72} still />
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>Photo update for {p.clientName || p.title}</Text>
@@ -149,7 +149,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>
-                <View style={{ borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={ph} width={112} /></View>
+                <View style={{ borderRadius: 6, overflow: 'hidden' }}><PhotoView photo={ph} width={112} /></View>
               </PressScale>
             ))}
           </ScrollView>
@@ -167,7 +167,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           {SUGGESTIONS.map((q) => (
             <PressScale key={q} accessibilityRole="button" accessibilityLabel={q} onPress={() => onAsk(q)}
-              style={{ width: 200, padding: 12, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, gap: 6 }}>
+              style={{ width: 200, padding: 12, borderRadius: 6, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, gap: 6 }}>
               <Ionicons name="sparkles" size={16} color={C.accent} />
               <Text style={{ color: C.ink2, fontSize: 13, lineHeight: 18 }} numberOfLines={3}>{q}</Text>
             </PressScale>
@@ -191,18 +191,17 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 /** Round, colorful shortcut button with a label. */
 function Shortcut({ icon, label, colors, onPress, badge }: { icon: IconName; label: string; colors: [string, string]; onPress: () => void; badge?: number }) {
   return (
-    <PressScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} scaleTo={0.92} style={{ alignItems: 'center', gap: 6, width: 76 }}>
-      <View style={{ width: 58, height: 58, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
-        shadowColor: colors[0], shadowOpacity: 0.45, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}>
-        <Gradient colors={colors} />
-        <Ionicons name={icon} size={26} color="#FFFFFF" />
+    <PressScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} scaleTo={0.92} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+      <View style={{ width: '100%', height: 64, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ position: 'absolute', left: 0, top: 0, width: 10, height: 2, backgroundColor: colors[0] }} />
+        <Ionicons name={icon} size={26} color={colors[0]} />
+        {badge ? (
+          <View style={{ position: 'absolute', right: 4, top: 4, minWidth: 18, height: 18, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+            <Text style={{ color: C.onAccent, fontSize: 11, fontWeight: '700', fontFamily: mono }}>{badge}</Text>
+          </View>
+        ) : null}
       </View>
-      {badge ? (
-        <View style={{ position: 'absolute', right: 6, top: -4, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, borderWidth: 2, borderColor: C.bg }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>{badge}</Text>
-        </View>
-      ) : null}
-      <Text style={{ color: C.ink2, fontSize: 12, fontWeight: '600' }}>{label}</Text>
+      <Readout color={C.ink2}>{label}</Readout>
     </PressScale>
   );
 }
@@ -210,9 +209,9 @@ function Shortcut({ icon, label, colors, onPress, badge }: { icon: IconName; lab
 function Count({ label, value, onPress }: { label: string; value: number; onPress: () => void }) {
   const n = useCountUp(value, 700);
   return (
-    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress} style={{ flex: 1, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 12, gap: 2 }}>
-      <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
-      <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800', fontFamily: mono }}>{Math.round(n)}</Text>
+    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress} style={{ flex: 1, backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 12, gap: 2 }}>
+      <Readout>{label}</Readout>
+      <Text style={{ color: C.ink, fontSize: 22, fontWeight: '700', fontFamily: mono }}>{String(Math.round(n)).padStart(2, '0')}</Text>
     </PressScale>
   );
 }
@@ -220,9 +219,9 @@ function Count({ label, value, onPress }: { label: string; value: number; onPres
 function Money({ label, value, sub, tone, onPress }: { label: string; value: number; sub: string; tone?: 'ok' | 'bad'; onPress: () => void }) {
   const n = useCountUp(value);
   return (
-    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${money(value)}`} onPress={onPress} style={{ flex: 1.4, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 12, gap: 2 }}>
-      <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
-      <Text style={{ color: C.accent, fontSize: 22, fontWeight: '800', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{money(n)}</Text>
+    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${money(value)}`} onPress={onPress} style={{ flex: 1.4, backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 12, gap: 2 }}>
+      <Readout>{label}</Readout>
+      <Text style={{ color: C.accent, fontSize: 22, fontWeight: '700', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{money(n)}</Text>
       <Text style={{ color: tone === 'bad' ? C.danger : tone === 'ok' ? C.okInk : C.muted, fontSize: 12, fontWeight: '600' }}>{sub}</Text>
     </PressScale>
   );

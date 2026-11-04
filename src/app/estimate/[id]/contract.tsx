@@ -16,6 +16,7 @@ import { Badge, Banner, Button, C, Card, Chip, Field, H2, Muted, NumberField, Sc
 import { Progress, Reveal } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
+import { celebrate } from '@/ui/celebrate';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
 
@@ -30,7 +31,7 @@ const STATE: Record<InvoiceState, { label: string; tone: 'ok' | 'info' | 'warn' 
 /** Everything after the yes: signature, change orders, invoices and payments for one job. */
 export default function ContractScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, profile, contracts, updateContract, issueInvoice } = useApp();
+  const { estimates, profile, contracts, updateContract, issueInvoice, emit } = useApp();
   const today = useToday();
   const est = estimates.find((e) => e.id === id);
   const c = contracts.find((x) => x.estimateId === id) ?? emptyContract(id ?? '');
@@ -69,6 +70,8 @@ export default function ContractScreen() {
     if (!(payAmount > 0)) return;
     const p = { id: newId(), date: today, amount: Math.round(payAmount * 100) / 100, method: payMethod, note: payNote.trim() };
     updateContract(est.id, (x) => ({ ...x, payments: [...x.payments, p] }));
+    emit('payment.recorded', { estimate: { id: est.id, title: est.title, client: est.clientName }, payment: p, balance: Math.round((t.balance - p.amount) * 100) / 100 });
+    celebrate();
     setPayOpen(false); setPayAmount(0); setPayNote('');
     notify('Payment recorded', `${money(p.amount)} by ${METHODS.find((m) => m.value === p.method)?.label}.`);
   };
@@ -152,7 +155,7 @@ export default function ContractScreen() {
               {it.credit ? <Badge label="Credit" tone="ok" /> : st ? <Badge label={STATE[st.state].label} tone={STATE[st.state].tone} /> : null}
               {it.credit ? null : <Pressable accessibilityRole="button" accessibilityLabel={it.invoice ? `Share invoice ${it.invoice.number}` : `Create invoice for ${it.label}`}
                 disabled={!!busy} onPress={() => invoice(it)}
-                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: it.invoice ? C.cardHi : C.accent }}>
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, backgroundColor: it.invoice ? C.cardHi : C.accent }}>
                 <Text style={{ color: it.invoice ? C.ink : C.onAccent, fontWeight: '700', fontSize: 13 }}>
                   {busy === it.key ? '…' : it.invoice ? 'Share' : 'Invoice'}
                 </Text>
