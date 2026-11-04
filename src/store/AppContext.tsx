@@ -274,7 +274,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return { ok: false, message: 'That text is not a backup. Paste the whole backup exactly as it was exported.' };
         }
         const d = (parsed ?? {}) as { app?: string; data?: unknown };
-        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return { ok: false, message: 'That text is not an Estimator backup.' };
+        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return { ok: false, message: 'That text is not a Bidwell AI backup.' };
         const { data: next, dropped } = sanitizePersisted(d.data);
         if (!next.profile) {
           setCustomJobs(dataRef.current.customTypes, dataRef.current.customQuestions); // keep the current job types

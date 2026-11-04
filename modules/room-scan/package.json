@@ -1,7 +1,7 @@
 {
   "name": "room-scan",
   "version": "1.0.0",
-  "description": "LiDAR room scanning with Apple RoomPlan for the Estimator app",
+  "description": "LiDAR room scanning with Apple RoomPlan for the Bidwell AI app",
   "main": "src/index.ts",
   "license": "UNLICENSED",
   "author": "YM LLC",

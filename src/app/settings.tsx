@@ -55,7 +55,7 @@ export default function Settings() {
 
   const exportBackup = async () => {
     const json = exportData();
-    const name = `estimator-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    const name = `bidwell-backup-${new Date().toISOString().slice(0, 10)}.json`;
     if (Platform.OS === 'web') {
       if (inClaudeApp) {
         const r = await hostSave(name, json);

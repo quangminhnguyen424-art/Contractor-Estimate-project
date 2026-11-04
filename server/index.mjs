@@ -105,4 +105,4 @@ http.createServer(async (req, res) => {
     res.statusCode = 502;
     res.end(JSON.stringify({ error: 'AI request failed' }));
   }
-}).listen(PORT, () => console.log(`Estimator AI server on :${PORT} using ${MODEL}`));
+}).listen(PORT, () => console.log(`Bidwell AI server on :${PORT} using ${MODEL}`));
