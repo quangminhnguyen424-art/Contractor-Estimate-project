@@ -1,8 +1,9 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Image, Platform, Pressable, Text, useWindowDimensions, View, type GestureResponderEvent } from 'react-native';
+import { Image, Platform, Pressable, useWindowDimensions, View, type GestureResponderEvent } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
+import { Text } from '@/ui/text';
 import { newId } from '@/engine/format';
 import { markupSvg, COLOR_HEX, type MarkColor, type MarkupShape, type PhotoKind, type ShapeKind, type SitePhoto, type SiteRoom } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
@@ -179,7 +180,7 @@ export default function PhotoScreen() {
           deletePhotosLater([photo.uri]);
           router.back();
         })}>
-        <Text style={{ color: '#B42318', fontWeight: '600' }}>Delete photo</Text>
+        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete photo</Text>
       </Pressable>
     </Screen>
   );

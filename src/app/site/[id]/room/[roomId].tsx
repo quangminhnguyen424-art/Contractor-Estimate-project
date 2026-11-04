@@ -1,7 +1,8 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, useWindowDimensions, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { newId } from '@/engine/format';
 import type { PhotoKind, SiteRoom, SiteTask } from '@/engine/site';
 import { stepsFor } from '@/engine/siteAI';
@@ -87,7 +88,7 @@ export default function RoomScreen() {
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: t.done }} accessibilityLabel={t.text} hitSlop={8}
           onPress={() => setTask(t.id, t.done ? { done: false, doneAt: undefined } : { done: true, doneAt: new Date().toISOString() })}
           style={{ width: 26, height: 26, borderRadius: 6, borderWidth: 2, borderColor: t.done ? C.okInk : C.ink2, backgroundColor: t.done ? C.okInk : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-          {t.done ? <Text style={{ color: '#fff', fontWeight: '800' }}>✓</Text> : null}
+          {t.done ? <Text style={{ color: C.onAccent, fontWeight: '800' }}>✓</Text> : null}
         </Pressable>
         <View style={{ flex: 1, gap: 6 }}>
           <Text style={{ color: t.done ? C.muted : C.ink, fontSize: 15, textDecorationLine: t.done ? 'line-through' : 'none' }}>{t.text}</Text>
@@ -166,7 +167,7 @@ export default function RoomScreen() {
           deletePhotosLater(room.photos.map((ph) => ph.uri));
           router.back();
         })}>
-        <Text style={{ color: '#B42318', fontWeight: '600' }}>Delete room</Text>
+        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete room</Text>
       </Pressable>
     </Screen>
   );

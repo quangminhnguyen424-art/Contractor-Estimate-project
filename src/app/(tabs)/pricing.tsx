@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { historyPerSf, presetFor } from '@/engine/estimator';
 import { dateFmt, money, newId } from '@/engine/format';
 import { FINISH_LABELS, jobType, perUnit, qtyWithUnit } from '@/engine/jobTypes';

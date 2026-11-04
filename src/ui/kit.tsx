@@ -1,32 +1,50 @@
 import React from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {
-  Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  Pressable, ScrollView, StyleSheet, View,
   type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Art, type ART } from './art';
+import { PressScale, Reveal } from './motion';
+import { NUM, Text, TextInput } from './text';
+
+/**
+ * Colors: blueprint navy with safety yellow. Dark, calm surfaces so job photos and numbers stand out,
+ * and one bright color for the thing to tap.
+ */
 export const C = {
-  bg: '#F4F3EF',
-  card: '#FFFFFF',
-  ink: '#1B1E22',
-  ink2: '#3F444A',
-  muted: '#5B6168',
-  line: '#E2E0DA',
-  lineSoft: '#EFEDE8',
-  accent: '#C2410C',
-  accentDark: '#9A3412',
-  accentTint: '#FBEDE5',
-  warnBg: '#FFF4D6',
-  warnInk: '#5C3900',
-  infoBg: '#E7F0FA',
-  infoInk: '#1E4E8C',
-  okBg: '#E3F2E7',
-  okInk: '#1D6B3A',
-  dark: '#1B1E22',
-  darkMuted: '#C9CCD1',
+  bg: '#0F172A',
+  card: '#1E293B',
+  cardHi: '#273449',
+  ink: '#F8FAFC',
+  ink2: '#CBD5E1',
+  muted: '#94A3B8',
+  line: '#334155',
+  lineSoft: '#273449',
+  accent: '#FACC15',
+  accentDark: '#FDE047', // accent used as text on a tinted background
+  accentTint: 'rgba(250,204,21,0.13)',
+  onAccent: '#0F172A', // text and icons on the yellow
+  sky: '#38BDF8',
+  skyTint: 'rgba(56,189,248,0.14)',
+  warnBg: '#3A2A08',
+  warnInk: '#FCD34D',
+  infoBg: '#0C2A47',
+  infoInk: '#93C5FD',
+  okBg: '#0B3326',
+  okInk: '#6EE7B7',
+  badBg: '#3B1219',
+  danger: '#F87171',
+  dark: '#020617',
+  darkMuted: '#94A3B8',
 };
 
-export const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, Menlo, monospace' });
+/** Paper colors for previews of documents the client sees (quotes, invoices): always white paper. */
+export const P = { paper: '#FFFFFF', ink: '#1B1E22', ink2: '#3F444A', muted: '#5B6168', line: '#E2E0DA', accent: '#B45309' };
+
+export const mono = NUM;
 
 export function Screen({ children, scroll = true, padded = true, footer, scrollEnabled = true }: {
   children: React.ReactNode; scroll?: boolean; padded?: boolean; footer?: React.ReactNode; scrollEnabled?: boolean;
@@ -69,27 +87,32 @@ export function Muted({ children, style }: { children: React.ReactNode; style?: 
   return <Text style={[s.muted, style]}>{children}</Text>;
 }
 
-export function Button({ title, onPress, kind = 'primary', disabled, style, accessibilityLabel }: {
+export function Button({ title, onPress, kind = 'primary', disabled, style, accessibilityLabel, icon }: {
   title: string; onPress: () => void; kind?: 'primary' | 'secondary' | 'ghost' | 'danger'; disabled?: boolean;
-  style?: StyleProp<ViewStyle>; accessibilityLabel?: string;
+  style?: StyleProp<ViewStyle>; accessibilityLabel?: string; icon?: IconName;
 }) {
-  const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.card : 'transparent';
-  const fg = kind === 'primary' ? '#FFFFFF' : kind === 'danger' ? '#B42318' : kind === 'ghost' ? C.accent : C.ink;
+  const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.cardHi : 'transparent';
+  const fg = kind === 'primary' ? C.onAccent : kind === 'danger' ? C.danger : kind === 'ghost' ? C.accent : C.ink;
   return (
-    <Pressable
+    <PressScale
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
+      style={[
         s.btn,
-        { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
-        kind === 'secondary' && { borderWidth: 1, borderColor: '#C9C6BE' },
+        { backgroundColor: bg, opacity: disabled ? 0.4 : 1 },
+        kind === 'secondary' && { borderWidth: 1, borderColor: C.line },
+        kind === 'primary' && !disabled && { shadowColor: C.accent, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
         kind === 'ghost' || kind === 'danger' ? { height: 44 } : null,
         style,
       ]}>
-      <Text style={[s.btnText, { color: fg }]}>{title}</Text>
-    </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {icon ? <Ionicons name={icon} size={20} color={fg} /> : null}
+        <Text style={[s.btnText, { color: fg }]}>{title}</Text>
+      </View>
+    </PressScale>
   );
 }
 
@@ -100,7 +123,7 @@ export function Field({ label, help, suffix, style, ...props }: TextInputProps &
       <View style={s.inputWrap}>
         <TextInput
           accessibilityLabel={label}
-          placeholderTextColor="#8A8F96"
+          placeholderTextColor="#64748B"
           style={[s.input, props.multiline && { height: 120, textAlignVertical: 'top', paddingTop: 12 }]}
           {...props}
         />
@@ -169,7 +192,7 @@ export function Segmented<T extends string>({ options, value, onChange }: {
             disabled={o.disabled}
             onPress={() => onChange(o.value)}
             style={[s.segItem, on && s.segOn, o.disabled && { opacity: 0.4 }]}>
-            <Text style={[s.segText, on && { color: C.ink, fontWeight: '700' }]}>{o.label}</Text>
+            <Text style={[s.segText, on && { color: C.onAccent, fontWeight: '700' }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -179,12 +202,12 @@ export function Segmented<T extends string>({ options, value, onChange }: {
 
 export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neutral' | 'info' | 'ok' | 'warn' | 'bad' }) {
   const map = {
-    neutral: ['#EDECE7', C.ink2], info: [C.infoBg, C.infoInk], ok: [C.okBg, C.okInk],
-    warn: [C.warnBg, C.warnInk], bad: ['#FDE8E7', '#912018'],
+    neutral: [C.cardHi, C.ink2], info: [C.infoBg, C.infoInk], ok: [C.okBg, C.okInk],
+    warn: [C.warnBg, C.warnInk], bad: [C.badBg, C.danger],
   } as const;
   const [bg, fg] = map[tone];
   return (
-    <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+    <View style={{ backgroundColor: bg, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 }}>
       <Text style={{ color: fg, fontSize: 12, fontWeight: '700' }}>{label}</Text>
     </View>
   );
@@ -227,7 +250,7 @@ export function Stepper({ label, value, onChange, min = 0 }: { label: string; va
       <Pressable accessibilityRole="button" accessibilityLabel={`Decrease ${label}`} onPress={() => onChange(Math.max(min, value - 1))} style={s.stepBtn}>
         <Text style={s.stepTxt}>−</Text>
       </Pressable>
-      <Text style={{ minWidth: 32, textAlign: 'center', fontFamily: mono, fontSize: 16 }}>{value}</Text>
+      <Text style={{ minWidth: 32, textAlign: 'center', fontFamily: mono, fontSize: 16, color: C.ink }}>{value}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={`Increase ${label}`} onPress={() => onChange(value + 1)} style={s.stepBtn}>
         <Text style={s.stepTxt}>+</Text>
       </Pressable>
@@ -235,25 +258,88 @@ export function Stepper({ label, value, onChange, min = 0 }: { label: string; va
   );
 }
 
+export type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+/** A big square shortcut with an icon (home screen). */
+export function Tile({ icon, title, sub, onPress, tone = 'yellow', index = 0 }: {
+  icon: IconName; title: string; sub?: string; onPress: () => void; tone?: 'yellow' | 'sky' | 'slate'; index?: number;
+}) {
+  const fg = tone === 'yellow' ? C.accent : tone === 'sky' ? C.sky : C.ink2;
+  const tint = tone === 'yellow' ? C.accentTint : tone === 'sky' ? C.skyTint : C.cardHi;
+  return (
+    <Reveal index={index} style={{ flexBasis: '47%', flexGrow: 1 }}>
+      <PressScale accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
+        style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, minHeight: 112 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={22} color={fg} />
+        </View>
+        <View style={{ gap: 2 }}>
+          <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{title}</Text>
+          {sub ? <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={2}>{sub}</Text> : null}
+        </View>
+      </PressScale>
+    </Reveal>
+  );
+}
+
+/** A friendly picture with a short message and one action, for screens with nothing in them yet. */
+export function Empty({ art, title, text, action, onAction, width = 260 }: {
+  art: keyof typeof ART; title: string; text?: string; action?: string; onAction?: () => void; width?: number;
+}) {
+  return (
+    <Reveal style={{ alignItems: 'center', gap: 10, paddingVertical: 12 }}>
+      <Art name={art} width={width} />
+      <Text style={{ color: C.ink, fontSize: 19, fontWeight: '700', textAlign: 'center' }}>{title}</Text>
+      {text ? <Text style={{ color: C.muted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 340 }}>{text}</Text> : null}
+      {action && onAction ? <Button title={action} onPress={onAction} style={{ alignSelf: 'stretch', marginTop: 4 }} /> : null}
+    </Reveal>
+  );
+}
+
+/** Section title with an optional link on the right ("See all"). */
+export function Section({ title, link, onLink }: { title: string; link?: string; onLink?: () => void }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+      <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>{title}</Text>
+      {link && onLink ? (
+        <Pressable accessibilityRole="button" onPress={onLink} hitSlop={8}>
+          <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{link}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/** A labelled number in a small box (money, counts). */
+export function Stat({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'warn' | 'accent' }) {
+  const color = tone === 'ok' ? C.okInk : tone === 'warn' ? C.warnInk : tone === 'accent' ? C.accent : C.ink;
+  return (
+    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.cardHi, borderRadius: 14, padding: 12, gap: 2 }}>
+      <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
+      <Text style={{ color, fontSize: 17, fontWeight: '700', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+    </View>
+  );
+}
+
 export const s = StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 },
-  h1: { fontSize: 26, fontWeight: '700', color: C.ink },
+  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 },
+  h1: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
   h2: { fontSize: 17, fontWeight: '700', color: C.ink },
   label: { fontSize: 14, fontWeight: '600', color: C.ink2 },
   muted: { fontSize: 14, color: C.muted, lineHeight: 20 },
-  btn: { height: 54, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  btnText: { fontSize: 17, fontWeight: '600' },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingRight: 12 },
+  btn: { height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
+  btnText: { fontSize: 16, fontWeight: '700' },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingRight: 12 },
   input: { flex: 1, minHeight: 48, paddingHorizontal: 14, fontSize: 16, color: C.ink },
   suffix: { color: C.muted, fontSize: 14 },
-  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   chipText: { fontSize: 15, color: C.ink, fontWeight: '500' },
-  seg: { flexDirection: 'row', backgroundColor: '#E9E7E1', borderRadius: 12, padding: 4, gap: 4 },
+  seg: { flexDirection: 'row', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 4, gap: 4 },
   segItem: { flex: 1, height: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  segOn: { backgroundColor: C.card, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segOn: { backgroundColor: C.accent, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   segText: { fontSize: 14, color: C.ink2, fontWeight: '500' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderColor: C.lineSoft },
   rowText: { fontSize: 15, color: C.ink },
-  stepBtn: { width: 44, height: 44, borderRadius: 10, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 22, color: C.ink },
 });

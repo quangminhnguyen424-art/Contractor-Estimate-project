@@ -1,8 +1,9 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
+import { Text } from '@/ui/text';
 import { TRADE_NAMES } from '@/engine/catalog';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { money, qtyFmt } from '@/engine/format';
@@ -15,11 +16,12 @@ import { confirmAction, notify } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs, projects, projectForEstimate } = useApp();
+  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs, projects, projectForEstimate, contracts } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === id);
+  const contract = contracts.find((c) => c.estimateId === id);
 
   if (!est || !profile) {
     return (
@@ -79,18 +81,18 @@ export default function EstimateScreen() {
         <Muted style={{ fontSize: 12 }}>Internal view. Your client never sees cost, labor or markup.</Muted>
       </View>
 
-      <View style={{ backgroundColor: C.dark, borderRadius: 16, padding: 18, gap: 12 }}>
+      <View style={{ backgroundColor: C.dark, borderRadius: 22, padding: 18, gap: 12, borderWidth: 1, borderColor: C.line }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Text style={{ color: C.darkMuted, fontSize: 14 }}>Client price</Text>
-          <Text style={{ color: '#fff', fontSize: 30, fontFamily: mono, fontWeight: '600' }}>{money(est.price)}</Text>
+          <Text style={{ color: C.accent, fontSize: 34, fontFamily: mono, fontWeight: '800' }}>{money(est.price)}</Text>
         </View>
         {est.mode === 'quick' ? (
-          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
+          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: C.line, paddingTop: 12, gap: 8 }}>
             <DarkStat label={cmp.unit === 'JOB' ? 'Priced' : 'Quantity'} value={qtyWithUnit(cmp.sizeSf, cmp.unit)} />
             <DarkStat label="Your price" value={`${money(cmp.pricePerSf)}${perUnit(cmp.unit)}`} accent />
           </View>
         ) : (
-          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: '#3A3F45', paddingTop: 12, gap: 8 }}>
+          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: C.line, paddingTop: 12, gap: 8 }}>
             <DarkStat label="Labor" value={money(est.laborTotal)} />
             <DarkStat label="Materials" value={money(est.materialTotal)} />
             {extras.length > 0 ? <DarkStat label="Your items" value={money(extrasTotal)} /> : null}
@@ -124,7 +126,7 @@ export default function EstimateScreen() {
           </Text>
           {[...warns, ...infos].map((c) => (
             <View key={c.id} style={{ flexDirection: 'row', gap: 8 }}>
-              <Text style={{ color: c.level === 'warn' ? '#B54708' : C.infoInk, fontWeight: '700' }}>{c.level === 'warn' ? '!' : 'i'}</Text>
+              <Text style={{ color: c.level === 'warn' ? C.warnInk : C.infoInk, fontWeight: '700' }}>{c.level === 'warn' ? '!' : 'i'}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontWeight: '600', color: C.ink }}>{c.title}</Text>
                 <Text style={{ color: C.ink2, fontSize: 13, lineHeight: 18 }}>{c.detail}</Text>
@@ -201,16 +203,22 @@ export default function EstimateScreen() {
           : 'Mark it Won when you get the job. It’s added to your past jobs so the app learns what you really charge.'}
       </Muted>
 
-      {est.status === 'won' ? (
-        <Button title={projects.some((x) => x.estimateId === est.id) ? 'Open job site' : 'Start job site'}
-          onPress={() => { const pid = projectForEstimate(est.id); if (pid) router.push(`/site/${pid}`); }} />
+      {est.status === 'sent' && !contract?.accepted ? (
+        <Button title="Client signs on this phone" icon="create-outline" onPress={() => router.push(`/estimate/${est.id}/sign`)} />
+      ) : null}
+      {est.status === 'won' || contract?.accepted ? (
+        <View style={{ gap: 10 }}>
+          <Button title={projects.some((x) => x.estimateId === est.id) ? 'Open job site' : 'Start job site'} icon="construct-outline"
+            onPress={() => { const pid = projectForEstimate(est.id); if (pid) router.push(`/site/${pid}`); }} />
+          <Button kind="secondary" title="Contract & payments" icon="wallet-outline" onPress={() => router.push(`/estimate/${est.id}/contract`)} />
+        </View>
       ) : null}
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Button kind="secondary" title="Edit answers" style={{ flex: 1 }} onPress={edit} />
       </View>
       <Pressable accessibilityRole="button" onPress={remove} style={{ alignSelf: 'center', padding: 12 }}>
-        <Text style={{ color: '#B42318', fontWeight: '600' }}>Delete estimate</Text>
+        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete estimate</Text>
       </Pressable>
     </Screen>
   );
@@ -220,7 +228,7 @@ function DarkStat({ label, value, accent }: { label: string; value: string; acce
   return (
     <View style={{ flex: 1, gap: 2 }}>
       <Text style={{ color: C.darkMuted, fontSize: 12 }}>{label}</Text>
-      <Text style={{ color: accent ? '#FDBA8C' : '#fff', fontFamily: mono, fontSize: 15 }}>{value}</Text>
+      <Text style={{ color: accent ? C.accent : C.ink, fontFamily: mono, fontSize: 15 }}>{value}</Text>
     </View>
   );
 }

@@ -47,3 +47,11 @@ export function scanRoom(): Promise<RoomScanResult> {
   if (!native) return Promise.reject(Object.assign(new Error('Room scanning is not available here.'), { code: 'UNSUPPORTED' }));
   return native.scanRoom();
 }
+
+/** Why scanning is or isn't possible here, so the app can explain it. */
+export function scanSupport(): 'ok' | 'web' | 'android' | 'not-installed' | 'no-lidar' {
+  if (Platform.OS === 'web') return 'web';
+  if (Platform.OS !== 'ios') return 'android';
+  if (!native) return 'not-installed';
+  return isRoomScanAvailable() ? 'ok' : 'no-lidar';
+}

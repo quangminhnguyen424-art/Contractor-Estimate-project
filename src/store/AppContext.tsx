@@ -5,6 +5,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
+import { emptyContract, type Contract } from '@/engine/contract';
+import type { CalEvent } from '@/engine/schedule';
 import { projectFromEstimate, type SiteProject } from '@/engine/site';
 import { deletePhotoFile } from '@/ui/photoStore';
 
@@ -64,6 +66,14 @@ interface Ctx extends Persisted {
   deleteProject: (id: string) => void;
   /** Opens (or creates) the job site project for a won estimate. Returns its id. */
   projectForEstimate: (estimateId: string) => string | null;
+  /** The contract for a won job (signature, change orders, invoices, payments), applied to the latest saved copy. */
+  updateContract: (estimateId: string, fn: (c: Contract) => Contract) => void;
+  /** Calendar events. */
+  saveEvent: (e: CalEvent) => void;
+  deleteEvent: (id: string) => void;
+  /** A floor plan from the Scan 3D screen, waiting to be used by the next new estimate (not saved). */
+  pendingPlan: PlanRoom[] | null;
+  setPendingPlan: (p: PlanRoom[] | null) => void;
   /** True when the last save failed (phone or browser storage full). */
   saveFailed: boolean;
   /** Deletes photo files, but only once the change that removed them has been saved. */
@@ -87,6 +97,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<Persisted>(EMPTY);
   const [ready, setReady] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [pendingPlan, setPendingPlan] = useState<PlanRoom[] | null>(null);
   const dataRef = useRef<Persisted>(EMPTY);
   const [apiKey, setApiKey] = useState('');
   const [saveFailed, setSaveFailed] = useState(false);
@@ -230,6 +241,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         update((d) => ({ ...d, projects: [p, ...d.projects] }));
         return p.id;
       },
+      updateContract: (estimateId, fn) =>
+        update((d) => {
+          const cur = d.contracts.find((c) => c.estimateId === estimateId) ?? emptyContract(estimateId);
+          return { ...d, contracts: [fn(cur), ...d.contracts.filter((c) => c.estimateId !== estimateId)] };
+        }),
+      saveEvent: (e) => update((d) => ({ ...d, events: [e, ...d.events.filter((x) => x.id !== e.id)] })),
+      deleteEvent: (id) => update((d) => ({ ...d, events: d.events.filter((x) => x.id !== id) })),
+      pendingPlan,
+      setPendingPlan,
       saveFailed,
       saveQuestions: (jobTypeId, qs) =>
         update((d) => {
@@ -252,7 +272,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Status or markup changes on a won job keep its past job (what the app learned) in step.
           return { ...d, estimates, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
         }),
-      deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id) })),
+      deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id) })),
       resetAll: () => {
         setDraft(null);
         toDelete.current.push(...dataRef.current.projects.flatMap((x) => x.rooms.flatMap((r) => r.photos.map((ph) => ph.uri))));
@@ -288,7 +308,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
       },
     }),
-    [data, ready, draft, update, commitDraft, apiKey, saveFailed],
+    [data, ready, draft, update, commitDraft, apiKey, saveFailed, pendingPlan],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

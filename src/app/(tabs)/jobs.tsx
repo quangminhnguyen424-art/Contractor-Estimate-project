@@ -1,18 +1,21 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { money } from '@/engine/format';
 import { estimateJob } from '@/engine/jobTypes';
 import type { EstimateStatus } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { Badge, Banner, Button, C, Chip, H2, Muted, Screen, mono, s } from '@/ui/kit';
+import { contractTotals } from '@/engine/contract';
+import { Badge, Banner, Button, C, Chip, Empty, Muted, Screen, mono, s } from '@/ui/kit';
+import { PressScale, Progress, Reveal } from '@/ui/motion';
 
 const STATUS_TONE = { draft: 'neutral', sent: 'info', won: 'ok', lost: 'bad' } as const;
 const STATUS_LABEL: Record<EstimateStatus, string> = { draft: 'Draft', sent: 'Sent', won: 'Won', lost: 'Lost' };
 
 export default function Jobs() {
-  const { estimates, profile } = useApp();
+  const { estimates, profile, contracts } = useApp();
   const [filter, setFilter] = useState<'all' | EstimateStatus>('all');
   const shown = useMemo(() => (filter === 'all' ? estimates : estimates.filter((e) => e.status === filter)), [estimates, filter]);
   const needsAttention = estimates.filter((e) => e.status === 'draft' && e.checks.some((c) => c.level === 'warn'));
@@ -23,7 +26,7 @@ export default function Jobs() {
   return (
     <Screen>
       <Muted>{profile?.companyName}</Muted>
-      <Button title="+  New estimate" onPress={() => router.push('/new')} />
+      <Button title="New estimate" icon="add" onPress={() => router.push('/new')} />
 
       {needsAttention.length > 0 ? (
         <Pressable accessibilityRole="button" onPress={() => router.push(`/estimate/${needsAttention[0].id}`)}>
@@ -48,29 +51,37 @@ export default function Jobs() {
       </View>
 
       {shown.length === 0 ? (
-        <View style={[s.card, { alignItems: 'center', paddingVertical: 32 }]}>
-          <H2>{estimates.length === 0 ? 'No estimates yet' : 'Nothing here'}</H2>
-          <Muted style={{ textAlign: 'center' }}>
-            {estimates.length === 0 ? 'Tap New estimate, describe the job by typing or with your keyboard mic, and get a quote in minutes.' : 'Try another filter.'}
-          </Muted>
-        </View>
+        <Empty art="jobs" title={estimates.length === 0 ? 'No estimates yet' : 'Nothing here'}
+          text={estimates.length === 0 ? 'Describe the job by typing or talking, add photos, and Claude fills in a quote with your own prices in minutes.' : 'Try another filter.'} />
       ) : (
-        shown.map((e) => (
-          <Pressable
-            key={e.id}
+        shown.map((e, i) => {
+          const c = contracts.find((x) => x.estimateId === e.id);
+          const t = c ? contractTotals(e, c) : null;
+          return (
+          <Reveal key={e.id} index={i}>
+          <PressScale
             accessibilityRole="button"
             onPress={() => router.push(`/estimate/${e.id}`)}
-            style={({ pressed }) => [s.card, { opacity: pressed ? 0.8 : 1 }]}>
+            scaleTo={0.98}
+            style={s.card}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: C.ink, flex: 1 }} numberOfLines={1}>{e.title}</Text>
-              <Badge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />
+              {c?.accepted ? <Badge label="Signed" tone="ok" /> : <Badge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />}
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
               <Muted style={{ flex: 1 }}>{estimateJob(e).name} · {e.mode === 'quick' ? 'Quick' : 'Detailed'}{e.clientName ? ` · ${e.clientName}` : ''}</Muted>
               <Text style={{ fontFamily: mono, color: C.ink, fontSize: 15 }}>{money(e.price)}</Text>
             </View>
-          </Pressable>
-        ))
+            {t && (t.paid > 0 || t.due > 0) ? (
+              <View style={{ gap: 4 }}>
+                <Progress value={t.total ? t.paid / t.total : 0} color={C.okInk} height={5} />
+                <Text style={{ color: C.muted, fontSize: 12 }}>Paid {money(t.paid)} of {money(t.total)}{t.due > 0 ? ` · ${money(t.due)} invoiced, unpaid` : ''}</Text>
+              </View>
+            ) : null}
+          </PressScale>
+          </Reveal>
+          );
+        })
       )}
     </Screen>
   );

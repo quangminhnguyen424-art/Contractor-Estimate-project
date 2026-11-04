@@ -1,10 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
+import { Text } from '@/ui/text';
 import { newId } from '@/engine/format';
 import { markupSvg, type PhotoKind, type SitePhoto } from '@/engine/site';
 
+import { C } from './kit';
 import { notify } from './notify';
 import { savePhoto, usePhotoUri } from './photoStore';
 
@@ -13,7 +15,7 @@ export function PhotoView({ photo, width, badge }: { photo: SitePhoto; width: nu
   const height = Math.round((width * photo.h) / photo.w);
   const src = usePhotoUri(photo.uri);
   return (
-    <View style={{ width, height, borderRadius: 8, overflow: 'hidden', backgroundColor: '#ddd' }}>
+    <View style={{ width, height, borderRadius: 8, overflow: 'hidden', backgroundColor: C.cardHi }}>
       {src ? <Image source={{ uri: src }} style={{ width, height }} accessibilityLabel={photo.note || `${photo.kind} photo`} /> : null}
       {photo.markup.length ? (
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0 }}>

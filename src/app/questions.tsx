@@ -1,7 +1,8 @@
 import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { ASSEMBLIES, TRADE_NAMES } from '@/engine/catalog';
 import { laborRate, presetFor } from '@/engine/estimator';
 import { money2 } from '@/engine/format';

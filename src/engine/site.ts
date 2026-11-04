@@ -64,6 +64,8 @@ export interface SiteProject {
   createdAt: string;
   rooms: SiteRoom[];
   logs: DailyLog[];
+  /** When photos were last sent to the client, to remind the contractor to keep them updated. */
+  lastClientUpdateAt?: string;
 }
 
 export const COLOR_HEX: Record<MarkColor, string> = { red: '#E11D48', yellow: '#FACC15', white: '#FFFFFF' };
@@ -264,7 +266,7 @@ h1{font-size:20px;margin:0 0 2px}h2{font-size:16px;margin:26px 0 8px;padding-top
 .ph img{width:100%;display:block;border-radius:6px}.ph svg{position:absolute;left:0;top:0;width:100%;height:100%}
 .note{font-weight:600;margin:2px 0 10px}ol{padding-left:20px}li{margin:6px 0;page-break-inside:avoid}
 .box{display:inline-block;width:12px;height:12px;border:1.5px solid #1B1E22;margin-right:8px;vertical-align:-2px}
-.orig{color:#5B6168;font-size:11px}.pair{display:flex;gap:8px;page-break-inside:avoid}.pair div{flex:1}
+.orig{color:#5B6168;font-size:11px}.pair{display:flex;gap:8px;page-break-inside:avoid}.pair div{flex:1}.grid{display:flex;flex-wrap:wrap;gap:8px}.grid>div{width:calc(50% - 4px);page-break-inside:avoid}
 .tag{font-size:11px;font-weight:700;letter-spacing:.05em;color:#5B6168;text-transform:uppercase}
 </style></head><body>${body}</body></html>`;
 
@@ -307,10 +309,12 @@ ${photos.map((ph) => `<div class="tag">${T.photo} ${no(ph.id)}</div>${photoBlock
 }
 
 /** Progress update for the client: finished work and before/after photos. Never prices or internal notes. */
-export function clientUpdateHtml(p: SiteProject, message: string, photoSrc: Record<string, string>, companyName: string, lang: 'en' | 'vi'): string {
+export function clientUpdateHtml(p: SiteProject, message: string, photoSrc: Record<string, string>, companyName: string, lang: 'en' | 'vi', recentIds: string[] = []): string {
   const L = lang === 'vi'
-    ? { title: 'Cập nhật tiến độ', done: 'Đã hoàn thành', ba: 'Trước và sau', before: 'Trước', after: 'Sau' }
-    : { title: 'Progress update', done: 'Finished', ba: 'Before and after', before: 'Before', after: 'After' };
+    ? { title: 'Cập nhật tiến độ', done: 'Đã hoàn thành', ba: 'Trước và sau', before: 'Trước', after: 'Sau', latest: 'Hình ảnh mới nhất' }
+    : { title: 'Progress update', done: 'Finished', ba: 'Before and after', before: 'Before', after: 'After', latest: 'Latest photos' };
+  // Latest photos: room and date only. Photo notes are instructions for the crew, so they stay off the client's copy.
+  const recent = p.rooms.flatMap((r) => r.photos.filter((ph) => recentIds.includes(ph.id) && photoSrc[ph.id]).map((ph) => ({ r, ph })));
   const prog = projectProgress(p);
   const pairs = beforeAfterPairs(p).filter((x) => photoSrc[x.before.id] && photoSrc[x.after.id] && !/^ask\s*:/i.test(x.label.trim()));
   const done = p.rooms.map((r) => ({ r, tasks: r.tasks.filter((t) => t.done && !isQuestion(t)) })).filter((x) => x.tasks.length);
@@ -318,6 +322,7 @@ export function clientUpdateHtml(p: SiteProject, message: string, photoSrc: Reco
 <div class="muted">${esc(companyName)} · ${prog.pct}% · ${new Date().toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US')}</div>
 <p>${esc(message).replace(/\n/g, '<br>')}</p>
 ${done.length ? `<h2>${L.done}</h2>${done.map((x) => `<div><b>${esc(x.r.name)}</b><ul>${x.tasks.map((t) => `<li>${esc(t.text)}</li>`).join('')}</ul></div>`).join('')}` : ''}
+${recent.length ? `<h2>${L.latest}</h2><div class="grid">${recent.map(({ r, ph }) => `<div>${photoBlock(ph, photoSrc[ph.id], false)}<div class="muted">${esc(r.name)} · ${new Date(ph.takenAt).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US')}</div></div>`).join('')}</div>` : ''}
 ${pairs.length ? `<h2>${L.ba}</h2>${pairs.map((x) => `<div class="tag">${esc(x.room)} · ${esc(x.label)}</div><div class="pair"><div><div class="muted">${L.before}</div>${photoBlock(x.before, photoSrc[x.before.id], false)}</div><div><div class="muted">${L.after}</div>${photoBlock(x.after, photoSrc[x.after.id], false)}</div></div>`).join('')}` : ''}`);
 }
 

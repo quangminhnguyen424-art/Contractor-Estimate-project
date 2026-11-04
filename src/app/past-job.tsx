@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { money, newId } from '@/engine/format';
 import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
@@ -81,7 +82,7 @@ export default function PastJobScreen() {
 
       {existing ? (
         <Pressable accessibilityRole="button" style={{ alignSelf: 'center', padding: 12 }} onPress={() => { deletePastJob(existing.id); router.back(); }}>
-          <Text style={{ color: '#B42318', fontWeight: '600' }}>Delete past job</Text>
+          <Text style={{ color: C.danger, fontWeight: '600' }}>Delete past job</Text>
         </Pressable>
       ) : null}
     </Screen>

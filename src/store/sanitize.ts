@@ -1,6 +1,8 @@
 // Checks saved or restored data before the app uses it, so a damaged or partial backup
 // can never crash the app (and can't lock the user out on every launch).
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
+import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, Signature } from '../engine/contract';
+import type { CalEvent, EventKind } from '../engine/schedule';
 import type { DailyLog, MarkupShape, SitePhoto, SiteProject, SiteRoom, SiteTask } from '../engine/site';
 import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, WorkProfile } from '../engine/types';
 
@@ -16,11 +18,15 @@ export interface Persisted {
   customQuestions: Record<string, Question[]>;
   /** Job site projects (after a job is won): rooms, photos, tasks, logs. */
   projects: SiteProject[];
+  /** Signatures, change orders, invoices and payments, one per won estimate. */
+  contracts: Contract[];
+  /** The calendar: site visits, crew days, calls, inspections. */
+  events: CalEvent[];
 }
 
 export const EMPTY: Persisted = {
   profile: null, presets: {}, priceBook: { labor: {}, materials: {} }, pastJobs: [], estimates: [], customTypes: [], customQuestions: {},
-  projects: [],
+  projects: [], contracts: [], events: [],
 };
 
 export const DEFAULT_SCHEDULE: PaymentMilestone[] = [
@@ -228,6 +234,7 @@ export function sanitizeProjects(v: unknown): SiteProject[] {
       status: p.status === 'done' ? 'done' : 'active', createdAt: str(p.createdAt, new Date().toISOString()),
       rooms: Array.isArray(p.rooms) ? p.rooms.map(sanitizeRoom).filter((x): x is SiteRoom => !!x).slice(0, 60) : [],
       logs,
+      ...(typeof p.lastClientUpdateAt === 'string' ? { lastClientUpdateAt: p.lastClientUpdateAt } : {}),
     }];
   }).slice(0, 200);
 }
@@ -302,7 +309,87 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
       customTypes,
       customQuestions,
       projects: sanitizeProjects(raw.projects),
+      contracts: sanitizeContracts(raw.contracts),
+      events: sanitizeEvents(raw.events),
     },
     dropped: estimatesIn.length - estimates.length + (pastIn.length - pastJobs.length),
   };
+}
+
+// ---- Contracts and calendar ----
+
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
+const money = (v: unknown) => {
+  const n = num(v, NaN);
+  return Number.isFinite(n) && Math.abs(n) < 1e8 ? Math.round(n * 100) / 100 : null;
+};
+
+function sanitizeSignature(v: unknown): Signature | null {
+  if (!isObj(v) || !Array.isArray(v.strokes)) return null;
+  const w = num(v.w, 0), h = num(v.h, 0);
+  if (!(w > 0 && w < 5000 && h > 0 && h < 5000)) return null;
+  const strokes = v.strokes
+    .filter((s): s is number[] => Array.isArray(s) && s.length >= 2 && s.length % 2 === 0 && s.every((x) => typeof x === 'number' && Number.isFinite(x)))
+    .slice(0, 200).map((s) => s.slice(0, 2000).map((x) => Math.round(x * 10) / 10));
+  if (!strokes.length) return null;
+  return { name: str(v.name).trim().slice(0, 80), strokes, w, h, signedAt: str(v.signedAt, new Date().toISOString()) };
+}
+
+const PAY: PayMethod[] = ['check', 'cash', 'zelle', 'card', 'transfer', 'other'];
+const CO_STATUS: ChangeStatus[] = ['pending', 'approved', 'declined'];
+
+export function sanitizeContracts(v: unknown): Contract[] {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set<string>();
+  return v.flatMap((c): Contract[] => {
+    if (!isObj(c) || typeof c.estimateId !== 'string' || seen.has(c.estimateId)) return [];
+    seen.add(c.estimateId);
+    const accSig = sanitizeSignature(c.accepted);
+    const accTotal = isObj(c.accepted) ? money(c.accepted.total) : null;
+    const changeOrders = (Array.isArray(c.changeOrders) ? c.changeOrders : []).flatMap((x): ChangeOrder[] => {
+      const amount = isObj(x) ? money(x.amount) : null;
+      if (!isObj(x) || typeof x.id !== 'string' || amount === null) return [];
+      const sig = sanitizeSignature(x.signature);
+      return [{
+        id: x.id, number: Math.max(1, Math.round(num(x.number, 1))), title: str(x.title, 'Change').trim().slice(0, 120) || 'Change',
+        description: str(x.description).slice(0, 4000), amount, status: CO_STATUS.includes(x.status as ChangeStatus) ? (x.status as ChangeStatus) : 'pending',
+        createdAt: str(x.createdAt, new Date().toISOString()), ...(typeof x.decidedAt === 'string' ? { decidedAt: x.decidedAt } : {}), ...(sig ? { signature: sig } : {}),
+      }];
+    }).slice(0, 200);
+    const invoices = (Array.isArray(c.invoices) ? c.invoices : []).flatMap((x): Invoice[] => {
+      const amount = isObj(x) ? money(x.amount) : null;
+      const tax = isObj(x) ? money(x.tax) : null;
+      if (!isObj(x) || typeof x.id !== 'string' || amount === null || tax === null || !YMD.test(str(x.date)) || !YMD.test(str(x.dueDate))) return [];
+      return [{ id: x.id, number: Math.round(num(x.number, 1001)), date: str(x.date), dueDate: str(x.dueDate), itemKey: str(x.itemKey).slice(0, 80), label: str(x.label).slice(0, 200), amount, tax }];
+    }).slice(0, 300);
+    const payments = (Array.isArray(c.payments) ? c.payments : []).flatMap((x): Payment[] => {
+      const amount = isObj(x) ? money(x.amount) : null;
+      if (!isObj(x) || typeof x.id !== 'string' || amount === null || !(amount > 0) || !YMD.test(str(x.date))) return [];
+      return [{ id: x.id, date: str(x.date), amount, method: PAY.includes(x.method as PayMethod) ? (x.method as PayMethod) : 'other', note: str(x.note).slice(0, 300) }];
+    }).slice(0, 500);
+    return [{ estimateId: c.estimateId, ...(accSig && accTotal !== null ? { accepted: { ...accSig, total: accTotal } } : {}), changeOrders, invoices, payments }];
+  }).slice(0, 1000);
+}
+
+const KIND_IDS: EventKind[] = ['visit', 'crew', 'call', 'inspection', 'delivery', 'other'];
+
+export function sanitizeEvents(v: unknown): CalEvent[] {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set<string>();
+  return v.flatMap((e): CalEvent[] => {
+    if (!isObj(e) || typeof e.id !== 'string' || seen.has(e.id) || !YMD.test(str(e.date))) return [];
+    seen.add(e.id);
+    const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(str(e.time)) ? str(e.time) : '';
+    const remind = e.remindMin === null ? null : num(e.remindMin, NaN);
+    return [{
+      id: e.id, title: str(e.title, 'Appointment').trim().slice(0, 120) || 'Appointment',
+      kind: KIND_IDS.includes(e.kind as EventKind) ? (e.kind as EventKind) : 'other', date: str(e.date), time,
+      durationMin: Math.max(0, Math.min(24 * 60, Math.round(num(e.durationMin, 60)))),
+      ...(typeof e.estimateId === 'string' ? { estimateId: e.estimateId } : {}), ...(typeof e.projectId === 'string' ? { projectId: e.projectId } : {}),
+      address: str(e.address).slice(0, 160), notes: str(e.notes).slice(0, 2000),
+      remindMin: remind === null || !Number.isFinite(remind) || remind < 0 || remind > 20160 ? null : Math.round(remind),
+      ...(typeof e.notificationId === 'string' ? { notificationId: e.notificationId } : {}),
+      done: e.done === true, createdAt: str(e.createdAt, new Date().toISOString()),
+    }];
+  }).slice(0, 3000);
 }

@@ -79,7 +79,8 @@ export function scheduleAmounts(est: Estimate, profile: Profile) {
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** HTML used for the PDF the client receives. */
-export function quoteHtml(est: Estimate, profile: Profile, lang: Lang): string {
+/** `accepted` is the client's signature block when they signed in the app (see contract.ts). */
+export function quoteHtml(est: Estimate, profile: Profile, lang: Lang, accepted?: string): string {
   const T = QUOTE_TEXT[lang];
   const jt = estimateJob(est);
   const sections = quoteSections(est, lang);
@@ -96,7 +97,7 @@ h1{font-size:22px;margin:0}h2{font-size:13px;margin:22px 0 6px;text-transform:up
 .muted{color:#5B6168}.r{text-align:right;white-space:nowrap}table{width:100%;border-collapse:collapse}
 td{padding:5px 0;border-bottom:1px solid #E2E0DA;vertical-align:top}.sec td{font-weight:600}
 ul{margin:2px 0 6px 16px;padding:0;color:#3F444A}.tot td{font-size:15px;font-weight:700;border-bottom:none}
-.sig{display:flex;gap:40px;margin-top:28px}.sig div{flex:1;border-top:1px solid #1B1E22;padding-top:4px}
+.sig{display:flex;gap:40px;margin-top:28px}.sig>div{flex:1;border-top:1px solid #1B1E22;padding-top:4px}
 </style></head><body>
 <div class="top"><div><h1>${esc(profile.companyName)}</h1>
 <div class="muted">${esc(profile.contactName)} · ${esc(profile.phone)} · ${esc(profile.email)}</div>
@@ -117,8 +118,8 @@ ${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${plan
 <h2>${T.schedule}</h2><table>${sched.map((s) => row(`${esc(s.label)} (${s.pct}%)`, money(s.amount))).join('')}</table>
 <div class="muted">${lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</div>
 <h2>${T.terms}</h2><ul>${T.termsLines.map((t) => `<li>${t}</li>`).join('')}</ul>
-<h2>${T.acceptance}</h2><div class="sig"><div>${T.owner}</div><div>${T.date}</div></div>
-<div class="sig"><div>${esc(profile.companyName)}</div><div>${T.date}</div></div>
+<h2>${T.acceptance}</h2>${accepted ?? `<div class="sig"><div>${T.owner}</div><div>${T.date}</div></div>
+<div class="sig"><div>${esc(profile.companyName)}</div><div>${T.date}</div></div>`}
 </body></html>`;
 }
 

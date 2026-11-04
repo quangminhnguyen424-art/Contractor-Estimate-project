@@ -3,10 +3,18 @@
   "short_name": "Bidwell AI",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F4F3EF",
-  "theme_color": "#F4F3EF",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }

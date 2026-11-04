@@ -1,7 +1,8 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { jobType, perUnit } from '@/engine/jobTypes';
 import type { PriceUnit } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -63,7 +64,7 @@ export default function JobTypeScreen() {
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${q.label}`} onPress={() => saveQuestions(id, qs.filter((x) => x.id !== q.id))}
               style={{ padding: 8 }}>
-              <Text style={{ color: '#B42318', fontWeight: '600' }}>Remove</Text>
+              <Text style={{ color: C.danger, fontWeight: '600' }}>Remove</Text>
             </Pressable>
           </View>
         ))}
@@ -76,7 +77,7 @@ export default function JobTypeScreen() {
 
       {own ? (
         <Pressable accessibilityRole="button" onPress={remove} style={{ alignSelf: 'center', padding: 12 }}>
-          <Text style={{ color: '#B42318', fontWeight: '600' }}>Delete this type of work</Text>
+          <Text style={{ color: C.danger, fontWeight: '600' }}>Delete this type of work</Text>
         </Pressable>
       ) : null}
     </Screen>

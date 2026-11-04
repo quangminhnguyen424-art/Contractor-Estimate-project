@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
-import { Platform, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
 
 import {
   beforeAfterPairs, clientUpdateHtml, LANG_NAMES, workOrderHtml, type CrewLang, type SiteProject,
 } from '@/engine/site';
+import { Text } from '@/ui/text';
 import { translateAll, writeClientUpdate, writePost } from '@/engine/siteAI';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
@@ -17,6 +18,8 @@ import { shareText } from '@/ui/shareText';
 import { PhotoView } from '@/ui/SitePhotoView';
 
 type Mode = 'crew' | 'client' | 'post';
+
+const weekAgo = () => new Date(Date.now() - 7 * 86400000).toISOString();
 
 /** Embeddable copies of the given photos, one at a time (phones run out of memory doing many at once). */
 async function photoSources(p: SiteProject, ids: Set<string>) {
@@ -43,6 +46,10 @@ export default function ShareScreen() {
   if (!p) return <Screen><Muted>This project was deleted.</Muted></Screen>;
   const company = profile?.companyName ?? '';
   const pairs = beforeAfterPairs(p);
+  // Photos the client hasn't seen: everything since the last update (or the last 7 days), newest 12.
+  const since = p.lastClientUpdateAt ?? weekAgo();
+  const recent = p.rooms.flatMap((r) => r.photos).filter((ph) => ph.takenAt > since)
+    .sort((a, b) => b.takenAt.localeCompare(a.takenAt)).slice(0, 12);
   const ai = aiFor(apiKey);
 
   /** Translates the open tasks in the chosen rooms that don't have this language yet, and saves them. */
@@ -111,8 +118,9 @@ export default function ShareScreen() {
   const clientPdf = async () => {
     setBusy('pdf');
     try {
-      const ids = new Set(pairs.flatMap((x) => [x.before.id, x.after.id]));
-      await sharePdf(clientUpdateHtml(p, text.trim(), await photoSources(p, ids), company, clientLang), `Progress update — ${p.title}`);
+      const ids = new Set([...pairs.flatMap((x) => [x.before.id, x.after.id]), ...recent.map((ph) => ph.id)]);
+      const shared = await sharePdf(clientUpdateHtml(p, text.trim(), await photoSources(p, ids), company, clientLang, recent.map((ph) => ph.id)), `Progress update — ${p.title}`);
+      if (shared) updateProject(p.id, (x) => ({ ...x, lastClientUpdateAt: new Date().toISOString() }));
     } catch {
       notify('Could not make the PDF', 'Try again.');
     } finally {
@@ -167,6 +175,21 @@ export default function ShareScreen() {
           )}
         </Card>
       )}
+
+      {mode === 'client' ? (
+        <Card>
+          <H2>New photos for the client · {recent.length}</H2>
+          <Muted style={{ fontSize: 13 }}>
+            {recent.length
+              ? `Taken ${p.lastClientUpdateAt ? 'since your last update' : 'in the last 7 days'}. They go in the update without your drawings or crew notes.`
+              : 'No new photos since the last update. Take a few progress photos first: clients love seeing the work move.'}
+          </Muted>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {recent.map((ph) => <PhotoView key={ph.id} photo={{ ...ph, markup: [] }} width={Math.floor((Math.min(width, 760) - 32 - 32 - 12) / 3)} />)}
+          </View>
+          {p.lastClientUpdateAt ? <Muted style={{ fontSize: 12 }}>Last update sent {new Date(p.lastClientUpdateAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.</Muted> : null}
+        </Card>
+      ) : null}
 
       {mode !== 'crew' ? (
         <Card>

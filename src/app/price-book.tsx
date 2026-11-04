@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { ASSEMBLIES, MATERIALS, TRADE_NAMES, TRADE_ORDER } from '@/engine/catalog';
 import { useApp } from '@/store/AppContext';
 import { C, Card, Field, Muted, NumberField, Screen, Segmented } from '@/ui/kit';

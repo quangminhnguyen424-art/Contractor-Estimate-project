@@ -1,12 +1,16 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { newId } from '@/engine/format';
 import { estimateJob } from '@/engine/jobTypes';
 import { emptyRoom, projectProgress, projectSummary, type SiteProject } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
-import { Button, C, Card, Field, H2, Muted, Screen } from '@/ui/kit';
+import { Badge, Button, C, Card, Empty, Field, H2, Muted, Screen } from '@/ui/kit';
+import { PressScale, Progress, Reveal } from '@/ui/motion';
+import { PhotoView } from '@/ui/SitePhotoView';
 
 /** Job sites: one project per job you won. Rooms, photos with instructions, tasks for the crew. */
 export default function Sites() {
@@ -31,9 +35,6 @@ export default function Sites() {
 
   return (
     <Screen>
-      <Muted>
-        After you win a job: photos room by room with arrows and notes, a task list your crew checks off, daily logs and updates for the client.
-      </Muted>
 
       {wonWithout.length ? (
         <Card>
@@ -43,7 +44,7 @@ export default function Sites() {
               style={{ paddingVertical: 8, borderTopWidth: 1, borderColor: C.lineSoft, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: C.ink, fontWeight: '600' }}>{e.title}</Text>
-                <Muted style={{ fontSize: 13 }}>{estimateJob(e).name}{e.plan?.length ? ` · ${e.plan.length} rooms from the floor plan` : ''}</Muted>
+                <Muted style={{ fontSize: 13 }}>{estimateJob(e).name}{e.plan?.length ? ` · ${e.plan.length} room${e.plan.length > 1 ? 's' : ''} from the floor plan` : ''}</Muted>
               </View>
               <Text style={{ color: C.accent, fontWeight: '700' }}>Start</Text>
             </Pressable>
@@ -52,13 +53,11 @@ export default function Sites() {
       ) : null}
 
       {active.length === 0 && !wonWithout.length ? (
-        <Card>
-          <H2>No job sites yet</H2>
-          <Muted style={{ fontSize: 13 }}>Mark an estimate Won and it shows up here, or start a project for any job below.</Muted>
-        </Card>
+        <Empty art="site" title="No job sites yet"
+          text="Every job you win gets a job site: photos room by room with arrows and notes, a task list your crew checks off, daily logs and photo updates for the client." />
       ) : null}
 
-      {active.map((p) => <ProjectRow key={p.id} p={p} onPress={() => open(p.id)} />)}
+      {active.map((p, i) => <ProjectCard key={p.id} p={p} index={i} onPress={() => open(p.id)} />)}
 
       {adding ? (
         <Card>
@@ -77,28 +76,61 @@ export default function Sites() {
       {done.length ? (
         <>
           <H2 style={{ marginTop: 8 }}>Finished</H2>
-          {done.map((p) => <ProjectRow key={p.id} p={p} onPress={() => open(p.id)} />)}
+          {done.map((p, i) => <ProjectCard key={p.id} p={p} index={i} onPress={() => open(p.id)} />)}
         </>
       ) : null}
     </Screen>
   );
 }
 
-function ProjectRow({ p, onPress }: { p: SiteProject; onPress: () => void }) {
+const daysSince = (iso: string) => Math.floor((Date.now() - Date.parse(iso)) / 86400000);
+
+/** A job as a big photo card: the latest photo, progress, and what happened lately. */
+function ProjectCard({ p, onPress, index }: { p: SiteProject; onPress: () => void; index: number }) {
+  const { width } = useWindowDimensions();
   const pr = projectProgress(p);
+  const photos = p.rooms.flatMap((r) => r.photos).sort((a, b) => b.takenAt.localeCompare(a.takenAt));
+  const cover = photos[0];
+  const w = Math.min(width, 760) - 32;
+  const last = [cover?.takenAt, p.logs[0]?.date, p.createdAt].filter(Boolean).sort().pop() ?? p.createdAt;
+  const ago = daysSince(last);
   return (
-    <Pressable accessibilityRole="button" onPress={onPress}>
-      <Card style={{ gap: 6 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-          <Text style={{ fontWeight: '700', color: C.ink, flex: 1, fontSize: 16 }} numberOfLines={1}>{p.title}</Text>
-          <Text style={{ color: p.status === 'done' ? C.okInk : C.accent, fontWeight: '700' }}>{pr.total ? `${pr.pct}%` : 'New'}</Text>
+    <Reveal index={index}>
+      <PressScale accessibilityRole="button" accessibilityLabel={p.title} onPress={onPress} scaleTo={0.98}
+        style={{ backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+        {cover ? (
+          <View style={{ height: Math.round(w * 0.5), overflow: 'hidden' }}>
+            <PhotoView photo={{ ...cover, markup: [] }} width={w} />
+            <View style={{ position: 'absolute', right: 10, top: 10, flexDirection: 'row', gap: 6 }}>
+              <Pill icon="images" text={String(photos.length)} />
+              {pr.total ? <Pill icon="checkmark-done" text={`${pr.pct}%`} /> : null}
+            </View>
+          </View>
+        ) : (
+          <View style={{ height: 86, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <Ionicons name="camera-outline" size={22} color={C.muted} />
+            <Text style={{ color: C.muted }}>No photos yet</Text>
+          </View>
+        )}
+        <View style={{ padding: 14, gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontWeight: '800', color: C.ink, flex: 1, fontSize: 17 }} numberOfLines={1}>{p.title}</Text>
+            {p.status === 'done' ? <Badge label="Finished" tone="ok" /> : null}
+          </View>
+          {p.address ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{p.address}</Text> : null}
+          <Progress value={pr.total ? pr.done / pr.total : 0} color={p.status === 'done' ? C.okInk : C.accent} height={6} />
+          <Text style={{ color: C.muted, fontSize: 12 }}>{projectSummary(p)} · {ago <= 0 ? 'active today' : `active ${ago}d ago`}</Text>
         </View>
-        {p.address ? <Muted style={{ fontSize: 13 }}>{p.address}</Muted> : null}
-        <View style={{ height: 6, borderRadius: 3, backgroundColor: C.line }}>
-          <View style={{ width: `${pr.pct}%`, height: 6, borderRadius: 3, backgroundColor: p.status === 'done' ? C.okInk : C.accent }} />
-        </View>
-        <Muted style={{ fontSize: 13 }}>{projectSummary(p)}</Muted>
-      </Card>
-    </Pressable>
+      </PressScale>
+    </Reveal>
+  );
+}
+
+function Pill({ icon, text }: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(2,6,23,0.72)', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 }}>
+      <Ionicons name={icon} size={13} color="#FFFFFF" />
+      <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>{text}</Text>
+    </View>
   );
 }

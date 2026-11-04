@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Text } from '@/ui/text';
 import { newId } from '@/engine/format';
 import { jobType } from '@/engine/jobTypes';
 import { EMPTY_WORK } from '@/engine/profile';
 import type { FinishLevel, JobTypeId, Presets, WorkProfile } from '@/engine/types';
 import { DEFAULT_SCHEDULE, useApp } from '@/store/AppContext';
 import { AddOwnType, JobTypeChips, priceSuffix } from '@/ui/JobTypes';
+import { Art } from '@/ui/art';
 import { Banner, Button, C, Card, Field, H1, H2, Muted, NumberField, Screen } from '@/ui/kit';
+import { Progress, Reveal } from '@/ui/motion';
 import { RestoreBackup } from '@/ui/RestoreBackup';
 import { WorkProfileForm } from '@/ui/WorkProfileForm';
 
@@ -65,12 +68,15 @@ export default function Onboarding() {
           </View>
         }>
         <Muted>Step {step} of 4</Muted>
-        <View style={{ height: 4, borderRadius: 2, backgroundColor: C.line }}>
-          <View style={{ width: `${(step / 4) * 100}%`, height: 4, borderRadius: 2, backgroundColor: C.accent }} />
-        </View>
+        <Progress value={step / 4} height={6} />
 
         {step === 1 && (
           <>
+            <Reveal style={{ alignItems: 'center', gap: 4, marginTop: 4 }}>
+              <Art name="hero" width={260} />
+              <Text style={{ color: C.accent, fontWeight: '800', fontSize: 15, letterSpacing: 0.5 }}>WELCOME TO BIDWELL AI</Text>
+              <Muted style={{ textAlign: 'center' }}>Faster estimates, organized job sites and happy clients. Two minutes to set up.</Muted>
+            </Reveal>
             <H1>Your company</H1>
             <Muted>This goes on every quote you send.</Muted>
             <Field label="Company name" value={companyName} onChangeText={setCompanyName} placeholder="e.g. Smith Remodeling LLC" />

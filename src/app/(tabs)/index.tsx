@@ -1,14 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View, type ScrollViewInstance } from 'react-native';
 
+import { Text, TextInput } from '@/ui/text';
 import { assistantSystem, parseAssistantReply } from '@/engine/assistant';
 import type { ChatTurn } from '@/engine/ai';
 import { newId } from '@/engine/format';
 import { useApp } from '@/store/AppContext';
 import { useChat, type ChatMessage } from '@/store/chat';
 import { aiFor, inClaudeApp } from '@/ui/host';
-import { C, Chip, Muted } from '@/ui/kit';
+import { Dashboard } from '@/ui/Dashboard';
+import { C, Chip, Muted, Section } from '@/ui/kit';
+import { Reveal, TypingDots } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { startEstimateFromChat } from '@/ui/startEstimate';
 import { listen, speak, stopSpeaking, voiceInputAvailable } from '@/ui/voice';
@@ -101,7 +104,6 @@ export default function Assistant() {
     }
   };
 
-  const firstName = (profile?.contactName ?? '').trim().split(/\s+/)[0];
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
@@ -124,19 +126,19 @@ export default function Assistant() {
         ) : null}
       </View>
 
-      <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" onContentSizeChange={() => { if (messages.length) scrollRef.current?.scrollToEnd({ animated: true }); }}
         contentContainerStyle={{ padding: 16, gap: 10, width: '100%', maxWidth: 760, alignSelf: 'center', flexGrow: 1 }}>
         {messages.length === 0 ? (
-          <View style={{ gap: 12, paddingTop: 24 }}>
-            <Text style={{ fontSize: 26, fontWeight: '700', color: C.ink }}>Hi{firstName ? ` ${firstName}` : ''}, what can I help with?</Text>
-            <Muted>
-              Ask anything: pricing, materials, code and permits, your jobs and numbers, messages to clients. Say a job out loud and I’ll start the estimate.
+          <View style={{ gap: 12, paddingTop: 4 }}>
+            <Dashboard claudeOn={claudeOn} onMic={mic} />
+            <Section title="Ask Claude anything" />
+            <Muted style={{ fontSize: 13 }}>
+              Pricing, materials, code and permits, your jobs and numbers, messages to clients. Say a job out loud and I’ll start the estimate.
             </Muted>
-            {!claudeOn ? (
-              <Text style={{ color: C.warnInk, fontSize: 13 }}>Claude isn’t connected here. Open the app inside Claude, or add your key in Settings.</Text>
-            ) : null}
             <View style={{ gap: 8, alignItems: 'flex-start' }}>
-              {SUGGESTIONS.map((s) => <Chip key={s} label={s} onPress={() => send(s)} />)}
+              {SUGGESTIONS.map((s, i) => (
+                <Reveal key={s} index={i}><Chip label={s} onPress={() => send(s)} /></Reveal>
+              ))}
             </View>
           </View>
         ) : null}
@@ -148,14 +150,14 @@ export default function Assistant() {
               backgroundColor: m.role === 'user' ? C.accent : m.error ? C.warnBg : C.card,
               borderWidth: m.role === 'user' ? 0 : 1, borderColor: C.line,
             }}>
-              <Text selectable style={{ color: m.role === 'user' ? '#fff' : m.error ? C.warnInk : C.ink, fontSize: 16, lineHeight: 23 }}>{m.text}</Text>
+              <Text selectable style={{ color: m.role === 'user' ? C.onAccent : m.error ? C.warnInk : C.ink, fontSize: 16, lineHeight: 23 }}>{m.text}</Text>
             </View>
             {m.role === 'assistant' && !m.error ? (
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                 {m.action ? (
                   <Pressable accessibilityRole="button" disabled={!!starting} onPress={() => start(m)}
-                    style={{ backgroundColor: C.dark, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9, opacity: starting ? 0.6 : 1 }}>
-                    <Text style={{ color: '#fff', fontWeight: '700' }}>
+                    style={{ backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9, opacity: starting ? 0.6 : 1 }}>
+                    <Text style={{ color: C.onAccent, fontWeight: '700' }}>
                       {starting === m.id ? 'Opening…' : `Start this estimate${m.action.title ? `: ${m.action.title}` : ''}`}
                     </Text>
                   </Pressable>
@@ -168,9 +170,8 @@ export default function Assistant() {
           </View>
         ))}
         {busy ? (
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <ActivityIndicator color={C.accent} />
-            <Muted>Thinking…</Muted>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: C.card, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line }}>
+            <TypingDots />
           </View>
         ) : null}
       </ScrollView>
@@ -179,17 +180,17 @@ export default function Assistant() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, width: '100%', maxWidth: 740, alignSelf: 'center' }}>
           <Pressable accessibilityRole="button" accessibilityLabel={listening ? 'Stop listening' : 'Talk'} onPress={mic}
             style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: listening ? C.accent : C.card, borderWidth: 1, borderColor: listening ? C.accent : C.line }}>
-            <Ionicons name={listening ? 'stop' : 'mic'} size={22} color={listening ? '#fff' : C.ink} />
+            <Ionicons name={listening ? 'stop' : 'mic'} size={22} color={listening ? C.onAccent : C.ink} />
           </Pressable>
           <TextInput
             value={text} onChangeText={setText} multiline accessibilityLabel="Message"
-            placeholder={listening ? 'Listening…' : 'Ask anything, or describe a job'} placeholderTextColor="#8A8F96"
+            placeholder={listening ? 'Listening…' : 'Ask anything, or describe a job'} placeholderTextColor="#64748B"
             style={{ flex: 1, minHeight: 46, maxHeight: 140, borderRadius: 23, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
               paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, fontSize: 16, color: C.ink }}
           />
           <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={!text.trim() || busy} onPress={() => send(text)}
             style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: text.trim() && !busy ? C.accent : C.line }}>
-            <Ionicons name="arrow-up" size={22} color="#fff" />
+            <Ionicons name="arrow-up" size={22} color={text.trim() && !busy ? C.onAccent : C.muted} />
           </Pressable>
         </View>
       </View>

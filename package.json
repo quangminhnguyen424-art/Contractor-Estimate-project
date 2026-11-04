@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/be-vietnam-pro": "^0.4.1",
     "@expo/ui": "~58.0.27",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -16,6 +17,7 @@
     "expo-image-manipulator": "~58.0.16",
     "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.16",
+    "expo-notifications": "~58.1.8",
     "expo-print": "~58.0.8",
     "expo-router": "~58.0.30",
     "expo-sharing": "~58.0.22",

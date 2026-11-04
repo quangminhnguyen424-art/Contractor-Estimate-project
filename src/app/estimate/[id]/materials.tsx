@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { money, money2 } from '@/engine/format';
 import { materialsHtml } from '@/engine/quote';
 import type { MaterialLine } from '@/engine/types';

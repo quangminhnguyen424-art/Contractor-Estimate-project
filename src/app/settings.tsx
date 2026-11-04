@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Platform, Pressable, Share, Text, View } from 'react-native';
+import { Platform, Pressable, Share, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { CLAUDE_MODEL, testClaudeKey } from '@/engine/ai';
 import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -212,7 +213,7 @@ export default function Settings() {
       </Card>
 
       <Pressable accessibilityRole="button" onPress={reset} style={{ alignSelf: 'center', padding: 12 }}>
-        <Text style={{ color: '#B42318', fontWeight: '600' }}>Erase all data on this device</Text>
+        <Text style={{ color: C.danger, fontWeight: '600' }}>Erase all data on this device</Text>
       </Pressable>
     </Screen>
   );

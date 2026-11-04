@@ -1,7 +1,8 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { dateFmt, newId } from '@/engine/format';
 import { dayActivity, localDay } from '@/engine/site';
 import { writeDailyLog } from '@/engine/siteAI';

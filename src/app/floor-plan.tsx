@@ -1,8 +1,9 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
+import { Text } from '@/ui/text';
 import { answersFromPlan, ftIn, manualRoom, planSvg, planTotals, roomFromScan, roomMeasures } from '@/engine/floorplan';
 import { newId } from '@/engine/format';
 import { jobType } from '@/engine/jobTypes';
@@ -92,7 +93,7 @@ export default function FloorPlanScreen() {
                   <Text style={{ flex: 1, fontWeight: '700', color: C.ink }}>{r.name}</Text>
                   <Muted style={{ fontSize: 12 }}>{r.source === 'scan' ? 'LiDAR scan' : 'Measured'}</Muted>
                   <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${r.name}`} onPress={() => setRooms(rooms.filter((x) => x.id !== r.id))} style={{ padding: 6 }}>
-                    <Text style={{ color: '#B42318', fontWeight: '600' }}>Remove</Text>
+                    <Text style={{ color: C.danger, fontWeight: '600' }}>Remove</Text>
                   </Pressable>
                 </View>
                 <Muted style={{ fontSize: 13 }}>

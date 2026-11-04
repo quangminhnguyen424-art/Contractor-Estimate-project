@@ -2,11 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Image, Platform, Pressable, Text, View } from 'react-native';
+import { Image, Platform, Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { historyPerSf } from '@/engine/estimator';
 import { money } from '@/engine/format';
+import { answersFromPlan, planTotals } from '@/engine/floorplan';
 import { defaultAnswers, jobType, perUnit } from '@/engine/jobTypes';
 import { workSummary } from '@/engine/profile';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
@@ -18,7 +20,7 @@ import { aiFor, inClaudeApp } from '@/ui/host';
 import { toAiImages } from '@/ui/photos';
 
 export default function NewEstimate() {
-  const { profile, setDraft, apiKey, pastJobs } = useApp();
+  const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan } = useApp();
   const claudeOn = !!apiKey || inClaudeApp;
   const [showAll, setShowAll] = useState(false);
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(null);
@@ -78,25 +80,44 @@ export default function NewEstimate() {
     if (parsed.error) notify('Claude could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
     else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Claude`, photos.length > 8 ? 'Claude looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
     const jt = jobType(type);
+    // Rooms from the 3D scan screen fill in the areas (floor, walls, baseboard) for this type of work.
+    const fromPlan = pendingPlan?.length ? answersFromPlan(jt, pendingPlan) : null;
     setDraft({
       jobTypeId: type,
       mode: effectiveMode,
       title: title.trim() || `${clientName.trim() ? `${clientName.trim()} — ` : ''}${jt.name}`,
       clientName, address, description, scopeNote: '', photos,
       finish: profile?.work?.finish ?? 'mid',
-      answers: { ...defaultAnswers(type), ...parsed.answers },
+      answers: { ...defaultAnswers(type), ...parsed.answers, ...(fromPlan?.answers ?? {}) },
       customItems: [],
-      heard: parsed.heard,
+      heard: [...(fromPlan?.heard ?? []), ...parsed.heard],
+      ...(pendingPlan?.length ? { plan: pendingPlan } : {}),
       aiNotes: parsed.notes ?? [],
       aiFilled: parsed.sources ?? Object.fromEntries(Object.keys(parsed.answers).map((k) => [k, 'notes' as const])),
     });
     router.push('/questions');
     // Clear the form so the next estimate starts fresh (the draft keeps everything).
     setJobTypeId(null); setTitle(''); setClientName(''); setAddress(''); setDescription(''); setPhotos([]);
+    setPendingPlan(null);
   };
 
   return (
     <Screen footer={<Button title={busy ? (claudeOn ? 'Claude is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
+      {pendingPlan?.length ? (
+        <Banner tone="ok" title={`Floor plan ready: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${planTotals(pendingPlan).floorSf} SF`}>
+          It’s added to this estimate and fills in the areas. <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => setPendingPlan(null)}>Remove</Text>
+        </Banner>
+      ) : (
+        <Pressable accessibilityRole="button" onPress={() => router.push('/scan')}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accent, opacity: pressed ? 0.8 : 1 })}>
+          <Ionicons name="scan-outline" size={26} color={C.accent} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.ink, fontWeight: '700' }}>Bigger job? Scan the rooms in 3D</Text>
+            <Text style={{ color: C.muted, fontSize: 13 }}>Measures walls, doors and windows and draws the floor plan.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.accent} />
+        </Pressable>
+      )}
       <Label>Project type</Label>
       <JobTypeChips selected={effectiveType ? [effectiveType] : []} onToggle={(id) => setJobTypeId(id)}
         only={showAll ? undefined : [...mine, ...(effectiveType && !mine.includes(effectiveType) ? [effectiveType] : [])]} />

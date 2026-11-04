@@ -1,5 +1,6 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 
+import { Text } from '@/ui/text';
 import { C } from './kit';
 
 /** One thing Claude noticed. Findings from a photo ("Photo 2: …") show that photo, so you can see it for yourself. */
