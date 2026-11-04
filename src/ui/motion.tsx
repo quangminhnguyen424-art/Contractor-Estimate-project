@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
@@ -97,4 +97,93 @@ function Dot({ delay, color }: { delay: number; color: string }) {
   }, [delay, y]);
   const anim = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   return <Animated.View style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }, anim]} />;
+}
+
+/** Floats gently up and down, like it's hanging in the air (illustrations, hero art). */
+export function Float({ children, style, distance = 6, duration = 2600 }: { children: ReactNode; style?: StyleProp<ViewStyle>; distance?: number; duration?: number }) {
+  const y = useSharedValue(0);
+  useEffect(() => {
+    y.set(withRepeat(withSequence(withTiming(-distance, { duration, easing: Easing.inOut(Easing.sin) }), withTiming(0, { duration, easing: Easing.inOut(Easing.sin) })), -1, false));
+  }, [y, distance, duration]);
+  const anim = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
+  return <Animated.View style={[style, anim]}>{children}</Animated.View>;
+}
+
+/** A four-point star that twinkles (grows, glows, fades) on a loop. Position it with `style`. */
+export function Twinkle({ size = 14, color = '#FDE68A', delay = 0, style }: { size?: number; color?: string; delay?: number; style?: StyleProp<ViewStyle> }) {
+  const v = useSharedValue(0.3);
+  useEffect(() => {
+    v.set(withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) }), withTiming(0.3, { duration: 900, easing: Easing.in(Easing.quad) })), -1, false)));
+  }, [v, delay]);
+  const anim = useAnimatedStyle(() => ({ opacity: v.get(), transform: [{ scale: 0.6 + v.get() * 0.5 }, { rotate: `${v.get() * 45}deg` }] }));
+  const arm = { position: 'absolute' as const, backgroundColor: color, borderRadius: size };
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style, anim]}>
+      <View style={[arm, { width: size * 0.22, height: size }]} />
+      <View style={[arm, { width: size, height: size * 0.22 }]} />
+      <View style={{ width: size * 0.4, height: size * 0.4, borderRadius: size, backgroundColor: color, shadowColor: color, shadowOpacity: 1, shadowRadius: size / 2 }} />
+    </Animated.View>
+  );
+}
+
+/** A soft colored glow that slowly breathes behind something (hero cards, the + button). */
+export function Glow({ color = '#FACC15', size = 220, style }: { color?: string; size?: number; style?: StyleProp<ViewStyle> }) {
+  const v = useSharedValue(0.35);
+  useEffect(() => {
+    v.set(withRepeat(withSequence(withTiming(0.6, { duration: 2200 }), withTiming(0.35, { duration: 2200 })), -1, false));
+  }, [v]);
+  const anim = useAnimatedStyle(() => ({ opacity: v.get(), transform: [{ scale: 0.9 + v.get() * 0.25 }] }));
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color,
+      shadowColor: color, shadowOpacity: 1, shadowRadius: size / 2, filter: [{ blur: size / 3 }] } as ViewStyle, style, anim]} />
+  );
+}
+
+/** Bars that bounce like a sound meter, while the microphone is listening. */
+export function Wave({ color = '#0F172A', bars = 4, height = 18 }: { color?: string; bars?: number; height?: number }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height }}>
+      {Array.from({ length: bars }, (_, i) => <WaveBar key={i} color={color} height={height} delay={i * 120} />)}
+    </View>
+  );
+}
+
+function WaveBar({ color, height, delay }: { color: string; height: number; delay: number }) {
+  const v = useSharedValue(0.3);
+  useEffect(() => {
+    v.set(withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: 260 }), withTiming(0.3, { duration: 320 })), -1, false)));
+  }, [v, delay]);
+  const anim = useAnimatedStyle(() => ({ height: height * v.get() }));
+  return <Animated.View style={[{ width: 3, borderRadius: 2, backgroundColor: color }, anim]} />;
+}
+
+/** A sheen that sweeps across a card now and then, to draw the eye (main call to action). */
+export function Shine({ width, height, every = 4200 }: { width: number; height: number; every?: number }) {
+  const x = useSharedValue(-width);
+  useEffect(() => {
+    x.set(withRepeat(withSequence(withTiming(-width, { duration: 0 }), withDelay(every, withTiming(width * 1.4, { duration: 1100, easing: Easing.inOut(Easing.quad) }))), -1, false));
+  }, [x, width, every]);
+  const anim = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { rotate: '20deg' }] }));
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -height, width: width * 0.22, height: height * 3, backgroundColor: 'rgba(255,255,255,0.18)' }, anim]} />
+  );
+}
+
+/** A number that counts up to its value when it first appears or changes (money totals). */
+export function useCountUp(value: number, duration = 900): number {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const start = Date.now();
+    const from = 0;
+    const step = () => {
+      const t = Math.min(1, (Date.now() - start) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      setShown(from + (value - from) * eased);
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return shown;
 }

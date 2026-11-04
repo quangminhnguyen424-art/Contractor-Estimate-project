@@ -10,19 +10,11 @@ import { useApp } from '@/store/AppContext';
 import { useChat, type ChatMessage } from '@/store/chat';
 import { aiFor, inClaudeApp } from '@/ui/host';
 import { Dashboard } from '@/ui/Dashboard';
-import { C, Chip, Muted, Section } from '@/ui/kit';
-import { Reveal, TypingDots } from '@/ui/motion';
+import { C } from '@/ui/kit';
+import { TypingDots, Wave } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { startEstimateFromChat } from '@/ui/startEstimate';
 import { listen, speak, stopSpeaking, voiceInputAvailable } from '@/ui/voice';
-
-const SUGGESTIONS = [
-  'Price a 45 SF hall bathroom remodel, tiled shower, mid-grade',
-  'Do I need a permit to replace a water heater in Seattle?',
-  'How do my bathroom prices compare to my past jobs?',
-  'Write a friendly follow-up text for a quote I sent last week',
-  'Lên danh sách vật tư cho 300 SF sàn LVP',
-];
 
 /** Home: talk with Claude about anything. Voice in, answers read aloud, and estimates started from the chat. */
 export default function Assistant() {
@@ -107,6 +99,7 @@ export default function Assistant() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+      {messages.length ? (
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, paddingHorizontal: 12, paddingTop: 4 }}>
         <Pressable accessibilityRole="switch" accessibilityState={{ checked: settings.speak }} accessibilityLabel="Read answers aloud"
           onPress={() => { if (settings.speak) stopSpeaking(); setSettings({ ...settings, speak: !settings.speak }); }}
@@ -125,21 +118,13 @@ export default function Assistant() {
           </Pressable>
         ) : null}
       </View>
+      ) : null}
 
       <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" onContentSizeChange={() => { if (messages.length) scrollRef.current?.scrollToEnd({ animated: true }); }}
         contentContainerStyle={{ padding: 16, gap: 10, width: '100%', maxWidth: 760, alignSelf: 'center', flexGrow: 1 }}>
         {messages.length === 0 ? (
           <View style={{ gap: 12, paddingTop: 4 }}>
-            <Dashboard claudeOn={claudeOn} onMic={mic} />
-            <Section title="Ask Claude anything" />
-            <Muted style={{ fontSize: 13 }}>
-              Pricing, materials, code and permits, your jobs and numbers, messages to clients. Say a job out loud and I’ll start the estimate.
-            </Muted>
-            <View style={{ gap: 8, alignItems: 'flex-start' }}>
-              {SUGGESTIONS.map((s, i) => (
-                <Reveal key={s} index={i}><Chip label={s} onPress={() => send(s)} /></Reveal>
-              ))}
-            </View>
+            <Dashboard claudeOn={claudeOn} onMic={mic} onAsk={(q) => send(q)} />
           </View>
         ) : null}
 
@@ -180,7 +165,7 @@ export default function Assistant() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, width: '100%', maxWidth: 740, alignSelf: 'center' }}>
           <Pressable accessibilityRole="button" accessibilityLabel={listening ? 'Stop listening' : 'Talk'} onPress={mic}
             style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: listening ? C.accent : C.card, borderWidth: 1, borderColor: listening ? C.accent : C.line }}>
-            <Ionicons name={listening ? 'stop' : 'mic'} size={22} color={listening ? C.onAccent : C.ink} />
+            {listening ? <Wave color={C.onAccent} /> : <Ionicons name="mic" size={22} color={C.ink} />}
           </Pressable>
           <TextInput
             value={text} onChangeText={setText} multiline accessibilityLabel="Message"

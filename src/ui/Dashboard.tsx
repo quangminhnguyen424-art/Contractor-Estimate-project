@@ -9,8 +9,9 @@ import { projectProgress, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
 
 import { Art } from './art';
-import { Button, C, Card, Section, Tile, mono } from './kit';
-import { PressScale, Reveal } from './motion';
+import { Button, C, Card, Section, mono } from './kit';
+import { Gradient } from './Gradient';
+import { PressScale, Pulse, Reveal, Shine, useCountUp } from './motion';
 import { PhotoView } from './SitePhotoView';
 import { Text } from './text';
 import { useToday } from './useToday';
@@ -27,8 +28,8 @@ export function staleUpdates(projects: ReturnType<typeof useApp>['projects'], no
   }).filter((x) => x.newer > 0 && x.days >= 3).sort((a, b) => b.days - a.days);
 }
 
-/** Home screen before the chat starts: today's work, money to collect, client updates due, and one-tap shortcuts. */
-export function Dashboard({ claudeOn, onMic }: { claudeOn: boolean; onMic: () => void }) {
+/** Home screen before the chat starts: one clear action, shortcuts, today, money, and what needs attention. */
+export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic: () => void; onAsk: (q: string) => void }) {
   const { profile, events, contracts, estimates, projects } = useApp();
   const { width } = useWindowDimensions();
   const today = useToday();
@@ -38,113 +39,190 @@ export function Dashboard({ claudeOn, onMic }: { claudeOn: boolean; onMic: () =>
   const todays = upcoming(events, today, 0).slice(0, 3);
   const nextUp = todays.length ? [] : upcoming(events, today, 7).slice(0, 2);
 
-  let due = 0, overdue = 0, balance = 0;
+  let due = 0, overdue = 0;
   for (const c of contracts) {
     const est = estimates.find((e) => e.id === c.estimateId);
     if (!est || !profile) continue;
-    const t = contractTotals(est, profile, c);
-    due += t.due; balance += Math.max(0, t.balance);
+    due += contractTotals(est, profile, c).due;
     overdue += Object.values(invoiceStates(c, today, est.salesTaxPct)).filter((s) => s.state === 'overdue').length;
   }
   const waiting = estimates.filter((e) => e.status === 'sent').length;
+  const activeJobs = projects.filter((p) => p.status === 'active').length;
   const updates = staleUpdates(projects).slice(0, 2);
   const photos: { ph: SitePhoto; pid: string; rid: string }[] = projects.flatMap((p) => p.rooms.flatMap((r) => r.photos.map((ph) => ({ ph, pid: p.id, rid: r.id }))))
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
-  const heroW = Math.min(width, 760) - 64;
+  const cardW = Math.min(width, 760) - 32;
+  const artW = Math.min(150, cardW * 0.4);
 
   return (
-    <View style={{ gap: 14 }}>
-      <Reveal style={{ gap: 2 }}>
-        <Text style={{ color: C.muted, fontSize: 14 }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-        <Text style={{ color: C.ink, fontSize: 28, fontWeight: '800', letterSpacing: -0.4 }}>{hello}{first ? `, ${first}` : ''}</Text>
+    <View style={{ gap: 16 }}>
+      <Reveal style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ color: C.muted, fontSize: 13 }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+          <Text style={{ color: C.ink, fontSize: 26, fontWeight: '800', letterSpacing: -0.4 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: claudeOn ? C.okBg : C.warnBg }}>
+          <Pulse active={claudeOn}><View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: claudeOn ? C.okInk : C.warnInk }} /></Pulse>
+          <Text style={{ color: claudeOn ? C.okInk : C.warnInk, fontSize: 12, fontWeight: '700' }}>{claudeOn ? 'Claude on' : 'Claude off'}</Text>
+        </View>
       </Reveal>
 
       {!claudeOn ? <ConnectClaude /> : null}
 
+      {/* The one main action. */}
       <Reveal index={1}>
-        <Card style={{ backgroundColor: C.dark, padding: 0, overflow: 'hidden' }}>
-          <View style={{ alignItems: 'center', paddingTop: 10 }}><Art name="hero" width={Math.min(heroW, 340)} /></View>
-          <View style={{ padding: 16, gap: 10 }}>
-            <Text style={{ color: C.ink, fontSize: 20, fontWeight: '800' }}>Describe a job. Get a price in minutes.</Text>
-            <Text style={{ color: C.muted, fontSize: 14, lineHeight: 20 }}>Type or say what the client wants, add photos, and Claude fills in the estimate with your own prices.</Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Button title="New estimate" icon="add" style={{ flex: 1 }} onPress={() => router.push('/new')} />
-              <PressScale accessibilityRole="button" accessibilityLabel="Talk to Claude" onPress={onMic}
-                style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: C.cardHi, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="mic" size={24} color={C.accent} />
-              </PressScale>
+        <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: '#2B3A55' }}>
+          <Gradient colors={['#1E293B', '#172554', '#0F172A']} glow="#FACC15" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, paddingBottom: 6, gap: 6 }}>
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text style={{ color: C.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>AI ESTIMATING</Text>
+              <Text style={{ color: C.ink, fontSize: 21, fontWeight: '800', lineHeight: 27 }}>Describe a job.{'\n'}Get a price in minutes.</Text>
             </View>
+            <Art name="hero" width={artW} />
           </View>
-        </Card>
+          <View style={{ flexDirection: 'row', gap: 10, padding: 16, paddingTop: 8 }}>
+            <View style={{ flex: 1, borderRadius: 16, overflow: 'hidden' }}>
+              <Button title="New estimate" icon="add" onPress={() => router.push('/new')} />
+              <Shine width={cardW - 100} height={54} />
+            </View>
+            <PressScale accessibilityRole="button" accessibilityLabel="Talk to Claude" onPress={onMic}
+              style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="mic" size={24} color={C.accent} />
+            </PressScale>
+          </View>
+        </View>
       </Reveal>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        <Tile index={2} icon="scan-outline" title="Scan 3D" sub="Rooms measured with LiDAR" onPress={() => router.push('/scan')} />
-        <Tile index={3} icon="camera-outline" tone="sky" title="Job photo" sub="Into a job and room" onPress={() => router.push('/quick')} />
-        <Tile index={4} icon="calendar-outline" tone="sky" title="Schedule" sub={todays.length ? `${todays.length} today` : 'Visits, crews, calls'} onPress={() => router.push('/schedule')} />
-        <Tile index={5} icon="pricetags-outline" tone="slate" title="My pricing" sub="Rates, past jobs, types" onPress={() => router.push('/pricing')} />
-      </View>
+      {/* Shortcuts: one tidy row. */}
+      <Reveal index={2} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Shortcut icon="scan" label="Scan 3D" colors={['#FACC15', '#F59E0B']} onPress={() => router.push('/scan')} />
+        <Shortcut icon="camera" label="Job photo" colors={['#38BDF8', '#2563EB']} onPress={() => router.push('/quick')} />
+        <Shortcut icon="calendar" label="Schedule" colors={['#A78BFA', '#7C3AED']} badge={todays.length || undefined} onPress={() => router.push('/schedule')} />
+        <Shortcut icon="pricetags" label="Pricing" colors={['#34D399', '#059669']} onPress={() => router.push('/pricing')} />
+      </Reveal>
 
-      {todays.length || nextUp.length ? (
-        <Reveal index={6} style={{ gap: 8 }}>
-          <Section title={todays.length ? 'Today' : 'Coming up'} link="Schedule" onLink={() => router.push('/schedule')} />
-          {[...todays, ...nextUp].map((e) => (
-            <Pressable key={e.id} accessibilityRole="button" onPress={() => router.push(`/event?id=${e.id}`)}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
-              <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 3, backgroundColor: KINDS[e.kind].color }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>{e.title}</Text>
-                <Text style={{ color: C.muted, fontSize: 13 }}>{e.date === today ? '' : `${new Date(`${e.date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' })} · `}{timeLabel(e)}{e.address ? ` · ${e.address}` : ''}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </Reveal>
-      ) : null}
+      {/* Numbers at a glance. */}
+      <Reveal index={3} style={{ flexDirection: 'row', gap: 10 }}>
+        <Money label="To collect" value={due} sub={overdue ? `${overdue} overdue` : due ? 'invoiced' : 'all paid'} tone={overdue ? 'bad' : 'ok'} onPress={() => router.push('/jobs')} />
+        <Count label="Quotes out" value={waiting} onPress={() => router.push('/jobs')} />
+        <Count label="Active jobs" value={activeJobs} onPress={() => router.push('/sites')} />
+      </Reveal>
 
-      {due > 0 || waiting > 0 || balance > 0 ? (
-        <Reveal index={7}>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Money label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : 'invoiced'} tone={overdue ? 'bad' : 'ok'} onPress={() => router.push('/jobs')} />
-            <Money label="Quotes out" value={String(waiting)} sub="waiting on a yes" onPress={() => router.push('/jobs')} />
-          </View>
-        </Reveal>
-      ) : null}
+      <Reveal index={4} style={{ gap: 8 }}>
+        <Section title={todays.length ? 'Today' : 'Coming up'} link="Schedule" onLink={() => router.push('/schedule')} />
+        {todays.length || nextUp.length ? [...todays, ...nextUp].map((e) => (
+          <Pressable key={e.id} accessibilityRole="button" onPress={() => router.push(`/event?id=${e.id}`)}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
+            <View style={{ width: 5, alignSelf: 'stretch', borderRadius: 3, backgroundColor: KINDS[e.kind].color }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>{e.title}</Text>
+              <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{e.date === today ? '' : `${new Date(`${e.date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' })} · `}{timeLabel(e)}{e.address ? ` · ${e.address}` : ''}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={C.muted} />
+          </Pressable>
+        )) : (
+          <Pressable accessibilityRole="button" onPress={() => router.push('/event')}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: C.line, borderStyle: 'dashed' }}>
+            <Ionicons name="add-circle-outline" size={20} color={C.accent} />
+            <Text style={{ color: C.muted }}>Nothing scheduled. Add a visit or crew day.</Text>
+          </Pressable>
+        )}
+      </Reveal>
 
       {updates.map(({ p, newer, days }, i) => (
-        <Reveal key={p.id} index={8 + i}>
+        <Reveal key={p.id} index={5 + i}>
           <PressScale accessibilityRole="button" onPress={() => router.push(`/site/${p.id}/share?mode=client`)} scaleTo={0.98}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.skyTint, borderWidth: 1, borderColor: C.sky }}>
-            <Ionicons name="images-outline" size={24} color={C.sky} />
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: C.skyTint, borderWidth: 1, borderColor: 'rgba(56,189,248,0.5)' }}>
+            <Art name="photos" width={72} still />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: C.ink, fontWeight: '700' }}>Send {p.clientName || p.title} a photo update</Text>
-              <Text style={{ color: C.muted, fontSize: 13 }}>{newer} new photo{newer > 1 ? 's' : ''} · last update {p.lastClientUpdateAt ? `${days} days ago` : 'never'} · {projectProgress(p).pct}% done</Text>
+              <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>Photo update for {p.clientName || p.title}</Text>
+              <Text style={{ color: C.muted, fontSize: 12 }}>{newer} new · last sent {p.lastClientUpdateAt ? `${days}d ago` : 'never'} · {projectProgress(p).pct}% done</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={C.sky} />
+            <Ionicons name="send" size={18} color={C.sky} />
           </PressScale>
         </Reveal>
       ))}
 
       {photos.length ? (
-        <Reveal index={10} style={{ gap: 8 }}>
+        <Reveal index={7} style={{ gap: 8 }}>
           <Section title="Latest job photos" link="Job sites" onLink={() => router.push('/sites')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>
-                <PhotoView photo={ph} width={120} />
+                <View style={{ borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={ph} width={112} /></View>
               </PressScale>
             ))}
           </ScrollView>
         </Reveal>
       ) : null}
+
+      <Reveal index={8} style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Art name="ai" width={64} still />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800' }}>Ask Claude anything</Text>
+            <Text style={{ color: C.muted, fontSize: 12 }}>Prices, materials, permits, messages to clients. Type or talk below.</Text>
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          {SUGGESTIONS.map((q) => (
+            <PressScale key={q} accessibilityRole="button" accessibilityLabel={q} onPress={() => onAsk(q)}
+              style={{ width: 200, padding: 12, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, gap: 6 }}>
+              <Ionicons name="sparkles" size={16} color={C.accent} />
+              <Text style={{ color: C.ink2, fontSize: 13, lineHeight: 18 }} numberOfLines={3}>{q}</Text>
+            </PressScale>
+          ))}
+        </ScrollView>
+      </Reveal>
     </View>
   );
 }
 
-function Money({ label, value, sub, tone, onPress }: { label: string; value: string; sub: string; tone?: 'ok' | 'bad'; onPress: () => void }) {
+const SUGGESTIONS = [
+  'Price a 45 SF hall bathroom remodel, tiled shower, mid-grade',
+  'Do I need a permit to replace a water heater in Seattle?',
+  'How do my bathroom prices compare to my past jobs?',
+  'Write a friendly follow-up text for a quote I sent last week',
+  'Lên danh sách vật tư cho 300 SF sàn LVP',
+];
+
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+/** Round, colorful shortcut button with a label. */
+function Shortcut({ icon, label, colors, onPress, badge }: { icon: IconName; label: string; colors: [string, string]; onPress: () => void; badge?: number }) {
   return (
-    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress} style={{ flex: 1, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 14, gap: 2 }}>
-      <Text style={{ color: C.muted, fontSize: 13 }}>{label}</Text>
-      <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+    <PressScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} scaleTo={0.92} style={{ alignItems: 'center', gap: 6, width: 76 }}>
+      <View style={{ width: 58, height: 58, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
+        shadowColor: colors[0], shadowOpacity: 0.45, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}>
+        <Gradient colors={colors} />
+        <Ionicons name={icon} size={26} color="#FFFFFF" />
+      </View>
+      {badge ? (
+        <View style={{ position: 'absolute', right: 6, top: -4, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, borderWidth: 2, borderColor: C.bg }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>{badge}</Text>
+        </View>
+      ) : null}
+      <Text style={{ color: C.ink2, fontSize: 12, fontWeight: '600' }}>{label}</Text>
+    </PressScale>
+  );
+}
+
+function Count({ label, value, onPress }: { label: string; value: number; onPress: () => void }) {
+  const n = useCountUp(value, 700);
+  return (
+    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress} style={{ flex: 1, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 12, gap: 2 }}>
+      <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
+      <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800', fontFamily: mono }}>{Math.round(n)}</Text>
+    </PressScale>
+  );
+}
+
+function Money({ label, value, sub, tone, onPress }: { label: string; value: number; sub: string; tone?: 'ok' | 'bad'; onPress: () => void }) {
+  const n = useCountUp(value);
+  return (
+    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${money(value)}`} onPress={onPress} style={{ flex: 1.4, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 12, gap: 2 }}>
+      <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
+      <Text style={{ color: C.accent, fontSize: 22, fontWeight: '800', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{money(n)}</Text>
       <Text style={{ color: tone === 'bad' ? C.danger : tone === 'ok' ? C.okInk : C.muted, fontSize: 12, fontWeight: '600' }}>{sub}</Text>
     </PressScale>
   );
