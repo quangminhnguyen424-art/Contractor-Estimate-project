@@ -191,6 +191,8 @@ export interface Profile {
   /** In the contractor's words: how they work, what they include, their goals. Sent to Claude with every job. */
   about: string;
   work?: WorkProfile;
+  /** State-required notices added to every quote (Washington disclosure, three-day right to cancel). */
+  notices?: import('./legal').Notices;
 }
 
 export interface PastJob {

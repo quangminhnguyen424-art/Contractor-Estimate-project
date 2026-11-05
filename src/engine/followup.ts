@@ -74,7 +74,13 @@ export const stopPlan = (p: FollowUpPlan, reason: NonNullable<FollowUpPlan['stop
 /** Quiet hours: never send before 8 AM or after 8 PM (the client's local time is assumed to be the phone's). */
 export const okToSendNow = (d: Date) => d.getHours() >= 8 && d.getHours() < 20;
 
-const first = (name: string) => name.trim().split(/\s+/)[0] || 'there';
+const TITLES = /^(mr|mrs|ms|miss|mx|dr|anh|chị|chi|cô|co|chú|chu|bác|bac|ông|ong|bà|ba|sr|sra)\.?$/i;
+/** How to greet the client: their first name, or the whole name when it starts with a title ("Mrs Kim"). */
+export const first = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'there';
+  return TITLES.test(parts[0]) ? parts.join(' ') : parts[0];
+};
 
 /** What to ask the client in person or by text, word for word, so the permission is clear. */
 export function consentQuestion(company: string, client: string): string {

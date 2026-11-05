@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { CONSENT_ITEMS, missingRequired, PRIVACY_SUMMARY, SUPPORT_EMAIL, TERMS, TERMS_VERSION } from '@/engine/legal';
@@ -14,19 +14,24 @@ import { Tick } from '@/ui/tick';
  * Also opened from Settings to read the Terms or change AI sharing (`?view=1`).
  */
 export default function TermsScreen() {
-  const { termsOk, acceptTerms, consent, setAiSharing } = useApp();
+  const { termsOk, acceptTerms, consent, setAiSharing, profile } = useApp();
   const [lang, setLang] = useState<'en' | 'vi'>('en');
   const [ticked, setTicked] = useState<Record<string, boolean>>(() => (termsOk ? { 'ai-share': consent?.ai === true } : ({} as Record<string, boolean>)));
   const [full, setFull] = useState(false);
   const missing = missingRequired(ticked);
 
+  const [accepted, setAccepted] = useState(false);
   const agree = () => {
     acceptTerms(ticked['ai-share'] === true);
-    if (router.canGoBack()) router.back();
+    setAccepted(true);
   };
+  // Once the agreement is saved, the rest of the app opens: setup for a new user, Home for everyone else.
+  useEffect(() => {
+    if (accepted && termsOk) router.replace(profile ? '/' : '/onboarding');
+  }, [accepted, termsOk, profile]);
 
   return (
-    <Screen footer={termsOk ? (
+    <Screen footer={termsOk && !accepted ? (
       <Button title="Save" icon="checkmark" onPress={() => { setAiSharing(ticked['ai-share'] === true); router.back(); }} />
     ) : (
       <View style={{ gap: 6 }}>

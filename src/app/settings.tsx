@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Platform, Pressable, Share, View } from 'react-native';
 
 import { Text } from '@/ui/text';
+import { Tick } from '@/ui/tick';
+import { defaultNotices } from '@/engine/legal';
 import { CLAUDE_MODEL, testClaudeKey } from '@/engine/ai';
 import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -178,6 +180,37 @@ export default function Settings() {
           </View>
         ))}
         {schedTotal !== 100 ? <Banner tone="warn" title={`Adds up to ${schedTotal}%. It needs to total 100%.`} /> : null}
+      </Card>
+
+      <Card>
+        <H2>Notices on your quotes</H2>
+        <Muted style={{ fontSize: 13 }}>Added as extra pages to every client quote. You are responsible for using the official wording for your state.</Muted>
+        <Tick on={!!p.notices?.waDisclosure} required onPress={() => set('notices', { ...(p.notices ?? defaultNotices()), waDisclosure: !p.notices?.waDisclosure })}>
+          <Text style={{ color: C.ink, fontSize: 15 }}>Washington “Notice to Customer” (RCW 18.27.114): residential jobs of $1,000 or more</Text>
+        </Tick>
+        {p.notices?.waDisclosure ? (
+          <>
+            <Field label="Registration expires" value={p.notices.regExpires} onChangeText={(v) => set('notices', { ...p.notices!, regExpires: v, checked: false })} placeholder="MM/DD/YYYY" maxLength={20} />
+            <Field label="Bond or deposit" value={p.notices.bond} onChangeText={(v) => set('notices', { ...p.notices!, bond: v, checked: false })} placeholder="$12,000 surety bond, company name" maxLength={120} />
+            <Field label="Notice text (paste the official L&I form)" value={p.notices.waText} onChangeText={(v) => set('notices', { ...p.notices!, waText: v, checked: false })} multiline maxLength={6000} style={{ minHeight: 160 }} />
+          </>
+        ) : null}
+        <Tick on={!!p.notices?.cancel3Day} required onPress={() => set('notices', { ...(p.notices ?? defaultNotices()), cancel3Day: !p.notices?.cancel3Day })}>
+          <Text style={{ color: C.ink, fontSize: 15 }}>Three-day right to cancel (sales made at the client’s home)</Text>
+        </Tick>
+        {p.notices?.cancel3Day ? (
+          <Field label="Cancellation notice (two copies are added)" value={p.notices.cancelText} onChangeText={(v) => set('notices', { ...p.notices!, cancelText: v, checked: false })} multiline maxLength={6000} style={{ minHeight: 160 }} />
+        ) : null}
+        {p.notices && (p.notices.waDisclosure || p.notices.cancel3Day) ? (
+          p.notices.checked
+            ? <Banner tone="ok" title="You confirmed these match the official forms." />
+            : (
+              <>
+                <Banner tone="warn" title="Check the wording">The starting text is a draft. Compare it with the official L&I and FTC forms (or ask your attorney), then confirm.</Banner>
+                <Button kind="secondary" title="I checked the wording" icon="checkmark" onPress={() => set('notices', { ...p.notices!, checked: true })} />
+              </>
+            )
+        ) : null}
       </Card>
 
       <Card>

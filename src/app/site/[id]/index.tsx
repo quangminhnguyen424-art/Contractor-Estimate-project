@@ -89,7 +89,7 @@ export default function ProjectScreen() {
         <Tile index={2} icon="book-outline" tone="slate" title="Daily log" sub="Bidwell writes it for you" onPress={() => go('log')} />
         <Tile index={3} icon="calendar-outline" tone="sky" title="Schedule" sub={nextVisit ? `Next: ${dayLabel(nextVisit.date, today)}` : 'Crew day, inspection…'} onPress={() => router.push(`/event?project=${p.id}`)} />
         {est ? <Tile index={4} icon="wallet-outline" title="Contract & payments" sub="Sign, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
-        <Tile index={6} icon="cash-outline" title="Job money" sub={money ? `Profit ${moneyFmt(money.profit.amount)} · ${money.profit.marginPct}%` : 'Costs, profit, owner balance'} onPress={() => go('money')} />
+        <Tile index={6} icon="cash-outline" title="Job money" sub={money && p.money?.costs.length ? `Profit ${moneyFmt(money.profit.amount)} · ${money.profit.marginPct}%` : 'Costs, profit, owner balance'} onPress={() => go('money')} />
         <Tile index={7} icon="cart-outline" tone="sky" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'From the estimate'} onPress={() => go('buy')} />
         <Tile index={5} icon="logo-facebook" tone="slate" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after` : 'Needs before + after'} onPress={() => go('share?mode=post')} />
       </View>

@@ -258,3 +258,30 @@ describe('Bidwell daily check-in', () => {
     expect(items.length).toBeLessThanOrEqual(8);
   });
 });
+
+describe('greeting the client', () => {
+  it('keeps titles with the name', async () => {
+    const { first } = await import('./followup');
+    expect(first('Mrs Kim')).toBe('Mrs Kim');
+    expect(first('Jenny Kim')).toBe('Jenny');
+    expect(first('Chị Lan')).toBe('Chị Lan');
+    expect(first('  ')).toBe('there');
+  });
+});
+
+describe('state notices on the quote', () => {
+  it('adds the WA disclosure (jobs of $1,000+) and two cancellation copies with the 3-business-day deadline', async () => {
+    const { quoteHtml } = await import('./quote');
+    const { defaultNotices } = await import('./legal');
+    const e = { ...est, updatedAt: '2026-11-06T18:00:00Z', job: { name: 'Bath', vi: 'Bath', unit: 'SF', exclusions: [], exclusionsVi: [] }, plan: undefined, scopeNote: '', comparison: { sizeSf: 45, pricePerSf: 0, presetPerSf: null, historyPerSf: null, historyCount: 0, flag: 'none', message: '' }, answers: {}, customItems: [] } as unknown as Estimate;
+    const p = { ...profile, license: 'UPGRAHL123', notices: { ...defaultNotices(), waDisclosure: true, cancel3Day: true, bond: '$12,000', regExpires: '05/01/2027' } };
+    const html = quoteHtml(e, p, 'en');
+    expect(html).toContain('NOTICE TO CUSTOMER');
+    expect(html).toContain('registration no. UPGRAHL123, expiring 05/01/2027');
+    expect(html.match(/NOTICE OF CANCELLATION/g)).toHaveLength(2);
+    // Friday Nov 6 → Sat 7, (Sun skipped), Mon 9, Tue 10
+    expect(html).toContain('midnight of November 10, 2026');
+    expect(quoteHtml({ ...e, price: 900 } as Estimate, p, 'en')).not.toContain('NOTICE TO CUSTOMER');
+    expect(quoteHtml(e, profile, 'en')).not.toContain('NOTICE OF CANCELLATION');
+  });
+});

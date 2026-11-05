@@ -1,3 +1,4 @@
+import { fillNotice } from './legal';
 import { TRADE_NAMES } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
 import { planSvg, planTotals } from './floorplan';
@@ -120,7 +121,26 @@ ${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${plan
 <h2>${T.terms}</h2><ul>${T.termsLines.map((t) => `<li>${t}</li>`).join('')}</ul>
 <h2>${T.acceptance}</h2>${accepted ?? `<div class="sig"><div>${T.owner}</div><div>${T.date}</div></div>
 <div class="sig"><div>${esc(profile.companyName)}</div><div>${T.date}</div></div>`}
+${noticesHtml(est, profile)}
 </body></html>`;
+}
+
+/** The state notices the contractor turned on, each on its own page with a place to acknowledge it. */
+function noticesHtml(est: Estimate, profile: Profile): string {
+  const n = profile.notices;
+  if (!n) return '';
+  const day = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const sent = new Date(est.updatedAt);
+  // Three business days: Saturdays count, Sundays don't (federal holidays are not checked here).
+  const deadline = new Date(sent);
+  for (let left = 3; left > 0;) { deadline.setDate(deadline.getDate() + 1); if (deadline.getDay() !== 0) left--; }
+  const vals = { license: profile.license, expires: n.regExpires, bond: n.bond, company: profile.companyName, contact: [profile.phone, profile.email].filter(Boolean).join(', '), date: day(sent), deadline: day(deadline) };
+  const page = (text: string, ack: string) => `<div style="page-break-before:always;padding-top:12px">${esc(fillNotice(text, vals)).split('\n').map((l, i) => (i === 0 ? `<h2>${l}</h2>` : `<p>${l}</p>`)).join('')}
+<div class="sig"><div>${ack}</div><div>Date</div></div></div>`;
+  return [
+    n.waDisclosure && est.price >= 1000 ? page(n.waText, 'Customer: I have received a copy of this disclosure statement') : '',
+    n.cancel3Day ? page(n.cancelText, 'Buyer') + page(n.cancelText, 'Buyer (second copy)') : '',
+  ].join('');
 }
 
 /** Plain material shopping list (for crew or supplier) — no client pricing. */

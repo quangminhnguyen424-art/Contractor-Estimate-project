@@ -89,6 +89,11 @@ export function sanitizeProfile(v: unknown): Profile | null {
     schedule: scheduleOk ? schedule : DEFAULT_SCHEDULE,
     about: str(v.about).slice(0, 2000),
     ...(isObj(v.work) ? { work: sanitizeWork(v.work) } : {}),
+    ...(isObj(v.notices) ? { notices: {
+      waDisclosure: v.notices.waDisclosure === true, regExpires: str(v.notices.regExpires).slice(0, 20), bond: str(v.notices.bond).slice(0, 120),
+      waText: str(v.notices.waText).slice(0, 6000), cancel3Day: v.notices.cancel3Day === true, cancelText: str(v.notices.cancelText).slice(0, 6000),
+      checked: v.notices.checked === true,
+    } } : {}),
   };
 }
 

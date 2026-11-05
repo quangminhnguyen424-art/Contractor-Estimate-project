@@ -117,3 +117,41 @@ export const missingRequired = (ticked: Record<string, boolean>) => CONSENT_ITEM
 export interface Consent { version: string; at: string; ai: boolean }
 
 export const consentCurrent = (c: Consent | undefined | null) => !!c && c.version === TERMS_VERSION;
+
+// ---------- Notices the contractor's state may require on quotes ----------
+
+export interface Notices {
+  /** Washington: "Notice to customer" disclosure (RCW 18.27.114), residential work of $1,000 or more, before work starts. */
+  waDisclosure: boolean;
+  regExpires: string;
+  bond: string; // e.g. "$12,000 surety bond, Acme Surety"
+  waText: string;
+  /** Sales made at the client's home: three-day right to cancel (FTC Cooling-Off Rule) with the cancellation form. */
+  cancel3Day: boolean;
+  cancelText: string;
+  /** The contractor confirmed the texts match the official forms. */
+  checked: boolean;
+}
+
+export const WA_DISCLOSURE_DRAFT = `NOTICE TO CUSTOMER (RCW 18.27.114)
+This contractor is registered with the State of Washington, registration no. {license}, expiring {expires}, and has posted a bond or deposit of {bond} for claims for breach of contract, including negligent or improper work.
+This bond or deposit might not be enough to cover a claim from the work under your contract, and it is not for your exclusive use: it covers all of the contractor's work and may be shared with other customers, suppliers, subcontractors and taxing authorities.
+You may withhold a contractually defined percentage of your construction contract as retainage for a stated period to protect you and help ensure your project is completed as required.
+If any supplier of materials used in your construction project, or any employee or subcontractor of the contractor, is not paid by the contractor, that supplier, employee or subcontractor may file a lien against your property. You may have to pay them even if you already paid the contractor in full.
+You may ask the contractor for original lien release documents from each supplier or subcontractor on your project.
+DRAFT: replace this text with the official form from Washington L&I before using it.`;
+
+export const CANCEL_DRAFT = `NOTICE OF CANCELLATION
+Date of transaction: {date}
+You may CANCEL this transaction, without any penalty or obligation, within THREE BUSINESS DAYS from the above date.
+If you cancel, any property traded in, any payments made by you under the contract or sale, and any negotiable instrument executed by you will be returned within TEN BUSINESS DAYS following receipt by the seller of your cancellation notice, and any security interest arising out of the transaction will be cancelled.
+To cancel this transaction, mail or deliver a signed and dated copy of this cancellation notice, or any other written notice, to {company}, {contact}, not later than midnight of {deadline}.
+I HEREBY CANCEL THIS TRANSACTION.   Date: ________   Buyer's signature: ______________________
+DRAFT: compare with the FTC Cooling-Off Rule form (16 CFR 429.1) and give the client two copies.`;
+
+export const defaultNotices = (): Notices => ({ waDisclosure: false, regExpires: '', bond: '', waText: WA_DISCLOSURE_DRAFT, cancel3Day: false, cancelText: CANCEL_DRAFT, checked: false });
+
+/** Fills the {placeholders} in a notice. */
+export function fillNotice(text: string, v: Record<string, string>): string {
+  return text.replace(/\{(\w+)\}/g, (m, k: string) => (v[k] != null && v[k] !== '' ? v[k] : '__________'));
+}
