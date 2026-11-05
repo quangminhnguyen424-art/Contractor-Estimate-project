@@ -21,7 +21,7 @@ const h12 = (h: number) => `${((h + 11) % 12) + 1}${h < 12 ? 'a' : 'p'}`;
 /** Add or change an appointment: what, when, which job, and when to remind. */
 export default function EventScreen() {
   const params = useLocalSearchParams<{ id?: string; date?: string; project?: string; estimate?: string }>();
-  const { events, saveEvent, deleteEvent, projects, estimates, profile } = useApp();
+  const { events, saveEvent, deleteEvent, projects, estimates, profile, team = [] } = useApp();
   const existing = events.find((e) => e.id === params.id);
   const today = useToday();
   const linkedProject = projects.find((p) => p.id === (existing?.projectId ?? params.project));
@@ -38,6 +38,7 @@ export default function EventScreen() {
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [remindMin, setRemind] = useState<number | null>(existing ? existing.remindMin : 60);
   const [saving, setSaving] = useState(false);
+  const [crew, setCrew] = useState<string[]>(existing?.crew ?? []);
   const days = Array.from({ length: 60 }, (_, i) => addDays(today, i));
   const jobs = [
     ...projects.filter((p) => p.status === 'active').map((p) => ({ key: `p:${p.id}`, label: p.title, projectId: p.id, estimateId: p.estimateId, address: p.address })),
@@ -57,6 +58,8 @@ export default function EventScreen() {
     ...(existing?.notificationId ? { notificationId: existing.notificationId } : {}),
     done: existing?.done ?? false,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
+    ...(crew.length ? { crew } : {}),
+    ...(existing?.attend ? { attend: existing.attend } : {}),
   });
 
   const save = async () => {
@@ -139,6 +142,22 @@ export default function EventScreen() {
         </>
       ) : null}
       <Field label="Address" value={address} onChangeText={setAddress} maxLength={160} placeholder="Where" />
+
+      {kind === 'crew' || kind === 'delivery' || kind === 'inspection' ? (
+        <>
+          <Label>Who is coming</Label>
+          {team.filter((m) => m.active).length ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {team.filter((m) => m.active).map((m) => (
+                <Chip key={m.id} label={`${m.name}${m.trade ? ` · ${m.trade}` : ''}`} selected={crew.includes(m.id)}
+                  onPress={() => setCrew(crew.includes(m.id) ? crew.filter((x) => x !== m.id) : [...crew, m.id])} />
+              ))}
+            </View>
+          ) : (
+            <Chip label="+ Add your crew and subs" onPress={() => router.push('/team')} />
+          )}
+        </>
+      ) : null}
 
       <Label>Remind me</Label>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>

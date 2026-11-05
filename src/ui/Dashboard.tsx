@@ -1,3 +1,4 @@
+import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Linking, Platform, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
@@ -30,7 +31,7 @@ export function staleUpdates(projects: ReturnType<typeof useApp>['projects'], no
 
 /** Home screen before the chat starts: one clear action, shortcuts, today, money, and what needs attention. */
 export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic: () => void; onAsk: (q: string) => void }) {
-  const { profile, events, contracts, estimates, projects } = useApp();
+  const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
   const { width } = useWindowDimensions();
   const today = useToday();
   const first = (profile?.contactName ?? '').trim().split(/\s+/)[0];
@@ -46,6 +47,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
     due += contractTotals(est, profile, c).due;
     overdue += Object.values(invoiceStates(c, today, est.salesTaxPct)).filter((s) => s.state === 'overdue').length;
   }
+  const checkIns = dailyCheckIn({ projects, estimates, contracts, profile, events, team, followups, today });
   const waiting = estimates.filter((e) => e.status === 'sent').length;
   const activeJobs = projects.filter((p) => p.status === 'active').length;
   const updates = staleUpdates(projects).slice(0, 2);
@@ -98,8 +100,23 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
         <Shortcut icon="camera" label="Job photo" colors={['#38BDF8', '#2563EB']} onPress={() => router.push('/quick')} />
         <Shortcut icon="calendar" label="Schedule" colors={['#A78BFA', '#7C3AED']} badge={todays.length || undefined} onPress={() => router.push('/schedule')} />
         <Shortcut icon="pricetags" label="Pricing" colors={['#34D399', '#059669']} onPress={() => router.push('/pricing')} />
-        <Shortcut icon="git-network" label="Apps" colors={['#F472B6', '#F472B6']} onPress={() => router.push('/connections')} />
+        <Shortcut icon="people" label="Crew" colors={['#F472B6', '#F472B6']} onPress={() => router.push('/team')} />
       </Reveal>
+
+      {/* Bidwell as project manager: what needs you today, across every job. */}
+      {checkIns.length ? (
+        <Reveal index={2} style={{ gap: 8 }}>
+          <Section title={`Bidwell check-in · ${checkIns.length}`} />
+          {checkIns.map((c) => (
+            <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.text} ${c.action}`} onPress={() => router.push(c.route as never)}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 6, padding: 12, opacity: pressed ? 0.75 : 1 })}>
+              <Ionicons name={c.icon as never} size={22} color={C.accent} />
+              <Text style={{ flex: 1, color: C.ink, fontSize: 15, lineHeight: 21 }}>{c.text}</Text>
+              <Text style={{ color: C.accent, fontWeight: '700' }}>{c.action}</Text>
+            </Pressable>
+          ))}
+        </Reveal>
+      ) : null}
 
       {/* Numbers at a glance. */}
       <Reveal index={3} style={{ flexDirection: 'row', gap: 10 }}>

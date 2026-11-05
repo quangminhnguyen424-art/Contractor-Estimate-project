@@ -217,7 +217,7 @@ function sanitizeTask(v: unknown, photoIds: Set<string>): SiteTask | null {
   if (!isObj(v) || typeof v.id !== 'string' || !str(v.text).trim()) return null;
   const tr = isObj(v.tr) ? Object.fromEntries(Object.entries(v.tr).filter(([k, x]) => (k === 'vi' || k === 'es') && typeof x === 'string')) : undefined;
   return {
-    id: v.id, text: str(v.text).trim().slice(0, 300), done: v.done === true,
+    id: v.id, text: str(v.text).trim().slice(0, 300), done: v.done === true, ...(v.review === true ? { review: true } : {}),
     ...(v.done === true && typeof v.doneAt === 'string' ? { doneAt: v.doneAt } : {}),
     ...(tr && Object.keys(tr).length ? { tr } : {}),
     ...(typeof v.photoId === 'string' && photoIds.has(v.photoId) ? { photoId: v.photoId } : {}),

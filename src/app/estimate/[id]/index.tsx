@@ -7,6 +7,7 @@ import { Text } from '@/ui/text';
 import { TRADE_NAMES } from '@/engine/catalog';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { money, qtyFmt } from '@/engine/format';
+import { nextFollowUp } from '@/engine/followup';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { EstimateStatus, Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -16,7 +17,7 @@ import { confirmAction, notify } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs, projects, projectForEstimate, contracts } = useApp();
+  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs, projects, projectForEstimate, contracts, followups } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
@@ -204,7 +205,17 @@ export default function EstimateScreen() {
       </Muted>
 
       {est.status === 'sent' && !contract?.accepted ? (
-        <Button title="Client signs on this phone" icon="create-outline" onPress={() => router.push(`/estimate/${est.id}/sign`)} />
+        <View style={{ gap: 10 }}>
+          <Button title="Client signs on this phone" icon="create-outline" onPress={() => router.push(`/estimate/${est.id}/sign`)} />
+          <Button kind="secondary" icon="notifications-outline" onPress={() => router.push(`/estimate/${est.id}/follow`)}
+            title={(() => {
+              const f = followups?.find((x) => x.estimateId === est.id);
+              if (!f || f.consent === 'not-asked') return 'Follow-ups: ask the client';
+              if (f.stopped) return 'Follow-ups: stopped';
+              const n = nextFollowUp(f, est.status);
+              return n ? `Follow-ups: next ${n.date}` : 'Follow-ups: all sent';
+            })()} />
+        </View>
       ) : null}
       {est.status === 'won' || contract?.accepted ? (
         <View style={{ gap: 10 }}>

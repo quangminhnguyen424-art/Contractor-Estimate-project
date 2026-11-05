@@ -240,3 +240,21 @@ describe('terms gate', () => {
     expect(d.followups?.[0]).toMatchObject({ channels: ['text'], days: [2] });
   });
 });
+
+describe('Bidwell daily check-in', () => {
+  it('asks about crew, follow-ups due, money, stale photo updates and unasked quotes', async () => {
+    const { dailyCheckIn } = await import('./pm');
+    const team: TeamMember[] = [{ id: 't', name: 'Tuan', role: 'crew', trade: 'Tile', phone: '', rate: 300, rateUnit: 'day', lang: 'en', active: true }];
+    const ev: CalEvent = { id: 'e', title: 'Crew day', kind: 'crew', date: '2026-11-04', time: '07:30', durationMin: 480, address: '', notes: '', remindMin: null, done: false, createdAt: '', crew: ['t'], projectId: 'p1' };
+    const project = { id: 'p1', estimateId: 'e1', title: 'Kim bath', clientName: 'Kim', address: '', status: 'active' as const, createdAt: '2026-10-20T00:00:00Z', rooms: [], logs: [], money: money() };
+    const sentEst = { ...est, id: 'e2', title: 'Patel kitchen', clientName: 'Raj', status: 'sent', updatedAt: '2026-10-30T00:00:00Z' } as Estimate;
+    const follow = { ...newPlan('e3', '2026-11-01'), consent: 'agreed' as const, channels: ['email' as const], email: 'a@b.co', days: [3] };
+    const followEst = { ...sentEst, id: 'e3', title: 'Deck', clientName: 'Lopez' } as Estimate;
+    const items = dailyCheckIn({ projects: [project], estimates: [est, sentEst, followEst], contracts: [contract()], profile, events: [ev], team, followups: [follow], today: '2026-11-04' });
+    const ids = items.map((i) => i.id);
+    expect(ids[0]).toBe('crew-e-t');
+    expect(ids).toEqual(expect.arrayContaining(['follow-e3', 'funds-p1', 'overdue-p1', 'photos-p1', 'ask-e2']));
+    expect(ids).not.toContain('ask-e3');
+    expect(items.length).toBeLessThanOrEqual(8);
+  });
+});

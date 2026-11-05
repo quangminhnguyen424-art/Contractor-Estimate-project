@@ -7,9 +7,9 @@ import { useToday } from '@/ui/useToday';
 import { buyTotals, emptyMoney, projectBooks } from '@/engine/books';
 import { money as moneyFmt, newId } from '@/engine/format';
 import { dayLabel, upcoming } from '@/engine/schedule';
-import { beforeAfterPairs, contractLine, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
+import { AREA_PRESETS, beforeAfterPairs, contractLine, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
-import { Button, C, Card, Field, H2, Muted, Screen, Section, Tile } from '@/ui/kit';
+import { Banner, Button, C, Card, Chip, Field, H2, Muted, Screen, Section, Tile } from '@/ui/kit';
 import { PressScale, Progress } from '@/ui/motion';
 import { confirmAction } from '@/ui/notify';
 import { PhotoView } from '@/ui/SitePhotoView';
@@ -46,16 +46,21 @@ export default function ProjectScreen() {
   const timeline = [...byDay.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 10)
     .map(([d, list]) => [d, list.sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt))] as const);
 
-  const addRoom = () => {
-    const name = roomName.trim();
+  const addRoom = (typed?: string) => {
+    const name = (typed ?? roomName).trim();
     if (!name) return;
-    updateProject(p.id, (x) => ({ ...x, rooms: [...x.rooms, emptyRoom(newId(), name)] }));
-    setRoomName('');
+    // A second "Repair spot" gets a number so every area keeps its own photos.
+    const taken = new Set(p.rooms.map((r) => r.name.toLowerCase()));
+    let unique = name;
+    for (let n = 2; taken.has(unique.toLowerCase()); n++) unique = `${name} ${n}`;
+    updateProject(p.id, (x) => ({ ...x, rooms: [...x.rooms, emptyRoom(newId(), unique)] }));
+    if (typed == null) setRoomName('');
   };
+  const reviewCount = p.rooms.reduce((t, r) => t + r.tasks.filter((x) => x.review).length, 0);
 
   const remove = () =>
     confirmAction('Delete this project?', 'All its photos, tasks and logs are deleted from this phone. The estimate stays.', 'Delete', () => {
-      deletePhotosLater(p.rooms.flatMap((r) => r.photos.map((ph) => ph.uri)));
+      deletePhotosLater([...p.rooms.flatMap((r) => r.photos.map((ph) => ph.uri)), ...(p.money?.costs.flatMap((c) => (c.receiptUri ? [c.receiptUri] : [])) ?? [])]);
       deleteProject(p.id);
       router.replace('/sites');
     });
@@ -89,7 +94,9 @@ export default function ProjectScreen() {
         <Tile index={5} icon="logo-facebook" tone="slate" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after` : 'Needs before + after'} onPress={() => go('share?mode=post')} />
       </View>
 
-      <H2>Rooms</H2>
+      <H2>Photos by area</H2>
+      <Muted style={{ fontSize: 13 }}>Each room or outside area keeps its photos, what to do, before/after, and tasks you or the crew mark done or flag for a second look.</Muted>
+      {reviewCount ? <Banner tone="warn" title={`${reviewCount} task${reviewCount > 1 ? 's' : ''} flagged: needs a look`} /> : null}
       {p.rooms.map((r) => {
         const rp = roomProgress(r);
         const cover = r.photos[r.photos.length - 1];
@@ -111,9 +118,19 @@ export default function ProjectScreen() {
         );
       })}
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
-        <Field label="Add a room" value={roomName} onChangeText={setRoomName} placeholder="e.g. Primary bath" style={{ flex: 1 }} maxLength={40} />
-        <Button kind="secondary" title="Add" disabled={!roomName.trim()} onPress={addRoom} />
+        <Field label="Add a room or area" value={roomName} onChangeText={setRoomName} placeholder="e.g. Primary bath, Siding" style={{ flex: 1 }} maxLength={40} />
+        <Button kind="secondary" title="Add" disabled={!roomName.trim()} onPress={() => addRoom()} />
       </View>
+      {AREA_PRESETS.map((g) => (
+        <View key={g.group} style={{ gap: 6 }}>
+          <Muted style={{ fontSize: 12 }}>{g.group}</Muted>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {g.names.filter((n) => n === 'Repair spot' || !p.rooms.some((r) => r.name.toLowerCase() === n.toLowerCase())).map((n) => (
+              <Chip key={n} label={`+ ${n}`} onPress={() => addRoom(n)} />
+            ))}
+          </View>
+        </View>
+      ))}
 
       {timeline.length ? (
         <>

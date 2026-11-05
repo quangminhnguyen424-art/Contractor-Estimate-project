@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, useWindowDimensions, View } from 'react-native';
@@ -76,7 +77,7 @@ export default function RoomScreen() {
     }));
   };
 
-  const open = room.tasks.filter((t) => !t.done);
+  const open = [...room.tasks.filter((t) => !t.done && t.review), ...room.tasks.filter((t) => !t.done && !t.review)];
   const done = room.tasks.filter((t) => t.done);
   const photoById = new Map(room.photos.map((ph) => [ph.id, ph]));
 
@@ -92,6 +93,11 @@ export default function RoomScreen() {
         </Pressable>
         <View style={{ flex: 1, gap: 6 }}>
           <Text style={{ color: t.done ? C.muted : C.ink, fontSize: 15, textDecorationLine: t.done ? 'line-through' : 'none' }}>{t.text}</Text>
+          {t.review ? (
+            <View style={{ alignSelf: 'flex-start', backgroundColor: C.warnBg, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2 }}>
+              <Text style={{ color: C.warnInk, fontSize: 12, fontWeight: '700' }}>NEEDS A LOOK</Text>
+            </View>
+          ) : null}
           {before || after ? (
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {before ? <PhotoView photo={before} width={72} badge="Where" /> : null}
@@ -104,6 +110,10 @@ export default function RoomScreen() {
             </Pressable>
           ) : null}
         </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={t.review ? `Clear review flag on ${t.text}` : `Flag ${t.text} as needs review`} hitSlop={8}
+          onPress={() => setTask(t.id, { review: !t.review })}>
+          <Ionicons name={t.review ? 'flag' : 'flag-outline'} size={20} color={t.review ? C.warnInk : C.muted} />
+        </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={`Delete task ${t.text}`} hitSlop={8}
           onPress={() => confirmAction('Delete this task?', t.text, 'Delete', () => setRoom((r) => ({ ...r, tasks: r.tasks.filter((x) => x.id !== t.id) })))}>
           <Text style={{ color: C.muted, fontSize: 18 }}>×</Text>

@@ -38,7 +38,16 @@ export interface SiteTask {
   doneAt?: string;
   photoId?: string; // a photo that shows where/what (before)
   afterPhotoId?: string; // the finished result
+  /** Flagged by the contractor or crew: done but needs a second look, or a question about it. */
+  review?: boolean;
 }
+
+/** Ready-made areas for the photo section, inside and outside the house (CompanyCam-style). */
+export const AREA_PRESETS: { group: string; names: string[] }[] = [
+  { group: 'Inside', names: ['Kitchen', 'Bathroom', 'Bedroom', 'Living room', 'Basement', 'Laundry', 'Stairs', 'Garage'] },
+  { group: 'Outside', names: ['Siding', 'Roof', 'Deck', 'Windows', 'Gutters', 'Foundation', 'Driveway', 'Yard'] },
+  { group: 'Other', names: ['Repair spot', 'Damage found', 'Permit & inspection'] },
+];
 
 export interface SiteRoom {
   id: string;
