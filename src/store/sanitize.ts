@@ -362,7 +362,11 @@ function sanitizeSignature(v: unknown): Signature | null {
     .filter((s): s is number[] => Array.isArray(s) && s.length >= 2 && s.length % 2 === 0 && s.every((x) => typeof x === 'number' && Number.isFinite(x)))
     .slice(0, 200).map((s) => s.slice(0, 2000).map((x) => Math.round(x * 10) / 10));
   if (!strokes.length) return null;
-  return { name: str(v.name).trim().slice(0, 80), strokes, w, h, signedAt: str(v.signedAt, new Date().toISOString()) };
+  const a = isObj(v.audit) ? v.audit : null;
+  return {
+    name: str(v.name).trim().slice(0, 80), strokes, w, h, signedAt: str(v.signedAt, new Date().toISOString()),
+    ...(a ? { audit: { via: 'online' as const, ip: str(a.ip).slice(0, 64), userAgent: str(a.userAgent).slice(0, 300), docSha256: str(a.docSha256).slice(0, 64), electronicConsent: a.electronicConsent === true } } : {}),
+  };
 }
 
 function sanitizeTerms(v: unknown): Terms | null {

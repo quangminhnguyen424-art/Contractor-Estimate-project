@@ -51,26 +51,35 @@ language sql security definer set search_path = public stable as $$
   from public.sign_requests r where r.token = p_token and r.status <> 'cancelled' limit 1;
 $$;
 
--- The client signs: only once, only before it expires, and only with a real signature.
-create or replace function public.submit_signature(p_token text, p_name text, p_strokes jsonb, p_w numeric, p_h numeric)
+-- The client signs: only once, only before it expires, only with a real signature and their consent to sign electronically.
+-- Kept with the signature as an audit trail (ESIGN/UETA): when, from which address and device, and a fingerprint of the exact document.
+create or replace function public.submit_signature(p_token text, p_name text, p_strokes jsonb, p_w numeric, p_h numeric, p_consent boolean)
 returns boolean language plpgsql security definer set search_path = public as $$
-declare n int;
+declare
+  n int;
+  hdr json := coalesce(nullif(current_setting('request.headers', true), ''), '{}')::json;
 begin
+  if p_consent is not true then raise exception 'consent required'; end if;
   if coalesce(length(trim(p_name)), 0) < 2 or length(p_name) > 80 then raise exception 'name required'; end if;
   if jsonb_typeof(p_strokes) <> 'array' or jsonb_array_length(p_strokes) = 0 or length(p_strokes::text) > 200000 then raise exception 'signature required'; end if;
   if p_w <= 0 or p_w > 5000 or p_h <= 0 or p_h > 5000 then raise exception 'bad size'; end if;
-  update public.sign_requests
+  update public.sign_requests r
      set status = 'signed', signed_at = now(),
-         signature = jsonb_build_object('name', trim(p_name), 'strokes', p_strokes, 'w', p_w, 'h', p_h, 'signedAt', now())
-   where token = p_token and status = 'pending' and expires_at > now();
+         signature = jsonb_build_object(
+           'name', trim(p_name), 'strokes', p_strokes, 'w', p_w, 'h', p_h, 'signedAt', now(),
+           'electronicConsent', true,
+           'ip', split_part(coalesce(hdr->>'x-forwarded-for', ''), ',', 1),
+           'userAgent', left(coalesce(hdr->>'user-agent', ''), 300),
+           'docSha256', encode(extensions.digest(r.html, 'sha256'), 'hex'))
+   where r.token = p_token and r.status = 'pending' and r.expires_at > now();
   get diagnostics n = row_count;
   return n = 1;
 end $$;
 
 revoke all on function public.get_sign_request(text) from public;
-revoke all on function public.submit_signature(text, text, jsonb, numeric, numeric) from public;
+revoke all on function public.submit_signature(text, text, jsonb, numeric, numeric, boolean) from public;
 grant execute on function public.get_sign_request(text) to anon, authenticated;
-grant execute on function public.submit_signature(text, text, jsonb, numeric, numeric) to anon, authenticated;
+grant execute on function public.submit_signature(text, text, jsonb, numeric, numeric, boolean) to anon, authenticated;
 
 -- AI requests per account per day, so a shared key can't run up a bill.
 create table if not exists public.ai_usage (

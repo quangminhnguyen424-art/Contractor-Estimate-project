@@ -10,7 +10,9 @@ import { money, qtyFmt } from '@/engine/format';
 import { nextFollowUp } from '@/engine/followup';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { EstimateStatus, Trade } from '@/engine/types';
+import { quoteHtml } from '@/engine/quote';
 import { useApp } from '@/store/AppContext';
+import { SendSignLink } from '@/ui/SendSignLink';
 import { Banner, Button, C, Card, Chip, H2, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
 import { AiNote } from '@/ui/AiNote';
 import { confirmAction, notify } from '@/ui/notify';
@@ -207,6 +209,10 @@ export default function EstimateScreen() {
       {est.status === 'sent' && !contract?.accepted ? (
         <View style={{ gap: 10 }}>
           <Button title="Client signs on this phone" icon="create-outline" onPress={() => router.push(`/estimate/${est.id}/sign`)} />
+          {profile ? (
+            <SendSignLink kind="quote" estimateId={est.id} title={est.title} clientName={est.clientName} total={est.total}
+              html={() => quoteHtml(est, profile, profile.quoteLanguage)} />
+          ) : null}
           <Button kind="secondary" icon="notifications-outline" onPress={() => router.push(`/estimate/${est.id}/follow`)}
             title={(() => {
               const f = followups?.find((x) => x.estimateId === est.id);

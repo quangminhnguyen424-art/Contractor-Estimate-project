@@ -70,3 +70,38 @@ export function deletePhotoFile(uri: string) {
     // already gone
   }
 }
+
+// ---- Cloud backup ----
+
+/** The file name a photo is backed up under, or null for photos that aren't kept as files. */
+export function photoCloudName(uri: string): string | null {
+  return uri.startsWith(PREFIX) ? uri.slice(PREFIX.length) : null;
+}
+
+export async function hasPhoto(uri: string): Promise<boolean> {
+  try {
+    return new File(resolvePhotoUri(uri)).exists;
+  } catch {
+    return false;
+  }
+}
+
+export async function photoBytes(uri: string): Promise<Uint8Array | null> {
+  try {
+    const f = new File(resolvePhotoUri(uri));
+    return f.exists ? await f.bytes() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Puts a photo downloaded from the cloud back where its saved address expects it. */
+export async function restorePhoto(uri: string, bytes: Uint8Array): Promise<void> {
+  const name = photoCloudName(uri);
+  if (!name) return;
+  const dir = new Directory(Paths.document, DIR);
+  if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+  const f = new File(dir, name);
+  if (!f.exists) f.create();
+  await f.write(bytes);
+}

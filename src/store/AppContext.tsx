@@ -27,6 +27,8 @@ import type {
 const KEY = 'estimating-app/v1';
 // The Claude key lives in its own slot so it is never included in a data backup.
 const AI_KEY = 'estimating-app/claude-key';
+// When the data last changed on this phone (for cloud sync).
+const CHANGED_KEY = 'estimating-app/changed-at';
 
 export interface Draft {
   id?: string; // set when editing an existing estimate
@@ -121,6 +123,12 @@ interface Ctx extends Persisted {
   saveApiKey: (key: string) => void;
   /** JSON backup of everything except the Claude key. */
   exportData: () => string;
+  /** When the data last changed on this phone (ms), for cloud sync. */
+  changedAt: number;
+  /** The data as saved right now. */
+  snapshot: () => Persisted;
+  /** Replaces everything with the cloud copy (checked first). Returns false when it isn't usable. */
+  replaceFromCloud: (raw: unknown) => boolean;
   /** Replace all data with a backup. */
   importData: (json: string) => { ok: boolean; message: string };
 }
@@ -144,6 +152,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const dataRef = useRef<Persisted>(EMPTY);
   const [apiKey, setApiKey] = useState('');
   const [saveFailed, setSaveFailed] = useState(false);
+  const [changedAt, setChangedAt] = useState(0);
+  const changedRef = useRef(0);
 
   useEffect(() => {
     (async () => {
@@ -157,6 +167,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {
         // Corrupt or unavailable storage: start fresh rather than crash.
+      }
+      try {
+        const ch = Number(await AsyncStorage.getItem(CHANGED_KEY));
+        if (Number.isFinite(ch) && ch > 0) { changedRef.current = ch; setChangedAt(ch); }
+      } catch {
+        // never synced
       }
       try {
         setApiKey((await AsyncStorage.getItem(AI_KEY)) ?? '');
@@ -176,6 +192,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     saveTimer.current = null;
     const doomed = toDelete.current;
     toDelete.current = [];
+    AsyncStorage.setItem(CHANGED_KEY, String(changedRef.current)).catch(() => {});
     AsyncStorage.setItem(KEY, JSON.stringify(dataRef.current)).then(
       () => { setSaveFailed(false); doomed.forEach(deletePhotoFile); },
       () => { setSaveFailed(true); toDelete.current.push(...doomed); },
@@ -191,8 +208,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [flush]);
 
-  const update = useCallback((fn: (d: Persisted) => Persisted) => {
+  const update = useCallback((fn: (d: Persisted) => Persisted, opts?: { fromCloud?: boolean }) => {
     const next = fn(dataRef.current);
+    // A change made here (not one that just arrived from the cloud) is what the next sync sends.
+    if (!opts?.fromCloud) { changedRef.current = Date.now(); setChangedAt(changedRef.current); }
     // Keep the job type list in step with the contractor's own types and questions before anything renders.
     setCustomJobs(next.customTypes, next.customQuestions);
     dataRef.current = next;
@@ -433,6 +452,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setApiKey(k);
         (k ? AsyncStorage.setItem(AI_KEY, k) : AsyncStorage.removeItem(AI_KEY)).catch(() => {});
       },
+      changedAt,
+      snapshot: () => dataRef.current,
+      replaceFromCloud: (raw) => {
+        const { data: next } = sanitizePersisted(raw);
+        if (!next.profile) {
+          setCustomJobs(dataRef.current.customTypes, dataRef.current.customQuestions);
+          return false;
+        }
+        setDraft(null);
+        // Reminders belong to this phone: set them again for what's coming up.
+        const restored = { ...next, events: next.events.map(({ notificationId: _n, ...e }) => e) };
+        update(() => restored, { fromCloud: true });
+        cancelAllReminders().then(async () => {
+          for (const e of restored.events) {
+            const r = await scheduleReminder(e).catch(() => ({ id: undefined }));
+            if (r.id) update((cur) => ({ ...cur, events: cur.events.map((x) => (x.id === e.id ? { ...x, notificationId: r.id } : x)) }), { fromCloud: true });
+          }
+        });
+        return true;
+      },
       exportData: () => JSON.stringify({ app: 'estimator', version: 1, exportedAt: new Date().toISOString(), data: dataRef.current }),
       importData: (json: string) => {
         let parsed: unknown;
@@ -464,7 +503,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
       },
     }),
-    [data, ready, draft, update, commitDraft, apiKey, saveFailed, pendingPlan],
+    [data, ready, draft, update, commitDraft, apiKey, saveFailed, pendingPlan, changedAt],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -11,6 +11,8 @@ export interface Signature {
   w: number;
   h: number;
   signedAt: string;
+  /** Signed online from a link: the audit trail kept for the electronic signature. */
+  audit?: { via: 'online'; ip: string; userAgent: string; docSha256: string; electronicConsent: boolean };
 }
 
 export type ChangeStatus = 'pending' | 'approved' | 'declined';

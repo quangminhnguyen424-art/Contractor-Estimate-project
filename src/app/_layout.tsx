@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CloudProvider } from '@/cloud/CloudProvider';
 import { AppProvider, useApp } from '@/store/AppContext';
 import { ConfettiHost } from '@/ui/celebrate';
 import { C } from '@/ui/kit';
@@ -84,6 +85,7 @@ function RootStack() {
         <Stack.Screen name="site/[id]/cost" options={{ title: 'Add a cost', presentation: 'modal' }} />
         <Stack.Screen name="estimate/[id]/follow" options={{ title: 'Follow-ups' }} />
         <Stack.Screen name="team" options={{ title: 'Crew & subs' }} />
+        <Stack.Screen name="account" options={{ title: 'Bidwell cloud' }} />
       </Stack.Protected>
       {/* Always reachable: on first launch (and after the Terms change) it is the only screen; later it opens from Settings. */}
       <Stack.Screen name="terms" options={{ headerShown: termsOk, title: 'Terms and AI' }} />
@@ -117,10 +119,12 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AppProvider>
-        <StatusBar style="light" />
-        <RootStack />
-        <SaveWarning />
-        <ConfettiHost />
+        <CloudProvider>
+          <StatusBar style="light" />
+          <RootStack />
+          <SaveWarning />
+          <ConfettiHost />
+        </CloudProvider>
       </AppProvider>
     </SafeAreaProvider>
   );

@@ -104,3 +104,31 @@ export function deletePhotoFile(uri: string) {
   cache.delete(uri);
   tx('readwrite', (s) => s.delete(uri.slice(4))).catch(() => {});
 }
+
+// ---- Cloud backup ----
+
+export function photoCloudName(uri: string): string | null {
+  return uri.startsWith('idb:') ? `${uri.slice(4)}.jpg` : null;
+}
+
+export async function hasPhoto(uri: string): Promise<boolean> {
+  return !uri.startsWith('idb:') || (await load(uri)) != null;
+}
+
+export async function photoBytes(uri: string): Promise<Uint8Array | null> {
+  const data = await load(uri);
+  if (!data) return null;
+  const bin = atob(data.slice(data.indexOf(',') + 1));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+export async function restorePhoto(uri: string, bytes: Uint8Array): Promise<void> {
+  if (!uri.startsWith('idb:')) return;
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  const data = `data:image/jpeg;base64,${btoa(s)}`;
+  await tx('readwrite', (st) => st.put(data, uri.slice(4)));
+  cache.set(uri, data);
+}

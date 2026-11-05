@@ -61,7 +61,7 @@
         <div class="row"><label>Sign with your finger / Ký bằng ngón tay</label><button class="link" id="clear" type="button">Clear / Xóa</button></div>
         <div class="pad" id="pad"><canvas id="canvas"></canvas><span class="hint">✕ Sign here / Ký tại đây</span></div>
       </div>
-      <label class="agree"><input id="agree" type="checkbox"><span id="agreeText">I have read this document and agree to it, including the price, scope and terms. / Tôi đã đọc và đồng ý với tài liệu này, gồm giá, phạm vi công việc và điều khoản.</span></label>
+      <label class="agree"><input id="agree" type="checkbox"><span id="agreeText">I have read this document and agree to it, including the price, scope and terms. I agree to sign electronically, and my electronic signature is as binding as one on paper. / Tôi đã đọc và đồng ý với tài liệu này, gồm giá, phạm vi và điều khoản, và đồng ý ký điện tử; chữ ký điện tử có giá trị như ký trên giấy.</span></label>
       <button id="submit" type="button" disabled>Sign / Ký tên</button>
       <div class="err" id="err" role="alert"></div>
     </div>
@@ -116,7 +116,7 @@
 
   $('submit').onclick = function () {
     $('submit').disabled = true; $('err').textContent = '';
-    rpc('submit_signature', { p_token: token, p_name: $('name').value.trim(), p_strokes: strokes, p_w: W, p_h: H })
+    rpc('submit_signature', { p_token: token, p_name: $('name').value.trim(), p_strokes: strokes, p_w: W, p_h: H, p_consent: $('agree').checked })
       .then(function (ok) { if (ok) show('done'); else { $('err').textContent = 'This link is no longer open for signing. / Link này không còn ký được.'; } })
       .catch(function () { $('err').textContent = 'Could not send. Check your connection and try again. / Không gửi được, hãy thử lại.'; check(); });
   };

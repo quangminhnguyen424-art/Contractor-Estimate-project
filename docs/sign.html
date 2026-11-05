@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Review and sign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #F4F6FB; --card: #FFFFFF; --ink: #0B1324; --ink2: #334155; --muted: #5B6475; --line: #DDE3EC; --accent: #FF6B1A; --ok: #0E9F6E; --bad: #DC2626; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Lexend', system-ui, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+  .brand b { color: var(--ink); }
+  .card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 1px 0 var(--line), 0 12px 30px rgba(15, 23, 42, 0.06); }
+  h1 { font-size: 24px; margin: 4px 0 2px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+  .total b { font-size: 28px; }
+  iframe { width: 100%; height: 70vh; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+  label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }
+  input[type=text] { width: 100%; height: 50px; border-radius: 12px; border: 1px solid var(--line); padding: 0 14px; font: inherit; font-size: 17px; }
+  .pad { position: relative; height: 180px; border: 2px dashed var(--line); border-radius: 14px; background: #fff; touch-action: none; }
+  .pad canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .pad .hint { position: absolute; left: 14px; bottom: 10px; color: #94A3B8; font-size: 13px; pointer-events: none; }
+  .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+  .agree { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--ink2); }
+  .agree input { width: 22px; height: 22px; margin-top: 1px; accent-color: var(--accent); }
+  button { height: 56px; border: 0; border-radius: 16px; background: var(--accent); color: #fff; font: 600 17px 'Lexend', sans-serif; cursor: pointer; width: 100%; box-shadow: 0 8px 22px rgba(255, 107, 26, 0.35); }
+  button:disabled { opacity: .45; box-shadow: none; cursor: default; }
+  .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; width: auto; height: auto; box-shadow: none; text-decoration: underline; }
+  .done { text-align: center; padding: 30px 18px; }
+  .done .tick { width: 72px; height: 72px; border-radius: 50%; background: #D1FAE5; color: var(--ok); display: inline-flex; align-items: center; justify-content: center; font-size: 38px; animation: pop .5s ease-out; }
+  @keyframes pop { from { transform: scale(.3); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .err { color: var(--bad); font-size: 14px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <div class="brand"><span>Sent with <b>Bidwell AI</b></span></div>
+  <section class="card" id="loading"><p class="muted">Loading… / Đang tải…</p></section>
+  <section class="card" id="gone" hidden><h1 id="goneTitle">This link isn't available</h1><p class="muted" id="goneText">Ask your contractor to send a new one. / Liên hệ nhà thầu để nhận link mới.</p></section>
+
+  <section id="doc" hidden>
+    <div class="card">
+      <div class="muted" id="company"></div>
+      <h1 id="title"></h1>
+      <div class="muted" id="what"></div>
+      <div class="total"><span class="muted">Total with tax / Tổng (gồm thuế)</span><b id="total"></b></div>
+    </div>
+  </section>
+  <iframe id="frame" title="Document" sandbox="" hidden></iframe>
+
+  <section class="card" id="signCard" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div><label for="name">Your full name / Họ và tên</label><input id="name" type="text" autocomplete="name" maxlength="80"></div>
+      <div>
+        <div class="row"><label>Sign with your finger / Ký bằng ngón tay</label><button class="link" id="clear" type="button">Clear / Xóa</button></div>
+        <div class="pad" id="pad"><canvas id="canvas"></canvas><span class="hint">✕ Sign here / Ký tại đây</span></div>
+      </div>
+      <label class="agree"><input id="agree" type="checkbox"><span id="agreeText">I have read this document and agree to it, including the price, scope and terms. I agree to sign electronically, and my electronic signature is as binding as one on paper. / Tôi đã đọc và đồng ý với tài liệu này, gồm giá, phạm vi và điều khoản, và đồng ý ký điện tử; chữ ký điện tử có giá trị như ký trên giấy.</span></label>
+      <button id="submit" type="button" disabled>Sign / Ký tên</button>
+      <div class="err" id="err" role="alert"></div>
+    </div>
+  </section>
+
+  <section class="card done" id="done" hidden>
+    <div class="tick">✓</div>
+    <h1>Signed. Thank you!</h1>
+    <p class="muted">Đã ký. Cảm ơn quý khách! Your contractor has been notified and will send you a copy.</p>
+  </section>
+</main>
+<script src="./cloud-config.js"></script>
+<script>
+(function () {
+  var cfg = window.BIDWELL_CLOUD || {};
+  var token = new URLSearchParams(location.search).get('t') || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var money = function (n) { return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  function rpc(fn, body) {
+    return fetch(cfg.url + '/rest/v1/rpc/' + fn, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', apikey: cfg.anonKey, Authorization: 'Bearer ' + cfg.anonKey },
+      body: JSON.stringify(body),
+    }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  }
+  function show(id) { ['loading', 'gone', 'doc', 'signCard', 'done', 'frame'].forEach(function (x) { $(x).hidden = true; }); [].concat(id).forEach(function (x) { $(x).hidden = false; }); }
+
+  // Signature pad: strokes kept as x,y pairs in the pad's own size, the same shape the app stores.
+  var canvas = $('canvas'), ctx = canvas.getContext('2d'), strokes = [], cur = null, W = 0, H = 0;
+  function size() {
+    var r = canvas.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    W = Math.round(r.width); H = Math.round(r.height);
+    canvas.width = W * d; canvas.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); draw();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = '#0B1324'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    strokes.concat(cur ? [cur] : []).forEach(function (s) {
+      ctx.beginPath(); ctx.moveTo(s[0], s[1]); for (var i = 2; i < s.length; i += 2) ctx.lineTo(s[i], s[i + 1]); ctx.stroke();
+    });
+    check();
+  }
+  function pt(e) { var r = canvas.getBoundingClientRect(); return [Math.round((e.clientX - r.left) * 10) / 10, Math.round((e.clientY - r.top) * 10) / 10]; }
+  canvas.addEventListener('pointerdown', function (e) { canvas.setPointerCapture(e.pointerId); cur = pt(e); draw(); });
+  canvas.addEventListener('pointermove', function (e) { if (cur) { cur = cur.concat(pt(e)); draw(); } });
+  function end() { if (cur) { strokes.push(cur.length === 2 ? cur.concat([cur[0] + 1, cur[1] + 1]) : cur); cur = null; draw(); } }
+  canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+  $('clear').onclick = function () { strokes = []; draw(); };
+  function ink() { return strokes.reduce(function (t, s) { return t + s.length / 2; }, 0); }
+  function check() { $('submit').disabled = !($('name').value.trim().length >= 2 && ink() >= 12 && $('agree').checked); }
+  $('name').oninput = check; $('agree').onchange = check;
+  window.addEventListener('resize', function () { if (!$('signCard').hidden && !strokes.length) size(); });
+
+  $('submit').onclick = function () {
+    $('submit').disabled = true; $('err').textContent = '';
+    rpc('submit_signature', { p_token: token, p_name: $('name').value.trim(), p_strokes: strokes, p_w: W, p_h: H, p_consent: $('agree').checked })
+      .then(function (ok) { if (ok) show('done'); else { $('err').textContent = 'This link is no longer open for signing. / Link này không còn ký được.'; } })
+      .catch(function () { $('err').textContent = 'Could not send. Check your connection and try again. / Không gửi được, hãy thử lại.'; check(); });
+  };
+
+  if (!cfg.url || !token) { show('gone'); return; }
+  rpc('get_sign_request', { p_token: token }).then(function (rows) {
+    var r = rows && rows[0];
+    if (!r) { show('gone'); return; }
+    $('company').textContent = r.company; $('title').textContent = r.title; $('total').textContent = money(r.total);
+    $('what').textContent = (r.kind === 'change' ? 'Change order for ' : 'Quote for ') + (r.client_name || 'you');
+    $('name').value = r.client_name || '';
+    $('frame').srcdoc = r.html;
+    if (r.status === 'signed') { show(['doc', 'frame', 'done']); return; }
+    if (r.expired) { $('goneTitle').textContent = 'This link has expired'; show('gone'); return; }
+    show(['doc', 'frame', 'signCard']); size();
+  }).catch(function () { show('gone'); });
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 
 import { demoAI, getAI, type SampleFn } from '@/engine/ai';
+import { accessToken } from '@/cloud/client';
+import { CLOUD, cloudConfigured } from '@/cloud/config';
 
 /**
  * When the web version runs as a claude.ai artifact (in the Claude app or claude.ai), the page
@@ -37,8 +39,13 @@ export const hostSample = () => capability<SampleFn>('sample');
  * The AI to use here: Claude built into the Claude app, else your own API key, else the offline reader.
  * Nothing leaves the phone unless the user allowed AI sharing (Apple 5.1.2(i)); then only the offline reader is used.
  */
-export const aiFor = (apiKey: string | undefined, allowed: boolean) =>
-  (!allowed ? demoAI : inClaudeApp ? getAI({ host: hostSample }) : getAI({ apiKey }));
+export const aiFor = (apiKey: string | undefined, allowed: boolean) => {
+  if (!allowed) return demoAI;
+  if (inClaudeApp) return getAI({ host: hostSample });
+  if (apiKey?.trim()) return getAI({ apiKey });
+  // No key of your own: Bidwell cloud's AI, with the signed-in account (the key stays on the server).
+  return cloudConfigured ? getAI({ cloud: { proxyUrl: `${CLOUD.url}/functions/v1/ai`, anonKey: CLOUD.anonKey, getToken: accessToken } }) : getAI({});
+};
 
 /**
  * Offers a file to save/share through the Claude app. Returns 'saved', 'declined' (user said no),

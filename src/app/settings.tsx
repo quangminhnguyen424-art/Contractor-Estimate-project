@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useCloud } from '@/cloud/CloudProvider';
 import { useState } from 'react';
 import { Platform, Pressable, Share, View } from 'react-native';
 
@@ -17,6 +18,7 @@ import { confirmAction, notify } from '@/ui/notify';
 
 export default function Settings() {
   const { profile, saveProfile, resetAll, apiKey, saveApiKey, exportData, importData, aiAllowed } = useApp();
+  const cloud = useCloud();
   const [p, setP] = useState<Profile>(profile!);
   const [base, setBase] = useState(profile);
   const [saved, setSaved] = useState(false);
@@ -128,6 +130,8 @@ export default function Settings() {
   return (
     <Screen footer={<Button title={saved ? 'Saved ✓' : 'Save settings'} disabled={schedTotal !== 100}
       onPress={() => { saveProfile({ ...p, specialties: Array.from(new Set([...p.specialties, 'small' as JobTypeId])) }); setSaved(true); setDirty(false); }} />}>
+      <Button kind={cloud.user ? 'secondary' : 'primary'} icon={cloud.user ? 'cloud-done-outline' : 'cloud-outline'} onPress={() => router.push('/account')}
+        title={cloud.user ? `Bidwell cloud: ${cloud.user.email ?? 'signed in'}` : 'Sign in to Bidwell cloud: backup, AI, online signing'} />
       <Button kind="secondary" title="Connected apps: QuickBooks, Sheets, Calendar, Zapier" icon="git-network-outline" onPress={() => router.push('/connections')} />
       <Card>
         <H2>Company</H2>

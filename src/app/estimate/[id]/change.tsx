@@ -7,6 +7,7 @@ import { changeOrderHtml, emptyContract, hasInk, nextChangeNo, signatureSvg, tax
 import { dateFmt, money, newId } from '@/engine/format';
 import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { SendSignLink } from '@/ui/SendSignLink';
 import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -117,6 +118,15 @@ export default function ChangeOrderScreen() {
 
       {!locked ? (
         <>
+          <SendSignLink kind="change" estimateId={est.id} changeId={saved?.id ?? coId} title={`${est.title}: change order ${number}${title.trim() ? ` (${title.trim()})` : ''}`}
+            clientName={est.clientName} total={Math.round((value(credit, amount) + taxOn(value(credit, amount), pct)) * 100) / 100}
+            disabled={!title.trim() || !(amount > 0)}
+            before={() => (saved ? saved.id : persist().id)}
+            html={() => {
+              const cur: ChangeOrder = { ...(saved ?? { id: coId, number, status: 'pending' as const, createdAt: new Date().toISOString() }), title: title.trim(), description, amount: value(credit, amount) } as ChangeOrder;
+              const withCur = { ...contract, changeOrders: [...contract.changeOrders.filter((x) => x.id !== cur.id), cur] };
+              return changeOrderHtml(est, profile, withCur, cur, 'en');
+            }} />
           <Banner tone="info" title="Client approves on your phone">They type their name and sign below. The change is added to the contract and can be invoiced.</Banner>
           <Field label="Client name" value={name} onChangeText={setName} maxLength={80} />
           <SignaturePad width={padW} strokes={strokes} onChange={setStrokes} onDrawing={setDrawing} />
