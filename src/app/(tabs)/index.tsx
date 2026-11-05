@@ -53,7 +53,7 @@ export default function Assistant() {
       add({ id: newId(), role: 'assistant', text: answer, action });
       if (settings.speak || spoken) speak(answer);
     } catch (e) {
-      add({ id: newId(), role: 'assistant', text: e instanceof Error ? e.message : 'Claude could not answer. Try again.', error: true });
+      add({ id: newId(), role: 'assistant', text: e instanceof Error ? e.message : 'Bidwell could not answer. Try again.', error: true });
     } finally {
       busyRef.current = false;
       setBusy(false);

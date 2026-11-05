@@ -45,14 +45,14 @@ export default function Settings() {
       setKeyStatus({ tone: 'info', text: 'Claude key removed. The app uses the offline reader.' });
       return;
     }
-    setKeyStatus({ tone: 'info', text: 'Checking the key with Claude…' });
+    setKeyStatus({ tone: 'info', text: 'Checking the key with Bidwell…' });
     const err = await testClaudeKey(k);
     if (err) {
       setKeyStatus({ tone: 'warn', text: err });
       return;
     }
     saveApiKey(k);
-    setKeyStatus({ tone: 'ok', text: 'Connected. Claude now reads your job notes and photos.' });
+    setKeyStatus({ tone: 'ok', text: 'Connected. Bidwell now reads your job notes and photos.' });
   };
 
   const exportBackup = async () => {
@@ -144,15 +144,15 @@ export default function Settings() {
 
       <Card>
         <H2>Your typical jobs</H2>
-        <Muted style={{ fontSize: 13 }}>Claude reads this with every job so its questions, notes and answers fit how you work.</Muted>
+        <Muted style={{ fontSize: 13 }}>Bidwell reads this with every job so its questions, notes and answers fit how you work.</Muted>
         <WorkProfileForm value={p.work ?? EMPTY_WORK} onChange={(w) => set('work', w)} />
       </Card>
 
       <Card>
-        <H2>About your business (for Claude)</H2>
+        <H2>About your business (for Bidwell)</H2>
         <Field label="How you work" multiline value={p.about} onChangeText={(v) => set('about', v)} maxLength={2000}
           placeholder="e.g. Mid-range remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin."
-          help="Claude reads this with every job, so its questions and notes fit how you work." />
+          help="Bidwell reads this with every job, so its questions and notes fit how you work." />
       </Card>
 
       <Card>
@@ -181,18 +181,18 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <H2>Claude AI</H2>
+        <H2>Bidwell AI</H2>
         <Text style={{ color: C.ink }}>
           {apiKey ? `Connected · ${CLAUDE_MODEL}` : inClaudeApp ? 'Built in · runs on your Claude plan' : 'Not connected · using the offline reader'}
         </Text>
         {inClaudeApp && !apiKey ? (
           <Muted style={{ fontSize: 13 }}>
-            You are using the app inside Claude, so Claude reads your notes and photos with no API key. The first time, Claude asks you to allow it.
+            You are using the app inside Claude, so Bidwell reads your notes and photos with no API key. The first time, Bidwell asks you to allow it.
           </Muted>
         ) : null}
         {inClaudeApp ? null : (<>
         <Muted style={{ fontSize: 13 }}>
-          For your own use. Create a key at console.anthropic.com (API Keys), paste it here, and set a monthly spending limit there.
+          Bidwell AI runs on Anthropic’s Claude. Create a Claude API key at console.anthropic.com (API Keys), paste it here, and set a monthly spending limit there.
           The key is saved only on this device and is never included in backups. Job notes and photos you send go to Anthropic to be read.
         </Muted>
         <Field label="Claude API key" value={keyText} onChangeText={(v) => { setKeyText(v); setKeyStatus(null); }}

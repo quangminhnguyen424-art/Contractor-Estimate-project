@@ -50,9 +50,9 @@ export function QuestionEditor({ onAdd }: { onAdd: (q: Question) => void }) {
       {kind === 'number' || kind === 'yesno' ? (
         <NumberField label={kind === 'number' ? `You charge per ${unit.trim() || 'unit'} (optional)` : 'You charge if yes (optional)'}
           value={price} onChange={setPrice} suffix="$"
-          help="Your client price before tax. Leave 0 if it only informs the estimate; Claude and you still see the answer." />
+          help="Your client price before tax. Leave 0 if it only informs the estimate; Bidwell and you still see the answer." />
       ) : (
-        <Muted style={{ fontSize: 13 }}>Claude fills this in from your notes when it can, and it’s saved with the estimate.</Muted>
+        <Muted style={{ fontSize: 13 }}>Bidwell fills this in from your notes when it can, and it’s saved with the estimate.</Muted>
       )}
       <Button kind="secondary" title="Add question" disabled={!ok} onPress={add} />
     </View>

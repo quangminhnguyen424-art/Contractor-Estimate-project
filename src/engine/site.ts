@@ -249,10 +249,10 @@ Keep it short: a hook line, 2-4 lines on the work, a call to message for a free 
 export function parseStringArray(reply: string, max = 30): string[] {
   const start = reply.indexOf('[');
   const end = reply.lastIndexOf(']');
-  if (start < 0 || end <= start) throw new Error("Claude's answer couldn't be read. Try again.");
+  if (start < 0 || end <= start) throw new Error("Bidwell's answer couldn't be read. Try again.");
   let raw: unknown;
-  try { raw = JSON.parse(reply.slice(start, end + 1)); } catch { throw new Error("Claude's answer couldn't be read. Try again."); }
-  if (!Array.isArray(raw)) throw new Error("Claude's answer couldn't be read. Try again.");
+  try { raw = JSON.parse(reply.slice(start, end + 1)); } catch { throw new Error("Bidwell's answer couldn't be read. Try again."); }
+  if (!Array.isArray(raw)) throw new Error("Bidwell's answer couldn't be read. Try again.");
   return raw.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map((x) => x.trim().slice(0, 300)).slice(0, max);
 }
 

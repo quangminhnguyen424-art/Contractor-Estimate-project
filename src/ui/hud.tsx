@@ -35,7 +35,7 @@ export function HudPanel({ children, style }: { children: ReactNode; style?: Sty
 
 /** Small capital readout label ("NEW ESTIMATE", "TODAY"). */
 export function Readout({ children, color = C.muted, style }: { children: ReactNode; color?: string; style?: StyleProp<ViewStyle> }) {
-  return <Text style={[{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.3, color, textTransform: 'uppercase' }, style as object]}>{children}</Text>;
+  return <Text style={[{ fontFamily: MONO, fontSize: 12, letterSpacing: 0.8, color, textTransform: 'uppercase' }, style as object]}>{children}</Text>;
 }
 
 /** A radar that sweeps round and round, with a blip. */

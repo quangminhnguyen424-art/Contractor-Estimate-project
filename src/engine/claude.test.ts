@@ -65,7 +65,7 @@ describe('direct Claude calls', () => {
     expect(await testClaudeKey('k')).toMatch(/internet/);
   });
   it('uses Claude only when a key is set', () => {
-    expect(getAI({ apiKey: 'sk-x' }).name).toMatch(/Claude/);
+    expect(getAI({ apiKey: 'sk-x' }).name).toMatch(/Bidwell \(claude-/);
     expect(getAI({ apiKey: '  ' }).name).toMatch(/Demo/);
   });
 });
@@ -93,7 +93,7 @@ describe('Claude built into claude.ai (no API key)', () => {
   it('prefers your own key, then the built-in Claude', () => {
     const host = async () => null;
     expect(getAI({ apiKey: 'sk-x', host }).name).toMatch(/claude-/);
-    expect(getAI({ host }).name).toBe('Claude (built in)');
+    expect(getAI({ host }).name).toBe('Bidwell (built in)');
   });
 });
 

@@ -40,6 +40,7 @@ export interface AiContext {
   about?: string; // the contractor's own words: how they work, what they include, their goals
   work?: string; // their setup interview answers, as sentences
   history?: string; // e.g. "8 past jobs of this type, average $310/SF"
+  scope?: string; // limits on the job, e.g. "interior only" after a 3D room scan
 }
 
 /** One turn of the assistant chat. */
@@ -127,10 +128,10 @@ function guessBuiltIn(t: string): JobTypeId | undefined {
 export const demoAI: EstimatorAI = {
   name: 'Demo AI (offline)',
   async complete() {
-    throw new Error('Claude is not connected. Open the app inside Claude, or add your Claude key in Settings.');
+    throw new Error('Bidwell is not connected. Open the app inside Claude, or add your Claude key in Settings.');
   },
   async chat() {
-    return 'I can only answer when Claude is connected. Open this app inside the Claude app, or add your Claude key in Settings. You can still create estimates in the New tab.';
+    return 'I can only answer when Bidwell is connected. Open this app inside the Claude app, or add your Claude key in Settings. You can still create estimates in the New tab.';
   },
   async parseScope(text, jobTypeId) {
     const jt = jobTypeId ?? guessJobType(text);
@@ -266,7 +267,7 @@ export function claudeAI(baseUrl: string): EstimatorAI {
     return (await res.json()) as T;
   };
   return {
-    name: 'Claude (server)',
+    name: 'Bidwell (server)',
     async chat(turns, system) {
       return post<{ text: string }>('/chat', { turns, system }).then((r) => r.text).catch(() => demoAI.chat(turns, system));
     },
@@ -415,6 +416,7 @@ function contextText(ctx?: AiContext): string {
   if (ctx?.work?.trim()) parts.push(`How this contractor usually works (from their setup answers): ${ctx.work.trim()}`);
   if (ctx?.about?.trim()) parts.push(`About this contractor, in their own words:\n${ctx.about.trim().slice(0, 2000)}`);
   if (ctx?.history?.trim()) parts.push(`Their pricing history for this job type: ${ctx.history.trim()}`);
+  if (ctx?.scope?.trim()) parts.push(ctx.scope.trim());
   return parts.length ? `\n\n${parts.join('\n\n')}` : '';
 }
 
@@ -459,20 +461,20 @@ async function callClaudeTurns(
     });
   } catch {
     clearTimeout(timer);
-    if (controller.signal.aborted) throw new Error('Claude took too long to answer (weak signal?). Try again with fewer photos.');
-    throw new Error('Could not reach Claude. Check your internet connection.');
+    if (controller.signal.aborted) throw new Error('Bidwell took too long to answer (weak signal?). Try again with fewer photos.');
+    throw new Error('Could not reach Bidwell. Check your internet connection.');
   }
   clearTimeout(timer);
   if (!res.ok) {
     let detail = '';
     try { detail = ((await res.json()) as { error?: { message?: string } }).error?.message ?? ''; } catch { /* ignore */ }
     if (res.status === 401) throw new Error('Claude API key is not valid. Check it in Settings.');
-    if (res.status === 429) throw new Error('Claude is busy or your rate limit was reached. Try again in a minute.');
+    if (res.status === 429) throw new Error('Bidwell is busy or your rate limit was reached. Try again in a minute.');
     if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
-    throw new Error(`Claude error (${res.status})${detail ? `: ${detail}` : ''}`);
+    throw new Error(`Bidwell error (${res.status})${detail ? `: ${detail}` : ''}`);
   }
   const data = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
-  if (data.stop_reason === 'max_tokens') throw new Error("Claude's answer was cut off. Try a shorter description or fewer photos.");
+  if (data.stop_reason === 'max_tokens') throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
   return (data.content ?? []).map((c) => c.text ?? '').join('');
 }
 
@@ -481,13 +483,13 @@ function parseReply(reply: string): unknown {
   try {
     return extractJson(reply);
   } catch {
-    throw new Error("Claude's answer couldn't be read. Try again, or fill in the questions yourself.");
+    throw new Error("Bidwell's answer couldn't be read. Try again, or fill in the questions yourself.");
   }
 }
 
 export function directClaudeAI(apiKey: string): EstimatorAI {
   return {
-    name: `Claude (${CLAUDE_MODEL})`,
+    name: `Bidwell (${CLAUDE_MODEL})`,
     async chat(turns, system) {
       return callClaudeTurns(apiKey, system, turns.map((t) => ({ role: t.role, content: t.content })), 1500);
     },
@@ -516,7 +518,7 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
         return cleanScopeResult(parseReply(reply), jt);
       } catch (e) {
         const fallback = await demoAI.parseScope(text, jt);
-        return { ...fallback, error: e instanceof Error ? e.message : 'Claude request failed' };
+        return { ...fallback, error: e instanceof Error ? e.message : 'Bidwell request failed' };
       }
     },
     async extractPastJob(text) {
@@ -524,7 +526,7 @@ export function directClaudeAI(apiKey: string): EstimatorAI {
         const reply = await callClaude(apiKey, pastJobSystem(), [{ type: 'text', text }], 300);
         return cleanPastJob(parseReply(reply));
       } catch (e) {
-        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
+        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Bidwell request failed' };
       }
     },
   };
@@ -536,7 +538,7 @@ export async function testClaudeKey(apiKey: string): Promise<string | null> {
     await callClaude(apiKey, 'Reply with the single word OK.', [{ type: 'text', text: 'ping' }], 5);
     return null;
   } catch (e) {
-    return e instanceof Error ? e.message : 'Claude request failed';
+    return e instanceof Error ? e.message : 'Bidwell request failed';
   }
 }
 
@@ -562,11 +564,11 @@ export function sampleErrorMessage(e: unknown): string {
       return 'Your Claude sign-in expired. Sign in again, then try again.';
     case 'image_rejected':
     case 'images_unavailable':
-      return 'Claude could not use these photos. Try fewer photos, or JPG/PNG files.';
+      return 'Bidwell could not use these photos. Try fewer photos, or JPG/PNG files.';
     case 'refused':
-      return 'Claude would not answer this one. Reword the notes and try again.';
+      return 'Bidwell would not answer this one. Reword the notes and try again.';
     default:
-      return 'Claude could not answer right now. Try again.';
+      return 'Bidwell could not answer right now. Try again.';
   }
 }
 
@@ -588,11 +590,11 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
     } catch (e) {
       throw new Error(sampleErrorMessage(e));
     }
-    if (res.truncated) throw new Error("Claude's answer was cut off. Try a shorter description or fewer photos.");
+    if (res.truncated) throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
     return res.text;
   };
   return {
-    name: 'Claude (built in)',
+    name: 'Bidwell (built in)',
     async complete(prompt, images) {
       return ask(prompt, images?.slice(0, 8));
     },
@@ -615,14 +617,14 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
         return cleanScopeResult(parseReply(await ask(prompt, imgs)), jt);
       } catch (e) {
         const fallback = await demoAI.parseScope(text, jt);
-        return { ...fallback, error: e instanceof Error ? e.message : 'Claude request failed' };
+        return { ...fallback, error: e instanceof Error ? e.message : 'Bidwell request failed' };
       }
     },
     async extractPastJob(text) {
       try {
         return cleanPastJob(parseReply(await ask(`${pastJobSystem()}\n\nText:\n${text}`)));
       } catch (e) {
-        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Claude request failed' };
+        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Bidwell request failed' };
       }
     },
   };

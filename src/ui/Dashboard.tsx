@@ -62,7 +62,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
           <Readout>Bidwell // field mode</Readout>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Blink color={claudeOn ? C.okInk : C.warnInk} on={claudeOn} />
-            <Readout color={claudeOn ? C.okInk : C.warnInk}>{claudeOn ? 'Claude link ok' : 'Claude offline'}</Readout>
+            <Readout color={claudeOn ? C.okInk : C.warnInk}>{claudeOn ? 'Bidwell link ok' : 'Bidwell offline'}</Readout>
           </View>
         </View>
         <Text style={{ color: C.ink, fontSize: 30, fontWeight: '700', letterSpacing: -0.5 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}.</Text>
@@ -83,7 +83,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
                 <Button title="Start" icon="add" onPress={() => router.push('/new')} style={{ height: 46 }} />
                 <Shine width={cardW - 200} height={46} />
               </View>
-              <PressScale accessibilityRole="button" accessibilityLabel="Talk to Claude" onPress={onMic}
+              <PressScale accessibilityRole="button" accessibilityLabel="Talk to Bidwell" onPress={onMic}
                 style={{ width: 46, height: 46, borderRadius: 4, borderWidth: 1, borderColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name="mic" size={22} color={C.accent} />
               </PressScale>
@@ -160,7 +160,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Art name="ai" width={64} still />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800' }}>Ask Claude anything</Text>
+            <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800' }}>Ask Bidwell anything</Text>
             <Text style={{ color: C.muted, fontSize: 12 }}>Prices, materials, permits, messages to clients. Type or talk below.</Text>
           </View>
         </View>
@@ -201,7 +201,7 @@ function Shortcut({ icon, label, colors, onPress, badge }: { icon: IconName; lab
           </View>
         ) : null}
       </View>
-      <Readout color={C.ink2}>{label}</Readout>
+      <Text style={{ color: C.ink2, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
     </PressScale>
   );
 }
@@ -234,12 +234,12 @@ function ConnectClaude() {
       <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Ionicons name="sparkles" size={22} color={C.accent} />
-          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800', flex: 1 }}>Connect Claude (about 5 minutes)</Text>
+          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800', flex: 1 }}>Turn on Bidwell AI (about 5 minutes)</Text>
         </View>
         <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>
-          The assistant, photo reading and auto-filled estimates need your own Claude key. Each question costs a few cents.
+          Bidwell AI runs on Anthropic’s Claude. The assistant, photo reading and auto-filled estimates need your own Claude API key. Each question costs a few cents.
         </Text>
-        {['Sign up at console.anthropic.com and add $10 credit (set a monthly limit).', 'Create an API key and copy it.', 'Paste it in Settings → Claude AI and tap Save and test.'].map((t, i) => (
+        {['Sign up at console.anthropic.com and add $10 credit (set a monthly limit).', 'Create an API key and copy it.', 'Paste it in Settings → Bidwell AI and tap Save and test.'].map((t, i) => (
           <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: C.onAccent, fontWeight: '800', fontSize: 12 }}>{i + 1}</Text>

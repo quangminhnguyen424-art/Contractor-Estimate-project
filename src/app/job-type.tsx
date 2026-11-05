@@ -52,7 +52,7 @@ export default function JobTypeScreen() {
       <Card>
         <H2>Your questions</H2>
         <Muted style={{ fontSize: 13 }}>
-          Asked on every {jt.name.toLowerCase()} job, after the standard questions. Claude reads them too and fills them in from your notes.
+          Asked on every {jt.name.toLowerCase()} job, after the standard questions. Bidwell reads them too and fills them in from your notes.
           Give a question a price and it’s added to the quote as its own line.
         </Muted>
         {qs.length === 0 ? <Muted style={{ fontSize: 13 }}>No questions yet.</Muted> : null}

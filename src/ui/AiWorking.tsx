@@ -47,7 +47,7 @@ function Working({ job }: { job: WorkJob }) {
       <View style={{ width: '100%', maxWidth: 420, gap: 18, padding: 20, borderWidth: 1, borderColor: 'rgba(255,122,26,0.35)', backgroundColor: 'rgba(255,122,26,0.04)' }}>
         <Brackets />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Readout color={C.accentDark}>Claude · working</Readout>
+          <Readout color={C.accentDark}>Bidwell · working</Readout>
           <Text style={{ fontFamily: MONO, color: C.accent, fontSize: 13 }}>{String(pct).padStart(2, '0')}%</Text>
         </View>
         <View style={{ alignItems: 'center' }}><Radar size={150} /></View>

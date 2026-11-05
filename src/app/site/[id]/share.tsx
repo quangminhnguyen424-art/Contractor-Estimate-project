@@ -109,7 +109,7 @@ export default function ShareScreen() {
     try {
       setText(mode === 'client' ? await writeClientUpdate(ai, p, clientLang) : await writePost(ai, p, pairs.length, clientLang));
     } catch (e) {
-      notify('Claude could not write it', e instanceof Error ? e.message : 'Try again.');
+      notify('Bidwell could not write it', e instanceof Error ? e.message : 'Try again.');
     } finally {
       setBusy(null);
     }
@@ -155,7 +155,7 @@ export default function ShareScreen() {
           <Label>Language</Label>
           <Segmented<CrewLang> value={lang} onChange={setLang}
             options={(['en', 'vi', 'es'] as CrewLang[]).map((l) => ({ value: l, label: LANG_NAMES[l].native }))} />
-          {lang !== 'en' ? <Muted style={{ fontSize: 13 }}>Claude translates the tasks; the English stays underneath in small type.</Muted> : null}
+          {lang !== 'en' ? <Muted style={{ fontSize: 13 }}>Bidwell translates the tasks; the English stays underneath in small type.</Muted> : null}
           {openTasks === 0 ? <Banner tone="info" title="No open tasks in these rooms">The PDF will only show the photos and notes.</Banner> : null}
           <Button title={busy === 'pdf' ? 'Making the PDF…' : 'Share work order PDF'} disabled={!!busy || !rooms.length} onPress={crewPdf} />
           <Button kind="secondary" title={busy === 'text' ? 'Preparing…' : 'Send tasks as a text message'} disabled={!!busy || !rooms.length} onPress={crewText} />
@@ -169,7 +169,7 @@ export default function ShareScreen() {
               : 'A short post about the finished work. Never the client’s name, address or prices.'}
           </Muted>
           <Segmented<'en' | 'vi'> value={clientLang} onChange={setClientLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
-          <Button kind="secondary" title={busy === 'write' ? 'Claude is writing…' : 'Write it with Claude'} disabled={!!busy} onPress={write} />
+          <Button kind="secondary" title={busy === 'write' ? 'Bidwell is writing…' : 'Write it with Bidwell'} disabled={!!busy} onPress={write} />
           <Field label={mode === 'client' ? 'Message' : 'Post'} multiline value={text} onChangeText={setText}
             placeholder={mode === 'client' ? 'Hi! Here’s where we are…' : 'Before and after: hall bath…'} />
           {mode === 'client' ? (

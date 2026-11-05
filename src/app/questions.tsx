@@ -90,7 +90,7 @@ export default function Questions() {
 
       {draft.aiNotes && draft.aiNotes.length > 0 ? (
         <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
-          <Text style={{ fontWeight: '700', color: C.infoInk }}>Claude noticed</Text>
+          <Text style={{ fontWeight: '700', color: C.infoInk }}>Bidwell noticed</Text>
           {draft.aiNotes.map((n, i) => (
             <AiNote key={`${i}-${n}`} note={n} photos={draft.photos}
               onDismiss={() => setDraft({ ...draft, aiNotes: draft.aiNotes!.filter((_, j) => j !== i) })} />
@@ -147,7 +147,7 @@ export default function Questions() {
               <QuestionInput q={qq} value={draft.answers[qq.id]} onChange={(v) => set(qq.id, v)} />
               {draft.aiFilled?.[qq.id] ? (
                 <Text style={{ fontSize: 12, fontWeight: '600', color: draft.aiFilled[qq.id] === 'photo' ? C.warnInk : C.okInk }}>
-                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Claude from a photo: check it' : '● Filled in from your notes'}
+                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Bidwell from a photo: check it' : '● Filled in from your notes'}
                 </Text>
               ) : null}
             </View>

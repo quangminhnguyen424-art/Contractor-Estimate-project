@@ -5,7 +5,7 @@ import { Platform, Pressable, View, type ColorValue } from 'react-native';
 
 import { C } from '@/ui/kit';
 import { Pulse } from '@/ui/motion';
-import { FONT, MONO } from '@/ui/text';
+import { FONT } from '@/ui/text';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const icon = (outline: IconName, filled: IconName) =>
@@ -39,7 +39,7 @@ export default function TabsLayout() {
         headerTitleStyle: { fontFamily: FONT.bold, fontSize: 18 },
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
-        tabBarLabelStyle: { fontFamily: MONO, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase' },
+        tabBarLabelStyle: { fontFamily: FONT.semibold, fontSize: 12 },
         tabBarStyle: { backgroundColor: C.card, borderTopColor: C.line, height: Platform.OS === 'web' ? 64 : undefined, paddingTop: 4 },
         sceneStyle: { backgroundColor: C.bg },
         headerRight: () => (

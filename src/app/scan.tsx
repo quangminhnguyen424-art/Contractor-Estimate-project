@@ -6,11 +6,14 @@ import { SvgXml } from 'react-native-svg';
 
 import { ftIn, manualRoom, planSvg, planTotals, roomFromScan, roomMeasures } from '@/engine/floorplan';
 import { newId } from '@/engine/format';
+import { jobType } from '@/engine/jobTypes';
+import { suggestFromScan } from '@/engine/recommend';
 import { emptyRoom } from '@/engine/site';
 import type { PlanRoom } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Art } from '@/ui/art';
 import { Banner, Button, C, Card, Chip, Field, H2, Muted, NumberField, P, Screen, Stat } from '@/ui/kit';
+import { HudPanel, Readout } from '@/ui/hud';
 import { Pulse, Reveal } from '@/ui/motion';
 import { notify } from '@/ui/notify';
 import { Text } from '@/ui/text';
@@ -102,6 +105,26 @@ export default function ScanScreen() {
       ) : (
         <Banner tone="info" title={WHY[support].title}>{WHY[support].text}</Banner>
       )}
+
+      {rooms.length ? (
+        <Reveal>
+          <HudPanel>
+            <Readout color={C.accentDark}>Bidwell suggests · indoor work only</Readout>
+            {suggestFromScan(rooms).map((sg) => (
+              <Pressable key={sg.jobTypeId} accessibilityRole="button" onPress={() => { setPendingPlan(rooms); router.replace(`/new?type=${sg.jobTypeId}`); }}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, opacity: pressed ? 0.7 : 1 })}>
+                <Ionicons name="sparkles" size={18} color={C.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{jobType(sg.jobTypeId).name}</Text>
+                  <Text style={{ color: C.muted, fontSize: 13 }}>{sg.why}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={C.muted} />
+              </Pressable>
+            ))}
+            <Text style={{ color: C.muted, fontSize: 13 }}>Name each room (Bath, Kitchen, Bedroom…) for better suggestions. Roof, siding, decks and yard work are left out.</Text>
+          </HudPanel>
+        </Reveal>
+      ) : null}
 
       {rooms.length ? (
         <Reveal>

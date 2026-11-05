@@ -58,7 +58,7 @@ export default function RoomScreen() {
         ...x, rooms: x.rooms.map((r) => (r.id === roomId ? { ...r, tasks: [...r.tasks, ...steps.map((text) => ({ id: newId(), text, done: false }))] } : r)),
       }));
     } catch (e) {
-      notify('Claude could not make the list', e instanceof Error ? e.message : 'Try again.');
+      notify('Bidwell could not make the list', e instanceof Error ? e.message : 'Try again.');
     } finally {
       setBusy(null);
     }
@@ -144,13 +144,13 @@ export default function RoomScreen() {
         <Field label="What needs doing" multiline value={notes}
           onChangeText={(v) => { setNotes(v); setRoom((r) => ({ ...r, notes: v })); }}
           placeholder="e.g. Demo vanity and tile to studs. Move the outlet 12 in left, box at 44 in AFF. New fan vented outside."
-          help="Tap the microphone on your keyboard to talk. Claude turns this and your photo notes into tasks." />
-        <Button title={busy === 'steps' ? 'Claude is writing the tasks…' : 'Make task list with Claude'} disabled={!!busy} onPress={makeSteps} />
+          help="Tap the microphone on your keyboard to talk. Bidwell turns this and your photo notes into tasks." />
+        <Button title={busy === 'steps' ? 'Bidwell is writing the tasks…' : 'Make task list with Bidwell'} disabled={!!busy} onPress={makeSteps} />
       </Card>
 
       <Card style={{ gap: 4 }}>
         <H2>Tasks{room.tasks.length ? ` · ${done.length} of ${room.tasks.length} done` : ''}</H2>
-        {room.tasks.length === 0 ? <Muted style={{ fontSize: 13 }}>No tasks yet. Make them with Claude above, or add your own.</Muted> : null}
+        {room.tasks.length === 0 ? <Muted style={{ fontSize: 13 }}>No tasks yet. Make them with Bidwell above, or add your own.</Muted> : null}
         {open.map(taskRow)}
         {done.map(taskRow)}
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end', marginTop: 6 }}>

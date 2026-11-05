@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, Platform, Pressable, View } from 'react-native';
 
@@ -9,12 +9,14 @@ import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { historyPerSf } from '@/engine/estimator';
 import { money } from '@/engine/format';
 import { answersFromPlan, planTotals } from '@/engine/floorplan';
-import { defaultAnswers, jobType, perUnit } from '@/engine/jobTypes';
+import { defaultAnswers, isJobTypeId, JOB_TYPES, jobType, perUnit } from '@/engine/jobTypes';
+import { INDOOR_NOTE, isIndoorType, suggestFromScan } from '@/engine/recommend';
 import { workSummary } from '@/engine/profile';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { contactsAvailable, pickClient } from '@/ui/contacts';
 import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
+import { HudPanel, Readout } from '@/ui/hud';
 import { JobTypeChips } from '@/ui/JobTypes';
 import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
 import { notify } from '@/ui/notify';
@@ -25,7 +27,15 @@ export default function NewEstimate() {
   const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan } = useApp();
   const claudeOn = !!apiKey || inClaudeApp;
   const [showAll, setShowAll] = useState(false);
-  const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(null);
+  const params = useLocalSearchParams<{ type?: string }>();
+  const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(params.type && isJobTypeId(params.type) ? params.type : null);
+  const [allowOutdoor, setAllowOutdoor] = useState(false);
+  // Coming from a Bidwell suggestion on the scan screen picks that type (also when this tab was already open).
+  const [lastParam, setLastParam] = useState(params.type);
+  if (params.type !== lastParam) {
+    setLastParam(params.type);
+    if (params.type && isJobTypeId(params.type)) setJobTypeId(params.type);
+  }
   const [mode, setMode] = useState<EstimateMode>('detailed');
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
@@ -36,7 +46,11 @@ export default function NewEstimate() {
   const [working, setWorking] = useState<WorkJob | null>(null);
 
   const mine = profile?.specialties ?? [];
-  const guessed = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
+  // After an indoor 3D scan, only indoor work is offered (outdoor work can be shown on purpose).
+  const indoorOnly = !!pendingPlan?.length && !allowOutdoor;
+  const suggestions = pendingPlan?.length ? suggestFromScan(pendingPlan) : [];
+  const guessedRaw = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
+  const guessed = guessedRaw && (!indoorOnly || isIndoorType(guessedRaw)) ? guessedRaw : undefined;
   const effectiveType = jobTypeId ?? guessed ?? null;
   const detailedAllowed = effectiveType ? jobType(effectiveType).detailed : true;
   const quickAllowed = effectiveType !== 'small';
@@ -69,7 +83,8 @@ export default function NewEstimate() {
       steps: [
         description.trim() ? 'Reading your notes' : 'Starting from your job type',
         ...(sent ? [`Looking at ${sent} photo${sent > 1 ? 's' : ''}`] : []),
-        ...(pendingPlan?.length ? ['Measuring the 3D scan'] : []),
+        ...(pendingPlan?.length ? [`3D scan: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${Math.round(planTotals(pendingPlan).floorSf)} SF floor`,
+          ...(isIndoorType(type) ? ['Indoor only: skipping roof, siding and yard work'] : [])] : []),
         `Matching ${jobType(type).name.toLowerCase()} questions`,
         'Filling in sizes and counts',
         'Checking your past jobs',
@@ -93,16 +108,17 @@ export default function NewEstimate() {
       about: profile?.about,
       work: workSummary(profile?.work),
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
+      scope: pendingPlan?.length && isIndoorType(type) ? INDOOR_NOTE : undefined,
     };
     if (description.trim() || images.length > 0) {
       parsed = await ai.parseScope(description, type, images, ctx)
-        .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Claude could not read this job.' }));
+        .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Bidwell could not read this job.' }));
     }
     await atLeast(started, ms);
     setWorking(null);
     setBusy(false);
-    if (parsed.error) notify('Claude could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
-    else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Claude`, photos.length > 8 ? 'Claude looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
+    if (parsed.error) notify('Bidwell could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
+    else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Bidwell`, photos.length > 8 ? 'Bidwell looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
     const jt = jobType(type);
     // Rooms from the 3D scan screen fill in the areas (floor, walls, baseboard) for this type of work.
     const fromPlan = pendingPlan?.length ? answersFromPlan(jt, pendingPlan) : null;
@@ -126,7 +142,7 @@ export default function NewEstimate() {
   };
 
   return (
-    <Screen footer={<Button title={busy ? (claudeOn ? 'Claude is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
+    <Screen footer={<Button title={busy ? (claudeOn ? 'Bidwell is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
       <AiWorking job={working} />
       {pendingPlan?.length ? (
         <Banner tone="ok" title={`Floor plan ready: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${planTotals(pendingPlan).floorSf} SF`}>
@@ -144,8 +160,28 @@ export default function NewEstimate() {
         </Pressable>
       )}
       <Label>Project type</Label>
+      {suggestions.length ? (
+        <HudPanel>
+          <Readout color={C.accentDark}>Bidwell suggests · indoor work from your scan</Readout>
+          {suggestions.map((s) => (
+            <Pressable key={s.jobTypeId} accessibilityRole="button" onPress={() => setJobTypeId(s.jobTypeId)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 }}>
+              <Ionicons name={effectiveType === s.jobTypeId ? 'radio-button-on' : 'radio-button-off'} size={20} color={C.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{jobType(s.jobTypeId).name}</Text>
+                <Text style={{ color: C.muted, fontSize: 13 }}>{s.why}</Text>
+              </View>
+            </Pressable>
+          ))}
+          <Text style={{ color: C.muted, fontSize: 13 }}>
+            Outdoor work (roof, siding, decks, fences, concrete, yard) is hidden for an indoor scan.{' '}
+            <Text style={{ color: C.accent, fontWeight: '700' }} onPress={() => setAllowOutdoor(!allowOutdoor)}>{allowOutdoor ? 'Hide it again' : 'Show it anyway'}</Text>
+          </Text>
+        </HudPanel>
+      ) : null}
       <JobTypeChips selected={effectiveType ? [effectiveType] : []} onToggle={(id) => setJobTypeId(id)}
-        only={showAll ? undefined : [...mine, ...(effectiveType && !mine.includes(effectiveType) ? [effectiveType] : [])]} />
+        only={(showAll ? JOB_TYPES.map((j) => j.id) : [...mine, ...(effectiveType && !mine.includes(effectiveType) ? [effectiveType] : [])])
+          .filter((id) => !indoorOnly || isIndoorType(id))} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Chip label={showAll ? 'Show mine only' : 'All types of work…'} onPress={() => setShowAll(!showAll)} />
         <Chip label="Small job / repairs" selected={effectiveType === 'small'} onPress={() => setJobTypeId('small')} />
@@ -179,7 +215,7 @@ export default function NewEstimate() {
       ) : null}
       <Muted style={{ fontSize: 13 }}>
         {claudeOn
-          ? 'Claude looks at up to 8 photos for conditions, code issues and quantities.'
+          ? 'Bidwell looks at up to 8 photos for conditions, code issues and quantities.'
           : 'Photos are saved with the job. Add your Claude key in Settings to have them analyzed.'}
       </Muted>
 

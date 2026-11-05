@@ -115,9 +115,9 @@ export default function Onboarding() {
         {step === 3 && (
           <>
             <H1>Your typical jobs</H1>
-            <Muted>A few questions so Claude learns how you work. It reads your answers with every job. Skip anything; change it anytime in Settings.</Muted>
+            <Muted>A few questions so Bidwell learns how you work. It reads your answers with every job. Skip anything; change it anytime in Settings.</Muted>
             <WorkProfileForm value={work} onChange={setWork} />
-            <Field label="Anything else Claude should know? (optional)" multiline value={about} onChangeText={setAbout} maxLength={2000}
+            <Field label="Anything else Bidwell should know? (optional)" multiline value={about} onChangeText={setAbout} maxLength={2000}
               placeholder="e.g. Most of my work is basement ADU conversions for investors. I aim for 25% margin. I use LVP, not carpet." />
           </>
         )}

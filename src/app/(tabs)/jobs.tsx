@@ -52,7 +52,7 @@ export default function Jobs() {
 
       {shown.length === 0 ? (
         <Empty art="jobs" title={estimates.length === 0 ? 'No estimates yet' : 'Nothing here'}
-          text={estimates.length === 0 ? 'Describe the job by typing or talking, add photos, and Claude fills in a quote with your own prices in minutes.' : 'Try another filter.'} />
+          text={estimates.length === 0 ? 'Describe the job by typing or talking, add photos, and Bidwell fills in a quote with your own prices in minutes.' : 'Try another filter.'} />
       ) : (
         shown.map((e, i) => {
           const c = contracts.find((x) => x.estimateId === e.id);

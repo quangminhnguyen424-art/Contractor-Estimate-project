@@ -50,7 +50,7 @@ export default function QuickSheet() {
             <>
               <Text style={{ color: C.ink, fontSize: 20, fontWeight: '800' }}>What do you want to do?</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                <Tile index={0} icon="calculator-outline" title="New estimate" sub="Describe it, Claude prices it" onPress={() => go('/new')} />
+                <Tile index={0} icon="calculator-outline" title="New estimate" sub="Describe it, Bidwell prices it" onPress={() => go('/new')} />
                 <Tile index={1} icon="camera-outline" tone="sky" title="Job photo" sub="Straight into a job and room"
                   onPress={() => (active.length ? setStep('project') : go('/sites'))} />
                 <Tile index={2} icon="scan-outline" title="Scan 3D" sub="Measure rooms with LiDAR" onPress={() => go('/scan')} />

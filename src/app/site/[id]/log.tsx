@@ -32,7 +32,7 @@ export default function LogScreen() {
     try {
       setText(await writeDailyLog(aiFor(apiKey), p, today));
     } catch (e) {
-      notify('Claude could not write the log', e instanceof Error ? e.message : 'Try again.');
+      notify('Bidwell could not write the log', e instanceof Error ? e.message : 'Try again.');
     } finally {
       setBusy(false);
     }
@@ -53,7 +53,7 @@ export default function LogScreen() {
       <Card>
         <H2>Today · {dateFmt(`${today}T12:00:00`)}</H2>
         <Muted style={{ fontSize: 13 }}>{photosToday} photo{photosToday === 1 ? '' : 's'} and {doneToday} finished task{doneToday === 1 ? '' : 's'} today.</Muted>
-        <Button kind="secondary" title={busy ? 'Claude is writing…' : 'Write today’s log with Claude'} disabled={busy} onPress={draft} />
+        <Button kind="secondary" title={busy ? 'Bidwell is writing…' : 'Write today’s log with Bidwell'} disabled={busy} onPress={draft} />
         <Field label="Log" multiline value={text} onChangeText={setText} placeholder="Work done, what’s next, anything to watch." />
         <Button title={existing ? 'Update today’s log' : 'Save today’s log'} disabled={!text.trim()} onPress={save} />
       </Card>

@@ -27,7 +27,7 @@ export function assistantSystem(d: AssistantData, today = new Date()): string {
     `- ${e.title} · ${estimateJob(e).name} · ${e.status} · ${money(e.price)} before tax · ${e.updatedAt.slice(0, 10)}`);
   const allTypes = JOB_TYPES.filter((j) => j.id !== 'small').map((j) => `${j.id} (${j.name})`).join(', ');
 
-  return `You are the assistant inside a contractor's estimating app. You talk with ${p.contactName || 'the contractor'} of ${p.companyName}, a licensed contractor in Washington State. Today is ${today.toISOString().slice(0, 10)}.
+  return `You are Bidwell, the AI assistant inside the Bidwell AI estimating app (built on Anthropic's Claude; say so if asked what you are). You talk with ${p.contactName || 'the contractor'} of ${p.companyName}, a licensed contractor in Washington State. Today is ${today.toISOString().slice(0, 10)}.
 Help with anything about their work and business: pricing and estimating, scope and materials, building code and permits, scheduling, client and sub communication, marketing, and general questions.
 
 How to answer:

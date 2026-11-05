@@ -78,7 +78,7 @@ export default function ProjectScreen() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         <Tile index={0} icon="images-outline" tone="sky" title="Photo update" sub={p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Send the client new photos'} onPress={() => go('share?mode=client')} />
         <Tile index={1} icon="people-outline" title="Crew work order" sub="EN · VI · ES, no prices" onPress={() => go('share?mode=crew')} />
-        <Tile index={2} icon="book-outline" tone="slate" title="Daily log" sub="Claude writes it for you" onPress={() => go('log')} />
+        <Tile index={2} icon="book-outline" tone="slate" title="Daily log" sub="Bidwell writes it for you" onPress={() => go('log')} />
         <Tile index={3} icon="calendar-outline" tone="sky" title="Schedule" sub={nextVisit ? `Next: ${dayLabel(nextVisit.date, today)}` : 'Crew day, inspection…'} onPress={() => router.push(`/event?project=${p.id}`)} />
         {est ? <Tile index={4} icon="wallet-outline" title="Contract & payments" sub="Sign, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
         <Tile index={5} icon="logo-facebook" tone="slate" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after` : 'Needs before + after'} onPress={() => go('share?mode=post')} />

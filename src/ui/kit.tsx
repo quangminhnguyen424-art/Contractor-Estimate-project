@@ -8,23 +8,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Art, type ART } from './art';
 import { PressScale, Reveal } from './motion';
-import { MONO, NUM, Text, TextInput } from './text';
-
-const MONO_LABEL = MONO;
+import { NUM, Text, TextInput } from './text';
 
 /**
  * Colors: the "job-site HUD" look. Near-black surfaces so job photos and numbers stand out, safety orange for
  * the thing to tap, sky blue for measurements and scans.
  */
 export const C = {
-  bg: '#07090C',
-  card: '#0D1117',
-  cardHi: '#151B23',
-  ink: '#E8EDF2',
-  ink2: '#B6C0CA',
-  muted: '#7C8896',
-  line: '#1F2933',
-  lineSoft: '#161D26',
+  bg: '#0A0D12',
+  card: '#121821',
+  cardHi: '#1B232E',
+  ink: '#F4F7FA',
+  ink2: '#CDD6DF',
+  muted: '#A0ACB8',
+  line: '#2C3744',
+  lineSoft: '#202A35',
   accent: '#FF7A1A',
   accentDark: '#FF9A55', // accent used as text on a tinted background
   accentTint: 'rgba(255,122,26,0.12)',
@@ -39,8 +37,8 @@ export const C = {
   okInk: '#34D399',
   badBg: '#331014',
   danger: '#F87171',
-  dark: '#0B0F14',
-  darkMuted: '#7C8896',
+  dark: '#0E131A',
+  darkMuted: '#A0ACB8',
 };
 
 /** Paper colors for previews of documents the client sees (quotes, invoices): always white paper. */
@@ -327,8 +325,8 @@ export const s = StyleSheet.create({
   card: { backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 },
   h1: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
   h2: { fontSize: 17, fontWeight: '700', color: C.ink },
-  label: { fontSize: 11, fontWeight: '600', color: C.muted, fontFamily: MONO_LABEL, letterSpacing: 1, textTransform: 'uppercase' },
-  muted: { fontSize: 14, color: C.muted, lineHeight: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: C.ink2 },
+  muted: { fontSize: 14, color: C.muted, lineHeight: 21 },
   btn: { height: 54, borderRadius: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 6, paddingRight: 12 },
