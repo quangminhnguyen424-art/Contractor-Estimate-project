@@ -34,7 +34,7 @@ async function photoSources(p: SiteProject, ids: Set<string>) {
 
 export default function ShareScreen() {
   const { id, mode: modeParam, room } = useLocalSearchParams<{ id: string; mode?: Mode; room?: string }>();
-  const { projects, updateProject, apiKey, profile } = useApp();
+  const { projects, updateProject, apiKey, profile, aiAllowed } = useApp();
   const { width } = useWindowDimensions();
   const p = projects.find((x) => x.id === id);
   const [mode, setMode] = useState<Mode>(modeParam === 'client' || modeParam === 'post' ? modeParam : 'crew');
@@ -50,7 +50,7 @@ export default function ShareScreen() {
   const since = p.lastClientUpdateAt ?? weekAgo();
   const recent = p.rooms.flatMap((r) => r.photos).filter((ph) => ph.takenAt > since)
     .sort((a, b) => b.takenAt.localeCompare(a.takenAt)).slice(0, 12);
-  const ai = aiFor(apiKey);
+  const ai = aiFor(apiKey, aiAllowed);
 
   /** Translates the open tasks in the chosen rooms that don't have this language yet, and saves them. */
   const withTranslations = async (): Promise<SiteProject> => {

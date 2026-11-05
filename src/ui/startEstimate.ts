@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import type { EstimateAction } from '@/engine/assistant';
+import { lessonsContext, type PriceLesson } from '@/engine/books';
 import { historyPerSf } from '@/engine/estimator';
 import { money } from '@/engine/format';
 import { defaultAnswers, jobType, perUnit } from '@/engine/jobTypes';
@@ -12,14 +13,15 @@ import { aiFor } from './host';
 
 /** Opens a new estimate from something said in the chat: Claude fills the answers, the contractor checks them. */
 export async function startEstimateFromChat(
-  action: EstimateAction, opts: { apiKey: string; profile: Profile | null; pastJobs: PastJob[]; setDraft: (d: Draft) => void },
+  action: EstimateAction, opts: { apiKey: string; aiAllowed: boolean; profile: Profile | null; pastJobs: PastJob[]; lessons?: PriceLesson[]; setDraft: (d: Draft) => void },
 ) {
   const jt = jobType(action.jobTypeId);
   const h = historyPerSf(action.jobTypeId, 'mid', opts.pastJobs);
-  const parsed = await aiFor(opts.apiKey).parseScope(action.notes, action.jobTypeId, [], {
+  const parsed = await aiFor(opts.apiKey, opts.aiAllowed).parseScope(action.notes, action.jobTypeId, [], {
     about: opts.profile?.about,
     work: workSummary(opts.profile?.work),
     history: h.perSf ? `${h.count} past jobs, average ${money(h.perSf)}${perUnit(jt.unit)}` : undefined,
+    prices: lessonsContext(opts.lessons ?? []),
   });
   opts.setDraft({
     jobTypeId: action.jobTypeId,

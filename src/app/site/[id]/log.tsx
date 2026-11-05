@@ -15,7 +15,7 @@ import { useToday } from '@/ui/useToday';
 /** Daily logs: Claude drafts today's from the photos and finished tasks; you edit and save. */
 export default function LogScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { projects, updateProject, apiKey } = useApp();
+  const { projects, updateProject, apiKey, aiAllowed } = useApp();
   const today = useToday();
   const p = projects.find((x) => x.id === id);
   const existing = p?.logs.find((l) => l.date === today);
@@ -30,7 +30,7 @@ export default function LogScreen() {
   const draft = async () => {
     setBusy(true);
     try {
-      setText(await writeDailyLog(aiFor(apiKey), p, today));
+      setText(await writeDailyLog(aiFor(apiKey, aiAllowed), p, today));
     } catch (e) {
       notify('Bidwell could not write the log', e instanceof Error ? e.message : 'Try again.');
     } finally {

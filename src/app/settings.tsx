@@ -14,7 +14,7 @@ import { WorkProfileForm } from '@/ui/WorkProfileForm';
 import { confirmAction, notify } from '@/ui/notify';
 
 export default function Settings() {
-  const { profile, saveProfile, resetAll, apiKey, saveApiKey, exportData, importData } = useApp();
+  const { profile, saveProfile, resetAll, apiKey, saveApiKey, exportData, importData, aiAllowed } = useApp();
   const [p, setP] = useState<Profile>(profile!);
   const [base, setBase] = useState(profile);
   const [saved, setSaved] = useState(false);
@@ -178,6 +178,16 @@ export default function Settings() {
           </View>
         ))}
         {schedTotal !== 100 ? <Banner tone="warn" title={`Adds up to ${schedTotal}%. It needs to total 100%.`} /> : null}
+      </Card>
+
+      <Card>
+        <H2>Terms, privacy and AI sharing</H2>
+        <Banner tone={aiAllowed ? 'ok' : 'warn'} title={aiAllowed ? 'AI sharing is on' : 'AI sharing is off'}>
+          {aiAllowed
+            ? 'Notes, photos and recordings you choose are sent to Anthropic (Claude) to draft estimates. Not used for training.'
+            : 'Nothing is sent to the AI. Bidwell uses the offline reader, which understands less. Turn it on to use AI.'}
+        </Banner>
+        <Button kind="secondary" title="Terms, privacy and AI sharing" icon="document-text-outline" onPress={() => router.push('/terms')} />
       </Card>
 
       <Card>

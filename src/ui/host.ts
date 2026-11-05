@@ -33,8 +33,12 @@ function capability<T>(name: string): Promise<T | null> {
 
 export const hostSample = () => capability<SampleFn>('sample');
 
-/** The AI to use here: Claude built into the Claude app, else your own API key, else the offline reader. */
-export const aiFor = (apiKey?: string) => (inClaudeApp ? getAI({ host: hostSample }) : getAI({ apiKey }));
+/**
+ * The AI to use here: Claude built into the Claude app, else your own API key, else the offline reader.
+ * Nothing leaves the phone unless the user allowed AI sharing (Apple 5.1.2(i)); then only the offline reader is used.
+ */
+export const aiFor = (apiKey: string | undefined, allowed: boolean) =>
+  (!allowed ? getAI({}) : inClaudeApp ? getAI({ host: hostSample }) : getAI({ apiKey }));
 
 /**
  * Offers a file to save/share through the Claude app. Returns 'saved', 'declined' (user said no),

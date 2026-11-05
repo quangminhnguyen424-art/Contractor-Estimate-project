@@ -14,7 +14,7 @@ import { notify } from '@/ui/notify';
 
 export default function PastJobScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { pastJobs, savePastJob, deletePastJob, apiKey, profile } = useApp();
+  const { pastJobs, savePastJob, deletePastJob, apiKey, profile, aiAllowed } = useApp();
   const [showAll, setShowAll] = useState(false);
   const existing = pastJobs.find((j) => j.id === id);
 
@@ -28,7 +28,7 @@ export default function PastJobScreen() {
   const [date, setDate] = useState(existing?.date.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
 
   const read = async () => {
-    const r = await aiFor(apiKey).extractPastJob(paste);
+    const r = await aiFor(apiKey, aiAllowed).extractPastJob(paste);
     if (r.error) notify('Bidwell could not read this', `${r.error}\n\nUsed the offline reader instead.`);
     const got: string[] = [];
     if (r.jobTypeId) { setJobTypeId(r.jobTypeId); got.push('job type'); }

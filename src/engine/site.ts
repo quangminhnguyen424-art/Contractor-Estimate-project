@@ -66,6 +66,8 @@ export interface SiteProject {
   logs: DailyLog[];
   /** When photos were last sent to the client, to remind the contractor to keep them updated. */
   lastClientUpdateAt?: string;
+  /** Costs, receipts, buy list and tax settings (the project dashboard). */
+  money?: import('./books').ProjectMoney;
 }
 
 export const COLOR_HEX: Record<MarkColor, string> = { red: '#E11D48', yellow: '#FACC15', white: '#FFFFFF' };

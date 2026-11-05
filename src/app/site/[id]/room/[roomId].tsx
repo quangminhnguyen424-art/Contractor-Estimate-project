@@ -17,7 +17,7 @@ import { addSitePhotos, KIND_LABEL, PhotoView } from '@/ui/SitePhotoView';
 /** One room: photos with drawings and notes, the room's instructions, and the crew's task list. */
 export default function RoomScreen() {
   const { id, roomId } = useLocalSearchParams<{ id: string; roomId: string }>();
-  const { projects, updateProject, apiKey, deletePhotosLater } = useApp();
+  const { projects, updateProject, apiKey, deletePhotosLater, aiAllowed } = useApp();
   const { width } = useWindowDimensions();
   const p = projects.find((x) => x.id === id);
   const room = p?.rooms.find((r) => r.id === roomId);
@@ -51,7 +51,7 @@ export default function RoomScreen() {
       const roomId = room.id;
       const uris = await Promise.all(room.photos.slice(0, 8).map(async (ph) => (await readablePhotoUri(ph.uri)) ?? ''));
       const { images } = await toAiImages(uris, 8);
-      const steps = await stepsFor(aiFor(apiKey), forAi, p, images);
+      const steps = await stepsFor(aiFor(apiKey, aiAllowed), forAi, p, images);
       if (!steps.length) notify('No tasks found', 'Add more detail to the notes and try again.');
       // Only adds tasks: anything typed while Claude was working is already saved and stays as it is.
       else updateProject(p.id, (x) => ({

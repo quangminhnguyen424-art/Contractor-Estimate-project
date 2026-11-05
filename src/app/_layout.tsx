@@ -31,7 +31,7 @@ function SaveWarning() {
 }
 
 function RootStack() {
-  const { ready, profile } = useApp();
+  const { ready, profile, termsOk } = useApp();
   const [fontsLoaded, fontError] = useFonts({
     SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold, JetBrainsMono_500Medium, JetBrainsMono_700Bold,
   });
@@ -53,10 +53,10 @@ function RootStack() {
         headerBackTitle: 'Back',
         contentStyle: { backgroundColor: C.bg },
       }}>
-      <Stack.Protected guard={!profile}>
+      <Stack.Protected guard={termsOk && !profile}>
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Protected guard={!!profile}>
+      <Stack.Protected guard={termsOk && !!profile}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="questions" options={{ title: 'A few questions' }} />
         <Stack.Screen name="estimate/[id]/index" options={{ title: 'Estimate' }} />
@@ -79,7 +79,14 @@ function RootStack() {
         <Stack.Screen name="estimate/[id]/sign" options={{ title: 'Client signature' }} />
         <Stack.Screen name="estimate/[id]/contract" options={{ title: 'Contract & payments' }} />
         <Stack.Screen name="estimate/[id]/change" options={{ title: 'Change order' }} />
+        <Stack.Screen name="site/[id]/money" options={{ title: 'Job money' }} />
+        <Stack.Screen name="site/[id]/buy" options={{ title: 'Buy list' }} />
+        <Stack.Screen name="site/[id]/cost" options={{ title: 'Add a cost', presentation: 'modal' }} />
+        <Stack.Screen name="estimate/[id]/follow" options={{ title: 'Follow-ups' }} />
+        <Stack.Screen name="team" options={{ title: 'Crew & subs' }} />
       </Stack.Protected>
+      {/* Always reachable: on first launch (and after the Terms change) it is the only screen; later it opens from Settings. */}
+      <Stack.Screen name="terms" options={{ headerShown: termsOk, title: 'Terms and AI' }} />
     </Stack>
   );
 }

@@ -41,6 +41,7 @@ export interface AiContext {
   work?: string; // their setup interview answers, as sentences
   history?: string; // e.g. "8 past jobs of this type, average $310/SF"
   scope?: string; // limits on the job, e.g. "interior only" after a 3D room scan
+  prices?: string; // what this contractor really paid on recent receipts
 }
 
 /** One turn of the assistant chat. */
@@ -417,6 +418,7 @@ function contextText(ctx?: AiContext): string {
   if (ctx?.about?.trim()) parts.push(`About this contractor, in their own words:\n${ctx.about.trim().slice(0, 2000)}`);
   if (ctx?.history?.trim()) parts.push(`Their pricing history for this job type: ${ctx.history.trim()}`);
   if (ctx?.scope?.trim()) parts.push(ctx.scope.trim());
+  if (ctx?.prices?.trim()) parts.push(ctx.prices.trim().slice(0, 2000));
   return parts.length ? `\n\n${parts.join('\n\n')}` : '';
 }
 
@@ -436,38 +438,61 @@ function questionsFor(jobTypeId?: JobTypeId) {
 
 const CLAUDE_TIMEOUT_MS = 60_000;
 
-async function callClaude(apiKey: string, system: string, content: unknown[], maxTokens: number): Promise<string> {
+/**
+ * How to reach Claude: the contractor's own API key, or (signed in to Bidwell cloud) the Bidwell server, which
+ * holds the key and checks the daily limit.
+ */
+export type ClaudeAuth = string | { proxyUrl: string; anonKey: string; getToken: () => Promise<string | null> };
+
+async function callClaude(apiKey: ClaudeAuth, system: string, content: unknown[], maxTokens: number): Promise<string> {
   return callClaudeTurns(apiKey, system, [{ role: 'user', content }], maxTokens);
 }
 
 async function callClaudeTurns(
-  apiKey: string, system: string, messages: { role: 'user' | 'assistant'; content: unknown }[], maxTokens: number,
+  apiKey: ClaudeAuth, system: string, messages: { role: 'user' | 'assistant'; content: unknown }[], maxTokens: number,
 ): Promise<string> {
   let res: Response;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
+  const viaCloud = typeof apiKey !== 'string';
   try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        // Required for calls made from a browser; harmless in the phone app.
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages }),
-    });
-  } catch {
+    if (viaCloud) {
+      const token = await apiKey.getToken();
+      if (!token) { clearTimeout(timer); throw Object.assign(new Error('Sign in to Bidwell cloud to use the AI.'), { signedOut: true }); }
+      res = await fetch(apiKey.proxyUrl, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: { 'content-type': 'application/json', Authorization: `Bearer ${token}`, apikey: apiKey.anonKey },
+        body: JSON.stringify({ max_tokens: maxTokens, system, messages }),
+      });
+    } else {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          // Required for calls made from a browser; harmless in the phone app.
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages }),
+      });
+    }
+  } catch (e) {
     clearTimeout(timer);
+    if (e instanceof Error && 'signedOut' in e) throw e;
     if (controller.signal.aborted) throw new Error('Bidwell took too long to answer (weak signal?). Try again with fewer photos.');
     throw new Error('Could not reach Bidwell. Check your internet connection.');
   }
   clearTimeout(timer);
   if (!res.ok) {
     let detail = '';
-    try { detail = ((await res.json()) as { error?: { message?: string } }).error?.message ?? ''; } catch { /* ignore */ }
+    try {
+      const err = (await res.json()) as { error?: { message?: string } | string };
+      detail = typeof err.error === 'string' ? err.error : err.error?.message ?? '';
+    } catch { /* ignore */ }
+    if (viaCloud && (res.status === 401 || res.status === 429 || res.status === 413 || res.status === 503)) throw new Error(detail || 'Bidwell AI is not available right now.');
     if (res.status === 401) throw new Error('Claude API key is not valid. Check it in Settings.');
     if (res.status === 429) throw new Error('Bidwell is busy or your rate limit was reached. Try again in a minute.');
     if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
@@ -487,7 +512,7 @@ function parseReply(reply: string): unknown {
   }
 }
 
-export function directClaudeAI(apiKey: string): EstimatorAI {
+export function directClaudeAI(apiKey: ClaudeAuth): EstimatorAI {
   return {
     name: `Bidwell (${CLAUDE_MODEL})`,
     async chat(turns, system) {
@@ -630,8 +655,9 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
   };
 }
 
-export function getAI(opts: { apiKey?: string; host?: () => Promise<SampleFn | null> } = {}): EstimatorAI {
+export function getAI(opts: { apiKey?: string; host?: () => Promise<SampleFn | null>; cloud?: Exclude<ClaudeAuth, string> } = {}): EstimatorAI {
   if (opts.apiKey?.trim()) return directClaudeAI(opts.apiKey.trim());
+  if (opts.cloud) return directClaudeAI(opts.cloud);
   if (opts.host) return hostClaudeAI(opts.host);
   const url = typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_AI_URL : undefined;
   return url ? claudeAI(url) : demoAI;

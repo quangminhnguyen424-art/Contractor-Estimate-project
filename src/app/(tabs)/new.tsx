@@ -1,3 +1,4 @@
+import { lessonsContext } from '@/engine/books';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -24,8 +25,8 @@ import { aiFor, inClaudeApp } from '@/ui/host';
 import { toAiImages } from '@/ui/photos';
 
 export default function NewEstimate() {
-  const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan } = useApp();
-  const claudeOn = !!apiKey || inClaudeApp;
+  const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons } = useApp();
+  const claudeOn = aiAllowed && (!!apiKey || inClaudeApp);
   const [showAll, setShowAll] = useState(false);
   const params = useLocalSearchParams<{ type?: string }>();
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(params.type && isJobTypeId(params.type) ? params.type : null);
@@ -92,7 +93,7 @@ export default function NewEstimate() {
       ms,
     });
     const started = Date.now();
-    const ai = aiFor(apiKey);
+    const ai = aiFor(apiKey, aiAllowed);
     // Claude also looks at the photos; the offline demo only reads the text.
     let images: ImageInput[] = [];
     let skipped = 0;
@@ -109,6 +110,7 @@ export default function NewEstimate() {
       work: workSummary(profile?.work),
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
       scope: pendingPlan?.length && isIndoorType(type) ? INDOOR_NOTE : undefined,
+      prices: lessonsContext(lessons ?? []),
     };
     if (description.trim() || images.length > 0) {
       parsed = await ai.parseScope(description, type, images, ctx)

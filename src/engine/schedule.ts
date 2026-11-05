@@ -21,6 +21,10 @@ export interface CalEvent {
   notificationId?: string;
   done: boolean;
   createdAt: string;
+  /** Team members booked for this day (crew days). */
+  crew?: string[];
+  /** Morning check results, by team member id. */
+  attend?: Record<string, import('./team').Attendance>;
 }
 
 export const KINDS: Record<EventKind, { en: string; vi: string; icon: string; color: string }> = {

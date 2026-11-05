@@ -18,7 +18,7 @@ import { listen, speak, stopSpeaking, voiceInputAvailable } from '@/ui/voice';
 
 /** Home: talk with Claude about anything. Voice in, answers read aloud, and estimates started from the chat. */
 export default function Assistant() {
-  const { profile, presets, pastJobs, estimates, apiKey, setDraft } = useApp();
+  const { profile, presets, pastJobs, estimates, apiKey, setDraft, aiAllowed, lessons } = useApp();
   const { messages, add, clear, settings, setSettings, current } = useChat();
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,7 +29,7 @@ export default function Assistant() {
   const sendRef = useRef<(raw: string, spoken?: boolean) => void>(() => {});
   const scrollRef = useRef<ScrollViewInstance>(null);
   const canListen = voiceInputAvailable();
-  const claudeOn = inClaudeApp || !!apiKey;
+  const claudeOn = aiAllowed && (inClaudeApp || !!apiKey);
 
   useEffect(() => () => { stopRef.current?.stop(); stopSpeaking(); }, []);
 
@@ -48,7 +48,7 @@ export default function Assistant() {
       .map((m) => ({ role: m.role, content: m.text || '(started an estimate)' }));
     while (turns.length && turns[0].role !== 'user') turns.shift();
     try {
-      const reply = await aiFor(apiKey).chat(turns, assistantSystem({ profile, presets, pastJobs, estimates }));
+      const reply = await aiFor(apiKey, aiAllowed).chat(turns, assistantSystem({ profile, presets, pastJobs, estimates }));
       const { text: answer, action } = parseAssistantReply(reply);
       add({ id: newId(), role: 'assistant', text: answer, action });
       if (settings.speak || spoken) speak(answer);
@@ -88,7 +88,7 @@ export default function Assistant() {
     if (!m.action) return;
     setStarting(m.id);
     try {
-      await startEstimateFromChat(m.action, { apiKey, profile, pastJobs, setDraft });
+      await startEstimateFromChat(m.action, { apiKey, aiAllowed, profile, pastJobs, lessons, setDraft });
     } catch {
       notify('Could not start the estimate', 'Try again, or use the New tab.');
     } finally {

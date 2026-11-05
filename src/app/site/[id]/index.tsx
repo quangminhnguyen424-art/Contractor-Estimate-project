@@ -4,7 +4,8 @@ import { Pressable, useWindowDimensions, View } from 'react-native';
 
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
-import { newId } from '@/engine/format';
+import { buyTotals, emptyMoney, projectBooks } from '@/engine/books';
+import { money as moneyFmt, newId } from '@/engine/format';
 import { dayLabel, upcoming } from '@/engine/schedule';
 import { beforeAfterPairs, contractLine, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
@@ -15,7 +16,7 @@ import { PhotoView } from '@/ui/SitePhotoView';
 
 export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { projects, estimates, events, updateProject, deleteProject, deletePhotosLater } = useApp();
+  const { projects, estimates, events, updateProject, deleteProject, deletePhotosLater, contracts, profile } = useApp();
   const { width } = useWindowDimensions();
   const today = useToday();
   const [roomName, setRoomName] = useState('');
@@ -31,6 +32,8 @@ export default function ProjectScreen() {
   const pr = projectProgress(p);
   const est = estimates.find((e) => e.id === p.estimateId);
   const pairs = beforeAfterPairs(p);
+  const money = p.money?.costs.length || est ? projectBooks({ est, profile, contract: contracts.find((c) => c.estimateId === p.estimateId), money: p.money ?? emptyMoney(), today }) : null;
+  const buy = buyTotals(p.money?.buy ?? []);
   const go = (path: string) => router.push(`/site/${p.id}/${path}` as never);
   const nextVisit = upcoming(events.filter((e) => e.projectId === p.id), today, 60)[0];
   const thumb = Math.floor((Math.min(width, 760) - 32 - 12) / 3);
@@ -81,6 +84,8 @@ export default function ProjectScreen() {
         <Tile index={2} icon="book-outline" tone="slate" title="Daily log" sub="Bidwell writes it for you" onPress={() => go('log')} />
         <Tile index={3} icon="calendar-outline" tone="sky" title="Schedule" sub={nextVisit ? `Next: ${dayLabel(nextVisit.date, today)}` : 'Crew day, inspection…'} onPress={() => router.push(`/event?project=${p.id}`)} />
         {est ? <Tile index={4} icon="wallet-outline" title="Contract & payments" sub="Sign, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
+        <Tile index={6} icon="cash-outline" title="Job money" sub={money ? `Profit ${moneyFmt(money.profit.amount)} · ${money.profit.marginPct}%` : 'Costs, profit, owner balance'} onPress={() => go('money')} />
+        <Tile index={7} icon="cart-outline" tone="sky" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'From the estimate'} onPress={() => go('buy')} />
         <Tile index={5} icon="logo-facebook" tone="slate" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after` : 'Needs before + after'} onPress={() => go('share?mode=post')} />
       </View>
 

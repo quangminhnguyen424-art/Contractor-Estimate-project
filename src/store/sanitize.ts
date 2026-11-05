@@ -1,5 +1,9 @@
 // Checks saved or restored data before the app uses it, so a damaged or partial backup
 // can never crash the app (and can't lock the user out on every launch).
+import type { BuyItem, CostEntry, CostKind, PriceLesson, ProjectMoney, ReceiptLine } from '../engine/books';
+import type { FollowUpPlan } from '../engine/followup';
+import type { Consent } from '../engine/legal';
+import type { AttendState, Attendance, TeamMember } from '../engine/team';
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
 import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, Signature, Terms } from '../engine/contract';
 import { HOOK_EVENTS, NO_CONNECTIONS, validHookUrl, type Connections } from '../engine/connect';
@@ -27,6 +31,14 @@ export interface Persisted {
   connections?: Connections;
   /** Highest invoice number ever issued, so numbers are never reused (even after a job is deleted). */
   lastInvoiceNo?: number;
+  /** Which version of the Terms this user agreed to, and whether AI may receive their content. */
+  consent?: Consent;
+  /** Crew and subcontractors. */
+  team?: TeamMember[];
+  /** Follow-up plans for unsigned quotes, one per estimate. */
+  followups?: FollowUpPlan[];
+  /** Prices learned from this contractor's own receipts. */
+  lessons?: PriceLesson[];
 }
 
 export const EMPTY: Persisted = {
@@ -240,6 +252,7 @@ export function sanitizeProjects(v: unknown): SiteProject[] {
       rooms: Array.isArray(p.rooms) ? p.rooms.map(sanitizeRoom).filter((x): x is SiteRoom => !!x).slice(0, 60) : [],
       logs,
       ...(typeof p.lastClientUpdateAt === 'string' ? { lastClientUpdateAt: p.lastClientUpdateAt } : {}),
+      ...(isObj(p.money) ? { money: sanitizeMoney(p.money) } : {}),
     }];
   }).slice(0, 200);
 }
@@ -318,6 +331,11 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
       events: sanitizeEvents(raw.events),
       ...(isObj(raw.connections) ? { connections: sanitizeConnections(raw.connections) } : {}),
       ...(typeof raw.lastInvoiceNo === 'number' && Number.isFinite(raw.lastInvoiceNo) ? { lastInvoiceNo: Math.round(raw.lastInvoiceNo) } : {}),
+      ...(isObj(raw.consent) && typeof raw.consent.version === 'string'
+        ? { consent: { version: raw.consent.version.slice(0, 40), at: str(raw.consent.at), ai: raw.consent.ai === true } } : {}),
+      ...(Array.isArray(raw.team) ? { team: sanitizeTeam(raw.team) } : {}),
+      ...(Array.isArray(raw.followups) ? { followups: sanitizeFollowups(raw.followups) } : {}),
+      ...(Array.isArray(raw.lessons) ? { lessons: sanitizeLessons(raw.lessons) } : {}),
     },
     dropped: estimatesIn.length - estimates.length + (pastIn.length - pastJobs.length),
   };
@@ -417,6 +435,8 @@ export function sanitizeEvents(v: unknown): CalEvent[] {
       remindMin: remind === null || !Number.isFinite(remind) || remind < 0 || remind > 20160 ? null : Math.round(remind),
       ...(typeof e.notificationId === 'string' ? { notificationId: e.notificationId } : {}),
       done: e.done === true, createdAt: str(e.createdAt, new Date().toISOString()),
+      ...(Array.isArray(e.crew) ? { crew: e.crew.filter((x): x is string => typeof x === 'string').slice(0, 30) } : {}),
+      ...(isObj(e.attend) ? { attend: sanitizeAttend(e.attend) } : {}),
     }];
   }).slice(0, 3000);
 }
@@ -429,4 +449,107 @@ function sanitizeConnections(v: Record<string, unknown>): Connections {
     events: Array.isArray(v.events) ? v.events.filter((e): e is Connections['events'][number] => ids.includes(e as Connections['events'][number])) : NO_CONNECTIONS.events,
     includeCosts: v.includeCosts === true,
   };
+}
+
+// ---- Money, team, follow-ups, price lessons ----
+
+const COST_KIND_IDS: CostKind[] = ['labor', 'materials', 'subs', 'equipment'];
+const finite = (v: unknown, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+const cents = (v: unknown) => Math.round(finite(v) * 100) / 100;
+
+function sanitizeLines(v: unknown): ReceiptLine[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  return v.flatMap((l): ReceiptLine[] => (isObj(l) && typeof l.name === 'string'
+    ? [{ name: l.name.slice(0, 80), qty: Math.max(0, finite(l.qty, 1)), unit: str(l.unit).slice(0, 12), total: cents(l.total), ...(typeof l.buyId === 'string' ? { buyId: l.buyId } : {}) }]
+    : [])).slice(0, 100);
+}
+
+export function sanitizeMoney(v: Record<string, unknown>): ProjectMoney {
+  const seen = new Set<string>();
+  const costs = (Array.isArray(v.costs) ? v.costs : []).flatMap((c): CostEntry[] => {
+    if (!isObj(c) || typeof c.id !== 'string' || seen.has(c.id) || !YMD.test(str(c.date))) return [];
+    seen.add(c.id);
+    const amount = cents(c.amount);
+    if (Math.abs(amount) > 1e7) return [];
+    const lines = sanitizeLines(c.lines);
+    const ow = isObj(c.ownerOwes) && YMD.test(str(c.ownerOwes.due))
+      ? { ownerOwes: { due: str(c.ownerOwes.due), ...(YMD.test(str(c.ownerOwes.paidOn)) ? { paidOn: str(c.ownerOwes.paidOn) } : {}) } } : {};
+    return [{
+      id: c.id, date: str(c.date), kind: COST_KIND_IDS.includes(c.kind as CostKind) ? (c.kind as CostKind) : 'materials',
+      vendor: str(c.vendor).slice(0, 60), note: str(c.note).slice(0, 500), amount,
+      ...(typeof c.receiptUri === 'string' && PHOTO_URI.test(c.receiptUri) ? { receiptUri: c.receiptUri } : {}),
+      ...(lines ? { lines } : {}), ...ow,
+      ...(typeof c.memberId === 'string' ? { memberId: c.memberId } : {}), ...(typeof c.eventId === 'string' ? { eventId: c.eventId } : {}),
+      createdAt: str(c.createdAt, new Date().toISOString()),
+    }];
+  }).slice(0, 3000);
+  const buySeen = new Set<string>();
+  const buy = (Array.isArray(v.buy) ? v.buy : []).flatMap((b): BuyItem[] => {
+    if (!isObj(b) || typeof b.id !== 'string' || buySeen.has(b.id) || typeof b.name !== 'string') return [];
+    buySeen.add(b.id);
+    return [{
+      id: b.id, name: b.name.slice(0, 100), qty: Math.max(0, finite(b.qty)), unit: str(b.unit).slice(0, 12), estCost: Math.max(0, cents(b.estCost)),
+      bought: b.bought === true, ...(typeof b.spent === 'number' && Number.isFinite(b.spent) ? { spent: cents(b.spent) } : {}),
+      source: b.source === 'added' ? 'added' : 'estimate',
+    }];
+  }).slice(0, 1000);
+  const salesTaxPct = typeof v.salesTaxPct === 'number' && v.salesTaxPct >= 0 && v.salesTaxPct <= 25 ? v.salesTaxPct : null;
+  const incomeTaxPct = Math.max(0, Math.min(60, finite(v.incomeTaxPct, 30)));
+  return { salesTaxPct, incomeTaxPct, costs, buy };
+}
+
+const ATTEND_IDS: AttendState[] = ['coming', 'late', 'moved', 'no-show', 'worked'];
+function sanitizeAttend(v: Record<string, unknown>): Record<string, Attendance> {
+  const out: Record<string, Attendance> = {};
+  for (const [k, a] of Object.entries(v).slice(0, 30)) {
+    if (!isObj(a) || !ATTEND_IDS.includes(a.state as AttendState)) continue;
+    out[k] = {
+      state: a.state as AttendState, at: str(a.at),
+      ...(YMD.test(str(a.movedTo)) ? { movedTo: str(a.movedTo) } : {}),
+      ...(typeof a.note === 'string' ? { note: a.note.slice(0, 300) } : {}),
+      ...(typeof a.costId === 'string' ? { costId: a.costId } : {}),
+    };
+  }
+  return out;
+}
+
+function sanitizeTeam(v: unknown[]): TeamMember[] {
+  const seen = new Set<string>();
+  return v.flatMap((m): TeamMember[] => {
+    if (!isObj(m) || typeof m.id !== 'string' || seen.has(m.id)) return [];
+    seen.add(m.id);
+    return [{
+      id: m.id, name: str(m.name).slice(0, 60), role: m.role === 'sub' ? 'sub' : 'crew', trade: str(m.trade).slice(0, 40), phone: str(m.phone).slice(0, 30),
+      rate: Math.max(0, Math.min(1e5, cents(m.rate))), rateUnit: m.rateUnit === 'hour' || m.rateUnit === 'job' ? m.rateUnit : 'day',
+      lang: m.lang === 'vi' || m.lang === 'es' ? m.lang : 'en', active: m.active !== false,
+    }];
+  }).slice(0, 200);
+}
+
+function sanitizeFollowups(v: unknown[]): FollowUpPlan[] {
+  const seen = new Set<string>();
+  return v.flatMap((p): FollowUpPlan[] => {
+    if (!isObj(p) || typeof p.estimateId !== 'string' || seen.has(p.estimateId) || !YMD.test(str(p.startDate))) return [];
+    seen.add(p.estimateId);
+    const consent = p.consent === 'agreed' || p.consent === 'declined' ? p.consent : 'not-asked';
+    const hows = ['in person', 'phone call', 'text', 'email', 'signing page'];
+    const reasons = ['declined', 'signed', 'lost', 'stop', 'manual'];
+    return [{
+      estimateId: p.estimateId, consent, ...(typeof p.consentAt === 'string' ? { consentAt: p.consentAt } : {}),
+      ...(hows.includes(str(p.consentHow)) ? { consentHow: str(p.consentHow) as FollowUpPlan['consentHow'] } : {}),
+      phone: str(p.phone).slice(0, 30), email: str(p.email).slice(0, 120),
+      channels: (Array.isArray(p.channels) ? p.channels : []).filter((c): c is 'text' | 'email' => c === 'text' || c === 'email').slice(0, 2),
+      days: (Array.isArray(p.days) ? p.days : []).filter((d): d is number => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 60).slice(0, 6),
+      startDate: str(p.startDate),
+      sent: (Array.isArray(p.sent) ? p.sent : []).flatMap((x) => (isObj(x) && Number.isInteger(x.day) ? [{ day: x.day as number, at: str(x.at), channel: x.channel === 'email' ? 'email' as const : 'text' as const }] : [])).slice(0, 20),
+      ...(isObj(p.stopped) && reasons.includes(str(p.stopped.reason)) ? { stopped: { at: str(p.stopped.at), reason: str(p.stopped.reason) as NonNullable<FollowUpPlan['stopped']>['reason'] } } : {}),
+      ...(typeof p.confirmedBoth === 'string' ? { confirmedBoth: p.confirmedBoth.slice(0, 40) } : {}),
+    }];
+  }).slice(0, 2000);
+}
+
+function sanitizeLessons(v: unknown[]): PriceLesson[] {
+  return v.flatMap((l): PriceLesson[] => (isObj(l) && typeof l.id === 'string' && typeof l.item === 'string' && finite(l.quoted) > 0 && finite(l.paid) > 0
+    ? [{ id: l.id, at: str(l.at).slice(0, 10), item: l.item.slice(0, 100), unit: str(l.unit).slice(0, 12), quoted: cents(l.quoted), paid: cents(l.paid), vendor: str(l.vendor).slice(0, 60), projectId: str(l.projectId) }]
+    : [])).slice(-3000);
 }

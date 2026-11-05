@@ -7,7 +7,11 @@ import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
 import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
 import { emptyContract, nextInvoiceNo, termsFrom, type Contract, type Invoice } from '@/engine/contract';
+import { emptyMoney, type PriceLesson, type ProjectMoney } from '@/engine/books';
+import { stopPlan, type FollowUpPlan } from '@/engine/followup';
+import { consentCurrent, TERMS_VERSION } from '@/engine/legal';
 import type { CalEvent } from '@/engine/schedule';
+import { laborCost, movedEvent, type Attendance, type TeamMember } from '@/engine/team';
 import { projectFromEstimate, type SiteProject } from '@/engine/site';
 import { deletePhotoFile } from '@/ui/photoStore';
 import { cancelAllReminders, scheduleReminder } from '@/ui/reminders';
@@ -77,6 +81,25 @@ interface Ctx extends Persisted {
   saveConnections: (c: Connections) => void;
   /** Tells the contractor's other apps that something happened (if a webhook link is set and the event is on). */
   emit: (event: HookEvent, data: Record<string, unknown>) => void;
+  /** True once this user agreed to the current Terms. */
+  termsOk: boolean;
+  /** True when the user allowed sending their content to the AI provider. */
+  aiAllowed: boolean;
+  acceptTerms: (ai: boolean) => void;
+  setAiSharing: (on: boolean) => void;
+  /** Crew and subs. */
+  saveMember: (m: TeamMember) => void;
+  deleteMember: (id: string) => void;
+  /** Follow-up plan for an unsigned quote. */
+  saveFollowUp: (p: FollowUpPlan) => void;
+  /** A job site's costs, buy list and tax settings, applied to the latest saved copy. */
+  updateMoney: (projectId: string, fn: (m: ProjectMoney) => ProjectMoney) => void;
+  addLessons: (ls: PriceLesson[]) => void;
+  /**
+   * Morning check for one person on one booked day. "worked" adds their labor cost to the job (once);
+   * "moved" books them on the new date.
+   */
+  markAttendance: (eventId: string, memberId: string, a: Attendance) => void;
   /** Calendar events. */
   saveEvent: (e: CalEvent) => void;
   deleteEvent: (id: string) => void;
@@ -271,6 +294,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return made;
       },
       saveConnections: (c) => update((d) => ({ ...d, connections: c })),
+      termsOk: consentCurrent(data.consent),
+      aiAllowed: consentCurrent(data.consent) && data.consent?.ai === true,
+      acceptTerms: (ai) => update((d) => ({ ...d, consent: { version: TERMS_VERSION, at: new Date().toISOString(), ai } })),
+      setAiSharing: (on) => update((d) => (d.consent ? { ...d, consent: { ...d.consent, ai: on, at: new Date().toISOString() } } : d)),
+      saveMember: (m) => update((d) => {
+        const team = d.team ?? [];
+        return { ...d, team: team.some((x) => x.id === m.id) ? team.map((x) => (x.id === m.id ? m : x)) : [...team, m] };
+      }),
+      deleteMember: (id) => update((d) => ({
+        ...d, team: (d.team ?? []).filter((x) => x.id !== id),
+        events: d.events.map((e) => (e.crew?.includes(id) ? { ...e, crew: e.crew.filter((x) => x !== id) } : e)),
+      })),
+      saveFollowUp: (p) => update((d) => ({ ...d, followups: [p, ...(d.followups ?? []).filter((x) => x.estimateId !== p.estimateId)] })),
+      updateMoney: (projectId, fn) =>
+        update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, money: fn(p.money ?? emptyMoney()) } : p)) })),
+      addLessons: (ls) => update((d) => ({ ...d, lessons: [...(d.lessons ?? []), ...ls].slice(-3000) })),
+      markAttendance: (eventId, memberId, a) => {
+        const cur = dataRef.current;
+        const ev = cur.events.find((e) => e.id === eventId);
+        const member = (cur.team ?? []).find((m) => m.id === memberId);
+        if (!ev || !member) return;
+        const prev = ev.attend?.[memberId];
+        let att: Attendance = { ...a, ...(prev?.costId ? { costId: prev.costId } : {}) };
+        let projects = cur.projects;
+        const projectId = ev.projectId ?? cur.projects.find((p) => p.estimateId && p.estimateId === ev.estimateId)?.id;
+        const amount = laborCost(member, ev);
+        if (a.state === 'worked' && !prev?.costId && projectId && amount > 0) {
+          const costId = newId();
+          att = { ...att, costId };
+          projects = projects.map((p) => (p.id !== projectId ? p : {
+            ...p, money: { ...(p.money ?? emptyMoney()), costs: [...(p.money ?? emptyMoney()).costs, {
+              id: costId, date: ev.date, kind: member.role === 'sub' ? 'subs' as const : 'labor' as const, vendor: member.name, note: `${ev.title} (${member.trade || member.role})`,
+              amount, memberId, eventId, createdAt: new Date().toISOString(),
+            }] },
+          }));
+        } else if (a.state !== 'worked' && prev?.costId) {
+          // Changed their mind: take the labor added for this day back out.
+          const gone = prev.costId;
+          projects = projects.map((p) => (p.money?.costs.some((c) => c.id === gone) ? { ...p, money: { ...p.money, costs: p.money.costs.filter((c) => c.id !== gone) } } : p));
+          const { costId: _c, ...rest } = att;
+          att = rest;
+        }
+        let events = cur.events.map((e) => (e.id === eventId ? { ...e, attend: { ...(e.attend ?? {}), [memberId]: att } } : e));
+        if (a.state === 'moved' && a.movedTo && a.movedTo !== ev.date && prev?.movedTo !== a.movedTo) {
+          const now = new Date().toISOString();
+          const moved = movedEvent(ev, memberId, a.movedTo, newId(), now);
+          events = [moved, ...events.map((e) => (e.id === eventId ? { ...e, crew: (e.crew ?? []).filter((x) => x !== memberId) || [], attend: { ...(e.attend ?? {}), [memberId]: att } } : e))];
+          scheduleReminder(moved).then((r) => {
+            if (r.id) update((d) => ({ ...d, events: d.events.map((x) => (x.id === moved.id ? { ...x, notificationId: r.id } : x)) }));
+          }).catch(() => {});
+        }
+        update((d) => ({ ...d, projects, events }));
+      },
       emit: (event, data) => {
         const d = dataRef.current;
         postHook(d.connections, event, data, d.profile?.companyName ?? '').catch(() => {});
@@ -299,8 +375,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             return next;
           });
           const status = estimates.find((e) => e.id === id)?.status ?? 'draft';
+          // A signed or lost job ends its follow-ups.
+          const followups = (d.followups ?? []).map((f) => (f.estimateId === id && !f.stopped && (status === 'won' || status === 'lost')
+            ? stopPlan(f, status === 'won' ? 'signed' : 'lost', new Date().toISOString()) : f));
           // Status or markup changes on a won job keep its past job (what the app learned) in step.
-          return { ...d, estimates, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
+          return { ...d, estimates, followups, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
         });
         // Let the contractor's other apps know when a quote goes out or a job is won.
         const after = dataRef.current.estimates.find((e) => e.id === id);
