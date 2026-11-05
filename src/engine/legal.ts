@@ -2,7 +2,7 @@
 // Bump TERMS_VERSION whenever the text changes in a way users must agree to again; the app then asks again.
 
 export const TERMS_VERSION = '2026-11-05';
-export const PUBLISHER = 'Quang Minh Nguyen (the developer of Bidwell AI)';
+export const PUBLISHER = 'YM LLC, Federal Way, Washington (the developer of Bidwell AI)';
 export const SUPPORT_EMAIL = 'justin.ngminh@gmail.com';
 
 export interface ConsentItem {
