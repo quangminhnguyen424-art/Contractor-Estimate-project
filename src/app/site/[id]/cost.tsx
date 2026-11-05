@@ -22,7 +22,7 @@ import { useToday } from '@/ui/useToday';
 /** Add or edit one cost. With ?receipt=1 it starts by photographing a receipt that Bidwell reads. */
 export default function CostScreen() {
   const { id, cost: costId, receipt } = useLocalSearchParams<{ id: string; cost?: string; receipt?: string }>();
-  const { projects, updateMoney, addLessons, apiKey, aiAllowed } = useApp();
+  const { projects, updateMoney, addLessons, apiKey, aiAllowed, deletePhotosLater } = useApp();
   const today = useToday();
   const p = projects.find((x) => x.id === id);
   const m = p?.money ?? emptyMoney();
@@ -53,6 +53,8 @@ export default function CostScreen() {
     if (r.canceled || !r.assets[0]) return;
     const saved = await savePhoto(r.assets[0].uri, r.assets[0].width).catch(() => null);
     if (!saved) { setMsg({ tone: 'warn', text: 'Could not save the photo. Try again.' }); return; }
+    // A second retake before saving: the in-between photo is never kept.
+    if (receiptUri && receiptUri !== editing?.receiptUri) deletePhotosLater([receiptUri]);
     setReceiptUri(saved.uri);
     if (!aiAllowed) { setMsg({ tone: 'info', text: 'Photo saved. Turn on AI sharing in Settings to have Bidwell read receipts; for now, type the amount.' }); return; }
     setReading(true);
@@ -88,7 +90,9 @@ export default function CostScreen() {
     };
     // A new receipt marks what it paid for on the buy list, and teaches the real price for next time.
     const fresh = !editing && lines.some((l) => l.buyId);
-    if (fresh) addLessons(lessonsFromReceipt(lines, m.buy, { at: date, vendor: entry.vendor, projectId: p.id }, newId));
+    if (fresh) addLessons(lessonsFromReceipt(lines, m.buy, { at: date, vendor: entry.vendor, projectId: p.id, costId: entry.id }, newId));
+    // A retaken photo replaces the old one: delete the file nobody points to any more.
+    if (editing?.receiptUri && editing.receiptUri !== receiptUri) deletePhotosLater([editing.receiptUri]);
     updateMoney(p.id, (x) => ({
       ...x,
       costs: editing ? x.costs.map((c) => (c.id === entry.id ? entry : c)) : [...x.costs, entry],

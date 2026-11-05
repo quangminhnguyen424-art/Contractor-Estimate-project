@@ -58,15 +58,17 @@ describe('project dashboard (the template)', () => {
   });
 
   it('adds costs by kind', () => {
-    expect(b.cost).toMatchObject({ labor: 4000, materials: 1500.55, subs: 1200, equipment: 99.45, total: 6800 });
+    // The $99.45 rental is paid back by the owner, so it is not a job cost.
+    expect(b.cost).toMatchObject({ labor: 4000, materials: 1500.55, subs: 1200, equipment: 0, total: 6700.55 });
   });
 
   it('profit and margin', () => {
-    expect(b.profit).toEqual({ amount: 14200, marginPct: 67.6 });
+    expect(b.profit).toEqual({ amount: 14299.45, marginPct: 68.1 });
   });
 
   it('owner funds: deposited minus spent; asks for a deposit when negative', () => {
-    expect(b.funds).toEqual({ deposited: 2200, spent: 6800, spendable: -4600, status: 'request' });
+    // $200 of the $2,200 paid is sales tax owed to the state.
+    expect(b.funds).toEqual({ deposited: 2200, taxHeld: 200, spent: 6800, spendable: -4800, status: 'request' });
   });
 
   it('owner reimbursement and overdue items (unpaid invoice + unpaid reimbursable cost past due)', () => {
@@ -78,7 +80,7 @@ describe('project dashboard (the template)', () => {
   });
 
   it('taxes: sales tax on the contract price, income tax on profit, net after tax', () => {
-    expect(b.tax).toEqual({ salesPct: 10, sales: 2100, incomePct: 30, income: 4260, reserve: 6360, netAfterTax: 9940, netMarginPct: 47.3 });
+    expect(b.tax).toEqual({ salesPct: 10, sales: 2100, incomePct: 30, income: 4289.84, reserve: 6389.84, netAfterTax: 10009.61, netMarginPct: 47.7 });
   });
 
   it('uses the job-site tax rate when set, and never taxes a loss', () => {
@@ -86,6 +88,18 @@ describe('project dashboard (the template)', () => {
     expect(loss.tax.sales).toBe(2173.5);
     expect(loss.tax.income).toBe(0);
     expect(loss.profit.amount).toBe(-9000);
+  });
+
+  it('a cost the owner paid back adds to the money in hand', () => {
+    const m = money();
+    m.costs = m.costs.map((c) => (c.ownerOwes ? { ...c, ownerOwes: { ...c.ownerOwes, paidOn: '2026-10-15' } } : c));
+    const back = projectBooks({ est, profile, contract: contract(), money: m, today: '2026-11-04' });
+    expect(back.funds.deposited).toBe(2299.45);
+    expect(back.owner.overdueCount).toBe(1);
+  });
+
+  it('materials budget includes sales tax (receipts do)', () => {
+    expect(b.budget.materials).toBe(6600);
   });
 
   it('flags kinds more than 5% over budget', () => {
@@ -103,7 +117,7 @@ describe('project dashboard (the template)', () => {
   });
 
   it('funds are low when less than 15% of the cost still to spend is on hand', () => {
-    const c = { ...contract(), payments: [{ id: 'p', date: '2026-10-05', amount: 7000, method: 'check' as const, note: '' }] };
+    const c = { ...contract(), payments: [{ id: 'p', date: '2026-10-05', amount: 7700, method: 'check' as const, note: '' }] };
     const low = projectBooks({ est, profile, contract: c, money: money(), today: '2026-11-04' });
     expect(low.funds.spendable).toBe(200);
     expect(low.funds.status).toBe('low');
@@ -274,14 +288,39 @@ describe('state notices on the quote', () => {
     const { quoteHtml } = await import('./quote');
     const { defaultNotices } = await import('./legal');
     const e = { ...est, updatedAt: '2026-11-06T18:00:00Z', job: { name: 'Bath', vi: 'Bath', unit: 'SF', exclusions: [], exclusionsVi: [] }, plan: undefined, scopeNote: '', comparison: { sizeSf: 45, pricePerSf: 0, presetPerSf: null, historyPerSf: null, historyCount: 0, flag: 'none', message: '' }, answers: {}, customItems: [] } as unknown as Estimate;
-    const p = { ...profile, license: 'UPGRAHL123', notices: { ...defaultNotices(), waDisclosure: true, cancel3Day: true, bond: '$12,000', regExpires: '05/01/2027' } };
-    const html = quoteHtml(e, p, 'en');
+    const p = { ...profile, license: 'UPGRAHL123', notices: { ...defaultNotices(), waDisclosure: true, cancel3Day: true, bond: '$12,000', regExpires: '05/01/2027', checked: true } };
+    const sale = new Date('2026-11-06T18:00:00Z');
+    const html = quoteHtml(e, p, 'en', undefined, sale);
+    // Draft wording the contractor hasn't confirmed never reaches the client.
+    expect(quoteHtml(e, { ...p, notices: { ...p.notices, checked: false } }, 'en', undefined, sale)).not.toContain('NOTICE');
     expect(html).toContain('NOTICE TO CUSTOMER');
     expect(html).toContain('registration no. UPGRAHL123, expiring 05/01/2027');
     expect(html.match(/NOTICE OF CANCELLATION/g)).toHaveLength(2);
     // Friday Nov 6 → Sat 7, (Sun skipped), Mon 9, Tue 10
     expect(html).toContain('midnight of November 10, 2026');
-    expect(quoteHtml({ ...e, price: 900 } as Estimate, p, 'en')).not.toContain('NOTICE TO CUSTOMER');
+    expect(quoteHtml({ ...e, price: 900 } as Estimate, p, 'en', undefined, sale)).not.toContain('NOTICE TO CUSTOMER');
     expect(quoteHtml(e, profile, 'en')).not.toContain('NOTICE OF CANCELLATION');
+  });
+});
+
+describe('QA fixes', () => {
+  it('cheap per-unit items keep a real price (no $0 or Infinity)', () => {
+    const b: BuyItem[] = [{ id: 's', name: 'Drywall screws', qty: 1000, unit: 'EA', estCost: 4, bought: false, source: 'estimate' }];
+    const ls = lessonsFromReceipt([{ name: 'Drywall screws', qty: 1000, unit: 'EA', total: 5, buyId: 's' }], b, { at: '2026-11-01', vendor: '', projectId: 'p', costId: 'c1' }, () => 'l');
+    expect(ls[0]).toMatchObject({ quoted: 0.004, paid: 0.005, costId: 'c1' });
+    expect(priceDrift(ls)[0].changePct).toBe(25);
+  });
+
+  it('deleting a receipt takes its amounts back off the buy list', async () => {
+    const { removeReceiptFromBuy } = await import('./books');
+    const b: BuyItem[] = [{ id: 'a', name: 'Tile', qty: 10, unit: 'SF', estCost: 50, bought: true, spent: 60, source: 'estimate' }, { id: 'b', name: 'Grout', qty: 1, unit: 'bag', estCost: 20, bought: true, spent: 50, source: 'estimate' }];
+    const out = removeReceiptFromBuy(b, [{ name: 'Tile', qty: 10, unit: 'SF', total: 60, buyId: 'a' }, { name: 'Grout', qty: 1, unit: 'bag', total: 20, buyId: 'b' }]);
+    expect(out.map((x) => [x.bought, x.spent])).toEqual([[false, undefined], [true, 30]]);
+  });
+
+  it('a follow-up plan needs a real start date, and a bad one never drops a STOP on reload', () => {
+    expect(planProblems({ ...newPlan('e', '11/03/2026'), consent: 'agreed', channels: ['email'], email: 'a@b.co', days: [2] })).toEqual(['Enter the date the quote was sent as YYYY-MM-DD.']);
+    const d = sanitizePersisted({ followups: [{ estimateId: 'e', startDate: 'bad', consent: 'declined', stopped: { at: 'x', reason: 'stop' } }] }).data;
+    expect(d.followups?.[0]).toMatchObject({ consent: 'declined', stopped: { reason: 'stop' } });
   });
 });

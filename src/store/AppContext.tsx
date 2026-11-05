@@ -14,7 +14,7 @@ import type { CalEvent } from '@/engine/schedule';
 import { laborCost, movedEvent, type Attendance, type TeamMember } from '@/engine/team';
 import { projectFromEstimate, type SiteProject } from '@/engine/site';
 import { deletePhotoFile } from '@/ui/photoStore';
-import { cancelAllReminders, scheduleReminder } from '@/ui/reminders';
+import { cancelAllReminders, cancelReminder, scheduleReminder } from '@/ui/reminders';
 import { postHook } from '@/ui/webhook';
 
 import { wonToPastJobs } from './learning';
@@ -95,6 +95,8 @@ interface Ctx extends Persisted {
   /** A job site's costs, buy list and tax settings, applied to the latest saved copy. */
   updateMoney: (projectId: string, fn: (m: ProjectMoney) => ProjectMoney) => void;
   addLessons: (ls: PriceLesson[]) => void;
+  /** Forgets the price lessons a deleted receipt taught. */
+  dropLessons: (costId: string) => void;
   /**
    * Morning check for one person on one booked day. "worked" adds their labor cost to the job (once);
    * "moved" books them on the new date.
@@ -124,6 +126,15 @@ interface Ctx extends Persisted {
 }
 
 const AppContext = createContext<Ctx | null>(null);
+
+/** Removes upcoming "Follow up:" reminders for a quote (and their phone notifications). */
+function dropFollowEvents(events: CalEvent[], estimateId: string): CalEvent[] {
+  return events.filter((e) => {
+    const drop = e.estimateId === estimateId && !e.done && e.title.startsWith('Follow up:');
+    if (drop) cancelReminder(e.notificationId);
+    return !drop;
+  });
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<Persisted>(EMPTY);
@@ -310,17 +321,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateMoney: (projectId, fn) =>
         update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, money: fn(p.money ?? emptyMoney()) } : p)) })),
       addLessons: (ls) => update((d) => ({ ...d, lessons: [...(d.lessons ?? []), ...ls].slice(-3000) })),
+      dropLessons: (costId) => update((d) => ({ ...d, lessons: (d.lessons ?? []).filter((l) => l.costId !== costId) })),
       markAttendance: (eventId, memberId, a) => {
         const cur = dataRef.current;
         const ev = cur.events.find((e) => e.id === eventId);
         const member = (cur.team ?? []).find((m) => m.id === memberId);
         if (!ev || !member) return;
         const prev = ev.attend?.[memberId];
-        let att: Attendance = { ...a, ...(prev?.costId ? { costId: prev.costId } : {}) };
+        let att: Attendance = { state: a.state, at: a.at, ...(a.movedTo ? { movedTo: a.movedTo } : {}), ...(a.note ? { note: a.note } : {}), ...(prev?.costId ? { costId: prev.costId } : {}) };
         let projects = cur.projects;
+        let events = cur.events;
         const projectId = ev.projectId ?? cur.projects.find((p) => p.estimateId && p.estimateId === ev.estimateId)?.id;
         const amount = laborCost(member, ev);
-        if (a.state === 'worked' && !prev?.costId && projectId && amount > 0) {
+        // A "per job" rate is charged once per job site, however many days they work.
+        const jobRateAlreadyCharged = member.rateUnit === 'job' && !!projectId
+          && !!cur.projects.find((p) => p.id === projectId)?.money?.costs.some((c) => c.memberId === memberId);
+        if (a.state === 'worked' && !prev?.costId && projectId && amount > 0 && !jobRateAlreadyCharged) {
           const costId = newId();
           att = { ...att, costId };
           projects = projects.map((p) => (p.id !== projectId ? p : {
@@ -336,15 +352,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const { costId: _c, ...rest } = att;
           att = rest;
         }
-        let events = cur.events.map((e) => (e.id === eventId ? { ...e, attend: { ...(e.attend ?? {}), [memberId]: att } } : e));
-        if (a.state === 'moved' && a.movedTo && a.movedTo !== ev.date && prev?.movedTo !== a.movedTo) {
-          const now = new Date().toISOString();
-          const moved = movedEvent(ev, memberId, a.movedTo, newId(), now);
-          events = [moved, ...events.map((e) => (e.id === eventId ? { ...e, crew: (e.crew ?? []).filter((x) => x !== memberId) || [], attend: { ...(e.attend ?? {}), [memberId]: att } } : e))];
+        // A reschedule books the new day; changing it again (or undoing it) removes that booking.
+        const sameMove = a.state === 'moved' && prev?.state === 'moved' && prev.movedTo === a.movedTo && !!prev.movedEventId;
+        if (prev?.movedEventId && !sameMove) {
+          const old = events.find((e) => e.id === prev.movedEventId);
+          if (old) cancelReminder(old.notificationId);
+          events = events.filter((e) => e.id !== prev.movedEventId);
+        }
+        if (sameMove) att = { ...att, movedEventId: prev!.movedEventId };
+        else if (a.state === 'moved' && a.movedTo && a.movedTo !== ev.date) {
+          const moved = movedEvent(ev, memberId, a.movedTo, newId(), new Date().toISOString());
+          att = { ...att, movedEventId: moved.id };
+          events = [moved, ...events];
           scheduleReminder(moved).then((r) => {
             if (r.id) update((d) => ({ ...d, events: d.events.map((x) => (x.id === moved.id ? { ...x, notificationId: r.id } : x)) }));
           }).catch(() => {});
         }
+        events = events.map((e) => (e.id === eventId ? { ...e, attend: { ...(e.attend ?? {}), [memberId]: att } } : e));
         update((d) => ({ ...d, projects, events }));
       },
       emit: (event, data) => {
@@ -378,8 +402,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // A signed or lost job ends its follow-ups.
           const followups = (d.followups ?? []).map((f) => (f.estimateId === id && !f.stopped && (status === 'won' || status === 'lost')
             ? stopPlan(f, status === 'won' ? 'signed' : 'lost', new Date().toISOString()) : f));
+          // ...and their reminders leave the calendar.
+          const ended = status === 'won' || status === 'lost';
+          const events = ended ? dropFollowEvents(d.events, id) : d.events;
           // Status or markup changes on a won job keep its past job (what the app learned) in step.
-          return { ...d, estimates, followups, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
+          return { ...d, estimates, followups, events, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
         });
         // Let the contractor's other apps know when a quote goes out or a job is won.
         const after = dataRef.current.estimates.find((e) => e.id === id);
@@ -389,7 +416,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             { estimate: estimatePayload(after, !!d.connections?.includeCosts) }, d.profile?.companyName ?? '').catch(() => {});
         }
       },
-      deleteEstimate: (id) => update((d) => ({ ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id) })),
+      deleteEstimate: (id) => update((d) => ({
+        ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id),
+        followups: (d.followups ?? []).filter((f) => f.estimateId !== id), events: dropFollowEvents(d.events, id),
+      })),
       resetAll: () => {
         setDraft(null);
         cancelAllReminders();

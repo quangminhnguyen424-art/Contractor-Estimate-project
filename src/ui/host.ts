@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { getAI, type SampleFn } from '@/engine/ai';
+import { demoAI, getAI, type SampleFn } from '@/engine/ai';
 
 /**
  * When the web version runs as a claude.ai artifact (in the Claude app or claude.ai), the page
@@ -38,7 +38,7 @@ export const hostSample = () => capability<SampleFn>('sample');
  * Nothing leaves the phone unless the user allowed AI sharing (Apple 5.1.2(i)); then only the offline reader is used.
  */
 export const aiFor = (apiKey: string | undefined, allowed: boolean) =>
-  (!allowed ? getAI({}) : inClaudeApp ? getAI({ host: hostSample }) : getAI({ apiKey }));
+  (!allowed ? demoAI : inClaudeApp ? getAI({ host: hostSample }) : getAI({ apiKey }));
 
 /**
  * Offers a file to save/share through the Claude app. Returns 'saved', 'declined' (user said no),

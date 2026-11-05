@@ -81,7 +81,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 /** HTML used for the PDF the client receives. */
 /** `accepted` is the client's signature block when they signed in the app (see contract.ts). */
-export function quoteHtml(est: Estimate, profile: Profile, lang: Lang, accepted?: string): string {
+export function quoteHtml(est: Estimate, profile: Profile, lang: Lang, accepted?: string, saleDate: Date = new Date()): string {
   const T = QUOTE_TEXT[lang];
   const jt = estimateJob(est);
   const sections = quoteSections(est, lang);
@@ -121,16 +121,18 @@ ${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${plan
 <h2>${T.terms}</h2><ul>${T.termsLines.map((t) => `<li>${t}</li>`).join('')}</ul>
 <h2>${T.acceptance}</h2>${accepted ?? `<div class="sig"><div>${T.owner}</div><div>${T.date}</div></div>
 <div class="sig"><div>${esc(profile.companyName)}</div><div>${T.date}</div></div>`}
-${noticesHtml(est, profile)}
+${noticesHtml(est, profile, saleDate)}
 </body></html>`;
 }
 
 /** The state notices the contractor turned on, each on its own page with a place to acknowledge it. */
-function noticesHtml(est: Estimate, profile: Profile): string {
+function noticesHtml(est: Estimate, profile: Profile, saleDate: Date): string {
   const n = profile.notices;
-  if (!n) return '';
+  // Draft wording never reaches a client: the contractor must confirm it matches the official forms first.
+  if (!n || !n.checked) return '';
   const day = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const sent = new Date(est.updatedAt);
+  // Counted from the day of the sale: the quote is generated when the client reviews and signs it.
+  const sent = new Date(saleDate);
   // Three business days: Saturdays count, Sundays don't (federal holidays are not checked here).
   const deadline = new Date(sent);
   for (let left = 3; left > 0;) { deadline.setDate(deadline.getDate() + 1); if (deadline.getDay() !== 0) left--; }

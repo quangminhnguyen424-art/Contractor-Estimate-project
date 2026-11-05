@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
-import { COST_KINDS, emptyMoney, KIND_ORDER, projectBooks, type CostEntry } from '@/engine/books';
+import { COST_KINDS, emptyMoney, KIND_ORDER, projectBooks, removeReceiptFromBuy, type CostEntry } from '@/engine/books';
 import { money, money2 } from '@/engine/format';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, H2, Muted, NumberField, Row, Screen } from '@/ui/kit';
@@ -31,7 +31,7 @@ function Bar({ value, max, over }: { value: number; max: number; over?: boolean 
 /** The job's money: what it sells for, what it has cost, the profit, the owner's money, and taxes to set aside. */
 export default function MoneyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { projects, estimates, contracts, profile, updateMoney, deletePhotosLater } = useApp();
+  const { projects, estimates, contracts, profile, updateMoney, deletePhotosLater, dropLessons } = useApp();
   const today = useToday();
   const p = projects.find((x) => x.id === id);
   if (!p) return <Screen><Muted>This job site was deleted.</Muted></Screen>;
@@ -44,7 +44,9 @@ export default function MoneyScreen() {
   const remove = (c: CostEntry) =>
     confirmAction('Delete this cost?', `${c.vendor || COST_KINDS[c.kind].en} · ${money2(c.amount)}`, 'Delete',
       () => {
-        updateMoney(p.id, (x) => ({ ...x, costs: x.costs.filter((y) => y.id !== c.id) }));
+        // Undo everything the receipt did: buy list amounts and the price lessons it taught.
+        updateMoney(p.id, (x) => ({ ...x, costs: x.costs.filter((y) => y.id !== c.id), buy: c.lines?.length ? removeReceiptFromBuy(x.buy, c.lines) : x.buy }));
+        dropLessons(c.id);
         if (c.receiptUri) deletePhotosLater([c.receiptUri]);
       });
   const markReimbursed = (c: CostEntry) =>
@@ -111,6 +113,7 @@ export default function MoneyScreen() {
         <Band title="OWNER FUNDS & SPENDABLE BALANCE" />
         <Row left="Total owner deposited" right={money2(b.funds.deposited)} sub={est ? 'Payments recorded on the contract' : undefined} />
         <Row left="Spent so far (all costs)" right={money2(b.funds.spent)} />
+        {b.funds.taxHeld > 0 ? <Row left="Sales tax inside payments (owed to the state)" right={money2(-b.funds.taxHeld)} /> : null}
         <Row left="Spendable balance left" right={money2(b.funds.spendable)} bold />
         <Row left="Status" right={statusText} bold />
       </Card>

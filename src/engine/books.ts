@@ -6,6 +6,7 @@ import { contractTotals, invoiceStates, termsOf, type Contract } from './contrac
 import type { Estimate, Profile } from './types';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
+const r4 = (n: number) => Math.round(n * 10000) / 10000;
 const sum = (xs: number[]) => r2(xs.reduce((a, b) => a + b, 0));
 
 export type CostKind = 'labor' | 'materials' | 'subs' | 'equipment';
@@ -72,7 +73,8 @@ export interface Books {
   /** Kinds over budget by more than 5%, with how much over (percent). */
   over: { kind: CostKind; pct: number; amount: number }[];
   profit: { amount: number; marginPct: number };
-  funds: { deposited: number; spent: number; spendable: number; status: FundsStatus };
+  /** spent = everything paid out (owner pay-backs included); taxHeld = sales tax inside the owner's payments. */
+  funds: { deposited: number; taxHeld: number; spent: number; spendable: number; status: FundsStatus };
   owner: { owes: number; received: number; balance: number; overdueCount: number; overdueAmount: number };
   tax: { salesPct: number; sales: number; incomePct: number; income: number; reserve: number; netAfterTax: number; netMarginPct: number };
 }
@@ -87,21 +89,31 @@ export function projectBooks(input: { est?: Estimate; profile?: Profile | null; 
   const changes = ct?.changes ?? 0;
   const price = r2(base + changes);
 
-  const costOf = (k: CostKind) => sum(money.costs.filter((c) => c.kind === k).map((c) => c.amount));
+  // Costs the owner pays back are pass-through: they don't lower the job's profit.
+  const jobCosts = money.costs.filter((c) => !c.ownerOwes);
+  const costOf = (k: CostKind) => sum(jobCosts.filter((c) => c.kind === k).map((c) => c.amount));
   const cost = { labor: costOf('labor'), materials: costOf('materials'), subs: costOf('subs'), equipment: costOf('equipment'), total: 0 };
   cost.total = sum(KIND_ORDER.map((k) => cost[k]));
 
-  const budget: Record<CostKind, number> = { labor: r2(est?.laborTotal ?? 0), materials: r2(est?.materialTotal ?? 0), subs: 0, equipment: 0 };
+  // Receipts include sales tax, so the materials budget does too.
+  const budget: Record<CostKind, number> = { labor: r2(est?.laborTotal ?? 0), materials: r2((est?.materialTotal ?? 0) * (1 + (est?.salesTaxPct ?? 0) / 100)), subs: 0, equipment: 0 };
   const over = KIND_ORDER
     .filter((k) => budget[k] > 0 && cost[k] > budget[k] * 1.05)
     .map((k) => ({ kind: k, pct: Math.round(((cost[k] - budget[k]) / budget[k]) * 100), amount: r2(cost[k] - budget[k]) }));
 
   const profitAmount = r2(price - cost.total);
 
-  const deposited = ct?.paid ?? 0;
-  const spendable = r2(deposited - cost.total);
+  // Owner money in hand: payments plus costs they paid back; the sales tax inside payments belongs to the state.
+  const reimbAll = money.costs.filter((c) => c.ownerOwes);
+  const paidBack = sum(reimbAll.filter((c) => c.ownerOwes?.paidOn).map((c) => c.amount));
+  const salesPctForCash = money.salesTaxPct ?? est?.salesTaxPct ?? 0;
+  const paid = ct?.paid ?? 0;
+  const deposited = r2(paid + paidBack);
+  const taxHeld = r2((paid * salesPctForCash) / (100 + salesPctForCash));
+  const spentAll = sum(money.costs.map((c) => c.amount));
+  const spendable = r2(deposited - taxHeld - spentAll);
   const leftToSpend = Math.max(0, (est?.cost ?? 0) - cost.total);
-  const status: FundsStatus = deposited === 0 && cost.total === 0 ? 'none'
+  const status: FundsStatus = deposited === 0 && spentAll === 0 ? 'none'
     : spendable < 0 ? 'request'
     : leftToSpend > 0 && spendable < leftToSpend * 0.15 ? 'low' : 'ok';
 
@@ -132,7 +144,7 @@ export function projectBooks(input: { est?: Estimate; profile?: Profile | null; 
     contract: { base: r2(base), changes: r2(changes), price },
     cost, budget, over,
     profit: { amount: profitAmount, marginPct: pct(profitAmount, price) },
-    funds: { deposited: r2(deposited), spent: cost.total, spendable, status },
+    funds: { deposited, taxHeld, spent: spentAll, spendable, status },
     owner: { owes, received, balance, overdueCount, overdueAmount: r2(overdueAmount) },
     tax: { salesPct, sales, incomePct: money.incomeTaxPct, income, reserve: r2(sales + income), netAfterTax, netMarginPct: pct(netAfterTax, price) },
   };
@@ -247,17 +259,22 @@ export interface PriceLesson {
   paid: number;
   vendor: string;
   projectId: string;
+  /** The cost (receipt) it came from, so deleting the receipt removes the lesson. */
+  costId?: string;
 }
 
 /** One lesson per receipt line that matched a buy item whose quantities can be compared. */
-export function lessonsFromReceipt(lines: ReceiptLine[], buy: BuyItem[], meta: { at: string; vendor: string; projectId: string }, newId: () => string): PriceLesson[] {
+export function lessonsFromReceipt(lines: ReceiptLine[], buy: BuyItem[], meta: { at: string; vendor: string; projectId: string; costId?: string }, newId: () => string): PriceLesson[] {
   const out: PriceLesson[] = [];
   for (const l of lines) {
     const b = buy.find((x) => x.id === l.buyId);
     if (!b || !(b.qty > 0) || !(l.qty > 0) || !(b.estCost > 0) || !(l.total > 0)) continue;
     const sameUnit = !l.unit || !b.unit || l.unit.toLowerCase().replace(/s$/, '') === b.unit.toLowerCase().replace(/s$/, '');
     if (!sameUnit) continue;
-    out.push({ id: newId(), at: meta.at, item: b.name, unit: b.unit, quoted: r2(b.estCost / b.qty), paid: r2(l.total / l.qty), vendor: meta.vendor, projectId: meta.projectId });
+    const quoted = r4(b.estCost / b.qty);
+    const paid = r4(l.total / l.qty);
+    if (!(quoted > 0) || !(paid > 0)) continue;
+    out.push({ id: newId(), at: meta.at, item: b.name, unit: b.unit, quoted, paid, vendor: meta.vendor, projectId: meta.projectId, ...(meta.costId ? { costId: meta.costId } : {}) });
   }
   return out;
 }
@@ -271,8 +288,9 @@ export function priceDrift(lessons: PriceLesson[], minPct = 5): Drift[] {
   const out: Drift[] = [];
   for (const ls of byItem.values()) {
     const recent = [...ls].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 3);
-    const paid = r2(recent.reduce((t, l) => t + l.paid, 0) / recent.length);
+    const paid = r4(recent.reduce((t, l) => t + l.paid, 0) / recent.length);
     const quoted = recent[0].quoted;
+    if (!(quoted > 0)) continue;
     const changePct = Math.round(((paid - quoted) / quoted) * 100);
     if (Math.abs(changePct) >= minPct) out.push({ item: recent[0].item, unit: recent[0].unit, quoted, paid, changePct, receipts: recent.length });
   }
@@ -285,4 +303,14 @@ export function lessonsContext(lessons: PriceLesson[]): string {
   if (!d.length) return '';
   return `What this contractor actually paid on recent receipts (use these material prices when they apply): ${d
     .map((x) => `${x.item} $${x.paid}/${x.unit || 'unit'} (estimates used $${x.quoted}, ${x.changePct > 0 ? '+' : ''}${x.changePct}%)`).join('; ')}.`;
+}
+
+/** Undoes a deleted receipt on the buy list: takes its amounts back off, unticking items it alone had ticked. */
+export function removeReceiptFromBuy(buy: BuyItem[], lines: ReceiptLine[]): BuyItem[] {
+  return buy.map((b) => {
+    const paid = sum(lines.filter((l) => l.buyId === b.id).map((l) => l.total));
+    if (!(paid > 0)) return b;
+    const left = r2((b.spent ?? 0) - paid);
+    return left > 0 ? { ...b, spent: left } : { ...b, spent: undefined, bought: false };
+  });
 }

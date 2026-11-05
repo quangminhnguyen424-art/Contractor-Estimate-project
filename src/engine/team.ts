@@ -36,6 +36,8 @@ export interface Attendance {
   note?: string;
   /** The labor cost added to the job for this day, so it is never added twice. */
   costId?: string;
+  /** The booking made on the new date, so a mistaken reschedule can be undone. */
+  movedEventId?: string;
 }
 
 export const newMember = (id: string): TeamMember => ({ id, name: '', role: 'crew', trade: '', phone: '', rate: 0, rateUnit: 'day', lang: 'en', active: true });

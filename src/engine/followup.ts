@@ -42,6 +42,7 @@ export function planProblems(p: FollowUpPlan): string[] {
   if (p.channels.includes('text') && !PHONE.test(p.phone.trim())) out.push('Add the client’s mobile number.');
   if (p.channels.includes('email') && !EMAIL.test(p.email.trim())) out.push('Add the client’s email.');
   if (!p.days.length) out.push('Set when to follow up (required).');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(p.startDate) || Number.isNaN(Date.parse(`${p.startDate}T12:00:00`))) out.push('Enter the date the quote was sent as YYYY-MM-DD.');
   if (p.days.some((d) => !Number.isInteger(d) || d < 1 || d > 60)) out.push('Each follow-up day must be between 1 and 60.');
   return out;
 }

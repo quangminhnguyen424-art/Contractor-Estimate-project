@@ -16,7 +16,7 @@ import { Tick } from '@/ui/tick';
 export default function TermsScreen() {
   const { termsOk, acceptTerms, consent, setAiSharing, profile } = useApp();
   const [lang, setLang] = useState<'en' | 'vi'>('en');
-  const [ticked, setTicked] = useState<Record<string, boolean>>(() => (termsOk ? { 'ai-share': consent?.ai === true } : ({} as Record<string, boolean>)));
+  const [ticked, setTicked] = useState<Record<string, boolean>>(() => ({ 'ai-share': consent?.ai === true }));
   const [full, setFull] = useState(false);
   const missing = missingRequired(ticked);
 

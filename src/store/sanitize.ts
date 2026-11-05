@@ -513,6 +513,7 @@ function sanitizeAttend(v: Record<string, unknown>): Record<string, Attendance> 
       ...(YMD.test(str(a.movedTo)) ? { movedTo: str(a.movedTo) } : {}),
       ...(typeof a.note === 'string' ? { note: a.note.slice(0, 300) } : {}),
       ...(typeof a.costId === 'string' ? { costId: a.costId } : {}),
+      ...(typeof a.movedEventId === 'string' ? { movedEventId: a.movedEventId } : {}),
     };
   }
   return out;
@@ -534,7 +535,8 @@ function sanitizeTeam(v: unknown[]): TeamMember[] {
 function sanitizeFollowups(v: unknown[]): FollowUpPlan[] {
   const seen = new Set<string>();
   return v.flatMap((p): FollowUpPlan[] => {
-    if (!isObj(p) || typeof p.estimateId !== 'string' || seen.has(p.estimateId) || !YMD.test(str(p.startDate))) return [];
+    // A bad start date never drops the plan: a "no" or STOP must be remembered.
+    if (!isObj(p) || typeof p.estimateId !== 'string' || seen.has(p.estimateId)) return [];
     seen.add(p.estimateId);
     const consent = p.consent === 'agreed' || p.consent === 'declined' ? p.consent : 'not-asked';
     const hows = ['in person', 'phone call', 'text', 'email', 'signing page'];
@@ -545,7 +547,7 @@ function sanitizeFollowups(v: unknown[]): FollowUpPlan[] {
       phone: str(p.phone).slice(0, 30), email: str(p.email).slice(0, 120),
       channels: (Array.isArray(p.channels) ? p.channels : []).filter((c): c is 'text' | 'email' => c === 'text' || c === 'email').slice(0, 2),
       days: (Array.isArray(p.days) ? p.days : []).filter((d): d is number => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 60).slice(0, 6),
-      startDate: str(p.startDate),
+      startDate: YMD.test(str(p.startDate)) ? str(p.startDate) : str(p.consentAt).slice(0, 10).match(YMD) ? str(p.consentAt).slice(0, 10) : '2026-01-01',
       sent: (Array.isArray(p.sent) ? p.sent : []).flatMap((x) => (isObj(x) && Number.isInteger(x.day) ? [{ day: x.day as number, at: str(x.at), channel: x.channel === 'email' ? 'email' as const : 'text' as const }] : [])).slice(0, 20),
       ...(isObj(p.stopped) && reasons.includes(str(p.stopped.reason)) ? { stopped: { at: str(p.stopped.at), reason: str(p.stopped.reason) as NonNullable<FollowUpPlan['stopped']>['reason'] } } : {}),
       ...(typeof p.confirmedBoth === 'string' ? { confirmedBoth: p.confirmedBoth.slice(0, 40) } : {}),
@@ -555,6 +557,6 @@ function sanitizeFollowups(v: unknown[]): FollowUpPlan[] {
 
 function sanitizeLessons(v: unknown[]): PriceLesson[] {
   return v.flatMap((l): PriceLesson[] => (isObj(l) && typeof l.id === 'string' && typeof l.item === 'string' && finite(l.quoted) > 0 && finite(l.paid) > 0
-    ? [{ id: l.id, at: str(l.at).slice(0, 10), item: l.item.slice(0, 100), unit: str(l.unit).slice(0, 12), quoted: cents(l.quoted), paid: cents(l.paid), vendor: str(l.vendor).slice(0, 60), projectId: str(l.projectId) }]
+    ? [{ id: l.id, at: str(l.at).slice(0, 10), item: l.item.slice(0, 100), unit: str(l.unit).slice(0, 12), quoted: Math.round(finite(l.quoted) * 1e4) / 1e4, paid: Math.round(finite(l.paid) * 1e4) / 1e4, vendor: str(l.vendor).slice(0, 60), projectId: str(l.projectId), ...(typeof l.costId === 'string' ? { costId: l.costId } : {}) }]
     : [])).slice(-3000);
 }
