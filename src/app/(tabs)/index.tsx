@@ -6,6 +6,7 @@ import { Text, TextInput } from '@/ui/text';
 import { assistantSystem, parseAssistantReply } from '@/engine/assistant';
 import type { ChatTurn } from '@/engine/ai';
 import { newId } from '@/engine/format';
+import { useCloud } from '@/cloud/CloudProvider';
 import { useApp } from '@/store/AppContext';
 import { useChat, type ChatMessage } from '@/store/chat';
 import { aiFor, inClaudeApp } from '@/ui/host';
@@ -29,7 +30,8 @@ export default function Assistant() {
   const sendRef = useRef<(raw: string, spoken?: boolean) => void>(() => {});
   const scrollRef = useRef<ScrollViewInstance>(null);
   const canListen = voiceInputAvailable();
-  const claudeOn = aiAllowed && (inClaudeApp || !!apiKey);
+  const cloud = useCloud();
+  const claudeOn = aiAllowed && (inClaudeApp || !!apiKey || !!cloud.user);
 
   useEffect(() => () => { stopRef.current?.stop(); stopSpeaking(); }, []);
 

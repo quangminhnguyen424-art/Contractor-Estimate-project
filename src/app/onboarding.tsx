@@ -1,3 +1,5 @@
+import { cloudConfigured } from '@/cloud/config';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,6 +52,8 @@ export default function Onboarding() {
       license: license.trim(), specialties: [...specialties, 'small'], markupPct, minMarkupPct, salesTaxPct,
       quoteValidDays: 30, quoteLanguage: 'en', schedule: DEFAULT_SCHEDULE, about: about.trim(), work,
     });
+    // Next: the free account (it turns on the AI). It can be skipped.
+    if (cloudConfigured) setTimeout(() => router.push('/account?welcome=1'), 350);
   };
 
   if (intro) return <IntroVideo onDone={() => setIntro(false)} />;

@@ -1,12 +1,13 @@
 import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Linking, Platform, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
 import { KINDS, timeLabel, upcoming } from '@/engine/schedule';
 import { projectProgress, type SitePhoto } from '@/engine/site';
+import { useCloud } from '@/cloud/CloudProvider';
 import { useApp } from '@/store/AppContext';
 
 import { Art } from './art';
@@ -257,31 +258,33 @@ function Money({ label, value, sub, tone, onPress }: { label: string; value: num
   );
 }
 
-/** Shown until Claude is connected: three steps to get a key, with buttons that open the right places. */
+/** Shown until the AI is on: create a free Bidwell account (no key needed), or use your own Claude key. */
 function ConnectClaude() {
+  const { aiAllowed } = useApp();
+  const cloud = useCloud();
+  if (!aiAllowed) {
+    return (
+      <Reveal index={1}>
+        <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
+          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>AI is turned off</Text>
+          <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>You chose not to send job notes and photos to the AI. Turn it on in Settings to get estimates drafted for you.</Text>
+          <Button kind="secondary" title="Open Settings" icon="settings-outline" onPress={() => router.push('/settings')} />
+        </Card>
+      </Reveal>
+    );
+  }
   return (
     <Reveal index={1}>
       <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Ionicons name="sparkles" size={22} color={C.accent} />
-          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800', flex: 1 }}>Turn on Bidwell AI (about 5 minutes)</Text>
+          <Ionicons name="person-circle" size={26} color={C.accent} />
+          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700', flex: 1 }}>Create your free Bidwell account</Text>
         </View>
         <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>
-          Bidwell AI runs on Anthropic’s Claude. The assistant, photo reading and auto-filled estimates need your own Claude API key. Each question costs a few cents.
+          One minute, just an email and password. It turns on the AI (no key needed), backs up your jobs and photos, and lets clients sign quotes from a link.
         </Text>
-        {['Sign up at console.anthropic.com and add $10 credit (set a monthly limit).', 'Create an API key and copy it.', 'Paste it in Settings → Bidwell AI and tap Save and test.'].map((t, i) => (
-          <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: C.onAccent, fontWeight: '800', fontSize: 12 }}>{i + 1}</Text>
-            </View>
-            <Text style={{ color: C.ink, flex: 1, fontSize: 14, lineHeight: 20 }}>{t}</Text>
-          </View>
-        ))}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button kind="secondary" title="Get a key" icon="open-outline" style={{ flex: 1 }}
-            onPress={() => (Platform.OS === 'web' ? window.open('https://console.anthropic.com/settings/keys', '_blank') : Linking.openURL('https://console.anthropic.com/settings/keys'))} />
-          <Button title="Paste key" icon="key-outline" style={{ flex: 1 }} onPress={() => router.push('/settings')} />
-        </View>
+        {cloud.configured ? <Button title="Create account" icon="person-add-outline" onPress={() => router.push('/account')} /> : null}
+        <Button kind="secondary" title="I have my own Claude API key" icon="key-outline" onPress={() => router.push('/settings')} />
       </Card>
     </Reveal>
   );

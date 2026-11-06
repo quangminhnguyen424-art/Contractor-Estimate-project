@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { useCloud } from '@/cloud/CloudProvider';
@@ -9,6 +10,9 @@ import { Text } from '@/ui/text';
 /** Bidwell cloud: sign in so data and photos are backed up, the AI works without a key, and clients can sign online. */
 export default function AccountScreen() {
   const cloud = useCloud();
+  const welcome = useLocalSearchParams<{ welcome?: string }>().welcome === '1';
+  // After setup: once the account is made, go straight to the app.
+  useEffect(() => { if (welcome && cloud.user) router.back(); }, [welcome, cloud.user]);
   const [mode, setMode] = useState<'in' | 'up'>('up');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,8 +69,8 @@ export default function AccountScreen() {
   return (
     <Screen footer={<Button title={busy ? 'One moment…' : mode === 'in' ? 'Sign in' : 'Create account'} icon="checkmark" disabled={busy || !/\S+@\S+\.\S+/.test(email) || password.length < 8} onPress={go} />}>
       <View style={{ gap: 4 }}>
-        <Text style={{ color: C.ink, fontSize: 24, fontWeight: '800' }}>Bidwell cloud</Text>
-        <Muted>Back up your work, use the AI without a key, and let clients sign online.</Muted>
+        <Text style={{ color: C.ink, fontSize: 24, fontWeight: '700' }}>{welcome ? 'Last step: your free account' : 'Bidwell cloud'}</Text>
+        <Muted>Turns on the AI with no key, backs up your jobs and photos, and lets clients sign online. Free.</Muted>
       </View>
       <Segmented options={[{ value: 'up', label: 'New account' }, { value: 'in', label: 'Sign in' }]} value={mode} onChange={setMode} />
       <Card>
@@ -75,6 +79,8 @@ export default function AccountScreen() {
           autoComplete={mode === 'up' ? 'new-password' : 'current-password'} textContentType={mode === 'up' ? 'newPassword' : 'password'} maxLength={72} />
         {msg ? <Banner tone={msg.tone} title={msg.text} /> : null}
       </Card>
+      {welcome ? <Button kind="secondary" title="Skip for now" onPress={() => router.back()} /> : null}
+      {welcome ? <Muted style={{ fontSize: 12 }}>You can make the account later in Settings. Without it, the AI needs your own Claude API key.</Muted> : null}
       <Muted style={{ fontSize: 12 }}>By creating an account you agree to the Terms of Use and Privacy Policy you accepted in the app. You can delete your account here at any time.</Muted>
     </Screen>
   );
