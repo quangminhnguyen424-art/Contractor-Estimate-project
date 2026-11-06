@@ -6,12 +6,13 @@ import { SvgXml } from 'react-native-svg';
 import { Text } from '@/ui/text';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
-import { estimateJob, FINISH_LABELS } from '@/engine/jobTypes';
+import { FINISH_LABELS } from '@/engine/jobTypes';
 import { acceptedBlock, changedSinceSigned } from '@/engine/contract';
-import { QUOTE_TEXT, quoteHtml, quoteSections, scheduleAmounts } from '@/engine/quote';
-import type { Lang } from '@/engine/types';
+import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, scheduleAmounts } from '@/engine/quote';
+import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, Muted, P, Screen, Segmented, mono } from '@/ui/kit';
+import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
+import { confirmAction } from '@/ui/notify';
 import { notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 
@@ -21,15 +22,17 @@ export default function QuoteScreen() {
   const est = estimates.find((e) => e.id === id);
   const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const { width } = useWindowDimensions();
   const planWidth = Math.min(width, 760) - 80;
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
 
   const T = QUOTE_TEXT[lang];
-  const jt = estimateJob(est);
   const sections = quoteSections(est, lang);
   const sched = scheduleAmounts(est, profile);
-  const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;
+  const wd = quoteWording(est, profile, lang);
+  const excl = wd.exclusions;
+  const isSigned = contracts.some((c) => c.estimateId === est.id && c.accepted);
   const blocking = est.checks.filter((c) => c.level === 'warn');
 
   const send = async () => {
@@ -52,14 +55,21 @@ export default function QuoteScreen() {
   };
 
   return (
-    <Screen footer={
+    <Screen footer={editing ? <Button title="Done editing" icon="checkmark" onPress={() => setEditing(false)} /> : (
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Button kind="secondary" title={contracts.some((c) => c.estimateId === est.id && c.accepted) ? 'Signed ✓' : 'Client signs'} icon="create-outline" style={{ flex: 1 }}
           onPress={() => router.push(`/estimate/${est.id}/sign`)} />
         <Button title={busy ? 'Creating…' : 'Share PDF'} icon="share-outline" disabled={busy} style={{ flex: 1 }} onPress={send} />
       </View>
-    }>
+    )}>
       <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+      {editing ? (
+        <QuoteEditor key={lang} est={est} lang={lang} profile={profile} signed={isSigned}
+          onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.back()} />
+      ) : (
+        <Button kind="secondary" icon="create-outline" title={est.quoteEdits ? 'Edit the quote (edited)' : 'Edit the quote before sending'} onPress={() => setEditing(true)} />
+      )}
+      {editing ? null : <>
       {blocking.length > 0 ? (
         <Banner tone="warn" title={`${blocking.length} item${blocking.length > 1 ? 's' : ''} to review before sending`}>
           {blocking.map((b) => b.title).join(' · ')}
@@ -78,7 +88,7 @@ export default function QuoteScreen() {
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ fontSize: 15, fontWeight: '700', color: P.ink }}>{T.quote}</Text>
             <Text style={{ fontSize: 12, color: P.muted }}>{dateFmt(est.updatedAt, lang)}</Text>
-            <Text style={{ fontSize: 12, color: P.muted }}>{T.validFor} {profile.quoteValidDays} {T.days}</Text>
+            <Text style={{ fontSize: 12, color: P.muted }}>{T.validFor} {wd.validDays} {T.days}</Text>
           </View>
         </View>
 
@@ -89,7 +99,7 @@ export default function QuoteScreen() {
         <View style={{ gap: 2 }}>
           <Text style={{ fontSize: 15, fontWeight: '700', color: P.ink }}>{est.title}</Text>
           <Text style={{ fontSize: 13, color: P.ink2 }}>{T.finish}: {FINISH_LABELS[est.finish][lang]}</Text>
-          {est.scopeNote ? <Text style={{ fontSize: 13, color: P.ink2, lineHeight: 19 }}>{est.scopeNote}</Text> : null}
+          {wd.scopeNote.trim() ? <Text style={{ fontSize: 13, color: P.ink2, lineHeight: 19 }}>{wd.scopeNote}</Text> : null}
         </View>
 
         <View>
@@ -97,7 +107,7 @@ export default function QuoteScreen() {
             <View key={s.trade} style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: P.line, gap: 2 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                 <Text style={{ fontWeight: '600', color: P.ink, flex: 1 }}>{s.title}</Text>
-                <Text style={{ fontFamily: mono, color: P.ink }}>{money(s.price)}</Text>
+                {wd.byTotal ? null : <Text style={{ fontFamily: mono, color: P.ink }}>{money(s.price)}</Text>}
               </View>
               {s.items.map((i, k) => <Text key={k} style={{ fontSize: 12, color: P.muted }}>• {i}</Text>)}
             </View>
@@ -119,12 +129,19 @@ export default function QuoteScreen() {
           <Text style={{ fontWeight: '700', color: P.ink }}>{T.notIncluded}</Text>
           {excl.map((e, k) => <Text key={k} style={{ fontSize: 12, color: P.ink2 }}>• {e}</Text>)}
         </View>
+        {wd.notes ? (
+          <View style={{ gap: 2 }}>
+            <Text style={{ fontWeight: '700', color: P.ink }}>{lang === 'vi' ? 'Ghi chú' : 'Notes'}</Text>
+            <Text style={{ fontSize: 12, color: P.ink2, lineHeight: 18 }}>{wd.notes}</Text>
+          </View>
+        ) : null}
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: P.ink }}>{T.schedule}</Text>
           {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
         </View>
       </View>
       <Muted style={{ fontSize: 13 }}>Sharing marks the estimate as Sent. The PDF also includes terms and signature lines.</Muted>
+      </>}
     </Screen>
   );
 }
@@ -134,6 +151,91 @@ function Line({ l, r, big }: { l: string; r: string; big?: boolean }) {
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
       <Text style={{ color: P.ink, fontSize: big ? 16 : 13, fontWeight: big ? '700' : '400', flex: 1 }}>{l}</Text>
       <Text style={{ color: P.ink, fontFamily: mono, fontSize: big ? 16 : 13, fontWeight: big ? '700' : '400' }}>{r}</Text>
+    </View>
+  );
+}
+
+const lines = (t: string) => t.split('\n').map((x) => x.replace(/^\s*[•\-*]\s*/, '').trim()).filter(Boolean);
+
+/** The contractor's editor: wording per section, scope note, what's not included, notes, valid days and how prices show.
+ *  Prices themselves come from the estimate (markup and your items), so the total always matches the job's numbers. */
+function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
+  est: Estimate; lang: Lang; profile: Profile; signed: boolean;
+  onSave: (q: QuoteEdits | null) => void; onPrice: () => void;
+}) {
+  const base = baseSections(est, lang);
+  const shown = quoteSections(est, lang);
+  const wd = quoteWording(est, profile, lang);
+  const validDefault = profile.quoteValidDays;
+  const [w, setW] = useState<QuoteWording>(() => est.quoteEdits?.[lang] ?? {});
+  const [secText, setSecText] = useState<Record<string, { title: string; items: string }>>(() =>
+    Object.fromEntries(shown.map((s) => [s.trade, { title: s.title, items: s.items.join('\n') }])));
+  const [days, setDays] = useState(wd.validDays);
+  const [byTotal, setByTotal] = useState(wd.byTotal);
+
+  const save = (next: { w?: QuoteWording; sec?: typeof secText; days?: number; byTotal?: boolean }) => {
+    const sec = next.sec ?? secText;
+    const sections: NonNullable<QuoteWording['sections']> = {};
+    for (const b of base) {
+      const t = sec[b.trade];
+      if (!t) continue;
+      const items = lines(t.items);
+      const sameTitle = t.title.trim() === b.title;
+      const sameItems = items.join('\n') === b.items.join('\n');
+      if (!sameTitle || !sameItems) sections[b.trade] = { title: sameTitle ? undefined : t.title.trim(), items: sameItems ? undefined : items };
+    }
+    const wording: QuoteWording = { ...(next.w ?? w), sections };
+    const d = next.days ?? days;
+    const bt = next.byTotal ?? byTotal;
+    const q: QuoteEdits = { ...est.quoteEdits, [lang]: wording, validDays: d === validDefault ? undefined : d, prices: bt ? 'total' : 'sections' };
+    onSave(q);
+  };
+  const setWord = (patch: Partial<QuoteWording>) => { const n = { ...w, ...patch }; setW(n); save({ w: n }); };
+
+  return (
+    <View style={{ gap: 12 }}>
+      {signed ? <Banner tone="info" title="The client already signed. The signed copy stays as signed; edits change only new copies." /> : null}
+      <Muted style={{ fontSize: 13 }}>Editing the {lang === 'vi' ? 'Vietnamese' : 'English'} quote. Changes save as you type. Prices come from the estimate.</Muted>
+      <Card>
+        <H2>Scope of work</H2>
+        <Field label="Scope summary (shown under the title)" value={w.scopeNote ?? est.scopeNote ?? ''} multiline
+          onChangeText={(v) => setWord({ scopeNote: v })} />
+        {shown.map((s) => {
+          const t = secText[s.trade] ?? { title: s.title, items: s.items.join('\n') };
+          const upd = (patch: Partial<typeof t>) => { const n = { ...secText, [s.trade]: { ...t, ...patch } }; setSecText(n); save({ sec: n }); };
+          return (
+            <View key={s.trade} style={{ gap: 8, borderTopWidth: 1, borderColor: C.lineSoft, paddingTop: 10 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Muted style={{ fontSize: 12 }}>Section</Muted>
+                <Text style={{ color: C.ink2, fontFamily: mono, fontSize: 13 }}>{money(s.price)}</Text>
+              </View>
+              <Field label="Heading" value={t.title} onChangeText={(v) => upd({ title: v })} maxLength={120} />
+              <Field label="What's included (one line each)" value={t.items} onChangeText={(v) => upd({ items: v })} multiline />
+            </View>
+          );
+        })}
+      </Card>
+      <Card>
+        <H2>Not included</H2>
+        <Field label="One line each" multiline value={(w.exclusions ?? wd.exclusions).join('\n')}
+          onChangeText={(v) => setWord({ exclusions: v.split('\n') })} />
+      </Card>
+      <Card>
+        <H2>Notes for the client</H2>
+        <Field label="Optional: allowances, timing, access, cleanup…" multiline value={w.notes ?? ''} onChangeText={(v) => setWord({ notes: v })} />
+      </Card>
+      <Card>
+        <H2>Prices and dates</H2>
+        <Segmented<'sections' | 'total'> value={byTotal ? 'total' : 'sections'}
+          onChange={(v) => { setByTotal(v === 'total'); save({ byTotal: v === 'total' }); }}
+          options={[{ value: 'sections', label: 'Price per section' }, { value: 'total', label: 'One total only' }]} />
+        <NumberField label="Quote valid for" suffix="days" decimals={false} value={days} onChange={(v) => { setDays(v); save({ days: v }); }} />
+        <Button kind="secondary" icon="calculator-outline" title="Change the price (markup or your items)" onPress={onPrice} />
+      </Card>
+      {est.quoteEdits ? (
+        <Button kind="secondary" icon="refresh-outline" title="Undo all edits"
+          onPress={() => confirmAction('Undo all edits?', 'The quote goes back to the wording Bidwell wrote, in both languages.', 'Undo', () => onSave(null))} />
+      ) : null}
     </View>
   );
 }

@@ -9,7 +9,7 @@ import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, 
 import { HOOK_EVENTS, NO_CONNECTIONS, validHookUrl, type Connections } from '../engine/connect';
 import type { CalEvent, EventKind } from '../engine/schedule';
 import type { DailyLog, MarkupShape, SitePhoto, SiteProject, SiteRoom, SiteTask } from '../engine/site';
-import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, WorkProfile } from '../engine/types';
+import type { CustomJobType, Estimate, ExtraLine, JobTypeId, PastJob, PaymentMilestone, PlanRoom, Presets, PriceBook, PriceUnit, Profile, Question, QuoteEdits, QuoteWording, WorkProfile } from '../engine/types';
 
 export interface Persisted {
   profile: Profile | null;
@@ -292,6 +292,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     description: str(e.description), scopeNote: str(e.scopeNote),
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
+    quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
     plan: sanitizePlan(e.plan),
     job: isObj(e.job) && typeof e.job.name === 'string' && UNITS.includes(e.job.unit)
       ? { name: e.job.name, vi: str(e.job.vi, e.job.name), unit: e.job.unit,
@@ -563,4 +564,28 @@ function sanitizeLessons(v: unknown[]): PriceLesson[] {
   return v.flatMap((l): PriceLesson[] => (isObj(l) && typeof l.id === 'string' && typeof l.item === 'string' && finite(l.quoted) > 0 && finite(l.paid) > 0
     ? [{ id: l.id, at: str(l.at).slice(0, 10), item: l.item.slice(0, 100), unit: str(l.unit).slice(0, 12), quoted: Math.round(finite(l.quoted) * 1e4) / 1e4, paid: Math.round(finite(l.paid) * 1e4) / 1e4, vendor: str(l.vendor).slice(0, 60), projectId: str(l.projectId), ...(typeof l.costId === 'string' ? { costId: l.costId } : {}) }]
     : [])).slice(-3000);
+}
+
+const strList = (v: unknown, max: number) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, max).map((x) => x.slice(0, 500)) : undefined);
+function sanitizeWording(v: unknown): QuoteWording | undefined {
+  if (!isObj(v)) return undefined;
+  const sections: NonNullable<QuoteWording['sections']> = {};
+  if (isObj(v.sections)) {
+    for (const [k, x] of Object.entries(v.sections).slice(0, 40)) {
+      if (!isObj(x)) continue;
+      sections[k.slice(0, 40)] = { title: typeof x.title === 'string' ? x.title.slice(0, 120) : undefined, items: strList(x.items, 60) };
+    }
+  }
+  return {
+    sections,
+    scopeNote: typeof v.scopeNote === 'string' ? v.scopeNote.slice(0, 4000) : undefined,
+    exclusions: strList(v.exclusions, 40),
+    notes: typeof v.notes === 'string' ? v.notes.slice(0, 4000) : undefined,
+  };
+}
+/** The contractor's quote wording: kept only in a safe shape. */
+export function sanitizeQuoteEdits(v: unknown): QuoteEdits | undefined {
+  if (!isObj(v)) return undefined;
+  const days = typeof v.validDays === 'number' && Number.isFinite(v.validDays) ? Math.min(365, Math.max(1, Math.round(v.validDays))) : undefined;
+  return { en: sanitizeWording(v.en), vi: sanitizeWording(v.vi), validDays: days, prices: v.prices === 'total' ? 'total' : 'sections' };
 }

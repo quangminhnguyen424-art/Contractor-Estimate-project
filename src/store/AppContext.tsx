@@ -20,7 +20,7 @@ import { postHook } from '@/ui/webhook';
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
-  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, PastJob, PlanRoom, Presets, PriceBook, Profile,
+  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, QuoteEdits, JobTypeId, PastJob, PlanRoom, Presets, PriceBook, Profile,
   Question, ScopeItem,
 } from '@/engine/types';
 
@@ -116,7 +116,7 @@ interface Ctx extends Persisted {
   deletePhotosLater: (uris: string[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
-  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number }) => void;
+  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null }) => void;
   deleteEstimate: (id: string) => void;
   resetAll: () => void;
   apiKey: string;
@@ -411,6 +411,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const estimates = d.estimates.map((e) => {
             if (e.id !== id) return e;
             let next = { ...e, status: patch.status ?? e.status };
+            if (patch.quoteEdits !== undefined) {
+              const { quoteEdits: _old, ...rest } = next;
+              next = patch.quoteEdits ? { ...rest, quoteEdits: patch.quoteEdits, updatedAt: new Date().toISOString() } : { ...rest, updatedAt: new Date().toISOString() };
+            }
             if (patch.markupPct != null && patch.markupPct !== e.markupPct && d.profile) {
               // Re-price markup only; saved costs and tax rate stay as quoted.
               next = { ...applyMarkup(next, patch.markupPct, d.profile.minMarkupPct), updatedAt: new Date().toISOString() };

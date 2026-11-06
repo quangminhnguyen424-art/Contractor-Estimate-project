@@ -41,6 +41,31 @@ export interface QuoteSection {
 
 /** Client-facing sections: trade totals with markup built in. Never shows cost, labor or markup. */
 export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
+  const w = est.quoteEdits?.[lang]?.sections;
+  return baseSections(est, lang).map((s) => {
+    const e = w?.[s.trade];
+    if (!e) return s;
+    const items = e.items?.map((i) => i.trim()).filter(Boolean);
+    return { ...s, title: e.title?.trim() || s.title, items: items ?? s.items };
+  });
+}
+
+/** What the contractor wrote, else the estimate's own wording. */
+export function quoteWording(est: Estimate, profile: Profile, lang: Lang) {
+  const w = est.quoteEdits?.[lang];
+  const jt = estimateJob(est);
+  const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;
+  return {
+    scopeNote: w?.scopeNote ?? est.scopeNote ?? '',
+    exclusions: w?.exclusions ? w.exclusions.map((x) => x.trim()).filter(Boolean) : excl,
+    notes: w?.notes?.trim() ?? '',
+    validDays: est.quoteEdits?.validDays ?? profile.quoteValidDays,
+    byTotal: est.quoteEdits?.prices === 'total',
+  };
+}
+
+/** The sections exactly as the estimate made them (before the contractor's wording). */
+export function baseSections(est: Estimate, lang: Lang): QuoteSection[] {
   const extras = est.extras ?? [];
   const extrasTotal = extras.reduce((t, x) => t + x.price, 0);
   const extraSection: QuoteSection[] = extras.length
@@ -83,10 +108,10 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /** `accepted` is the client's signature block when they signed in the app (see contract.ts). */
 export function quoteHtml(est: Estimate, profile: Profile, lang: Lang, accepted?: string, saleDate: Date = new Date()): string {
   const T = QUOTE_TEXT[lang];
-  const jt = estimateJob(est);
   const sections = quoteSections(est, lang);
   const sched = scheduleAmounts(est, profile);
-  const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;
+  const wd = quoteWording(est, profile, lang);
+  const excl = wd.exclusions;
   const quoteNo = est.id.slice(-6).toUpperCase();
   const row = (l: string, r: string, cls = '') => `<tr class="${cls}"><td>${l}</td><td class="r">${r}</td></tr>`;
 
@@ -104,12 +129,12 @@ ul{margin:2px 0 6px 16px;padding:0;color:#3F444A}.tot td{font-size:15px;font-wei
 <div class="muted">${esc(profile.contactName)} · ${esc(profile.phone)} · ${esc(profile.email)}</div>
 ${profile.license ? `<div class="muted">${T.registration} ${esc(profile.license)}</div>` : ''}</div>
 <div class="r"><div style="font-size:18px;font-weight:700">${T.quote}</div><div>${T.quoteNo} ${quoteNo}</div>
-<div>${dateFmt(est.updatedAt, lang)}</div><div class="muted">${T.validFor} ${profile.quoteValidDays} ${T.days}</div></div></div>
+<div>${dateFmt(est.updatedAt, lang)}</div><div class="muted">${T.validFor} ${wd.validDays} ${T.days}</div></div></div>
 <h2>${T.preparedFor}</h2><div><b>${esc(est.clientName || '—')}</b>${est.address ? ` · ${esc(est.address)}` : ''}</div>
 <h2>${T.project}</h2><div><b>${esc(est.title)}</b> · ${T.finish}: ${FINISH_LABELS[est.finish][lang]}</div>
-${est.scopeNote?.trim() ? `<div class="muted">${esc(est.scopeNote).replace(/\n/g, '<br>')}</div>` : ''}
+${wd.scopeNote.trim() ? `<div class="muted">${esc(wd.scopeNote).replace(/\n/g, '<br>')}</div>` : ''}
 <h2>${T.scope}</h2><table>
-${sections.map((s) => `<tr class="sec"><td>${esc(s.title)}<ul>${s.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></td><td class="r">${money(s.price)}</td></tr>`).join('')}
+${sections.map((s) => `<tr class="sec"><td>${esc(s.title)}<ul>${s.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></td><td class="r">${wd.byTotal ? '' : money(s.price)}</td></tr>`).join('')}
 ${row(T.subtotal, money(est.price))}
 ${row(`${T.tax} (${est.salesTaxPct}%)`, money(est.tax))}
 ${row(T.total, money(est.total), 'tot')}
@@ -118,6 +143,7 @@ ${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${plan
 <h2>${T.notIncluded}</h2><ul>${excl.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
 <h2>${T.schedule}</h2><table>${sched.map((s) => row(`${esc(s.label)} (${s.pct}%)`, money(s.amount))).join('')}</table>
 <div class="muted">${lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</div>
+${wd.notes ? `<h2>${lang === 'vi' ? 'Ghi chú' : 'Notes'}</h2><div>${esc(wd.notes).replace(/\n/g, '<br>')}</div>` : ''}
 <h2>${T.terms}</h2><ul>${T.termsLines.map((t) => `<li>${t}</li>`).join('')}</ul>
 <h2>${T.acceptance}</h2>${accepted ?? `<div class="sig"><div>${T.owner}</div><div>${T.date}</div></div>
 <div class="sig"><div>${esc(profile.companyName)}</div><div>${T.date}</div></div>`}

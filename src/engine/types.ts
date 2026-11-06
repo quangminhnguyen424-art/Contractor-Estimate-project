@@ -259,6 +259,23 @@ export interface PriceComparison {
 export type EstimateStatus = 'draft' | 'sent' | 'won' | 'lost';
 export type EstimateMode = 'quick' | 'detailed';
 
+/** The contractor's own wording for the client quote, per language. Prices still come from the estimate. */
+export interface QuoteWording {
+  /** By section key (trade id, 'general' or 'extras'): a new heading and/or bullet lines. */
+  sections?: Record<string, { title?: string; items?: string[] }>;
+  scopeNote?: string;
+  exclusions?: string[];
+  /** Extra notes printed above the terms. */
+  notes?: string;
+}
+export interface QuoteEdits {
+  en?: QuoteWording;
+  vi?: QuoteWording;
+  validDays?: number;
+  /** 'total' shows one price for the whole job instead of a price per section. */
+  prices?: 'sections' | 'total';
+}
+
 export interface Estimate {
   id: string;
   createdAt: string;
@@ -294,4 +311,5 @@ export interface Estimate {
   total: number;
   checks: Check[];
   comparison: PriceComparison;
+  quoteEdits?: QuoteEdits;
 }

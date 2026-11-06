@@ -83,6 +83,31 @@ describe('confidentiality', () => {
   });
 });
 
+describe('contractor edits the quote', () => {
+  it('uses the contractor wording, keeps prices, and can show one total', () => {
+    const r = buildEstimate(input());
+    const base = asEstimate(r, { scopeNote: 'Original scope' });
+    const first = quoteSections(base, 'en')[0];
+    const est: Estimate = { ...base, quoteEdits: {
+      en: { scopeNote: 'New scope words', sections: { [first.trade]: { title: 'Demo and haul-away', items: ['Remove old tub', '', 'Haul debris'] } },
+        exclusions: ['Permit fees', ' '], notes: 'Owner picks tile by Friday.' },
+      validDays: 14, prices: 'total' } };
+    const s = quoteSections(est, 'en')[0];
+    expect(s.title).toBe('Demo and haul-away');
+    expect(s.items).toEqual(['Remove old tub', 'Haul debris']);
+    expect(s.price).toBe(first.price);
+    const html = quoteHtml(est, profile, 'en');
+    expect(html).toContain('New scope words');
+    expect(html).not.toContain('Original scope');
+    expect(html).toContain('Owner picks tile by Friday.');
+    expect(html).toContain('14 days');
+    expect(html).toContain('<li>Permit fees</li>');
+    expect(html).toContain(`<td class="r"></td>`);
+    // The Vietnamese quote is untouched by English edits.
+    expect(quoteSections(est, 'vi')[0].title).toBe(quoteSections(base, 'vi')[0].title);
+  });
+});
+
 describe('construction logic', () => {
   it('tiled shower includes a pan, and tile on a wood subfloor gets a membrane', () => {
     const r = buildEstimate(input({ answers: { ...defaultAnswers('bathroom'), foundation: 'crawl' } }));
