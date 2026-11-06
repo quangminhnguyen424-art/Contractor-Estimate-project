@@ -1,4 +1,5 @@
 import { useCloud } from '@/cloud/CloudProvider';
+import { Tick } from '@/ui/tick';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,6 +29,8 @@ export default function Onboarding() {
   const [contactName, setContactName] = useState('');
   const [phone, setPhone] = useState('');
   const cloud = useCloud();
+  const [tips, setTips] = useState(false);
+  const [tried1, setTried1] = useState(false);
   const [email, setEmail] = useState(cloud.user?.email ?? '');
   const [license, setLicense] = useState('');
   const [specialties, setSpecialties] = useState<JobTypeId[]>([]);
@@ -51,6 +54,7 @@ export default function Onboarding() {
       companyName: companyName.trim(), contactName: contactName.trim(), phone: phone.trim(), email: email.trim(),
       license: license.trim(), specialties: [...specialties, 'small'], markupPct, minMarkupPct, salesTaxPct,
       quoteValidDays: 30, quoteLanguage: 'en', schedule: DEFAULT_SCHEDULE, about: about.trim(), work,
+      ...(tips ? { tipsOk: true, tipsAt: new Date().toISOString() } : {}),
     });
   };
 
@@ -66,8 +70,8 @@ export default function Onboarding() {
               <Button
                 title="Continue"
                 style={{ flex: 2 }}
-                disabled={step === 1 ? !companyName.trim() : specialties.length === 0}
-                onPress={() => setStep(step + 1)}
+                disabled={step !== 1 && specialties.length === 0}
+                onPress={() => { if (step === 1 && !companyName.trim()) { setTried1(true); return; } setStep(step + 1); }}
               />
             ) : (
               <Button title="Start estimating" style={{ flex: 2 }} onPress={finish} />
@@ -88,12 +92,15 @@ export default function Onboarding() {
             <Banner tone="info" title="This information is printed on your quotes">
               Your company name, your name, phone, email and registration number appear at the top of every quote, contract and PDF you send to clients. Use the details you want clients to see. You can change them any time in Settings.
             </Banner>
-            <Field label="Company name" value={companyName} onChangeText={setCompanyName} placeholder="e.g. Smith Remodeling LLC" />
+            <Field label="Company name *" value={companyName} onChangeText={setCompanyName} placeholder="e.g. Smith Remodeling LLC" error={tried1 && !companyName.trim() ? 'Company name is required' : null} />
             <Field label="Your name" value={contactName} onChangeText={setContactName} />
             <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
             <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
             <Field label="Contractor registration #" value={license} onChangeText={setLicense} autoCapitalize="characters"
               help="Washington requires it on bids and contracts." />
+            <Tick on={tips} onPress={() => setTips((v) => !v)}>
+              Optional: send me setup tips and Bidwell news by text or email. I can reply STOP or turn this off any time. Not needed to use the app.
+            </Tick>
             <RestoreBackup />
           </>
         )}

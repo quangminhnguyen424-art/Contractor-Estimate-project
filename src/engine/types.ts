@@ -193,6 +193,9 @@ export interface Profile {
   work?: WorkProfile;
   /** State-required notices added to every quote (Washington disclosure, three-day right to cancel). */
   notices?: import('./legal').Notices;
+  /** The contractor agreed to get setup tips and product news from Bidwell by text or email (optional), and when. */
+  tipsOk?: boolean;
+  tipsAt?: string;
 }
 
 export interface PastJob {

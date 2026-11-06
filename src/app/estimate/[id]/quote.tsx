@@ -14,8 +14,7 @@ import { aiFor } from '@/ui/host';
 import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
-import { confirmAction } from '@/ui/notify';
-import { notify } from '@/ui/notify';
+import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 
 export default function QuoteScreen() {
@@ -58,19 +57,27 @@ export default function QuoteScreen() {
 
   return (
     <Screen footer={editing ? <Button title="Done editing" icon="checkmark" onPress={() => setEditing(false)} /> : (
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button kind="secondary" title={contracts.some((c) => c.estimateId === est.id && c.accepted) ? 'Signed ✓' : 'Client signs'} icon="create-outline" style={{ flex: 1 }}
-          onPress={() => router.push(`/estimate/${est.id}/sign`)} />
-        <Button title={busy ? 'Creating…' : 'Share PDF'} icon="share-outline" disabled={busy} style={{ flex: 1 }} onPress={send} />
+      <View style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <Text style={{ color: C.ink2, fontSize: 15 }}>Total amount</Text>
+          <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>{money(est.total)}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Button kind="secondary" title="Edit" icon="create-outline" style={{ flex: 1 }} onPress={() => setEditing(true)} />
+          <Button kind="secondary" title={isSigned ? 'Signed ✓' : 'Sign'} icon="pencil" style={{ flex: 1 }}
+            onPress={() => router.push(`/estimate/${est.id}/sign`)} />
+          <Button title={busy ? '…' : 'Share'} icon="share-outline" disabled={busy} style={{ flex: 1.3 }} onPress={send} />
+        </View>
       </View>
     )}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink, fontSize: 20, fontWeight: '700' }}>{editing ? 'Edit your quote' : 'Your quote is ready'}</Text>
+      </View>
       <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
       {editing ? (
         <QuoteEditor key={lang} est={est} lang={lang} profile={profile} signed={isSigned}
           onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.back()} />
-      ) : (
-        <Button kind="secondary" icon="create-outline" title={est.quoteEdits ? 'Edit the quote (edited)' : 'Edit the quote before sending'} onPress={() => setEditing(true)} />
-      )}
+      ) : null}
       {editing ? null : <>
       {blocking.length > 0 ? (
         <Banner tone="warn" title={`${blocking.length} item${blocking.length > 1 ? 's' : ''} to review before sending`}>
@@ -142,7 +149,7 @@ export default function QuoteScreen() {
           {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
         </View>
       </View>
-      <Muted style={{ fontSize: 13 }}>Sharing marks the estimate as Sent. The PDF also includes terms and signature lines.</Muted>
+      <Muted style={{ fontSize: 13 }}>Tap Edit to change the wording, Sign to have the client sign on this phone, or Share to send the PDF by text or email. Sharing marks the estimate as Sent.</Muted>
       </>}
     </Screen>
   );

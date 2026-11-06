@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C } from '@/ui/kit';
 import { Pulse } from '@/ui/motion';
-import { FONT } from '@/ui/text';
+import { Text } from '@/ui/text';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const icon = (outline: IconName, filled: IconName) =>
@@ -18,7 +18,7 @@ const icon = (outline: IconName, filled: IconName) =>
 function PlusButton() {
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -14 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -22 }}>
         <Pulse min={0.97} max={1.04}>
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.card,
             shadowColor: C.orange, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
@@ -30,22 +30,53 @@ function PlusButton() {
   );
 }
 
-export default function TabsLayout() {
+const TABS: Record<string, { label: string; icon: IconName; active: IconName }> = {
+  index: { label: 'Home', icon: 'home-outline', active: 'home' },
+  jobs: { label: 'Estimates', icon: 'document-text-outline', active: 'document-text' },
+  sites: { label: 'Job sites', icon: 'construct-outline', active: 'construct' },
+  schedule: { label: 'Schedule', icon: 'calendar-outline', active: 'calendar' },
+};
+
+/** Floating tab bar like Facebook's: a rounded bar lifted off the bottom edge, the open tab in a soft blue pill, the orange + in the middle. */
+function FloatingTabBar({ state, navigateToTab }: { state: { index: number; routes: { key: string; name: string }[] }; navigateToTab: (key: string) => void }) {
   const insets = useSafeAreaInsets();
-  // Room for the iPhone home bar plus a little extra, so the buttons sit comfortably above the edge.
-  const bottom = Math.max(insets.bottom, 10) + 8;
+  const current = state.routes[state.index]?.name;
+  return (
+    <View style={{ backgroundColor: C.bg, paddingHorizontal: 14, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 10) + 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 32, height: 64, paddingHorizontal: 6, width: '100%', maxWidth: 520, alignSelf: 'center',
+        borderWidth: 1, borderColor: C.line, shadowColor: '#0B1324', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+        {state.routes.map((r) => {
+          if (r.name === 'new') return <PlusButton key={r.key} />;
+          const t = TABS[r.name];
+          if (!t) return null;
+          const on = current === r.name;
+          return (
+            <Pressable key={r.key} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t.label}
+              onPress={() => navigateToTab(r.key)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 64 }}>
+              <View style={{ alignItems: 'center', justifyContent: 'center', width: 58, height: 40, borderRadius: 20, backgroundColor: on ? C.accentTint : 'transparent' }}>
+                <Ionicons name={on ? t.active : t.icon} size={24} color={on ? C.accent : C.ink2} />
+              </View>
+              <Text style={{ fontSize: 10, fontWeight: on ? '700' : '500', color: on ? C.accent : C.muted, marginTop: 1 }} numberOfLines={1}>{t.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <FloatingTabBar state={props.state} navigateToTab={props.navigateToTab} />}
       screenOptions={{
         headerStyle: { backgroundColor: C.bg },
         headerShadowVisible: false,
         headerTintColor: C.ink,
-        headerTitleStyle: { fontFamily: FONT.bold, fontSize: 18 },
+        headerTitleStyle: { fontWeight: '700', fontSize: 18 },
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
-        tabBarLabelStyle: { fontFamily: FONT.semibold, fontSize: 12 },
-        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.line, height: 60 + bottom, paddingTop: 8, paddingBottom: bottom },
-        tabBarItemStyle: { height: 52 },
+        tabBarLabelStyle: { fontWeight: '600', fontSize: 12 },
         sceneStyle: { backgroundColor: C.bg },
         headerRight: () => (
           <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={10} style={{ paddingHorizontal: 16 }}>

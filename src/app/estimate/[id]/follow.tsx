@@ -9,7 +9,7 @@ import {
 } from '@/engine/followup';
 import { addDays, type CalEvent } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Card, Chip, Field, H2, Muted, Screen } from '@/ui/kit';
+import { Banner, Button, C, Card, Chip, Field, H2, Muted, Screen, Select } from '@/ui/kit';
 import { notify } from '@/ui/notify';
 import { cancelReminder, scheduleReminder } from '@/ui/reminders';
 import { Text } from '@/ui/text';
@@ -154,12 +154,7 @@ export default function FollowScreen() {
             <Chip label="Not asked yet" selected={p.consent === 'not-asked'} onPress={() => set({ consent: 'not-asked' })} />
           </View>
           {p.consent === 'agreed' ? (
-            <View style={{ gap: 6 }}>
-              <Muted style={{ fontSize: 13 }}>How did they agree?</Muted>
-              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-                {HOWS.map((h) => <Chip key={h} label={h} selected={p.consentHow === h} onPress={() => set({ consentHow: h })} />)}
-              </View>
-            </View>
+            <Select<NonNullable<typeof p.consentHow>> label="How did they agree?" value={p.consentHow} onChange={(h) => set({ consentHow: h })} options={HOWS.map((h) => ({ value: h, label: h }))} />
           ) : null}
           <Button kind="danger" title="Client said no" onPress={() => stop('declined')} />
         </Card>

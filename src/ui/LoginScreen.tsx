@@ -11,6 +11,13 @@ import { Text } from './text';
 
 type Mode = 'in' | 'up' | 'forgot';
 const okEmail = (e: string) => /^\S+@\S+\.\S+$/.test(e.trim());
+/** What a new password needs (shown as a checklist while typing, like CompanyCam). */
+export const PASSWORD_RULES = [
+  { label: 'At least 8 characters', ok: (p: string) => p.length >= 8 },
+  { label: '1 uppercase letter', ok: (p: string) => /[A-Z]/.test(p) },
+  { label: '1 lowercase letter', ok: (p: string) => /[a-z]/.test(p) },
+  { label: '1 number', ok: (p: string) => /\d/.test(p) },
+];
 
 /** The front door: log in, make an account, or reset a forgotten password. Also opens as a pop-up wherever the app needs you signed in. */
 /** `gate`: shown on its own before the app (no navigator yet), so there is nothing to close or go back to. */
@@ -24,17 +31,23 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'warn' | 'ok' | 'info'; text: string } | null>(null);
+  const [tried, setTried] = useState(false);
 
   // Opened as a pop-up: close it once signed in, back to where the contractor was.
   useEffect(() => {
     if (!gate && cloud.user && router.canGoBack()) router.back();
   }, [cloud.user, gate]);
 
-  const go = (m: Mode) => { setMode(m); setMsg(null); setPassword(''); setConfirm(''); };
+  const go = (m: Mode) => { setMode(m); setMsg(null); setPassword(''); setConfirm(''); setTried(false); };
+  const strong = PASSWORD_RULES.every((r) => r.ok(password));
+  const emailErr = tried && !okEmail(email) ? (email.trim() ? 'Enter a valid email address' : 'Email is required') : null;
+  const passErr = tried && mode !== 'forgot' ? (!password ? 'Password is required' : mode === 'up' && !strong ? 'The password needs everything in the list below' : null) : null;
+  const confirmErr = tried && mode === 'up' && password && confirm !== password ? 'The two passwords don’t match' : null;
 
   const submit = async () => {
     setMsg(null);
-    if (!okEmail(email)) { setMsg({ tone: 'warn', text: 'Enter a valid email address.' }); return; }
+    setTried(true);
+    if (!okEmail(email)) return;
     if (mode === 'forgot') {
       setBusy(true);
       const err = await cloud.resetPassword(email);
@@ -42,8 +55,7 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
       setMsg(err ? { tone: 'warn', text: err } : { tone: 'ok', text: `If ${email.trim()} has an account, a link to choose a new password is on its way. Check your inbox and spam folder.` });
       return;
     }
-    if (password.length < 8) { setMsg({ tone: 'warn', text: 'The password needs at least 8 characters.' }); return; }
-    if (mode === 'up' && password !== confirm) { setMsg({ tone: 'warn', text: 'The two passwords don’t match.' }); return; }
+    if (!password || (mode === 'up' && (!strong || password !== confirm))) return;
     setBusy(true);
     const err = mode === 'in' ? await cloud.signIn(email, password) : await cloud.signUp(email, password);
     setBusy(false);
@@ -79,17 +91,31 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
             <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>Enter the email you signed up with. We’ll email you a link to choose a new password.</Text>
           ) : null}
           <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false}
-            autoComplete="email" textContentType="emailAddress" maxLength={120} returnKeyType={mode === 'forgot' ? 'send' : 'next'}
+            autoComplete="email" textContentType="emailAddress" maxLength={120} error={emailErr} returnKeyType={mode === 'forgot' ? 'send' : 'next'}
             onSubmitEditing={mode === 'forgot' ? submit : undefined} />
           {mode !== 'forgot' ? (
             <>
-              <Field label={mode === 'up' ? 'Password (8 or more characters)' : 'Password'} value={password} onChangeText={setPassword}
+              <Field label="Password" value={password} onChangeText={setPassword} error={passErr}
                 secureTextEntry={!show} autoCapitalize="none" autoCorrect={false} maxLength={72}
                 autoComplete={mode === 'up' ? 'new-password' : 'current-password'} textContentType={mode === 'up' ? 'newPassword' : 'password'}
                 returnKeyType={mode === 'in' ? 'go' : 'next'} onSubmitEditing={mode === 'in' ? submit : undefined} />
               {mode === 'up' ? (
-                <Field label="Type the password again" value={confirm} onChangeText={setConfirm} secureTextEntry={!show} autoCapitalize="none"
+                <Field label="Type the password again" value={confirm} onChangeText={setConfirm} error={confirmErr} secureTextEntry={!show} autoCapitalize="none"
                   autoCorrect={false} maxLength={72} autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={submit} />
+              ) : null}
+              {mode === 'up' ? (
+                <View style={{ backgroundColor: C.cardHi, borderRadius: 14, padding: 12, gap: 6 }}>
+                  <Text style={{ color: C.ink2, fontWeight: '600', fontSize: 14 }}>Password needs:</Text>
+                  {PASSWORD_RULES.map((r) => {
+                    const ok = r.ok(password);
+                    return (
+                      <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Ionicons name={ok ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={ok ? C.okInk : C.muted} />
+                        <Text style={{ color: ok ? C.okInk : C.ink2, fontSize: 14 }}>{r.label}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
               ) : null}
               <Pressable accessibilityRole="button" onPress={() => setShow((v) => !v)} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}>
                 <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.ink2} />

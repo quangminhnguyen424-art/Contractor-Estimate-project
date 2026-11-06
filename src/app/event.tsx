@@ -5,7 +5,7 @@ import { ScrollView, View } from 'react-native';
 import { newId } from '@/engine/format';
 import { addDays, dayLabel, eventIcs, isYmd, KINDS, REMINDERS, type CalEvent, type EventKind } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
-import { Button, C, Card, Chip, Field, Label, Muted, Screen } from '@/ui/kit';
+import { Button, C, Card, Chip, Field, Label, Muted, Screen, Select } from '@/ui/kit';
 import { PressScale } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { cancelReminder, remindersAvailable, scheduleReminder } from '@/ui/reminders';
@@ -92,9 +92,7 @@ export default function EventScreen() {
   return (
     <Screen footer={<Button title={saving ? 'Saving…' : existing ? 'Save changes' : 'Add to schedule'} icon="checkmark" disabled={saving} onPress={save} />}>
       <Stack.Screen options={{ title: existing ? 'Appointment' : 'New appointment' }} />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {(Object.keys(KINDS) as EventKind[]).map((k) => <Chip key={k} label={KINDS[k].en} selected={kind === k} onPress={() => setKind(k)} />)}
-      </View>
+      <Select<EventKind> label="What is it?" value={kind} onChange={setKind} options={(Object.keys(KINDS) as EventKind[]).map((k) => ({ value: k, label: KINDS[k].en }))} />
       <Field label="Title" value={title} onChangeText={setTitle} maxLength={120} placeholder={`${KINDS[kind].en}${selectedJob ? ` — ${selectedJob.label}` : ''}`} />
 
       <Label>Day</Label>
@@ -113,32 +111,32 @@ export default function EventScreen() {
         })}
       </ScrollView>
 
-      <Label>Time</Label>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        <Chip label="All day" selected={hour === null} onPress={() => setHour(null)} />
-        {HOURS.map((h) => <Chip key={h} label={h12(h)} selected={hour === h} onPress={() => setHour(h)} />)}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flex: 1.2 }}>
+          <Select<string> label="Time" value={hour === null ? 'all' : String(hour)} onChange={(v) => setHour(v === 'all' ? null : Number(v))}
+            options={[{ value: 'all', label: 'All day' }, ...HOURS.map((h) => ({ value: String(h), label: h12(h) }))]} />
+        </View>
+        {hour !== null ? (
+          <View style={{ flex: 1 }}>
+            <Select<string> label="Minutes" value={String(minute)} onChange={(v) => setMinute(v as typeof minute)}
+              options={MINUTES.map((m) => ({ value: String(m), label: `:${m}` }))} />
+          </View>
+        ) : null}
       </View>
       {hour !== null ? (
-        <>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            {MINUTES.map((m) => <Chip key={m} label={`:${m}`} selected={minute === m} onPress={() => setMinute(m)} />)}
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {DURATIONS.map((d) => <Chip key={d.v} label={d.l} selected={duration === d.v} onPress={() => setDuration(d.v)} />)}
-          </View>
-        </>
+        <Select<string> label="How long" value={String(duration)} onChange={(v) => setDuration(Number(v))}
+          options={DURATIONS.map((d) => ({ value: String(d.v), label: d.l }))} />
       ) : null}
 
       {jobs.length ? (
         <>
-          <Label>Job</Label>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            <Chip label="None" selected={!selectedJob} onPress={() => { setProjectId(undefined); setEstimateId(undefined); }} />
-            {jobs.map((j) => (
-              <Chip key={j.key} label={j.label} selected={selectedJob?.key === j.key}
-                onPress={() => { setProjectId(j.projectId); setEstimateId(j.estimateId); if (!address.trim()) setAddress(j.address); }} />
-            ))}
-          </View>
+          <Select<string> label="Job" value={selectedJob?.key ?? 'none'}
+            options={[{ value: 'none', label: 'None' }, ...jobs.map((j) => ({ value: j.key, label: j.label, sub: j.address || undefined }))]}
+            onChange={(v) => {
+              const j = jobs.find((x) => x.key === v);
+              setProjectId(j?.projectId); setEstimateId(j?.estimateId);
+              if (j && !address.trim()) setAddress(j.address);
+            }} />
         </>
       ) : null}
       <Field label="Address" value={address} onChangeText={setAddress} maxLength={160} placeholder="Where" />
@@ -159,10 +157,8 @@ export default function EventScreen() {
         </>
       ) : null}
 
-      <Label>Remind me</Label>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {REMINDERS.map((r) => <Chip key={String(r.value)} label={r.label} selected={remindMin === r.value} onPress={() => setRemind(r.value)} />)}
-      </View>
+      <Select<string> label="Remind me" value={String(remindMin)} onChange={(v) => setRemind(REMINDERS.find((r) => String(r.value) === v)!.value)}
+        options={REMINDERS.map((r) => ({ value: String(r.value), label: r.label }))} />
       {!remindersAvailable ? <Muted style={{ fontSize: 12 }}>Reminders ring in the installed iPhone app.</Muted> : null}
       <Field label="Notes" multiline value={notes} onChangeText={setNotes} placeholder="Gate code, what to bring, who to call." />
 

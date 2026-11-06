@@ -88,6 +88,7 @@ export function sanitizeProfile(v: unknown): Profile | null {
     quoteValidDays: num(v.quoteValidDays, 30), quoteLanguage: v.quoteLanguage === 'vi' ? 'vi' : 'en',
     schedule: scheduleOk ? schedule : DEFAULT_SCHEDULE,
     about: str(v.about).slice(0, 2000),
+    ...(v.tipsOk === true && typeof v.tipsAt === 'string' ? { tipsOk: true, tipsAt: v.tipsAt } : {}),
     ...(isObj(v.work) ? { work: sanitizeWork(v.work) } : {}),
     ...(isObj(v.notices) ? { notices: {
       waDisclosure: v.notices.waDisclosure === true, regExpires: str(v.notices.regExpires).slice(0, 20), bond: str(v.notices.bond).slice(0, 120),

@@ -7,7 +7,7 @@ import { dayLabel } from '@/engine/schedule';
 import { LANG_NAMES, type CrewLang } from '@/engine/site';
 import { ATTEND, confirmText, morningCheck, newMember, suggestDates, type AttendState, type TeamMember } from '@/engine/team';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Card, Chip, Field, H2, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { Banner, Button, C, Card, Chip, Field, H2, Muted, NumberField, Screen, Segmented, Select } from '@/ui/kit';
 import { confirmAction } from '@/ui/notify';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
@@ -81,10 +81,8 @@ export default function TeamScreen() {
               <Segmented options={[{ value: 'day', label: '/day' }, { value: 'hour', label: '/hr' }, { value: 'job', label: '/job' }]} value={edit.rateUnit} onChange={(rateUnit) => setEdit({ ...edit, rateUnit })} />
             </View>
           </View>
-          <Muted style={{ fontSize: 13 }}>Messages in</Muted>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            {(Object.keys(LANG_NAMES) as CrewLang[]).map((l) => <Chip key={l} label={LANG_NAMES[l].native} selected={edit.lang === l} onPress={() => setEdit({ ...edit, lang: l })} />)}
-          </View>
+          <Select<CrewLang> label="Messages in" value={edit.lang} onChange={(l) => setEdit({ ...edit, lang: l })}
+            options={(Object.keys(LANG_NAMES) as CrewLang[]).map((l) => ({ value: l, label: LANG_NAMES[l].native }))} />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Button title="Save" icon="checkmark" disabled={!edit.name.trim()} style={{ flex: 1 }} onPress={() => { saveMember({ ...edit, name: edit.name.trim() }); setEdit(null); }} />
             <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={() => setEdit(null)} />

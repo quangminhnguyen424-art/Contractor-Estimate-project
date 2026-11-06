@@ -1,8 +1,8 @@
 import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {
-  Pressable, ScrollView, StyleSheet, View,
-  type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
+  Modal, Pressable, ScrollView, StyleSheet, View,
+  type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -119,11 +119,11 @@ export function Button({ title, onPress, kind = 'primary', disabled, style, acce
   );
 }
 
-export function Field({ label, help, suffix, style, ...props }: TextInputProps & { label: string; help?: string; suffix?: string; style?: StyleProp<ViewStyle> }) {
+export function Field({ label, help, suffix, style, error, ...props }: TextInputProps & { label: string; help?: string; suffix?: string; style?: StyleProp<ViewStyle>; error?: string | null }) {
   return (
     <View style={[{ gap: 6 }, style]}>
       <Label>{label}</Label>
-      <View style={s.inputWrap}>
+      <View style={[s.inputWrap, error ? { borderColor: C.danger, borderWidth: 1.5 } : null]}>
         <TextInput
           accessibilityLabel={label}
           placeholderTextColor="#64748B"
@@ -132,7 +132,12 @@ export function Field({ label, help, suffix, style, ...props }: TextInputProps &
         />
         {suffix ? <Text style={s.suffix}>{suffix}</Text> : null}
       </View>
-      {help ? <Muted style={{ fontSize: 13 }}>{help}</Muted> : null}
+      {error ? (
+        <View accessibilityRole="alert" style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="alert-circle-outline" size={16} color={C.danger} />
+          <Text style={{ color: C.danger, fontSize: 13 }}>{error}</Text>
+        </View>
+      ) : help ? <Muted style={{ fontSize: 13 }}>{help}</Muted> : null}
     </View>
   );
 }
@@ -262,6 +267,57 @@ export function Stepper({ label, value, onChange, min = 0 }: { label: string; va
 }
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+/**
+ * A drop-down choice (like a menu in Word): shows the current choice; tap it and a list slides up that scrolls,
+ * with the current choice marked. Tap a line to pick it.
+ */
+export function Select<T extends string | number>({ label, value, options, onChange, placeholder = 'Choose…', help, error }: {
+  label: string; value: T | null | undefined; options: { value: T; label: string; sub?: string }[]; onChange: (v: T) => void;
+  placeholder?: string; help?: string; error?: string | null;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const insets = useSafeAreaInsets();
+  const current = options.find((o) => o.value === value);
+  const listRef = React.useRef<ScrollViewInstance>(null);
+  const at = Math.max(0, options.findIndex((o) => o.value === value));
+  return (
+    <View style={{ gap: 6 }}>
+      {label ? <Label>{label}</Label> : null}
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${current?.label ?? placeholder}`} onPress={() => setOpen(true)}
+        style={[s.inputWrap, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, minHeight: 52 }, error ? { borderColor: C.danger, borderWidth: 1.5 } : null]}>
+        <Text style={{ flex: 1, fontSize: 17, color: current ? C.ink : C.muted }} numberOfLines={1}>{current?.label ?? placeholder}</Text>
+        <Ionicons name="chevron-down" size={20} color={C.ink2} />
+      </Pressable>
+      {error ? <Text style={{ color: C.danger, fontSize: 13 }}>{error}</Text> : help ? <Muted style={{ fontSize: 13 }}>{help}</Muted> : null}
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}
+        onShow={() => { setTimeout(() => listRef.current?.scrollTo({ y: Math.max(0, at * 57 - 120), animated: false }), 0); }}>
+        <Pressable accessibilityLabel="Close" onPress={() => setOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(11,19,36,0.45)', justifyContent: 'flex-end' }}>
+          <Pressable onPress={() => {}} style={{ backgroundColor: C.card, borderTopLeftRadius: 26, borderTopRightRadius: 26, maxHeight: '75%', paddingBottom: insets.bottom + 8, width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+            <View style={{ alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: C.line, marginTop: 10 }} />
+            <Text style={{ color: C.ink, fontSize: 18, fontWeight: '700', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 }}>{label || placeholder}</Text>
+            <ScrollView ref={listRef} contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}>
+              {options.map((o) => {
+                const on = o.value === value;
+                return (
+                  <Pressable key={String(o.value)} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => { onChange(o.value); setOpen(false); }}
+                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 51, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
+                      borderWidth: 1, borderColor: on ? C.accent : C.line, backgroundColor: on ? C.accentTint : pressed ? C.cardHi : C.card })}>
+                    <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? C.accent : C.muted} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: C.ink, fontSize: 16, fontWeight: on ? '600' : '400' }}>{o.label}</Text>
+                      {o.sub ? <Text style={{ color: C.muted, fontSize: 13 }}>{o.sub}</Text> : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
 
 /** A white card holding rows separated by thin lines (like a phone settings list). */
 export function List({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {

@@ -1,8 +1,3 @@
-import { Lexend_400Regular } from '@expo-google-fonts/lexend/400Regular';
-import { Lexend_500Medium } from '@expo-google-fonts/lexend/500Medium';
-import { Lexend_600SemiBold } from '@expo-google-fonts/lexend/600SemiBold';
-import { Lexend_700Bold } from '@expo-google-fonts/lexend/700Bold';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -16,7 +11,7 @@ import { ConfettiHost } from '@/ui/celebrate';
 import { inClaudeApp } from '@/ui/host';
 import { LoginScreen } from '@/ui/LoginScreen';
 import { Button, C } from '@/ui/kit';
-import { FONT, Text } from '@/ui/text';
+import { Text } from '@/ui/text';
 
 /** Shown on every screen when the app could not save (storage full), so no change is lost silently. */
 function SaveWarning() {
@@ -60,11 +55,7 @@ function RootStack() {
   // Inside the Claude app the AI comes from Claude itself, so the account is optional there; everywhere else you log in first.
   const needLogin = cloudConfigured && !inClaudeApp && !cloud.user;
   const in_ = !needLogin;
-  const [fontsLoaded, fontError] = useFonts({
-    Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold,
-  });
-  // If the font can't load, the app still opens with the phone's own font.
-  if (!ready || !cloud.authReady || (!fontsLoaded && !fontError)) {
+  if (!ready || !cloud.authReady) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg }}>
         <ActivityIndicator color={C.accent} />
@@ -78,7 +69,7 @@ function RootStack() {
       screenOptions={{
         headerStyle: { backgroundColor: C.bg },
         headerTintColor: C.ink,
-        headerTitleStyle: { fontFamily: FONT.bold, color: C.ink },
+        headerTitleStyle: { fontWeight: '700', color: C.ink },
         headerShadowVisible: false,
         headerBackTitle: 'Back',
         contentStyle: { backgroundColor: C.bg },

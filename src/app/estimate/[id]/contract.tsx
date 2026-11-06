@@ -12,7 +12,7 @@ import { addDays } from '@/engine/schedule';
 import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Art } from '@/ui/art';
-import { Badge, Banner, Button, C, Card, Chip, Field, H2, Muted, NumberField, Screen, Section, Segmented, Stat, mono } from '@/ui/kit';
+import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Section, Segmented, Stat, mono, Select } from '@/ui/kit';
 import { Progress, Reveal } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -138,10 +138,7 @@ export default function ContractScreen() {
 
       <Section title="Invoices" />
       <Card style={{ gap: 8 }}>
-        <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Muted style={{ fontSize: 13 }}>New invoices due:</Muted>
-          {[0, 7, 15, 30].map((d) => <Chip key={d} label={d === 0 ? 'On receipt' : `${d} days`} selected={dueDays === d} onPress={() => setDueDays(d)} />)}
-        </View>
+        <Select<number> label="New invoices due" value={dueDays} onChange={setDueDays} options={[0, 7, 15, 30].map((d) => ({ value: d, label: d === 0 ? 'On receipt' : `${d} days after sending` }))} />
         {items.map((it) => {
           const st = it.invoice ? states[it.invoice.id] : undefined;
           return (
@@ -184,9 +181,7 @@ export default function ContractScreen() {
         {payOpen ? (
           <View style={{ gap: 10, borderTopWidth: c.payments.length ? 1 : 0, borderColor: C.lineSoft, paddingTop: 10 }}>
             <NumberField label="Amount received" suffix="$" value={payAmount} onChange={setPayAmount} />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {METHODS.map((m) => <Chip key={m.value} label={m.label} selected={payMethod === m.value} onPress={() => setPayMethod(m.value)} />)}
-            </View>
+            <Select label="Paid by" value={payMethod} onChange={setPayMethod} options={METHODS.map((m) => ({ value: m.value, label: m.label }))} />
             <Field label="Note (optional)" value={payNote} onChangeText={setPayNote} placeholder="e.g. Check #1042" maxLength={300} />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={() => setPayOpen(false)} />

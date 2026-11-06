@@ -6,14 +6,15 @@ import { Pressable, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
 import { buyTotals, emptyMoney, projectBooks } from '@/engine/books';
-import { money as moneyFmt, newId } from '@/engine/format';
+import { newId } from '@/engine/format';
 import { dayLabel, upcoming } from '@/engine/schedule';
-import { AREA_PRESETS, beforeAfterPairs, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
+import { AREA_PRESETS, beforeAfterPairs, emptyRoom, localDay, projectProgress, roomProgress, type PhotoKind, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
-import { Action, Banner, Button, C, Card, Chip, Field, List, ListRow, Muted, Screen, Section } from '@/ui/kit';
+import { Banner, Button, C, Card, Field, List, ListRow, Muted, Screen, Section, Segmented, Select } from '@/ui/kit';
 import { PressScale, Progress } from '@/ui/motion';
 import { confirmAction } from '@/ui/notify';
-import { PhotoView } from '@/ui/SitePhotoView';
+import { addSitePhotos, PhotoView } from '@/ui/SitePhotoView';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +23,10 @@ export default function ProjectScreen() {
   const today = useToday();
   const [roomName, setRoomName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [shooting, setShooting] = useState(false);
+  const [shootRoom, setShootRoom] = useState<string | null>(null);
+  const [shootKind, setShootKind] = useState<PhotoKind>('progress');
+  const insets = useSafeAreaInsets();
   const p = projects.find((x) => x.id === id);
   if (!p) {
     return (
@@ -67,30 +72,57 @@ export default function ProjectScreen() {
       router.replace('/sites');
     });
 
+  const cover = p.rooms.flatMap((r) => r.photos).sort((x, y) => y.takenAt.localeCompare(x.takenAt))[0];
+  const openTasks = pr.total - pr.done;
+  const capture = async (camera: boolean) => {
+    const room = p.rooms.find((r) => r.id === shootRoom) ?? p.rooms[0];
+    if (!room) { setShooting(false); setAdding(true); return; }
+    setShooting(false);
+    const added = await addSitePhotos(camera, shootKind);
+    if (added.length) updateProject(p.id, (x) => ({ ...x, rooms: x.rooms.map((r) => (r.id === room.id ? { ...r, photos: [...r.photos, ...added] } : r)) }));
+  };
+
   return (
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
     <Screen>
-      <Stack.Screen options={{ title: p.title }} />
-      <View style={{ gap: 4 }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{p.title}</Text>
-        <Muted>{[p.clientName, p.address].filter(Boolean).join(' · ') || 'No address yet'}</Muted>
-      </View>
-
-      {/* Progress in one line. */}
-      <View style={{ gap: 6 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ color: C.ink2, fontSize: 14 }}>{pr.total ? `${pr.done} of ${pr.total} tasks done` : 'No tasks yet'} · {pr.photos} photo{pr.photos === 1 ? '' : 's'}</Text>
-          <Text style={{ fontWeight: '700', color: C.accent }}>{pr.pct}%</Text>
+      <Stack.Screen options={{ title: '' }} />
+      {/* Header like CompanyCam: newest photo, the job, the address. */}
+      <View style={{ alignItems: 'center', gap: 6 }}>
+        {cover ? (
+          <View style={{ borderRadius: 22, overflow: 'hidden' }}><PhotoView photo={cover} width={120} /></View>
+        ) : (
+          <Pressable accessibilityRole="button" accessibilityLabel="Take the first photo" onPress={() => setShooting(true)}
+            style={{ width: 96, height: 96, borderRadius: 24, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="camera" size={34} color={C.accent} />
+          </Pressable>
+        )}
+        <Text style={{ fontSize: 24, fontWeight: '700', color: C.ink, textAlign: 'center' }}>{p.title}</Text>
+        <Muted style={{ textAlign: 'center' }}>{[p.clientName, p.address].filter(Boolean).join(' · ') || 'No address yet'}</Muted>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          <View style={{ width: 120 }}><Progress value={pr.total ? pr.done / pr.total : 0} height={6} /></View>
+          <Text style={{ color: C.ink2, fontSize: 13, fontWeight: '600' }}>{pr.pct}% done</Text>
         </View>
-        <Progress value={pr.total ? pr.done / pr.total : 0} />
       </View>
 
-      {/* The things done most often on a job, one tap each. */}
-      <View style={{ flexDirection: 'row', gap: 4 }}>
-        <Action icon="send" label="Photo update" onPress={() => go('share?mode=client')} />
-        <Action icon="book" label="Daily log" onPress={() => go('log')} />
-        <Action icon="people" label="Work order" onPress={() => go('share?mode=crew')} />
-        <Action icon="calendar" label="Schedule" badge={!!nextVisit} onPress={() => router.push(`/event?project=${p.id}`)} />
+      {/* Three numbers that matter, one tap each. */}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Summary icon="checkmark-circle" color={C.accent} title="To-dos" sub={pr.total ? `${openTasks} left` : 'None yet'} onPress={() => (p.rooms[0] ? go(`room/${p.rooms[0].id}`) : setAdding(true))} />
+        <Summary icon="document-text" color="#9333EA" title="Paperwork" sub={est ? 'Contract' : 'No estimate'} onPress={() => (est ? router.push(`/estimate/${est.id}/contract`) : undefined)} />
+        <Summary icon="cash" color={C.okInk} title="Money" sub={money && p.money?.costs.length ? `${money.profit.marginPct}% profit` : 'Track costs'} onPress={() => go('money')} />
       </View>
+
+      {pr.photos ? (
+        <Pressable accessibilityRole="button" onPress={() => go('share?mode=client')}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.infoBg, borderRadius: 20, padding: 16 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ color: C.ink, fontWeight: '700', fontSize: 16 }}>Send the client a photo update</Text>
+            <Text style={{ color: C.ink2, fontSize: 13 }}>{p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Bidwell writes the message for you'}</Text>
+          </View>
+          <View style={{ backgroundColor: C.accent, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Start</Text>
+          </View>
+        </Pressable>
+      ) : null}
 
       {/* Photos by area (like CompanyCam): the heart of the job. */}
       <Section title="Areas" />
@@ -126,30 +158,15 @@ export default function ProjectScreen() {
             <Field label="Name" value={roomName} onChangeText={setRoomName} placeholder="e.g. Primary bath, Siding" style={{ flex: 1 }} maxLength={40} />
             <Button title="Add" disabled={!roomName.trim()} onPress={() => { addRoom(); setAdding(false); }} />
           </View>
-          {AREA_PRESETS.map((g) => (
-            <View key={g.group} style={{ gap: 6 }}>
-              <Muted style={{ fontSize: 12 }}>{g.group}</Muted>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {g.names.filter((n) => n === 'Repair spot' || !p.rooms.some((r) => r.name.toLowerCase() === n.toLowerCase())).map((n) => (
-                  <Chip key={n} label={`+ ${n}`} onPress={() => { addRoom(n); setAdding(false); }} />
-                ))}
-              </View>
-            </View>
-          ))}
+          <Select<string> label="Or pick a common one" value={null} placeholder="Kitchen, Siding, Roof…" onChange={(n) => { addRoom(n); setAdding(false); }}
+            options={AREA_PRESETS.flatMap((g) => g.names.filter((n) => n === 'Repair spot' || !p.rooms.some((r) => r.name.toLowerCase() === n.toLowerCase()))
+              .map((n) => ({ value: n, label: n, sub: g.group })))} />
         </Card>
       ) : null}
 
-      {/* Money and paperwork: private to the contractor. */}
-      <Section title="Money & paperwork" />
-      <List>
-        {est ? <ListRow icon="document-text" title="Contract & payments" sub="Signature, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
-        <ListRow icon="cash" title="Job money" sub={money && p.money?.costs.length ? `Profit ${moneyFmt(money.profit.amount)} · ${money.profit.marginPct}%` : 'Costs, receipts, profit'} onPress={() => go('money')} />
-        <ListRow icon="cart" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'Materials from the estimate'} onPress={() => go('buy')} />
-      </List>
-
       {timeline.length ? (
         <>
-          <Section title="Photo timeline" />
+          <Section title={`Photos (${pr.photos})`} />
           {timeline.map(([day, list]) => (
             <View key={day} style={{ gap: 6 }}>
               <Text style={{ color: C.muted, fontSize: 13, fontWeight: '600' }}>{dayLabel(day, today)} · {list.length} photo{list.length > 1 ? 's' : ''}</Text>
@@ -167,11 +184,77 @@ export default function ProjectScreen() {
 
       <Section title="More" />
       <List>
+        <ListRow icon="cart" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'Materials from the estimate'} onPress={() => go('buy')} />
+        <ListRow icon="calendar" title="Schedule a visit" sub={nextVisit ? `Next: ${dayLabel(nextVisit.date, today)}` : 'Crew day, inspection, walkthrough'} onPress={() => router.push(`/event?project=${p.id}`)} />
+        <ListRow icon="people" title="Crew work order" sub="English, Tiếng Việt, Español · no prices" onPress={() => go('share?mode=crew')} />
         <ListRow icon="logo-facebook" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after pair${pairs.length > 1 ? 's' : ''} ready` : 'Needs a before and an after photo'} onPress={() => go('share?mode=post')} />
         <ListRow icon={p.status === 'active' ? 'checkmark-done' : 'refresh'} title={p.status === 'active' ? 'Mark job finished' : 'Reopen job'}
           onPress={() => updateProject(p.id, (x) => ({ ...x, status: x.status === 'active' ? 'done' : 'active' }))} />
         <ListRow icon="trash" title="Delete project" danger onPress={remove} />
       </List>
+      <View style={{ height: 96 }} />
     </Screen>
+
+    {/* Floating bar like CompanyCam: daily log, a big camera, and Bidwell's AI. */}
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 12, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 40, padding: 8,
+        shadowColor: '#0B1324', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Daily log" onPress={() => go('log')}
+          style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="chatbox-ellipses-outline" size={24} color={C.ink} />
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Take photos" onPress={() => setShooting(true)}
+          style={{ width: 120, height: 56, borderRadius: 28, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="camera" size={26} color="#FFFFFF" />
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Photo update with AI" onPress={() => go('share?mode=client')}
+          style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="sparkles" size={24} color="#7C3AED" />
+        </Pressable>
+      </View>
+    </View>
+
+    {/* Where the new photos go: pick the area and before / progress / after, then the camera opens. */}
+    {shooting ? (
+      <Pressable accessibilityLabel="Close" onPress={() => setShooting(false)} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(11,19,36,0.45)', justifyContent: 'flex-end' }}>
+        <Pressable onPress={() => {}} style={{ backgroundColor: C.card, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, paddingBottom: insets.bottom + 20, gap: 14 }}>
+          <View style={{ alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: C.line }} />
+          <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>Take photos</Text>
+          {p.rooms.length ? (
+            <>
+              <Select<string> label="Which area?" value={shootRoom ?? p.rooms[0].id} onChange={setShootRoom}
+                options={p.rooms.map((r) => ({ value: r.id, label: r.name, sub: `${r.photos.length} photo${r.photos.length === 1 ? '' : 's'}` }))} />
+              <Text style={{ color: C.ink2, fontWeight: '600' }}>What kind?</Text>
+              <Segmented<PhotoKind> value={shootKind} onChange={setShootKind}
+                options={[{ value: 'before', label: 'Before' }, { value: 'progress', label: 'Progress' }, { value: 'after', label: 'After' }]} />
+              <Button title="Open camera" icon="camera" onPress={() => capture(true)} />
+              <Button kind="secondary" title="Choose from library" icon="images-outline" onPress={() => capture(false)} />
+            </>
+          ) : (
+            <>
+              <Text style={{ color: C.ink2 }}>Add an area first (a room, the siding, a repair spot) so every photo has a place.</Text>
+              <Button title="Add an area" icon="add" onPress={() => { setShooting(false); setAdding(true); }} />
+            </>
+          )}
+        </Pressable>
+      </Pressable>
+    ) : null}
+    </View>
+  );
+}
+
+/** One of the three summary tiles under the job title. */
+function Summary({ icon, color, title, sub, onPress }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: string; title: string; sub: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${title}: ${sub}`} onPress={onPress}
+      style={({ pressed }) => ({ flex: 1, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 12, gap: 8, opacity: pressed ? 0.8 : 1 })}>
+      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: `${color}1A`, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name={icon} size={22} color={color} />
+      </View>
+      <View>
+        <Text style={{ color: C.ink, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>{title}</Text>
+        <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={1}>{sub}</Text>
+      </View>
+    </Pressable>
   );
 }

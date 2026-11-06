@@ -1,37 +1,38 @@
 import { createContext, useContext } from 'react';
 import {
-  StyleSheet, Text as RNText, TextInput as RNTextInput,
+  Platform, StyleSheet, Text as RNText, TextInput as RNTextInput,
   type TextInputProps, type TextProps, type TextStyle,
 } from 'react-native';
 
 /**
- * Everything uses Lexend: a font designed to be easy to read, with full Vietnamese accents.
- * Custom fonts come as one file per weight, so the weight in a style is turned into the matching file here.
+ * Everything uses the phone's own font: San Francisco on iPhone (the font of Facebook, Messages and most iPhone apps),
+ * Roboto on Android, and the same system fonts on the web. It has every weight and full Vietnamese accents built in.
  */
+const SYSTEM = Platform.select({
+  ios: 'System',
+  android: 'sans-serif',
+  default: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+}) as string;
+
 export const FONT = {
-  regular: 'Lexend_400Regular',
-  medium: 'Lexend_500Medium',
-  semibold: 'Lexend_600SemiBold',
-  bold: 'Lexend_700Bold',
-  heavy: 'Lexend_700Bold',
+  regular: SYSTEM,
+  medium: SYSTEM,
+  semibold: SYSTEM,
+  bold: SYSTEM,
+  heavy: SYSTEM,
 } as const;
 
-/** The font for small labels and numbers (kept as its own name so screens can ask for it). */
-export const MONO = 'Lexend_500Medium';
-const MONO_BOLD = 'Lexend_600SemiBold';
+/** Small labels and numbers use the same font with even-width digits, so money lines up in columns. */
+export const MONO = '__mono__';
 
-/** Marker for numbers (money, sizes): the readout font, so digits line up in columns. */
+/** Marker for numbers (money, sizes). */
 export const NUM = '__numbers__';
 
 type Weight = TextStyle['fontWeight'];
 
-export function fontFor(weight: Weight): string {
-  const w = typeof weight === 'number' ? weight : weight === 'bold' ? 700 : weight === 'normal' || !weight ? 400 : parseInt(weight, 10) || 400;
-  if (w >= 800) return FONT.heavy;
-  if (w >= 700) return FONT.bold;
-  if (w >= 600) return FONT.semibold;
-  if (w >= 500) return FONT.medium;
-  return FONT.regular;
+/** Kept for screens that ask for a font by weight: the system font has every weight. */
+export function fontFor(_weight: Weight): string {
+  return SYSTEM;
 }
 
 // Nested text (a bold word inside a sentence) inherits the weight of the text around it, as in plain React Native.
@@ -40,14 +41,13 @@ const WeightCtx = createContext<Weight>(undefined);
 function useFontStyle(style: TextProps['style']) {
   const inherited = useContext(WeightCtx);
   const flat = (StyleSheet.flatten(style) ?? {}) as TextStyle;
-  const { fontWeight, fontFamily, ...rest } = flat;
-  const weight = fontWeight ?? inherited;
+  const { fontFamily, ...rest } = flat;
+  const weight = flat.fontWeight ?? inherited;
   if (fontFamily === NUM || fontFamily === MONO) {
-    const w = typeof weight === 'number' ? weight : parseInt(String(weight ?? '400'), 10) || (weight === 'bold' ? 700 : 400);
-    return { weight, style: [rest, { fontFamily: w >= 600 ? MONO_BOLD : MONO }] };
+    return { weight, style: [rest, { fontFamily: SYSTEM, fontWeight: weight, fontVariant: ['tabular-nums'] as TextStyle['fontVariant'] }] };
   }
-  if (fontFamily) return { style, weight }; // a deliberate other font
-  return { weight, style: [rest, { fontFamily: fontFor(weight) }] };
+  if (fontFamily && fontFamily !== SYSTEM) return { style, weight }; // a deliberate other font
+  return { weight, style: [rest, { fontFamily: SYSTEM, fontWeight: weight }] };
 }
 
 export function Text({ style, children, ...props }: TextProps) {
@@ -61,6 +61,5 @@ export function Text({ style, children, ...props }: TextProps) {
 
 export function TextInput({ style, ...props }: TextInputProps) {
   const flat = (StyleSheet.flatten(style) ?? {}) as TextStyle;
-  const { fontWeight, ...rest } = flat;
-  return <RNTextInput {...props} style={[rest, { fontFamily: fontFor(fontWeight) }]} />;
+  return <RNTextInput {...props} style={[flat, { fontFamily: SYSTEM }]} />;
 }

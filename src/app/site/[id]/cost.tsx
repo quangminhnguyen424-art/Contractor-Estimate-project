@@ -12,7 +12,7 @@ import { money2, newId } from '@/engine/format';
 import { isYmd } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
-import { Banner, Button, C, Card, Chip, Field, H2, Muted, NumberField, Screen } from '@/ui/kit';
+import { Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Select } from '@/ui/kit';
 import { savePhoto, usePhotoUri } from '@/ui/photoStore';
 import { toAiImage } from '@/ui/photos';
 import { Text } from '@/ui/text';
@@ -115,9 +115,7 @@ export default function CostScreen() {
 
       <Card>
         <H2>Cost</H2>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {KIND_ORDER.map((k) => <Chip key={k} label={COST_KINDS[k].en} selected={kind === k} onPress={() => setKind(k)} />)}
-        </View>
+        <Select label="Kind of cost" value={kind} onChange={setKind} options={KIND_ORDER.map((k) => ({ value: k, label: COST_KINDS[k].en }))} />
         <NumberField label="Amount paid (tax included)" suffix="$" value={amount} onChange={setAmount} />
         <Field label={kind === 'labor' ? 'Who' : kind === 'subs' ? 'Subcontractor' : 'Store or vendor'} value={vendor} onChangeText={setVendor} maxLength={60} />
         <Field label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} maxLength={10} autoCapitalize="none" />

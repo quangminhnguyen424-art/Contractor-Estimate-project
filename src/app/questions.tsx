@@ -11,7 +11,7 @@ import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { AnswerValue, FinishLevel, Question } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
-import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented, Select } from '@/ui/kit';
 import { AiNote } from '@/ui/AiNote';
 import { QuestionEditor } from '@/ui/QuestionEditor';
 
@@ -221,12 +221,16 @@ function QuestionInput({ q, value, onChange }: { q: Question; value: AnswerValue
     );
   }
   return (
-    <View style={{ gap: 6 }}>
-      <Label>{q.label}</Label>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {q.options!.map((o) => <Chip key={o.value} label={o.label} selected={value === o.value} onPress={() => onChange(o.value)} />)}
+    q.options!.length > 3 ? (
+      <Select<string> label={q.label} value={value as string} onChange={onChange} help={q.help} options={q.options!.map((o) => ({ value: o.value, label: o.label }))} />
+    ) : (
+      <View style={{ gap: 6 }}>
+        <Label>{q.label}</Label>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {q.options!.map((o) => <Chip key={o.value} label={o.label} selected={value === o.value} onPress={() => onChange(o.value)} />)}
+        </View>
+        {q.help ? <Muted style={{ fontSize: 13 }}>{q.help}</Muted> : null}
       </View>
-      {q.help ? <Muted style={{ fontSize: 13 }}>{q.help}</Muted> : null}
-    </View>
+    )
   );
 }
