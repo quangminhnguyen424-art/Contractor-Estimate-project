@@ -1,6 +1,6 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +10,10 @@ import { AppProvider, useApp } from '@/store/AppContext';
 import { ConfettiHost } from '@/ui/celebrate';
 import { inClaudeApp } from '@/ui/host';
 import { LoginScreen } from '@/ui/LoginScreen';
+import { IntroVideo } from '@/ui/IntroVideo';
+import { Onboarding } from '@/ui/Onboarding';
+import { QuickTour } from '@/ui/QuickTour';
+import { clearFreshSetup, isFreshSetup, isWelcomed, markWelcomed } from '@/ui/welcome';
 import { Button, C } from '@/ui/kit';
 import { Text } from '@/ui/text';
 
@@ -49,12 +53,35 @@ function FirstSync() {
   );
 }
 
+/** Once per account on each phone: the welcome video, a walk through setup (filled in from the account), then a quick tour. */
+function Welcome({ onDone }: { onDone: (route?: string) => void }) {
+  const { profile } = useApp();
+  // Right after a brand-new setup, only the tour is left.
+  const [step, setStep] = useState<'intro' | 'setup' | 'tour'>(() => (isFreshSetup() ? 'tour' : 'intro'));
+  if (step === 'intro') return <IntroVideo onDone={() => setStep('setup')} />;
+  if (step === 'setup') return <Onboarding skipIntro onDone={() => setStep('tour')} />;
+  return <QuickTour name={profile?.contactName?.split(' ')[0]} onDone={onDone} />;
+}
+
 function RootStack() {
   const { ready, profile, termsOk } = useApp();
   const cloud = useCloud();
   // Inside the Claude app the AI comes from Claude itself, so the account is optional there; everywhere else you log in first.
   const needLogin = cloudConfigured && !inClaudeApp && !cloud.user;
   const in_ = !needLogin;
+  const who = cloud.user?.id ?? (inClaudeApp ? 'claude' : 'local');
+  const [welcomed, setWelcomed] = useState<Record<string, boolean>>({});
+  const [goTo, setGoTo] = useState<string | null>(null);
+  useEffect(() => {
+    if (who in welcomed) return;
+    isWelcomed(who).then((v) => setWelcomed((w) => ({ ...w, [who]: v })));
+  }, [who, welcomed]);
+  // After the tour: open what the contractor picked once the app is on screen.
+  useEffect(() => {
+    if (!goTo) return;
+    const t = setTimeout(() => { router.push(goTo as never); setGoTo(null); }, 60);
+    return () => clearTimeout(t);
+  }, [goTo]);
   if (!ready || !cloud.authReady) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg }}>
@@ -64,6 +91,13 @@ function RootStack() {
   }
   if (needLogin) return <LoginScreen gate />;
   if (cloud.user && cloud.firstSync !== 'done') return <FirstSync />;
+  if (termsOk && profile && welcomed[who] === false) {
+    return <Welcome onDone={(route) => {
+      markWelcomed(who); clearFreshSetup();
+      setWelcomed((w) => ({ ...w, [who]: true }));
+      if (route) setGoTo(route);
+    }} />;
+  }
   return (
     <Stack
       screenOptions={{
