@@ -45,7 +45,7 @@ export function SignaturePad({ width, height = 170, strokes, onChange, onDrawing
   const all = live ? [...strokes, live] : strokes;
   return (
     <View style={{ gap: 6 }}>
-      <View style={{ width, height, borderRadius: 6, backgroundColor: P.paper, overflow: 'hidden' }}>
+      <View style={{ width, height, borderRadius: 14, backgroundColor: P.paper, overflow: 'hidden' }}>
         <View pointerEvents="none" style={{ position: 'absolute', left: 18, right: 18, bottom: 34, height: 1.5, backgroundColor: '#CBD5E1' }} />
         <Text style={{ position: 'absolute', left: 18, bottom: 12, color: '#94A3B8', fontSize: 12 }}>✕ Sign here</Text>
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0 }}>

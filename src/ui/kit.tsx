@@ -15,30 +15,33 @@ import { NUM, Text, TextInput } from './text';
  * the thing to tap, sky blue for measurements and scans.
  */
 export const C = {
-  bg: '#0A0D12',
-  card: '#121821',
-  cardHi: '#1B232E',
-  ink: '#F4F7FA',
-  ink2: '#CDD6DF',
-  muted: '#A0ACB8',
-  line: '#2C3744',
-  lineSoft: '#202A35',
-  accent: '#FF7A1A',
-  accentDark: '#FF9A55', // accent used as text on a tinted background
-  accentTint: 'rgba(255,122,26,0.12)',
-  onAccent: '#07090C', // text and icons on the orange
-  sky: '#38BDF8',
-  skyTint: 'rgba(56,189,248,0.12)',
-  warnBg: '#2E2208',
-  warnInk: '#FCD34D',
-  infoBg: '#0A2236',
-  infoInk: '#93C5FD',
-  okBg: '#0A2A1E',
-  okInk: '#34D399',
-  badBg: '#331014',
-  danger: '#F87171',
-  dark: '#0E131A',
-  darkMuted: '#A0ACB8',
+  // Clear Field: a light, easy-to-read look for phones used outside on job sites.
+  bg: '#F5F7FB',
+  card: '#FFFFFF',
+  cardHi: '#EEF2F8',
+  ink: '#0B1324',
+  ink2: '#3B4659',
+  muted: '#4F5A6B',
+  line: '#DCE3EC',
+  lineSoft: '#EEF2F8',
+  accent: '#2457F5', // the main action color (blue)
+  accentDark: '#1A3FC0', // accent used as text on a tinted background
+  accentTint: 'rgba(36,87,245,0.10)',
+  onAccent: '#FFFFFF', // text and icons on the blue
+  orange: '#FF6B1A', // highlights: the quick-add button, "now" markers
+  orangeInk: '#B4480C', // orange as text on white (readable)
+  sky: '#0369A1',
+  skyTint: 'rgba(3,105,161,0.10)',
+  warnBg: '#FFF4EC',
+  warnInk: '#9A3412',
+  infoBg: '#EEF3FF',
+  infoInk: '#1A3FC0',
+  okBg: '#E6F6EF',
+  okInk: '#08734F',
+  badBg: '#FDECEC',
+  danger: '#C2271B',
+  dark: '#EEF3FF', // the highlighted "client price" panel
+  darkMuted: '#4F5A6B',
 };
 
 /** Paper colors for previews of documents the client sees (quotes, invoices): always white paper. */
@@ -91,7 +94,7 @@ export function Button({ title, onPress, kind = 'primary', disabled, style, acce
   title: string; onPress: () => void; kind?: 'primary' | 'secondary' | 'ghost' | 'danger'; disabled?: boolean;
   style?: StyleProp<ViewStyle>; accessibilityLabel?: string; icon?: IconName;
 }) {
-  const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.cardHi : 'transparent';
+  const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.card : 'transparent';
   const fg = kind === 'primary' ? C.onAccent : kind === 'danger' ? C.danger : kind === 'ghost' ? C.accent : C.ink;
   return (
     <PressScale
@@ -192,7 +195,7 @@ export function Segmented<T extends string>({ options, value, onChange }: {
             disabled={o.disabled}
             onPress={() => onChange(o.value)}
             style={[s.segItem, on && s.segOn, o.disabled && { opacity: 0.4 }]}>
-            <Text style={[s.segText, on && { color: C.onAccent, fontWeight: '700' }]}>{o.label}</Text>
+            <Text style={[s.segText, on && { color: C.ink, fontWeight: '700' }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -207,7 +210,7 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
   } as const;
   const [bg, fg] = map[tone];
   return (
-    <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 }}>
+    <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
       <Text style={{ color: fg, fontSize: 12, fontWeight: '700' }}>{label}</Text>
     </View>
   );
@@ -217,7 +220,7 @@ export function Banner({ tone, title, children }: { tone: 'warn' | 'info' | 'ok'
   const bg = tone === 'warn' ? C.warnBg : tone === 'info' ? C.infoBg : C.okBg;
   const fg = tone === 'warn' ? C.warnInk : tone === 'info' ? C.infoInk : C.okInk;
   return (
-    <View style={{ backgroundColor: bg, borderRadius: 6, padding: 14, gap: 4 }}>
+    <View style={{ backgroundColor: bg, borderRadius: 14, padding: 14, gap: 4 }}>
       <Text style={{ color: fg, fontWeight: '700', fontSize: 15 }}>{title}</Text>
       {children ? <Text style={{ color: fg, fontSize: 14, lineHeight: 20 }}>{children}</Text> : null}
     </View>
@@ -269,8 +272,8 @@ export function Tile({ icon, title, sub, onPress, tone = 'yellow', index = 0 }: 
   return (
     <Reveal index={index} style={{ flexBasis: '47%', flexGrow: 1 }}>
       <PressScale accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
-        style={{ backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, minHeight: 112 }}>
-        <View style={{ width: 42, height: 42, borderRadius: 6, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+        style={{ backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, minHeight: 112 }}>
+        <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={22} color={fg} />
         </View>
         <View style={{ gap: 2 }}>
@@ -314,7 +317,7 @@ export function Section({ title, link, onLink }: { title: string; link?: string;
 export function Stat({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'warn' | 'accent' }) {
   const color = tone === 'ok' ? C.okInk : tone === 'warn' ? C.warnInk : tone === 'accent' ? C.accent : C.ink;
   return (
-    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.cardHi, borderRadius: 6, padding: 12, gap: 2 }}>
+    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 12, gap: 2 }}>
       <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
       <Text style={{ color, fontSize: 17, fontWeight: '700', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
     </View>
@@ -322,24 +325,24 @@ export function Stat({ label, value, tone }: { label: string; value: string; ton
 }
 
 export const s = StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 },
+  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10, shadowColor: '#0B1324', shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
   h1: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
   h2: { fontSize: 17, fontWeight: '700', color: C.ink },
   label: { fontSize: 14, fontWeight: '600', color: C.ink2 },
   muted: { fontSize: 14, color: C.muted, lineHeight: 21 },
-  btn: { height: 54, borderRadius: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
+  btn: { height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 6, paddingRight: 12 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingRight: 12 },
   input: { flex: 1, minHeight: 48, paddingHorizontal: 14, fontSize: 16, color: C.ink },
   suffix: { color: C.muted, fontSize: 14 },
-  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 6, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   chipText: { fontSize: 15, color: C.ink, fontWeight: '500' },
-  seg: { flexDirection: 'row', backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 6, padding: 4, gap: 4 },
-  segItem: { flex: 1, height: 40, borderRadius: 2, alignItems: 'center', justifyContent: 'center' },
-  segOn: { backgroundColor: C.accent, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  seg: { flexDirection: 'row', backgroundColor: '#E7ECF4', borderRadius: 14, padding: 4, gap: 4 },
+  segItem: { flex: 1, height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  segOn: { backgroundColor: C.card, shadowColor: '#0B1324', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   segText: { fontSize: 14, color: C.ink2, fontWeight: '500' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderColor: C.lineSoft },
   rowText: { fontSize: 15, color: C.ink },
-  stepBtn: { width: 44, height: 44, borderRadius: 6, borderWidth: 1, borderColor: C.line, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 22, color: C.ink },
 });

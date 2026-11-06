@@ -77,7 +77,7 @@ export default function SignScreen() {
             It was {money(signed.total)} when signed and is {money(est.total)} now. The signed quote and the contract keep the signed amount. Use a change order for the difference, or remove the signature and have the client sign again.
           </Banner>
         ) : null}
-        <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 12 }}>
+        <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 12 }}>
           <SvgXml xml={signatureSvg(signed, '#0F172A')} width={padW - 24} height={Math.round(((padW - 24) * signed.h) / signed.w)} />
         </View>
         <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
@@ -95,7 +95,7 @@ export default function SignScreen() {
       <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
       <Muted style={{ fontSize: 13 }}>Hand the phone to your client. They check the total and sign with a finger.</Muted>
       <Reveal>
-        <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 18, gap: 10 }}>
+        <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 18, gap: 10 }}>
           <Text style={{ color: P.muted, fontSize: 13 }}>{profile.companyName}</Text>
           <Text style={{ color: P.ink, fontSize: 20, fontWeight: '800' }}>{L.title}</Text>
           <Text style={{ color: P.ink, fontSize: 15, fontWeight: '600' }}>{est.title}</Text>

@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@expo-google-fonts/lexend": "^0.4.1",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/ui": "~58.0.27",
     "@expo/vector-icons": "^15.0.2",

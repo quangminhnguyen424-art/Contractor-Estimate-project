@@ -43,8 +43,8 @@ function Working({ job }: { job: WorkJob }) {
   const bar = useAnimatedStyle(() => ({ width: `${p.get() * 100}%` }));
   const pct = Math.round(Math.min(94, (done / job.steps.length) * 94));
   return (
-    <View style={{ flex: 1, backgroundColor: 'rgba(7,9,12,0.96)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <View style={{ width: '100%', maxWidth: 420, gap: 18, padding: 20, borderWidth: 1, borderColor: 'rgba(255,122,26,0.35)', backgroundColor: 'rgba(255,122,26,0.04)' }}>
+    <View style={{ flex: 1, backgroundColor: 'rgba(245,247,251,0.97)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <View style={{ width: '100%', maxWidth: 420, gap: 18, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, shadowColor: C.accent, shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 4 }}>
         <Brackets />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Readout color={C.accentDark}>Bidwell · working</Readout>

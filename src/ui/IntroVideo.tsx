@@ -77,7 +77,7 @@ function Bar({ state }: { state: 'done' | 'now' | 'next' }) {
 function Talk() {
   return (
     <View style={{ alignItems: 'center', gap: 16 }}>
-      <View style={{ width: 120, height: 120, borderWidth: 1, borderColor: 'rgba(255,122,26,0.4)', backgroundColor: 'rgba(255,122,26,0.08)', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 120, height: 120, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(36,87,245,0.3)', backgroundColor: 'rgba(36,87,245,0.08)', alignItems: 'center', justifyContent: 'center' }}>
         <Brackets />
         <Wave color={C.accent} bars={6} height={54} />
       </View>

@@ -68,7 +68,7 @@ export function ScanBeam({ height, color = '#FF7A1A' }: { height: number; color?
 }
 
 /** Progress bar that fills smoothly to its value (0–1). */
-export function Progress({ value, color = '#FF7A1A', track = '#1F2933', height = 8 }: { value: number; color?: string; track?: string; height?: number }) {
+export function Progress({ value, color = '#2457F5', track = '#E7ECF4', height = 8 }: { value: number; color?: string; track?: string; height?: number }) {
   const w = useSharedValue(0);
   useEffect(() => {
     w.set(withDelay(150, withTiming(Math.max(0, Math.min(1, value || 0)), { duration: 700, easing: Easing.out(Easing.cubic) })));

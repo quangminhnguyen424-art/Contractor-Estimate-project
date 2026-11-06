@@ -93,7 +93,7 @@ export default function ChangeOrderScreen() {
           {shown.description ? <Text style={{ color: C.ink2, lineHeight: 21 }}>{shown.description}</Text> : null}
           <Text style={{ color: C.accent, fontSize: 24, fontWeight: '800', fontFamily: '__numbers__' }}>{money(shown.amount)} <Text style={{ color: C.muted, fontSize: 14 }}>+ {money(taxOn(shown.amount, pct))} tax</Text></Text>
           {shown.signature ? (
-            <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 10, gap: 4 }}>
+            <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 10, gap: 4 }}>
               <SvgXml xml={signatureSvg(shown.signature, '#0F172A')} width={padW - 52} height={Math.round(((padW - 52) * shown.signature.h) / shown.signature.w)} />
               <Text style={{ color: P.muted, fontSize: 12 }}>{shown.signature.name} · {dateFmt(shown.signature.signedAt)}</Text>
             </View>

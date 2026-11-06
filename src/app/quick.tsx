@@ -65,7 +65,7 @@ export default function QuickSheet() {
               {active.map((p, i) => (
                 <Reveal key={p.id} index={i}>
                   <Pressable accessibilityRole="button" onPress={() => { setProjectId(p.id); setStep('room'); }}
-                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 6, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
+                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
                     <Ionicons name="construct-outline" size={22} color={C.accent} />
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: C.ink, fontWeight: '700' }}>{p.title}</Text>

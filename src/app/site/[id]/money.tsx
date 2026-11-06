@@ -13,7 +13,7 @@ import { useToday } from '@/ui/useToday';
 /** One heading band, like the dark headers on the Project Dashboard sheet. */
 function Band({ title }: { title: string }) {
   return (
-    <View style={{ backgroundColor: C.cardHi, borderRadius: 4, paddingVertical: 8, paddingHorizontal: 10 }}>
+    <View style={{ backgroundColor: C.cardHi, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10 }}>
       <Text style={{ color: C.ink, fontWeight: '700', letterSpacing: 0.6, fontSize: 13 }}>{title}</Text>
     </View>
   );

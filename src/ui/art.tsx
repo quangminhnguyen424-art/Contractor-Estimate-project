@@ -7,7 +7,8 @@ import { Float, ScanBeam, Twinkle } from './motion';
  * Illustrations drawn for this app (simple vector scenes in the app's colors): near-black, safety orange,
  * sky blue and slate. Each is a viewBox of 320 x 200 and scales to any width.
  */
-const Y = '#FF7A1A', Y2 = '#FFB37A', SKY = '#38BDF8', SKY2 = '#0EA5E9', SL = '#1F2933', SL2 = '#3A4654', INK = '#07090C', W = '#E8EDF2';
+// Light palette (design A): blue line drawings on white, orange highlights.
+const Y = '#FF6B1A', Y2 = '#F08A4B', SKY = '#2457F5', SKY2 = '#7C9BF8', SL = '#E3E8F0', SL2 = '#C9D6FF', INK = '#FFFFFF', W = '#3B4659';
 
 const grid = `<g stroke="${SL}" stroke-width="1" opacity=".55">${Array.from({ length: 11 }, (_, i) => `<line x1="${i * 32}" y1="0" x2="${i * 32}" y2="200"/>`).join('')}${Array.from({ length: 7 }, (_, i) => `<line x1="0" y1="${i * 32}" x2="320" y2="${i * 32}"/>`).join('')}</g>`;
 const svg = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">${body}</svg>`;
@@ -26,8 +27,8 @@ export const ART = {
   /** A phone scanning a room in 3D. */
   scan: svg(`${grid}
 <path d="M70 120 L160 75 L250 120 L160 165Z" fill="${INK}" stroke="${SKY}" stroke-width="2.5"/>
-<path d="M70 120 L70 62 L160 18 L160 75Z" fill="#132036" stroke="${SKY}" stroke-width="2.5"/>
-<path d="M160 18 L250 62 L250 120 L160 75Z" fill="#17263F" stroke="${SKY}" stroke-width="2.5"/>
+<path d="M70 120 L70 62 L160 18 L160 75Z" fill="#EEF3FF" stroke="${SKY}" stroke-width="2.5"/>
+<path d="M160 18 L250 62 L250 120 L160 75Z" fill="#DCE6FF" stroke="${SKY}" stroke-width="2.5"/>
 <rect x="190" y="70" width="26" height="22" fill="none" stroke="${Y2}" stroke-width="2" transform="skewY(26)"/>
 <path d="M96 76 L96 112 L120 100 L120 64Z" fill="none" stroke="${Y2}" stroke-width="2"/>
 <g transform="translate(118 92) rotate(-8)"><rect width="84" height="128" rx="14" fill="${SL}" stroke="${W}" stroke-width="3"/><rect x="8" y="12" width="68" height="100" rx="6" fill="${INK}" opacity=".85"/>
@@ -59,7 +60,7 @@ ${Array.from({ length: 12 }, (_, i) => `<rect x="${102 + (i % 4) * 30}" y="${84 
 
   /** A signed agreement. */
   sign: svg(`${grid}
-<rect x="96" y="24" width="128" height="160" rx="10" fill="${W}"/><rect x="112" y="44" width="70" height="9" rx="4" fill="${SL2}"/>
+<rect x="96" y="24" width="128" height="160" rx="10" fill="#FFFFFF" stroke="#C9D2DF" stroke-width="2"/><rect x="112" y="44" width="70" height="9" rx="4" fill="${SL2}"/>
 ${[66, 80, 94, 108].map((y) => `<rect x="112" y="${y}" width="${y === 108 ? 60 : 96}" height="6" rx="3" fill="#CBD5E1"/>`).join('')}
 <line x1="112" y1="160" x2="208" y2="160" stroke="${SL2}" stroke-width="2"/>
 <path d="M114 152 c10 -22 18 -22 16 -4 c-2 14 10 -18 22 -10 c8 6 -6 16 6 12 c10 -4 14 -14 26 -8" stroke="${SKY2}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
@@ -68,7 +69,7 @@ ${[66, 80, 94, 108].map((y) => `<rect x="112" y="${y}" width="${y === 108 ? 60 :
 
   /** Invoice with a coin: payments. */
   money: svg(`${grid}
-<rect x="80" y="30" width="120" height="150" rx="10" fill="${W}"/><rect x="96" y="48" width="56" height="10" rx="5" fill="${SL2}"/>
+<rect x="80" y="30" width="120" height="150" rx="10" fill="#FFFFFF" stroke="#C9D2DF" stroke-width="2"/><rect x="96" y="48" width="56" height="10" rx="5" fill="${SL2}"/>
 ${[72, 88, 104, 120].map((y) => `<rect x="96" y="${y}" width="88" height="6" rx="3" fill="#CBD5E1"/>`).join('')}
 <rect x="96" y="142" width="88" height="20" rx="6" fill="${SKY}"/>
 <circle cx="226" cy="128" r="40" fill="${Y}"/><circle cx="226" cy="128" r="30" fill="none" stroke="#EAB308" stroke-width="4"/>
@@ -84,8 +85,8 @@ ${[0, 1, 2, 3, 4, 5, 6].map((i) => `<rect x="${98 + i * 14}" y="${88 - [10, 22, 
 
   /** Photos fanned out with a check: client photo updates. */
   photos: svg(`${grid}
-<g transform="rotate(-10 120 110)"><rect x="70" y="50" width="110" height="90" rx="8" fill="${W}"/><rect x="78" y="58" width="94" height="62" rx="4" fill="${SKY2}"/><path d="M78 120 L110 88 L134 108 L150 94 L172 116 L172 120Z" fill="${SL2}"/></g>
-<g transform="rotate(8 200 110)"><rect x="140" y="46" width="110" height="90" rx="8" fill="${W}"/><rect x="148" y="54" width="94" height="62" rx="4" fill="#1E293B"/><path d="M160 106 L190 74 L218 106Z" fill="none" stroke="${Y}" stroke-width="5" stroke-linejoin="round"/><rect x="176" y="92" width="28" height="24" fill="${Y}"/></g>
+<g transform="rotate(-10 120 110)"><rect x="70" y="50" width="110" height="90" rx="8" fill="#FFFFFF" stroke="#C9D2DF" stroke-width="2"/><rect x="78" y="58" width="94" height="62" rx="4" fill="${SKY2}"/><path d="M78 120 L110 88 L134 108 L150 94 L172 116 L172 120Z" fill="${SL2}"/></g>
+<g transform="rotate(8 200 110)"><rect x="140" y="46" width="110" height="90" rx="8" fill="#FFFFFF" stroke="#C9D2DF" stroke-width="2"/><rect x="148" y="54" width="94" height="62" rx="4" fill="#DCE6FF"/><path d="M160 106 L190 74 L218 106Z" fill="none" stroke="${Y}" stroke-width="5" stroke-linejoin="round"/><rect x="176" y="92" width="28" height="24" fill="${Y}"/></g>
 <circle cx="250" cy="150" r="22" fill="#34D399"/><path d="M240 150 l7 7 l13 -15" stroke="${INK}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`),
 };
 

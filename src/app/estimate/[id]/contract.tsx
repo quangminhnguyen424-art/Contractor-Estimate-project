@@ -155,7 +155,7 @@ export default function ContractScreen() {
               {it.credit ? <Badge label="Credit" tone="ok" /> : st ? <Badge label={STATE[st.state].label} tone={STATE[st.state].tone} /> : null}
               {it.credit ? null : <Pressable accessibilityRole="button" accessibilityLabel={it.invoice ? `Share invoice ${it.invoice.number}` : `Create invoice for ${it.label}`}
                 disabled={!!busy} onPress={() => invoice(it)}
-                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, backgroundColor: it.invoice ? C.cardHi : C.accent }}>
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: it.invoice ? C.cardHi : C.accent }}>
                 <Text style={{ color: it.invoice ? C.ink : C.onAccent, fontWeight: '700', fontSize: 13 }}>
                   {busy === it.key ? '…' : it.invoice ? 'Share' : 'Invoice'}
                 </Text>

@@ -1,9 +1,7 @@
-import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono/500Medium';
-import { JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono/700Bold';
-import { SpaceGrotesk_400Regular } from '@expo-google-fonts/space-grotesk/400Regular';
-import { SpaceGrotesk_500Medium } from '@expo-google-fonts/space-grotesk/500Medium';
-import { SpaceGrotesk_600SemiBold } from '@expo-google-fonts/space-grotesk/600SemiBold';
-import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk/700Bold';
+import { Lexend_400Regular } from '@expo-google-fonts/lexend/400Regular';
+import { Lexend_500Medium } from '@expo-google-fonts/lexend/500Medium';
+import { Lexend_600SemiBold } from '@expo-google-fonts/lexend/600SemiBold';
+import { Lexend_700Bold } from '@expo-google-fonts/lexend/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -24,7 +22,7 @@ function SaveWarning() {
   if (!saveFailed) return null;
   return (
     <View accessibilityRole="alert" pointerEvents="none"
-      style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 6, padding: 12 }}>
+      style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 14, padding: 12 }}>
       <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Could not save your latest changes</Text>
       <Text style={{ color: '#FFFFFF', fontSize: 13 }}>Storage is full. Delete old photos or finished job sites, then try again.</Text>
     </View>
@@ -34,7 +32,7 @@ function SaveWarning() {
 function RootStack() {
   const { ready, profile, termsOk } = useApp();
   const [fontsLoaded, fontError] = useFonts({
-    SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold, JetBrainsMono_500Medium, JetBrainsMono_700Bold,
+    Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold,
   });
   // If the font can't load, the app still opens with the phone's own font.
   if (!ready || (!fontsLoaded && !fontError)) {
@@ -120,7 +118,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppProvider>
         <CloudProvider>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           <RootStack />
           <SaveWarning />
           <ConfettiHost />

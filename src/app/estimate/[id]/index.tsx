@@ -84,7 +84,7 @@ export default function EstimateScreen() {
         <Muted style={{ fontSize: 12 }}>Internal view. Your client never sees cost, labor or markup.</Muted>
       </View>
 
-      <View style={{ backgroundColor: C.dark, borderRadius: 6, padding: 18, gap: 12, borderWidth: 1, borderColor: C.line }}>
+      <View style={{ backgroundColor: C.dark, borderRadius: 22, padding: 18, gap: 12, borderWidth: 1, borderColor: "#D6E0FF" }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Text style={{ color: C.darkMuted, fontSize: 14 }}>Client price</Text>
           <Text style={{ color: C.accent, fontSize: 34, fontFamily: mono, fontWeight: '800' }}>{money(est.price)}</Text>

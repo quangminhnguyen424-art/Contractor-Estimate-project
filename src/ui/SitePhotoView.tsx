@@ -23,7 +23,7 @@ export function PhotoView({ photo, width, badge }: { photo: SitePhoto; width: nu
         </View>
       ) : null}
       {badge ? (
-        <View style={{ position: 'absolute', left: 4, top: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
+        <View style={{ position: 'absolute', left: 4, top: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 10, paddingHorizontal: 5, paddingVertical: 1 }}>
           <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{badge}</Text>
         </View>
       ) : null}

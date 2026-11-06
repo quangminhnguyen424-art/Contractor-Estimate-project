@@ -68,7 +68,7 @@ export default function QuoteScreen() {
         </Banner>
       ) : null}
 
-      <View style={{ backgroundColor: P.paper, borderRadius: 6, padding: 20, gap: 14, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 }}>
+      <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 20, gap: 14, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 2, borderColor: P.accent, paddingBottom: 10 }}>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ fontSize: 17, fontWeight: '700', color: P.ink }}>{profile.companyName}</Text>

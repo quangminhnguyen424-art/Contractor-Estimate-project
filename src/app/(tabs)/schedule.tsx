@@ -45,7 +45,7 @@ export default function ScheduleScreen() {
           const count = events.filter((e) => e.date === d).length;
           return (
             <PressScale key={d} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={dayLabel(d, today)} onPress={() => setDay(d)}
-              style={{ width: 54, paddingVertical: 10, borderRadius: 6, alignItems: 'center', gap: 4, backgroundColor: on ? C.accent : C.card, borderWidth: 1, borderColor: on ? C.accent : d === today ? C.sky : C.line }}>
+              style={{ width: 54, paddingVertical: 10, borderRadius: 14, alignItems: 'center', gap: 4, backgroundColor: on ? C.accent : C.card, borderWidth: 1, borderColor: on ? C.accent : d === today ? C.sky : C.line }}>
               <Text style={{ color: on ? C.onAccent : C.muted, fontSize: 11, fontWeight: '600' }}>{date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}</Text>
               <Text style={{ color: on ? C.onAccent : C.ink, fontSize: 19, fontWeight: '800' }}>{date.getDate()}</Text>
               <View style={{ flexDirection: 'row', gap: 2, height: 6 }}>
@@ -82,7 +82,7 @@ export default function ScheduleScreen() {
 
 function IconDot({ icon, color }: { icon: IconName; color: string }) {
   return (
-    <View style={{ width: 42, height: 42, borderRadius: 6, backgroundColor: `${color}22`, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: `${color}22`, alignItems: 'center', justifyContent: 'center' }}>
       <Ionicons name={icon} size={21} color={color} />
     </View>
   );
@@ -93,7 +93,7 @@ function EventRow({ e, job, index, showDay, today }: { e: CalEvent; job: string;
   return (
     <Reveal index={index}>
       <PressScale accessibilityRole="button" accessibilityLabel={e.title} onPress={() => router.push(`/event?id=${e.id}`)} scaleTo={0.98}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 6, borderWidth: 1, borderColor: C.line, padding: 12, opacity: e.done ? 0.55 : 1 }}>
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 12, opacity: e.done ? 0.55 : 1 }}>
         <IconDot icon={k.icon as IconName} color={k.color} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={{ color: C.ink, fontWeight: '700', textDecorationLine: e.done ? 'line-through' : 'none' }} numberOfLines={1}>{e.title}</Text>

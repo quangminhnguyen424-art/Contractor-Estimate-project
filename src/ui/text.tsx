@@ -5,21 +5,20 @@ import {
 } from 'react-native';
 
 /**
- * Text uses Space Grotesk (technical, modern, with Vietnamese accents); numbers and small labels use
- * JetBrains Mono, like the readout on a measuring tool. Custom fonts come as one file per weight, so the
- * weight in a style is turned into the matching file here.
+ * Everything uses Lexend: a font designed to be easy to read, with full Vietnamese accents.
+ * Custom fonts come as one file per weight, so the weight in a style is turned into the matching file here.
  */
 export const FONT = {
-  regular: 'SpaceGrotesk_400Regular',
-  medium: 'SpaceGrotesk_500Medium',
-  semibold: 'SpaceGrotesk_600SemiBold',
-  bold: 'SpaceGrotesk_700Bold',
-  heavy: 'SpaceGrotesk_700Bold',
+  regular: 'Lexend_400Regular',
+  medium: 'Lexend_500Medium',
+  semibold: 'Lexend_600SemiBold',
+  bold: 'Lexend_700Bold',
+  heavy: 'Lexend_700Bold',
 } as const;
 
-/** The readout font, for labels set in capitals. */
-export const MONO = 'JetBrainsMono_500Medium';
-const MONO_BOLD = 'JetBrainsMono_700Bold';
+/** The font for small labels and numbers (kept as its own name so screens can ask for it). */
+export const MONO = 'Lexend_500Medium';
+const MONO_BOLD = 'Lexend_600SemiBold';
 
 /** Marker for numbers (money, sizes): the readout font, so digits line up in columns. */
 export const NUM = '__numbers__';

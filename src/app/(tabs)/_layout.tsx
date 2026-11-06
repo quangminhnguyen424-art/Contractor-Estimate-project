@@ -13,15 +13,15 @@ const icon = (outline: IconName, filled: IconName) =>
     return <Ionicons name={focused ? filled : outline} color={typeof color === 'string' ? color : C.muted} size={size} />;
   };
 
-/** The raised yellow + in the middle of the tab bar: opens the quick menu (estimate, job photo, scan, appointment). */
+/** The raised orange + in the middle of the tab bar: opens the quick menu (estimate, job photo, scan, appointment). */
 function PlusButton() {
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -18 }}>
         <Pulse min={0.97} max={1.04}>
-          <View style={{ width: 52, height: 52, transform: [{ rotate: '45deg' }], backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.bg,
-            shadowColor: C.accent, shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6 }}>
-            <View style={{ transform: [{ rotate: '-45deg' }] }}><Ionicons name="add" size={30} color={C.onAccent} /></View>
+          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.card,
+            shadowColor: C.orange, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+            <Ionicons name="add" size={30} color="#FFFFFF" />
           </View>
         </Pulse>
       </Pressable>

@@ -152,7 +152,7 @@ export default function NewEstimate() {
         </Banner>
       ) : (
         <Pressable accessibilityRole="button" onPress={() => router.push('/scan')}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 6, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accent, opacity: pressed ? 0.8 : 1 })}>
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accent, opacity: pressed ? 0.8 : 1 })}>
           <Ionicons name="scan-outline" size={26} color={C.accent} />
           <View style={{ flex: 1 }}>
             <Text style={{ color: C.ink, fontWeight: '700' }}>Bigger job? Scan the rooms in 3D</Text>
@@ -266,7 +266,7 @@ function PhotoButton({ icon, label, onPress }: { icon: 'camera-outline' | 'image
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => ({ flex: 1, height: 72, borderRadius: 6, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
+      style={({ pressed }) => ({ flex: 1, height: 72, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
         alignItems: 'center', justifyContent: 'center', gap: 4, opacity: pressed ? 0.7 : 1 })}>
       <Ionicons name={icon} size={24} color={C.ink} />
       <Text style={{ fontSize: 14, color: C.ink }}>{label}</Text>

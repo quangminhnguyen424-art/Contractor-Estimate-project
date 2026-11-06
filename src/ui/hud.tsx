@@ -23,11 +23,11 @@ export function Brackets({ color = C.accent, size = 14, weight = 3 }: { color?: 
   );
 }
 
-/** A panel with corner brackets and an orange tint: for the one main thing on a screen. */
+/** The one main panel on a screen: a white card with a soft blue glow. */
 export function HudPanel({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[{ position: 'relative', padding: 16, backgroundColor: 'rgba(255,122,26,0.06)', borderWidth: 1, borderColor: 'rgba(255,122,26,0.35)', gap: 10 }, style]}>
-      <Brackets />
+    <View style={[{ position: 'relative', padding: 16, borderRadius: 22, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, gap: 10,
+      shadowColor: C.accent, shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 }, style]}>
       {children}
     </View>
   );
@@ -35,7 +35,7 @@ export function HudPanel({ children, style }: { children: ReactNode; style?: Sty
 
 /** Small capital readout label ("NEW ESTIMATE", "TODAY"). */
 export function Readout({ children, color = C.muted, style }: { children: ReactNode; color?: string; style?: StyleProp<ViewStyle> }) {
-  return <Text style={[{ fontFamily: MONO, fontSize: 12, letterSpacing: 0.8, color, textTransform: 'uppercase' }, style as object]}>{children}</Text>;
+  return <Text style={[{ fontFamily: MONO, fontWeight: '600', fontSize: 13, letterSpacing: 0.1, color }, style as object]}>{children}</Text>;
 }
 
 /** A radar that sweeps round and round, with a blip. */
@@ -50,17 +50,17 @@ export function Radar({ size = 96 }: { size?: number }) {
   const ring = useAnimatedStyle(() => ({ opacity: 1 - blip.get(), transform: [{ scale: 0.6 + blip.get() * 1.6 }] }));
   const half = size / 2;
   return (
-    <View style={{ width: size, height: size, borderRadius: half, borderWidth: 1, borderColor: 'rgba(255,122,26,0.5)', overflow: 'hidden', backgroundColor: 'rgba(255,122,26,0.06)' }}>
-      <View style={{ position: 'absolute', left: half - 0.5, top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(255,122,26,0.28)' }} />
-      <View style={{ position: 'absolute', top: half - 0.5, left: 0, right: 0, height: 1, backgroundColor: 'rgba(255,122,26,0.28)' }} />
-      <View style={{ position: 'absolute', left: size * 0.2, top: size * 0.2, width: size * 0.6, height: size * 0.6, borderRadius: size, borderWidth: 1, borderColor: 'rgba(255,122,26,0.22)' }} />
+    <View style={{ width: size, height: size, borderRadius: half, borderWidth: 1, borderColor: 'rgba(36,87,245,0.5)', overflow: 'hidden', backgroundColor: 'rgba(36,87,245,0.06)' }}>
+      <View style={{ position: 'absolute', left: half - 0.5, top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(36,87,245,0.28)' }} />
+      <View style={{ position: 'absolute', top: half - 0.5, left: 0, right: 0, height: 1, backgroundColor: 'rgba(36,87,245,0.28)' }} />
+      <View style={{ position: 'absolute', left: size * 0.2, top: size * 0.2, width: size * 0.6, height: size * 0.6, borderRadius: size, borderWidth: 1, borderColor: 'rgba(36,87,245,0.22)' }} />
       <Animated.View style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size }, sweep]}>
         {/* The bright edge of the sweep and a fading wedge behind it. */}
-        <View style={{ position: 'absolute', left: half, top: 0, width: half, height: half, borderTopRightRadius: half, backgroundColor: 'rgba(255,122,26,0.22)' }} />
+        <View style={{ position: 'absolute', left: half, top: 0, width: half, height: half, borderTopRightRadius: half, backgroundColor: 'rgba(36,87,245,0.22)' }} />
         <View style={{ position: 'absolute', left: half - 1, top: 0, width: 2, height: half, backgroundColor: C.accent }} />
       </Animated.View>
-      <View style={{ position: 'absolute', left: size * 0.64, top: size * 0.27, width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFB37A' }} />
-      <Animated.View style={[{ position: 'absolute', left: size * 0.64 - 3, top: size * 0.27 - 3, width: 13, height: 13, borderRadius: 7, borderWidth: 1, borderColor: '#FFB37A' }, ring]} />
+      <View style={{ position: 'absolute', left: size * 0.64, top: size * 0.27, width: 7, height: 7, borderRadius: 4, backgroundColor: '#FF6B1A' }} />
+      <Animated.View style={[{ position: 'absolute', left: size * 0.64 - 3, top: size * 0.27 - 3, width: 13, height: 13, borderRadius: 7, borderWidth: 1, borderColor: '#FF6B1A' }, ring]} />
     </View>
   );
 }
@@ -72,7 +72,7 @@ export function Blink({ color = C.okInk, size = 7, on = true }: { color?: string
     v.set(on ? withRepeat(withSequence(withTiming(0.15, { duration: 550 }), withTiming(1, { duration: 550 })), -1, false) : withTiming(1));
   }, [v, on]);
   const anim = useAnimatedStyle(() => ({ opacity: v.get() }));
-  return <Animated.View style={[{ width: size, height: size, backgroundColor: color }, anim]} />;
+  return <Animated.View style={[{ width: size, height: size, borderRadius: size, backgroundColor: color }, anim]} />;
 }
 
 /** Text that types itself out, pauses, and moves on to the next line (examples of what to say). */
@@ -89,7 +89,7 @@ export function TypeLines({ lines, style }: { lines: string[]; style?: object })
   }, [i, n, lines]);
   const line = lines[i % lines.length] ?? '';
   return (
-    <Text style={[{ fontFamily: MONO, fontSize: 13, color: C.ink }, style]} numberOfLines={1}>
+    <Text style={[{ fontSize: 14, color: C.ink2 }, style]} numberOfLines={1}>
       {line.slice(0, n)}<Text style={{ color: C.accent }}>▌</Text>
     </Text>
   );

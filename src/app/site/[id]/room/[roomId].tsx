@@ -88,13 +88,13 @@ export default function RoomScreen() {
       <View key={t.id} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 8, borderTopWidth: 1, borderColor: C.lineSoft }}>
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: t.done }} accessibilityLabel={t.text} hitSlop={8}
           onPress={() => setTask(t.id, t.done ? { done: false, doneAt: undefined } : { done: true, doneAt: new Date().toISOString() })}
-          style={{ width: 26, height: 26, borderRadius: 6, borderWidth: 2, borderColor: t.done ? C.okInk : C.ink2, backgroundColor: t.done ? C.okInk : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: t.done ? C.okInk : C.ink2, backgroundColor: t.done ? C.okInk : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
           {t.done ? <Text style={{ color: C.onAccent, fontWeight: '800' }}>✓</Text> : null}
         </Pressable>
         <View style={{ flex: 1, gap: 6 }}>
           <Text style={{ color: t.done ? C.muted : C.ink, fontSize: 15, textDecorationLine: t.done ? 'line-through' : 'none' }}>{t.text}</Text>
           {t.review ? (
-            <View style={{ alignSelf: 'flex-start', backgroundColor: C.warnBg, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2 }}>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: C.warnBg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
               <Text style={{ color: C.warnInk, fontSize: 12, fontWeight: '700' }}>NEEDS A LOOK</Text>
             </View>
           ) : null}

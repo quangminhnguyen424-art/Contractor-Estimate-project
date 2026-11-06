@@ -105,7 +105,7 @@ export default function CostScreen() {
     <Screen footer={<Button title={editing ? 'Save changes' : 'Save cost'} icon="checkmark" disabled={!valid || reading} onPress={save} />}>
       <Card>
         <H2>Receipt</H2>
-        {receiptUri ? <Image source={{ uri: shown }} style={{ width: '100%', height: 220, borderRadius: 6, backgroundColor: C.cardHi }} resizeMode="contain" accessibilityLabel="Receipt photo" /> : null}
+        {receiptUri ? <Image source={{ uri: shown }} style={{ width: '100%', height: 220, borderRadius: 14, backgroundColor: C.cardHi }} resizeMode="contain" accessibilityLabel="Receipt photo" /> : null}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Button title={reading ? 'Reading…' : receiptUri ? 'Retake' : 'Snap receipt'} icon="camera-outline" disabled={reading} style={{ flex: 1 }} onPress={() => snap(true)} />
           <Button kind="secondary" title="From photos" icon="image-outline" disabled={reading} style={{ flex: 1 }} onPress={() => snap(false)} />
