@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { demoAI, guessJobType } from './ai';
 import { applyMarkup, buildEstimate, type EstimateInput } from './estimator';
 import { defaultAnswers, JOB_TYPES } from './jobTypes';
-import { quoteHtml, quoteSections, scheduleAmounts } from './quote';
+import { quoteHtml, quoteSections, quoteWritePrompt, scheduleAmounts } from './quote';
 import type { Estimate, FinishLevel, Profile } from './types';
 
 const profile: Profile = {
@@ -105,6 +105,19 @@ describe('contractor edits the quote', () => {
     expect(html).toContain(`<td class="r"></td>`);
     // The Vietnamese quote is untouched by English edits.
     expect(quoteSections(est, 'vi')[0].title).toBe(quoteSections(base, 'vi')[0].title);
+  });
+});
+
+describe('help me write', () => {
+  it('sends the AI the work, never any dollar amount', () => {
+    const est = asEstimate(buildEstimate(input()), { scopeNote: 'Remodel hall bath' });
+    const trade = quoteSections(est, 'en')[0].trade;
+    for (const t of [{ kind: 'scope' as const }, { kind: 'notes' as const }, { kind: 'section' as const, trade }]) {
+      const p = quoteWritePrompt(est, 'vi', t, 'khách muốn gạch lớn');
+      expect(p).not.toMatch(/\$\s?\d/);
+      expect(p).toContain('Vietnamese');
+      expect(p).toContain('khách muốn gạch lớn');
+    }
   });
 });
 

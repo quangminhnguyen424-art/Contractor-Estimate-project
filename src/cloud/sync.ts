@@ -22,6 +22,7 @@ export async function loadMeta(): Promise<SyncMeta | null> {
     return null;
   }
 }
+export const clearMeta = () => AsyncStorage.removeItem(META).catch(() => {});
 export const saveMeta = (m: SyncMeta) => AsyncStorage.setItem(META, JSON.stringify(m)).catch(() => {});
 
 export async function pullWorkspace(uid: string): Promise<{ data: unknown; updatedAt: string } | null> {

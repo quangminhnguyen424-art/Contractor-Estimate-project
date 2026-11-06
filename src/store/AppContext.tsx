@@ -118,7 +118,8 @@ interface Ctx extends Persisted {
   commitDraft: (d: Draft) => string;
   updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null }) => void;
   deleteEstimate: (id: string) => void;
-  resetAll: () => void;
+  /** Erases everything on this device. keepPhotos leaves photo files (used on sign-out: they are matched again on the next sign-in). */
+  resetAll: (keepPhotos?: boolean) => void;
   apiKey: string;
   saveApiKey: (key: string) => void;
   /** JSON backup of everything except the Claude key. */
@@ -443,10 +444,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id),
         followups: (d.followups ?? []).filter((f) => f.estimateId !== id), events: dropFollowEvents(d.events, id),
       })),
-      resetAll: () => {
+      resetAll: (keepPhotos) => {
         setDraft(null);
         cancelAllReminders();
-        toDelete.current.push(...dataRef.current.projects.flatMap((x) => x.rooms.flatMap((r) => r.photos.map((ph) => ph.uri))));
+        if (!keepPhotos) toDelete.current.push(...dataRef.current.projects.flatMap((x) => x.rooms.flatMap((r) => r.photos.map((ph) => ph.uri))));
         update(() => EMPTY);
       },
       deletePhotosLater: (uris) => { toDelete.current.push(...uris); },

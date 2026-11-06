@@ -9,10 +9,13 @@ import { useEffect } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CloudProvider } from '@/cloud/CloudProvider';
+import { CloudProvider, useCloud } from '@/cloud/CloudProvider';
+import { cloudConfigured } from '@/cloud/config';
 import { AppProvider, useApp } from '@/store/AppContext';
 import { ConfettiHost } from '@/ui/celebrate';
-import { C } from '@/ui/kit';
+import { inClaudeApp } from '@/ui/host';
+import { LoginScreen } from '@/ui/LoginScreen';
+import { Button, C } from '@/ui/kit';
 import { FONT, Text } from '@/ui/text';
 
 /** Shown on every screen when the app could not save (storage full), so no change is lost silently. */
@@ -29,19 +32,47 @@ function SaveWarning() {
   );
 }
 
+/** After signing in on a phone: bring the account's work down before deciding whether setup is needed. */
+function FirstSync() {
+  const cloud = useCloud();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg, padding: 24, gap: 14 }}>
+      {cloud.firstSync === 'waiting' ? (
+        <>
+          <ActivityIndicator color={C.accent} />
+          <Text style={{ color: C.ink2, fontSize: 15 }}>Loading your account…</Text>
+        </>
+      ) : (
+        <>
+          <Text style={{ color: C.ink, fontSize: 18, fontWeight: '700', textAlign: 'center' }}>Can’t reach Bidwell cloud</Text>
+          <Text style={{ color: C.ink2, fontSize: 14, textAlign: 'center' }}>Check your internet connection. Your saved work comes back once it connects.</Text>
+          <Button title="Try again" icon="refresh" onPress={cloud.retryFirstSync} style={{ alignSelf: 'stretch' }} />
+          <Button kind="ghost" title="Continue offline" onPress={cloud.skipFirstSync} />
+        </>
+      )}
+    </View>
+  );
+}
+
 function RootStack() {
   const { ready, profile, termsOk } = useApp();
+  const cloud = useCloud();
+  // Inside the Claude app the AI comes from Claude itself, so the account is optional there; everywhere else you log in first.
+  const needLogin = cloudConfigured && !inClaudeApp && !cloud.user;
+  const in_ = !needLogin;
   const [fontsLoaded, fontError] = useFonts({
     Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold,
   });
   // If the font can't load, the app still opens with the phone's own font.
-  if (!ready || (!fontsLoaded && !fontError)) {
+  if (!ready || !cloud.authReady || (!fontsLoaded && !fontError)) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg }}>
         <ActivityIndicator color={C.accent} />
       </View>
     );
   }
+  if (needLogin) return <LoginScreen gate />;
+  if (cloud.user && cloud.firstSync !== 'done') return <FirstSync />;
   return (
     <Stack
       screenOptions={{
@@ -52,10 +83,10 @@ function RootStack() {
         headerBackTitle: 'Back',
         contentStyle: { backgroundColor: C.bg },
       }}>
-      <Stack.Protected guard={termsOk && !profile}>
+      <Stack.Protected guard={in_ && termsOk && !profile}>
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Protected guard={termsOk && !!profile}>
+      <Stack.Protected guard={in_ && termsOk && !!profile}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="questions" options={{ title: 'A few questions' }} />
         <Stack.Screen name="estimate/[id]/index" options={{ title: 'Estimate' }} />
@@ -83,10 +114,16 @@ function RootStack() {
         <Stack.Screen name="site/[id]/cost" options={{ title: 'Add a cost', presentation: 'modal' }} />
         <Stack.Screen name="estimate/[id]/follow" options={{ title: 'Follow-ups' }} />
         <Stack.Screen name="team" options={{ title: 'Crew & subs' }} />
-        <Stack.Screen name="account" options={{ title: 'Bidwell cloud' }} />
+        <Stack.Screen name="account" options={{ title: "Account" }} />
       </Stack.Protected>
-      {/* Always reachable: on first launch (and after the Terms change) it is the only screen; later it opens from Settings. */}
-      <Stack.Screen name="terms" options={{ headerShown: termsOk, title: 'Terms and AI' }} />
+      {/* After logging in: on first launch (and after the Terms change) it is the only screen; later it opens from Settings. */}
+      <Stack.Protected guard={in_}>
+        <Stack.Screen name="terms" options={{ headerShown: termsOk, title: 'Terms and AI' }} />
+      </Stack.Protected>
+      {/* Logging in from inside the app (e.g. to send a signing link): opens as a pop-up. Logged out, the app shows the login screen instead of all of this. */}
+      <Stack.Protected guard={in_ && termsOk && !!profile && !cloud.user}>
+        <Stack.Screen name="login" options={{ headerShown: false, presentation: 'modal' }} />
+      </Stack.Protected>
     </Stack>
   );
 }

@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useCloud } from '@/cloud/CloudProvider';
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { defaultNotices } from '@/engine/legal';
 import { CLAUDE_MODEL, testClaudeKey } from '@/engine/ai';
 import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Card, Field, H2, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { Banner, Button, C, Field, Label, List, ListRow, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 import { hostSave, inClaudeApp } from '@/ui/host';
 import { EMPTY_WORK } from '@/engine/profile';
 import { JobTypeChips } from '@/ui/JobTypes';
@@ -24,6 +25,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [keyText, setKeyText] = useState(apiKey);
+  const [showKey, setShowKey] = useState(false);
   const [keyStatus, setKeyStatus] = useState<{ tone: 'ok' | 'warn' | 'info'; text: string } | null>(null);
   const [backupText, setBackupText] = useState('');
   // The profile changed elsewhere (a restored backup, or a type of work added in Pricing). Show it, but
@@ -40,7 +42,7 @@ export default function Settings() {
   const schedTotal = p.schedule.reduce((t, m) => t + m.pct, 0);
 
   const reset = () =>
-    confirmAction('Erase everything?', 'Deletes your profile, prices, past jobs and estimates on this device. Export a backup first if you want to keep them.', 'Erase', resetAll);
+    confirmAction('Erase everything?', 'Deletes your profile, prices, past jobs and estimates on this device. Export a backup first if you want to keep them.', 'Erase', () => resetAll());
 
   const saveKey = async () => {
     const k = keyText.trim();
@@ -130,39 +132,40 @@ export default function Settings() {
   return (
     <Screen footer={<Button title={saved ? 'Saved ✓' : 'Save settings'} disabled={schedTotal !== 100}
       onPress={() => { saveProfile({ ...p, specialties: Array.from(new Set([...p.specialties, 'small' as JobTypeId])) }); setSaved(true); setDirty(false); }} />}>
-      <Button kind={cloud.user ? 'secondary' : 'primary'} icon={cloud.user ? 'cloud-done-outline' : 'cloud-outline'} onPress={() => router.push('/account')}
-        title={cloud.user ? `Bidwell cloud: ${cloud.user.email ?? 'signed in'}` : 'Sign in to Bidwell cloud: backup, AI, online signing'} />
-      <Button kind="secondary" title="Connected apps: QuickBooks, Sheets, Calendar, Zapier" icon="git-network-outline" onPress={() => router.push('/connections')} />
-      <Card>
-        <H2>Company</H2>
+      <List>
+        <ListRow icon="person-circle" title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Bidwell'} sub={cloud.user ? 'Account, backup and sync' : 'Backup, AI and online signing'}
+          onPress={() => router.push(cloud.user ? '/account' : '/login')} />
+        <ListRow icon="pricetags" title="My pricing" sub="Your rates and price book" onPress={() => router.push('/pricing')} />
+        <ListRow icon="people" title="Crew & subs" sub="Who works your jobs and their rates" onPress={() => router.push('/team')} />
+        <ListRow icon="git-network" title="Connected apps" sub="QuickBooks, Sheets, Calendar, Zapier" onPress={() => router.push('/connections')} />
+        <ListRow icon="shield-checkmark" title="Terms, privacy and AI" onPress={() => router.push('/terms')} />
+      </List>
+      <Text style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>Tap a section to open it.</Text>
+      <Fold title="Company">
         <Field label="Company name" value={p.companyName} onChangeText={(v) => set('companyName', v)} />
         <Field label="Your name" value={p.contactName} onChangeText={(v) => set('contactName', v)} />
         <Field label="Phone" value={p.phone} onChangeText={(v) => set('phone', v)} keyboardType="phone-pad" />
         <Field label="Email" value={p.email} onChangeText={(v) => set('email', v)} autoCapitalize="none" keyboardType="email-address" />
         <Field label="Contractor registration #" value={p.license} onChangeText={(v) => set('license', v)} autoCapitalize="characters" />
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Work you do</H2>
+      <Fold title="Work you do">
         <JobTypeChips selected={p.specialties} onToggle={toggle} />
         <Muted style={{ fontSize: 13 }}>Add your own types of work and questions in Pricing.</Muted>
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Your typical jobs</H2>
+      <Fold title="Your typical jobs">
         <Muted style={{ fontSize: 13 }}>Bidwell reads this with every job so its questions, notes and answers fit how you work.</Muted>
         <WorkProfileForm value={p.work ?? EMPTY_WORK} onChange={(w) => set('work', w)} />
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>About your business (for Bidwell)</H2>
+      <Fold title="About your business (for Bidwell)">
         <Field label="How you work" multiline value={p.about} onChangeText={(v) => set('about', v)} maxLength={2000}
           placeholder="e.g. Mid-range remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin."
           help="Bidwell reads this with every job, so its questions and notes fit how you work." />
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Pricing rules</H2>
+      <Fold title="Pricing rules">
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <NumberField label="Default markup" suffix="%" value={p.markupPct} onChange={(v) => set('markupPct', v)} style={{ flex: 1 }} />
           <NumberField label="Never below" suffix="%" value={p.minMarkupPct} onChange={(v) => set('minMarkupPct', v)} style={{ flex: 1 }} />
@@ -173,10 +176,9 @@ export default function Settings() {
         <Label>Default quote language</Label>
         <Segmented<Lang> value={p.quoteLanguage} onChange={(v) => set('quoteLanguage', v)}
           options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Payment schedule</H2>
+      <Fold title="Payment schedule">
         {p.schedule.map((m, i) => (
           <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
             <Field label={`Step ${i + 1}`} value={m.label} onChangeText={(v) => setMilestone(i, { label: v })} style={{ flex: 2 }} />
@@ -184,10 +186,9 @@ export default function Settings() {
           </View>
         ))}
         {schedTotal !== 100 ? <Banner tone="warn" title={`Adds up to ${schedTotal}%. It needs to total 100%.`} /> : null}
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Notices on your quotes</H2>
+      <Fold title="Notices on your quotes">
         <Muted style={{ fontSize: 13 }}>Added as extra pages to every client quote. You are responsible for using the official wording for your state.</Muted>
         <Tick on={!!p.notices?.waDisclosure} required onPress={() => set('notices', { ...(p.notices ?? defaultNotices()), waDisclosure: !p.notices?.waDisclosure })}>
           <Text style={{ color: C.ink, fontSize: 15 }}>Washington “Notice to Customer” (RCW 18.27.114): residential jobs of $1,000 or more</Text>
@@ -215,55 +216,72 @@ export default function Settings() {
               </>
             )
         ) : null}
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Terms, privacy and AI sharing</H2>
+      <Fold title="Terms, privacy and AI sharing">
         <Banner tone={aiAllowed ? 'ok' : 'warn'} title={aiAllowed ? 'AI sharing is on' : 'AI sharing is off'}>
           {aiAllowed
             ? 'Notes, photos and recordings you choose are sent to Anthropic (Claude) to draft estimates. Not used for training.'
             : 'Nothing is sent to the AI. Bidwell uses the offline reader, which understands less. Turn it on to use AI.'}
         </Banner>
         <Button kind="secondary" title="Terms, privacy and AI sharing" icon="document-text-outline" onPress={() => router.push('/terms')} />
-      </Card>
+      </Fold>
 
-      <Card>
-        <H2>Bidwell AI</H2>
+      <Fold title="Bidwell AI">
         <Text style={{ color: C.ink }}>
-          {apiKey ? `Connected · ${CLAUDE_MODEL}` : inClaudeApp ? 'Built in · runs on your Claude plan' : 'Not connected · using the offline reader'}
+          {!aiAllowed ? 'Off · AI sharing is turned off above'
+            : apiKey ? `On · your own Claude key (${CLAUDE_MODEL})`
+            : inClaudeApp ? 'On · runs on your Claude plan'
+            : cloud.user ? 'On · included with your Bidwell account'
+            : 'Off · log in to turn it on'}
         </Text>
-        {inClaudeApp && !apiKey ? (
-          <Muted style={{ fontSize: 13 }}>
-            You are using the app inside Claude, so Bidwell reads your notes and photos with no API key. The first time, Bidwell asks you to allow it.
-          </Muted>
-        ) : null}
-        {inClaudeApp ? null : (<>
-        <Muted style={{ fontSize: 13 }}>
-          Bidwell AI runs on Anthropic’s Claude. Create a Claude API key at console.anthropic.com (API Keys), paste it here, and set a monthly spending limit there.
-          The key is saved only on this device and is never included in backups. Job notes and photos you send go to Anthropic to be read.
-        </Muted>
-        <Field label="Claude API key" value={keyText} onChangeText={(v) => { setKeyText(v); setKeyStatus(null); }}
-          placeholder="sk-ant-…" autoCapitalize="none" autoCorrect={false} secureTextEntry />
-        <Button kind="secondary" title={keyText.trim() ? 'Save and test key' : 'Remove key'} onPress={saveKey} />
-        {keyStatus ? <Banner tone={keyStatus.tone} title={keyStatus.text} /> : null}
-        </>)}
-      </Card>
+        {!inClaudeApp && !cloud.user ? <Button title="Log in to turn on the AI" icon="log-in-outline" onPress={() => router.push('/login')} /> : null}
+        {inClaudeApp ? null : (
+          <>
+            <Button kind="ghost" title={showKey ? 'Hide: use my own Claude API key' : 'Advanced: use my own Claude API key'} onPress={() => setShowKey((v) => !v)} />
+            {showKey || apiKey ? (<>
+              <Muted style={{ fontSize: 13 }}>
+                Optional. Your account already includes the AI. With your own key from console.anthropic.com, Bidwell uses it instead and Anthropic bills you directly.
+                The key stays on this device and is never backed up.
+              </Muted>
+              <Field label="Claude API key" value={keyText} onChangeText={(v) => { setKeyText(v); setKeyStatus(null); }}
+                placeholder="sk-ant-…" autoCapitalize="none" autoCorrect={false} secureTextEntry />
+              <Button kind="secondary" title={keyText.trim() ? 'Save and test key' : 'Remove key'} onPress={saveKey} />
+              {keyStatus ? <Banner tone={keyStatus.tone} title={keyStatus.text} /> : null}
+            </>) : null}
+          </>
+        )}
+      </Fold>
 
-      <Card>
-        <H2>Backup</H2>
+      <Fold title="Backup">
         <Muted style={{ fontSize: 13 }}>
-          Your data lives only on this device. Export a backup now and then, and to move your prices and estimates to another phone or computer, restore it there.
+          {cloud.user ? 'Your work is backed up to your account automatically. You can also export a copy as a file.' : 'Your data lives only on this device. Export a backup now and then.'}
         </Muted>
         <Button kind="secondary" title="Export backup" onPress={exportBackup} />
         {Platform.OS === 'web' ? <Button kind="ghost" title="Choose backup file…" onPress={pickBackupFile} /> : null}
         <Field label="Restore from backup" multiline value={backupText} onChangeText={setBackupText}
           placeholder="Paste the backup text here" autoCapitalize="none" autoCorrect={false} />
         <Button kind="secondary" title="Restore backup" disabled={backupText.trim().length < 10} onPress={restore} />
-      </Card>
+      </Fold>
 
       <Pressable accessibilityRole="button" onPress={reset} style={{ alignSelf: 'center', padding: 12 }}>
         <Text style={{ color: C.danger, fontWeight: '600' }}>Erase all data on this device</Text>
       </Pressable>
     </Screen>
+  );
+}
+
+/** A settings section that opens when tapped, so the page stays short. */
+function Fold({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen((v) => !v)}
+        style={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 10 }}>
+        <Text style={{ flex: 1, color: C.ink, fontSize: 16, fontWeight: '600' }}>{title}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+      </Pressable>
+      {open ? <View style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>{children}</View> : null}
+    </View>
   );
 }

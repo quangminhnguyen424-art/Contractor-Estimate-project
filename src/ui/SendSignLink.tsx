@@ -25,7 +25,7 @@ export function SendSignLink(props: {
   if (!cloud.configured) return null;
 
   const send = async () => {
-    if (!cloud.user) { router.push('/account'); return; }
+    if (!cloud.user) { router.push('/login'); return; }
     setBusy(true);
     try {
       const madeId = props.before?.();
@@ -47,7 +47,7 @@ export function SendSignLink(props: {
   return (
     <>
       <Button kind="secondary" icon="link-outline" disabled={busy || props.disabled}
-        title={busy ? 'Making the link…' : cloud.user ? (sent ? 'Send the link again' : 'Send a link to sign online') : 'Sign in to send a signing link'} onPress={send} />
+        title={busy ? 'Making the link…' : cloud.user ? (sent ? 'Send the link again' : 'Send a link to sign online') : 'Log in to send a signing link'} onPress={send} />
       {sent ? <Muted style={{ fontSize: 12 }}>When the client signs, Bidwell records it here and lets you know. The link works for 30 days; a new link replaces the old one.</Muted> : null}
     </>
   );

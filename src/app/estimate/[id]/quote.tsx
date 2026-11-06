@@ -1,6 +1,7 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 import { Text } from '@/ui/text';
@@ -8,7 +9,8 @@ import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
 import { FINISH_LABELS } from '@/engine/jobTypes';
 import { acceptedBlock, changedSinceSigned } from '@/engine/contract';
-import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, scheduleAmounts } from '@/engine/quote';
+import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, quoteWritePrompt, scheduleAmounts, type QuoteWriteTarget } from '@/engine/quote';
+import { aiFor } from '@/ui/host';
 import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
@@ -200,6 +202,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
         <H2>Scope of work</H2>
         <Field label="Scope summary (shown under the title)" value={w.scopeNote ?? est.scopeNote ?? ''} multiline
           onChangeText={(v) => setWord({ scopeNote: v })} />
+        <HelpWrite est={est} lang={lang} target={{ kind: 'scope' }} draft={w.scopeNote ?? est.scopeNote ?? ''} onText={(t) => setWord({ scopeNote: t })} />
         {shown.map((s) => {
           const t = secText[s.trade] ?? { title: s.title, items: s.items.join('\n') };
           const upd = (patch: Partial<typeof t>) => { const n = { ...secText, [s.trade]: { ...t, ...patch } }; setSecText(n); save({ sec: n }); };
@@ -211,6 +214,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
               </View>
               <Field label="Heading" value={t.title} onChangeText={(v) => upd({ title: v })} maxLength={120} />
               <Field label="What's included (one line each)" value={t.items} onChangeText={(v) => upd({ items: v })} multiline />
+              <HelpWrite est={est} lang={lang} target={{ kind: 'section', trade: s.trade }} draft={t.items} onText={(v) => upd({ items: v })} />
             </View>
           );
         })}
@@ -223,6 +227,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
       <Card>
         <H2>Notes for the client</H2>
         <Field label="Optional: allowances, timing, access, cleanup…" multiline value={w.notes ?? ''} onChangeText={(v) => setWord({ notes: v })} />
+        <HelpWrite est={est} lang={lang} target={{ kind: 'notes' }} draft={w.notes ?? ''} onText={(t) => setWord({ notes: t })} />
       </Card>
       <Card>
         <H2>Prices and dates</H2>
@@ -236,6 +241,34 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
         <Button kind="secondary" icon="refresh-outline" title="Undo all edits"
           onPress={() => confirmAction('Undo all edits?', 'The quote goes back to the wording Bidwell wrote, in both languages.', 'Undo', () => onSave(null))} />
       ) : null}
+    </View>
+  );
+}
+
+/** "Help me write": the AI drafts this part from the job (or polishes what the contractor typed). The contractor edits after. */
+function HelpWrite({ est, lang, target, draft, onText }: { est: Estimate; lang: Lang; target: QuoteWriteTarget; draft: string; onText: (t: string) => void }) {
+  const { apiKey, aiAllowed } = useApp();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const run = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const out = (await aiFor(apiKey, aiAllowed).complete(quoteWritePrompt(est, lang, target, draft), undefined, 600)).trim();
+      if (out) onText(out.replace(/^["“]|["”]$/g, '')); else setErr('The AI had nothing to add. Try typing a few words first.');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'The AI is not available right now.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={{ gap: 6 }}>
+      <Pressable accessibilityRole="button" onPress={run} disabled={busy}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: C.accentTint, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, opacity: busy ? 0.6 : 1 }}>
+        <Ionicons name="sparkles" size={16} color={C.accent} />
+        <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{busy ? 'Writing…' : draft.trim() ? 'Help me write · improve this' : 'Help me write'}</Text>
+      </Pressable>
+      {err ? <Muted style={{ fontSize: 12, color: C.danger }}>{err}</Muted> : null}
     </View>
   );
 }

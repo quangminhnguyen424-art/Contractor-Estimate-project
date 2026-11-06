@@ -10,7 +10,8 @@ export interface SyncMeta { uid: string; remoteAt: string; syncedChange: number 
  */
 export function decide(input: { uid: string; meta: SyncMeta | null; remote: { updatedAt: string } | null; localChange: number; localEmpty: boolean }): 'pull' | 'push' | 'none' {
   const { uid, meta, remote, localChange, localEmpty } = input;
-  if (!remote) return localEmpty ? 'none' : 'push';
+  // Never send one account's data into another account's empty cloud.
+  if (!remote) return localEmpty || (meta && meta.uid !== uid) ? 'none' : 'push';
   if (localEmpty || (meta && meta.uid !== uid)) return 'pull';
   if (!meta) return Date.parse(remote.updatedAt) > localChange ? 'pull' : 'push';
   const cloudChanged = remote.updatedAt > meta.remoteAt;

@@ -1,19 +1,18 @@
 import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
 import { KINDS, timeLabel, upcoming } from '@/engine/schedule';
-import { projectProgress, type SitePhoto } from '@/engine/site';
+import type { SitePhoto } from '@/engine/site';
 import { useCloud } from '@/cloud/CloudProvider';
 import { useApp } from '@/store/AppContext';
 
-import { Art } from './art';
-import { Button, C, Card, Section, mono } from './kit';
-import { Blink, TypeLines } from './hud';
-import { PressScale, Reveal, Shine, useCountUp } from './motion';
+import { Button, C, Card, Section } from './kit';
+import { PressScale, Reveal, Shine } from './motion';
 import { PhotoView } from './SitePhotoView';
 import { Text } from './text';
 import { useToday } from './useToday';
@@ -30,7 +29,7 @@ export function staleUpdates(projects: ReturnType<typeof useApp>['projects'], no
   }).filter((x) => x.newer > 0 && x.days >= 3).sort((a, b) => b.days - a.days);
 }
 
-/** Home screen before the chat starts: one clear action, shortcuts, today, money, and what needs attention. */
+/** Home screen before the chat starts: one clear action, then today, money and recent photos. */
 export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic: () => void; onAsk: (q: string) => void }) {
   const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
   const { width } = useWindowDimensions();
@@ -51,180 +50,120 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
   const checkIns = dailyCheckIn({ projects, estimates, contracts, profile, events, team, followups, today });
   const waiting = estimates.filter((e) => e.status === 'sent').length;
   const activeJobs = projects.filter((p) => p.status === 'active').length;
-  const updates = staleUpdates(projects).slice(0, 2);
   const photos: { ph: SitePhoto; pid: string; rid: string }[] = projects.flatMap((p) => p.rooms.flatMap((r) => r.photos.map((ph) => ({ ph, pid: p.id, rid: r.id }))))
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
   const cardW = Math.min(width, 760) - 32;
   const summary = [`${activeJobs} job${activeJobs === 1 ? '' : 's'} live`, todays.length ? `${todays.length} on today` : '', overdue ? `${overdue} invoice${overdue > 1 ? 's' : ''} overdue` : '']
     .filter(Boolean).join(' · ');
 
+  // One list of what needs you today: Bidwell's check-ins first, then today's (or the next) appointments.
+  const [allItems, setAllItems] = useState(false);
+  const rows: Row[] = [
+    ...checkIns.map((c) => ({ id: c.id, icon: c.icon as IconName, color: C.accent, title: c.text, action: c.action, route: c.route })),
+    ...[...todays, ...nextUp].map((e) => ({
+      id: e.id, icon: 'calendar' as IconName, color: KINDS[e.kind].color, title: e.title, route: `/event?id=${e.id}`,
+      sub: `${e.date === today ? 'Today' : new Date(`${e.date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' })} · ${timeLabel(e)}${e.address ? ` · ${e.address}` : ''}`,
+    })),
+  ];
+  const shown = allItems ? rows : rows.slice(0, 4);
+
   return (
-    <View style={{ gap: 16 }}>
-      <Reveal style={{ gap: 4 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: C.muted, fontSize: 14, fontWeight: '500' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: claudeOn ? C.okBg : C.warnBg, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 4 }}>
-            <Blink color={claudeOn ? C.okInk : C.warnInk} on={claudeOn} />
-            <Text style={{ color: claudeOn ? C.okInk : C.warnInk, fontSize: 12, fontWeight: '600' }}>{claudeOn ? 'AI ready' : 'AI off'}</Text>
-          </View>
-        </View>
-        <Text style={{ color: C.ink, fontSize: 30, fontWeight: '700', letterSpacing: -0.6 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
-        <Text style={{ color: C.muted, fontSize: 14 }}>{summary}</Text>
+    <View style={{ gap: 22 }}>
+      <Reveal style={{ gap: 2 }}>
+        <Text style={{ color: C.muted, fontSize: 14, fontWeight: '500' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+        <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
+        {summary ? <Text style={{ color: C.muted, fontSize: 14 }}>{summary}</Text> : null}
       </Reveal>
 
       {!claudeOn ? <ConnectClaude /> : null}
 
-      {/* The one main action: a floor plan drawing itself, then three ways to start. */}
-      <Reveal index={1}>
-        <View style={{ backgroundColor: C.card, borderRadius: 24, padding: 16, gap: 14, shadowColor: '#2457F5', shadowOpacity: 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 4 }}>
-          <View style={{ backgroundColor: C.infoBg, borderRadius: 18, alignItems: 'center', overflow: 'hidden', paddingVertical: 6 }}>
-            <Art name="hero" width={Math.min(cardW - 32, 340)} beam />
-          </View>
-          <View style={{ gap: 4 }}>
-            <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>Price a job in minutes</Text>
-            <TypeLines lines={['"hall bath, tub to tile shower…"', '"300 sf LVP in 2 bedrooms"', '"basement ADU, kitchen + 2 baths"', '"thay ống nước nóng 50 gal"']} />
-          </View>
-          <View style={{ overflow: 'hidden', borderRadius: 16 }}>
-            <Button title="New estimate" icon="add" onPress={() => router.push('/new')} style={{ height: 54 }} />
-            <Shine width={cardW - 32} height={54} />
-          </View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Chip icon="mic" label="Talk" onPress={onMic} />
-            <Chip icon="scan" label="Scan 3D" onPress={() => router.push('/scan')} />
-            <Chip icon="camera" label="Photo" onPress={() => router.push('/quick')} />
-          </View>
+      {/* The one main action, and three other ways to start. */}
+      <Reveal index={1} style={{ gap: 10 }}>
+        <View style={{ overflow: 'hidden', borderRadius: 16 }}>
+          <Button title="New estimate" icon="add" onPress={() => router.push('/new')} style={{ height: 56 }} />
+          <Shine width={cardW} height={56} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Chip icon="mic" label="Talk" onPress={onMic} />
+          <Chip icon="scan" label="Scan 3D" onPress={() => router.push('/scan')} />
+          <Chip icon="camera" label="Photo" onPress={() => router.push('/quick')} />
         </View>
       </Reveal>
 
-      {/* Shortcuts: one tidy row. */}
-      <Reveal index={2} style={{ flexDirection: 'row', gap: 8 }}>
-        <Shortcut icon="briefcase" label="Jobs" colors={['#2457F5', '#2457F5']} onPress={() => router.push('/jobs')} />
-        <Shortcut icon="images" label="Sites" colors={['#0369A1', '#0369A1']} onPress={() => router.push('/sites')} />
-        <Shortcut icon="calendar" label="Schedule" colors={['#7C3AED', '#7C3AED']} badge={todays.length || undefined} onPress={() => router.push('/schedule')} />
-        <Shortcut icon="pricetags" label="Pricing" colors={['#08734F', '#08734F']} onPress={() => router.push('/pricing')} />
-        <Shortcut icon="people" label="Crew" colors={['#FF6B1A', '#FF6B1A']} onPress={() => router.push('/team')} />
-      </Reveal>
-
-      {/* Bidwell as project manager: what needs you today, across every job. */}
-      {checkIns.length ? (
-        <Reveal index={2} style={{ gap: 8 }}>
-          <Section title={`Bidwell check-in · ${checkIns.length}`} />
-          {checkIns.map((c) => (
-            <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`${c.text} ${c.action}`} onPress={() => router.push(c.route as never)}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 12, opacity: pressed ? 0.75 : 1 })}>
-              <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}><Ionicons name={c.icon as never} size={19} color={C.accent} /></View>
-              <Text style={{ flex: 1, color: C.ink, fontSize: 15, lineHeight: 21 }}>{c.text}</Text>
-              <Text style={{ color: C.accent, fontWeight: '700' }}>{c.action}</Text>
+      <Reveal index={2} style={{ gap: 8 }}>
+        <Section title={rows.length ? 'Today' : 'Today'} link="Schedule" onLink={() => router.push('/schedule')} />
+        <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+          {shown.length ? shown.map((r, i) => (
+            <Pressable key={r.id} accessibilityRole="button" onPress={() => router.push(r.route as never)}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12,
+                borderTopWidth: i ? 1 : 0, borderColor: C.lineSoft, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
+              <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: `${r.color}1A`, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name={r.icon} size={18} color={r.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.ink, fontSize: 15, lineHeight: 20 }} numberOfLines={2}>{r.title}</Text>
+                {r.sub ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{r.sub}</Text> : null}
+              </View>
+              {r.action ? <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{r.action}</Text> : <Ionicons name="chevron-forward" size={16} color={C.muted} />}
             </Pressable>
-          ))}
-        </Reveal>
-      ) : null}
-
-      {/* Numbers at a glance. */}
-      <Reveal index={3} style={{ flexDirection: 'row', gap: 10 }}>
-        <Money label="To collect" value={due} sub={overdue ? `${overdue} overdue` : due ? 'invoiced' : 'all paid'} tone={overdue ? 'bad' : 'ok'} onPress={() => router.push('/jobs')} />
-        <Count label="Quotes out" value={waiting} onPress={() => router.push('/jobs')} />
-        <Count label="Active jobs" value={activeJobs} onPress={() => router.push('/sites')} />
+          )) : (
+            <Pressable accessibilityRole="button" onPress={() => router.push('/event')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 }}>
+              <Ionicons name="checkmark-circle" size={22} color={C.okInk} />
+              <Text style={{ color: C.ink2, flex: 1 }}>All caught up. Tap to add a visit or crew day.</Text>
+            </Pressable>
+          )}
+          {rows.length > 4 ? (
+            <Pressable accessibilityRole="button" onPress={() => setAllItems((v) => !v)} style={{ padding: 12, alignItems: 'center', borderTopWidth: 1, borderColor: C.lineSoft }}>
+              <Text style={{ color: C.accent, fontWeight: '600' }}>{allItems ? 'Show less' : `See all ${rows.length}`}</Text>
+            </Pressable>
+          ) : null}
+        </View>
       </Reveal>
 
-      <Reveal index={4} style={{ gap: 8 }}>
-        <Section title={todays.length ? 'Today' : 'Coming up'} link="Schedule" onLink={() => router.push('/schedule')} />
-        {todays.length || nextUp.length ? [...todays, ...nextUp].map((e) => (
-          <Pressable key={e.id} accessibilityRole="button" onPress={() => router.push(`/event?id=${e.id}`)}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, opacity: pressed ? 0.75 : 1 })}>
-            <View style={{ width: 5, alignSelf: 'stretch', borderRadius: 3, backgroundColor: KINDS[e.kind].color }} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>{e.title}</Text>
-              <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{e.date === today ? '' : `${new Date(`${e.date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' })} · `}{timeLabel(e)}{e.address ? ` · ${e.address}` : ''}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={C.muted} />
-          </Pressable>
-        )) : (
-          <Pressable accessibilityRole="button" onPress={() => router.push('/event')}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: C.line, borderStyle: 'dashed' }}>
-            <Ionicons name="add-circle-outline" size={20} color={C.accent} />
-            <Text style={{ color: C.muted }}>Nothing scheduled. Add a visit or crew day.</Text>
-          </Pressable>
-        )}
+      {/* Money and work at a glance: one card, three numbers. */}
+      <Reveal index={3}>
+        <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
+          <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => router.push('/jobs')} />
+          <Glance label="Quotes out" value={String(waiting)} onPress={() => router.push('/jobs')} divider />
+          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => router.push('/sites')} divider />
+        </View>
       </Reveal>
-
-      {updates.map(({ p, newer, days }, i) => (
-        <Reveal key={p.id} index={5 + i}>
-          <PressScale accessibilityRole="button" onPress={() => router.push(`/site/${p.id}/share?mode=client`)} scaleTo={0.98}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, backgroundColor: C.skyTint, borderWidth: 1, borderColor: 'rgba(3,105,161,0.25)' }}>
-            <Art name="photos" width={72} still />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.ink, fontWeight: '700' }} numberOfLines={1}>Photo update for {p.clientName || p.title}</Text>
-              <Text style={{ color: C.muted, fontSize: 12 }}>{newer} new · last sent {p.lastClientUpdateAt ? `${days}d ago` : 'never'} · {projectProgress(p).pct}% done</Text>
-            </View>
-            <Ionicons name="send" size={18} color={C.sky} />
-          </PressScale>
-        </Reveal>
-      ))}
 
       {photos.length ? (
-        <Reveal index={7} style={{ gap: 8 }}>
-          <Section title="Latest job photos" link="Job sites" onLink={() => router.push('/sites')} />
+        <Reveal index={4} style={{ gap: 8 }}>
+          <Section title="Recent photos" link="Job sites" onLink={() => router.push('/sites')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>
-                <View style={{ borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={ph} width={112} /></View>
+                <View style={{ borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={ph} width={104} /></View>
               </PressScale>
             ))}
           </ScrollView>
         </Reveal>
       ) : null}
 
-      <Reveal index={8} style={{ gap: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Art name="ai" width={64} still />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.ink, fontSize: 17, fontWeight: '800' }}>Ask Bidwell anything</Text>
-            <Text style={{ color: C.muted, fontSize: 12 }}>Prices, materials, permits, messages to clients. Type or talk below.</Text>
-          </View>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-          {SUGGESTIONS.map((q) => (
-            <PressScale key={q} accessibilityRole="button" accessibilityLabel={q} onPress={() => onAsk(q)}
-              style={{ width: 200, padding: 12, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, gap: 6 }}>
-              <Ionicons name="sparkles" size={16} color={C.accent} />
-              <Text style={{ color: C.ink2, fontSize: 13, lineHeight: 18 }} numberOfLines={3}>{q}</Text>
-            </PressScale>
-          ))}
-        </ScrollView>
-      </Reveal>
+      <Text style={{ color: C.muted, fontSize: 13, textAlign: 'center' }}>Ask Bidwell anything below: prices, materials, permits, client messages.</Text>
     </View>
   );
 }
 
-const SUGGESTIONS = [
-  'Price a 45 SF hall bathroom remodel, tiled shower, mid-grade',
-  'Do I need a permit to replace a water heater in Seattle?',
-  'How do my bathroom prices compare to my past jobs?',
-  'Write a friendly follow-up text for a quote I sent last week',
-  'Lên danh sách vật tư cho 300 SF sàn LVP',
-];
+interface Row { id: string; icon: IconName; color: string; title: string; sub?: string; action?: string; route: string }
+
+/** One number in the glance card. */
+function Glance({ label, value, sub, bad, divider, onPress }: { label: string; value: string; sub?: string; bad?: boolean; divider?: boolean; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress}
+      style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 12, gap: 2, borderLeftWidth: divider ? 1 : 0, borderColor: C.lineSoft }}>
+      <Text style={{ color: C.muted, fontSize: 12, fontWeight: '500' }}>{label}</Text>
+      <Text style={{ color: bad ? C.danger : C.ink, fontSize: 20, fontWeight: '700' }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      {sub ? <Text style={{ color: C.danger, fontSize: 11 }}>{sub}</Text> : null}
+    </Pressable>
+  );
+}
+
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-/** Rounded shortcut tile: tinted icon on white. */
-function Shortcut({ icon, label, colors, onPress, badge }: { icon: IconName; label: string; colors: [string, string]; onPress: () => void; badge?: number }) {
-  return (
-    <PressScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} scaleTo={0.92} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
-      <View style={{ width: '100%', height: 64, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: `${colors[0]}1A`, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={icon} size={21} color={colors[0]} />
-        </View>
-        {badge ? (
-          <View style={{ position: 'absolute', right: 6, top: 6, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>{badge}</Text>
-          </View>
-        ) : null}
-      </View>
-      <Text style={{ color: C.ink2, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{label}</Text>
-    </PressScale>
-  );
-}
 
 /** Light pill under the main button: another way to start. */
 function Chip({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
@@ -237,26 +176,7 @@ function Chip({ icon, label, onPress }: { icon: IconName; label: string; onPress
   );
 }
 
-function Count({ label, value, onPress }: { label: string; value: number; onPress: () => void }) {
-  const n = useCountUp(value, 700);
-  return (
-    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress} style={{ flex: 1, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 14, gap: 2 }}>
-      <Text style={{ color: C.muted, fontSize: 12, fontWeight: '500' }}>{label}</Text>
-      <Text style={{ color: C.ink, fontSize: 22, fontWeight: '700', fontFamily: mono }}>{Math.round(n)}</Text>
-    </PressScale>
-  );
-}
 
-function Money({ label, value, sub, tone, onPress }: { label: string; value: number; sub: string; tone?: 'ok' | 'bad'; onPress: () => void }) {
-  const n = useCountUp(value);
-  return (
-    <PressScale accessibilityRole="button" accessibilityLabel={`${label} ${money(value)}`} onPress={onPress} style={{ flex: 1.4, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 14, gap: 2 }}>
-      <Text style={{ color: C.muted, fontSize: 12, fontWeight: '500' }}>{label}</Text>
-      <Text style={{ color: C.accent, fontSize: 22, fontWeight: '700', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{money(n)}</Text>
-      <Text style={{ color: tone === 'bad' ? C.danger : tone === 'ok' ? C.okInk : C.muted, fontSize: 12, fontWeight: '600' }}>{sub}</Text>
-    </PressScale>
-  );
-}
 
 /** Shown until the AI is on: create a free Bidwell account (no key needed), or use your own Claude key. */
 function ConnectClaude() {
@@ -283,7 +203,7 @@ function ConnectClaude() {
         <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>
           One minute, just an email and password. It turns on the AI (no key needed), backs up your jobs and photos, and lets clients sign quotes from a link.
         </Text>
-        {cloud.configured ? <Button title="Create account" icon="person-add-outline" onPress={() => router.push('/account')} /> : null}
+        {cloud.configured ? <Button title="Log in or create account" icon="person-add-outline" onPress={() => router.push('/login')} /> : null}
         <Button kind="secondary" title="I have my own Claude API key" icon="key-outline" onPress={() => router.push('/settings')} />
       </Card>
     </Reveal>

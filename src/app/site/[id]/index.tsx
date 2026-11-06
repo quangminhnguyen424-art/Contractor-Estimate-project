@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
@@ -7,9 +8,9 @@ import { useToday } from '@/ui/useToday';
 import { buyTotals, emptyMoney, projectBooks } from '@/engine/books';
 import { money as moneyFmt, newId } from '@/engine/format';
 import { dayLabel, upcoming } from '@/engine/schedule';
-import { AREA_PRESETS, beforeAfterPairs, contractLine, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
+import { AREA_PRESETS, beforeAfterPairs, emptyRoom, localDay, projectProgress, roomProgress, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Card, Chip, Field, H2, Muted, Screen, Section, Tile } from '@/ui/kit';
+import { Action, Banner, Button, C, Card, Chip, Field, List, ListRow, Muted, Screen, Section } from '@/ui/kit';
 import { PressScale, Progress } from '@/ui/motion';
 import { confirmAction } from '@/ui/notify';
 import { PhotoView } from '@/ui/SitePhotoView';
@@ -20,6 +21,7 @@ export default function ProjectScreen() {
   const { width } = useWindowDimensions();
   const today = useToday();
   const [roomName, setRoomName] = useState('');
+  const [adding, setAdding] = useState(false);
   const p = projects.find((x) => x.id === id);
   if (!p) {
     return (
@@ -71,66 +73,79 @@ export default function ProjectScreen() {
       <View style={{ gap: 4 }}>
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{p.title}</Text>
         <Muted>{[p.clientName, p.address].filter(Boolean).join(' · ') || 'No address yet'}</Muted>
-        {est ? <Muted style={{ fontSize: 12 }}>{contractLine(est)} · internal, never on crew or client PDFs</Muted> : null}
       </View>
 
-      <Card style={{ gap: 8 }}>
+      {/* Progress in one line. */}
+      <View style={{ gap: 6 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontWeight: '700', color: C.ink }}>{pr.done} of {pr.total} tasks done</Text>
-          <Text style={{ fontWeight: '800', color: C.accent }}>{pr.pct}%</Text>
+          <Text style={{ color: C.ink2, fontSize: 14 }}>{pr.total ? `${pr.done} of ${pr.total} tasks done` : 'No tasks yet'} · {pr.photos} photo{pr.photos === 1 ? '' : 's'}</Text>
+          <Text style={{ fontWeight: '700', color: C.accent }}>{pr.pct}%</Text>
         </View>
         <Progress value={pr.total ? pr.done / pr.total : 0} />
-        <Muted style={{ fontSize: 13 }}>{pr.photos} photos · {pairs.length} before/after pair{pairs.length === 1 ? '' : 's'} · {p.logs.length} daily log{p.logs.length === 1 ? '' : 's'}</Muted>
-      </Card>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        <Tile index={0} icon="images-outline" tone="sky" title="Photo update" sub={p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Send the client new photos'} onPress={() => go('share?mode=client')} />
-        <Tile index={1} icon="people-outline" title="Crew work order" sub="EN · VI · ES, no prices" onPress={() => go('share?mode=crew')} />
-        <Tile index={2} icon="book-outline" tone="slate" title="Daily log" sub="Bidwell writes it for you" onPress={() => go('log')} />
-        <Tile index={3} icon="calendar-outline" tone="sky" title="Schedule" sub={nextVisit ? `Next: ${dayLabel(nextVisit.date, today)}` : 'Crew day, inspection…'} onPress={() => router.push(`/event?project=${p.id}`)} />
-        {est ? <Tile index={4} icon="wallet-outline" title="Contract & payments" sub="Sign, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
-        <Tile index={6} icon="cash-outline" title="Job money" sub={money && p.money?.costs.length ? `Profit ${moneyFmt(money.profit.amount)} · ${money.profit.marginPct}%` : 'Costs, profit, owner balance'} onPress={() => go('money')} />
-        <Tile index={7} icon="cart-outline" tone="sky" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'From the estimate'} onPress={() => go('buy')} />
-        <Tile index={5} icon="logo-facebook" tone="slate" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after` : 'Needs before + after'} onPress={() => go('share?mode=post')} />
       </View>
 
-      <H2>Photos by area</H2>
-      <Muted style={{ fontSize: 13 }}>Each room or outside area keeps its photos, what to do, before/after, and tasks you or the crew mark done or flag for a second look.</Muted>
+      {/* The things done most often on a job, one tap each. */}
+      <View style={{ flexDirection: 'row', gap: 4 }}>
+        <Action icon="send" label="Photo update" onPress={() => go('share?mode=client')} />
+        <Action icon="book" label="Daily log" onPress={() => go('log')} />
+        <Action icon="people" label="Work order" onPress={() => go('share?mode=crew')} />
+        <Action icon="calendar" label="Schedule" badge={!!nextVisit} onPress={() => router.push(`/event?project=${p.id}`)} />
+      </View>
+
+      {/* Photos by area (like CompanyCam): the heart of the job. */}
+      <Section title="Areas" />
       {reviewCount ? <Banner tone="warn" title={`${reviewCount} task${reviewCount > 1 ? 's' : ''} flagged: needs a look`} /> : null}
-      {p.rooms.map((r) => {
-        const rp = roomProgress(r);
-        const cover = r.photos[r.photos.length - 1];
-        return (
-          <Pressable key={r.id} accessibilityRole="button" onPress={() => go(`room/${r.id}`)}>
-            <Card style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              {cover ? <PhotoView photo={cover} width={64} /> : (
-                <View style={{ width: 64, height: 48, borderRadius: 8, backgroundColor: C.lineSoft, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: C.muted, fontSize: 11 }}>No photos</Text>
+      <List>
+        {p.rooms.map((r) => {
+          const rp = roomProgress(r);
+          const cover = r.photos[r.photos.length - 1];
+          return (
+            <Pressable key={r.id} accessibilityRole="button" onPress={() => go(`room/${r.id}`)}
+              style={({ pressed }) => ({ flexDirection: 'row', gap: 12, alignItems: 'center', padding: 12, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
+              {cover ? <View style={{ borderRadius: 10, overflow: 'hidden' }}><PhotoView photo={cover} width={60} /></View> : (
+                <View style={{ width: 60, height: 45, borderRadius: 10, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="camera-outline" size={20} color={C.muted} />
                 </View>
               )}
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontWeight: '700', color: C.ink, fontSize: 16 }}>{r.name}</Text>
-                <Muted style={{ fontSize: 13 }}>{rp.total ? `${rp.done} of ${rp.total} tasks` : 'No tasks yet'} · {rp.photos} photo{rp.photos === 1 ? '' : 's'}</Muted>
+                <Text style={{ fontWeight: '600', color: C.ink, fontSize: 16 }}>{r.name}</Text>
+                <Muted style={{ fontSize: 13 }}>{rp.photos} photo{rp.photos === 1 ? '' : 's'}{rp.total ? ` · ${rp.done}/${rp.total} done` : ''}</Muted>
               </View>
-              <Text style={{ color: C.muted, fontSize: 20 }}>›</Text>
-            </Card>
-          </Pressable>
-        );
-      })}
-      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
-        <Field label="Add a room or area" value={roomName} onChangeText={setRoomName} placeholder="e.g. Primary bath, Siding" style={{ flex: 1 }} maxLength={40} />
-        <Button kind="secondary" title="Add" disabled={!roomName.trim()} onPress={() => addRoom()} />
-      </View>
-      {AREA_PRESETS.map((g) => (
-        <View key={g.group} style={{ gap: 6 }}>
-          <Muted style={{ fontSize: 12 }}>{g.group}</Muted>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {g.names.filter((n) => n === 'Repair spot' || !p.rooms.some((r) => r.name.toLowerCase() === n.toLowerCase())).map((n) => (
-              <Chip key={n} label={`+ ${n}`} onPress={() => addRoom(n)} />
-            ))}
+              <Ionicons name="chevron-forward" size={16} color={C.muted} />
+            </Pressable>
+          );
+        })}
+        <Pressable accessibilityRole="button" onPress={() => setAdding((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 }}>
+          <Ionicons name={adding ? 'close-circle' : 'add-circle'} size={22} color={C.accent} />
+          <Text style={{ color: C.accent, fontWeight: '600', fontSize: 15 }}>{adding ? 'Close' : 'Add an area'}</Text>
+        </Pressable>
+      </List>
+      {adding ? (
+        <Card>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
+            <Field label="Name" value={roomName} onChangeText={setRoomName} placeholder="e.g. Primary bath, Siding" style={{ flex: 1 }} maxLength={40} />
+            <Button title="Add" disabled={!roomName.trim()} onPress={() => { addRoom(); setAdding(false); }} />
           </View>
-        </View>
-      ))}
+          {AREA_PRESETS.map((g) => (
+            <View key={g.group} style={{ gap: 6 }}>
+              <Muted style={{ fontSize: 12 }}>{g.group}</Muted>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {g.names.filter((n) => n === 'Repair spot' || !p.rooms.some((r) => r.name.toLowerCase() === n.toLowerCase())).map((n) => (
+                  <Chip key={n} label={`+ ${n}`} onPress={() => { addRoom(n); setAdding(false); }} />
+                ))}
+              </View>
+            </View>
+          ))}
+        </Card>
+      ) : null}
+
+      {/* Money and paperwork: private to the contractor. */}
+      <Section title="Money & paperwork" />
+      <List>
+        {est ? <ListRow icon="document-text" title="Contract & payments" sub="Signature, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
+        <ListRow icon="cash" title="Job money" sub={money && p.money?.costs.length ? `Profit ${moneyFmt(money.profit.amount)} · ${money.profit.marginPct}%` : 'Costs, receipts, profit'} onPress={() => go('money')} />
+        <ListRow icon="cart" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'Materials from the estimate'} onPress={() => go('buy')} />
+      </List>
 
       {timeline.length ? (
         <>
@@ -150,11 +165,13 @@ export default function ProjectScreen() {
         </>
       ) : null}
 
-      <Button kind="secondary" title={p.status === 'active' ? 'Mark job finished' : 'Reopen job'}
-        onPress={() => updateProject(p.id, (x) => ({ ...x, status: x.status === 'active' ? 'done' : 'active' }))} />
-      <Pressable accessibilityRole="button" onPress={remove} style={{ alignSelf: 'center', padding: 12 }}>
-        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete project</Text>
-      </Pressable>
+      <Section title="More" />
+      <List>
+        <ListRow icon="logo-facebook" title="Facebook post" sub={pairs.length ? `${pairs.length} before/after pair${pairs.length > 1 ? 's' : ''} ready` : 'Needs a before and an after photo'} onPress={() => go('share?mode=post')} />
+        <ListRow icon={p.status === 'active' ? 'checkmark-done' : 'refresh'} title={p.status === 'active' ? 'Mark job finished' : 'Reopen job'}
+          onPress={() => updateProject(p.id, (x) => ({ ...x, status: x.status === 'active' ? 'done' : 'active' }))} />
+        <ListRow icon="trash" title="Delete project" danger onPress={remove} />
+      </List>
     </Screen>
   );
 }

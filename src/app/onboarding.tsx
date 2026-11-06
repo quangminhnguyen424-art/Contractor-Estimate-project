@@ -1,5 +1,4 @@
-import { cloudConfigured } from '@/cloud/config';
-import { router } from 'expo-router';
+import { useCloud } from '@/cloud/CloudProvider';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,7 +27,8 @@ export default function Onboarding() {
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const cloud = useCloud();
+  const [email, setEmail] = useState(cloud.user?.email ?? '');
   const [license, setLicense] = useState('');
   const [specialties, setSpecialties] = useState<JobTypeId[]>([]);
   const [markupPct, setMarkupPct] = useState(20);
@@ -52,8 +52,6 @@ export default function Onboarding() {
       license: license.trim(), specialties: [...specialties, 'small'], markupPct, minMarkupPct, salesTaxPct,
       quoteValidDays: 30, quoteLanguage: 'en', schedule: DEFAULT_SCHEDULE, about: about.trim(), work,
     });
-    // Next: the free account (it turns on the AI). It can be skipped.
-    if (cloudConfigured) setTimeout(() => router.push('/account?welcome=1'), 350);
   };
 
   if (intro) return <IntroVideo onDone={() => setIntro(false)} />;
@@ -87,7 +85,9 @@ export default function Onboarding() {
               <Muted style={{ textAlign: 'center' }}>Faster estimates, organized job sites and happy clients. Two minutes to set up.</Muted>
             </Reveal>
             <H1>Your company</H1>
-            <Muted>This goes on every quote you send.</Muted>
+            <Banner tone="info" title="This information is printed on your quotes">
+              Your company name, your name, phone, email and registration number appear at the top of every quote, contract and PDF you send to clients. Use the details you want clients to see. You can change them any time in Settings.
+            </Banner>
             <Field label="Company name" value={companyName} onChangeText={setCompanyName} placeholder="e.g. Smith Remodeling LLC" />
             <Field label="Your name" value={contactName} onChangeText={setContactName} />
             <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />

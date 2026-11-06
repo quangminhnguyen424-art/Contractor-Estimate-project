@@ -184,3 +184,24 @@ ${[...groups.entries()].map(([cat, rows]) => `<h2>${esc(cat)}</h2><table><tr><th
 ${rows.map((m) => `<tr><td>${esc(m.name)}</td><td class="r">${m.qty}</td><td>${esc(m.unit)}</td><td class="r">$${m.unitPrice.toFixed(2)}</td><td class="r">$${m.total.toFixed(2)}</td></tr>`).join('')}</table>`).join('')}
 <h2>Total before tax: ${money(est.materialTotal)}</h2></body></html>`;
 }
+
+/** What the AI may write for the contractor on the client quote. */
+export type QuoteWriteTarget = { kind: 'scope' } | { kind: 'notes' } | { kind: 'section'; trade: string };
+
+/**
+ * Prompt for "Help me write" on the client quote. Only client-facing facts go in: the job, the client's scope and the
+ * section headings and lines — never cost, labor, markup or profit.
+ */
+export function quoteWritePrompt(est: Estimate, lang: Lang, target: QuoteWriteTarget, draft: string): string {
+  const jt = estimateJob(est);
+  const secs = quoteSections(est, lang);
+  const language = lang === 'vi' ? 'Vietnamese' : 'plain American English';
+  const job = `Job: ${lang === 'vi' ? jt.vi : jt.name} for ${est.clientName || 'the client'}${est.address ? ` at ${est.address}` : ''}. Finish level: ${est.finish}.`;
+  const scope = secs.map((x) => `- ${x.title}: ${x.items.join('; ')}`).join('\n');
+  const rules = `Write in ${language}, friendly and professional, the way a good contractor talks to a homeowner. No prices, costs, labor rates, markup or profit. No promises about dates or warranties. Reply with the text only, no heading and no quotes.`;
+  const yours = draft.trim() ? `\nThe contractor's rough notes (use and improve them): ${draft.trim()}` : '';
+  if (target.kind === 'scope') return `${job}\nWork on the quote:\n${scope}\n${yours}\nWrite 2 to 3 short sentences that summarize the work for the client.\n${rules}`;
+  if (target.kind === 'notes') return `${job}\nWork on the quote:\n${scope}\n${yours}\nWrite 3 to 5 short notes for the client as separate lines: what they should know or decide (selections, access, protection of their home, cleanup, anything they provide). Do not repeat the work list.\n${rules}`;
+  const sec = secs.find((x) => x.trade === target.trade);
+  return `${job}\nSection "${sec?.title ?? ''}" currently lists: ${sec?.items.join('; ') ?? ''}${yours}\nRewrite this section's lines so a homeowner understands exactly what is included. One item per line, 2 to 6 lines, start each line with a verb or the item name, no bullets or numbers.\n${rules}`;
+}

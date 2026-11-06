@@ -8,10 +8,10 @@ import { celebrate } from '@/ui/celebrate';
 import { notify } from '@/ui/notify';
 
 import { callFunction, supabase } from './client';
-import { cloudConfigured } from './config';
+import { CLOUD, cloudConfigured } from './config';
 import { fetchNewSignatures, markApplied, signedHtml, toSignature } from './sign';
 import { decide } from './decide';
-import { backupPhotos, loadMeta, pullWorkspace, pushWorkspace, restorePhotos, saveMeta } from './sync';
+import { backupPhotos, clearMeta, loadMeta, pullWorkspace, pushWorkspace, restorePhotos, saveMeta } from './sync';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'error';
 
@@ -23,7 +23,15 @@ interface CloudCtx {
   error: string | null;
   signIn: (email: string, password: string) => Promise<string | null>;
   signUp: (email: string, password: string) => Promise<string | null>;
-  signOut: () => Promise<void>;
+  /** False until the phone has checked whether someone is signed in. */
+  authReady: boolean;
+  /** The first sync after signing in: the app waits for it so a new phone gets the account's data before setup. */
+  firstSync: 'waiting' | 'done' | 'failed';
+  retryFirstSync: () => void;
+  skipFirstSync: () => void;
+  resetPassword: (email: string) => Promise<string | null>;
+  /** Saves to the cloud, signs out and clears this phone. Returns a message if the data could not be saved first. */
+  signOut: (force?: boolean) => Promise<string | null>;
   deleteAccount: () => Promise<string | null>;
   syncNow: () => Promise<void>;
   backupNow: (onProgress?: (done: number, total: number) => void) => Promise<number>;
@@ -66,20 +74,27 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<SyncState>('off');
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(!cloudConfigured);
+  const [firstSync, setFirstSync] = useState<'waiting' | 'done' | 'failed'>('waiting');
   const busy = useRef(false);
+  const uidRef = useRef<string | undefined>(undefined);
   const appRef = useRef(app);
   useEffect(() => { appRef.current = app; });
 
   useEffect(() => {
     if (!cloudConfigured) return;
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null)).catch(() => {});
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+    const take = (next: User | null) => {
+      if (next?.id !== uidRef.current) { uidRef.current = next?.id; setFirstSync('waiting'); }
+      setUser(next);
+    };
+    supabase.auth.getSession().then(({ data }) => take(data.session?.user ?? null)).catch(() => {}).finally(() => setAuthReady(true));
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => take(session?.user ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
 
   /** One full sync: decide which side wins, move the data, then photos and online signatures. */
-  const sync = useCallback(async (uid: string) => {
-    if (busy.current) return;
+  const sync = useCallback(async (uid: string): Promise<boolean> => {
+    if (busy.current) return false;
     busy.current = true;
     setState('syncing');
     try {
@@ -104,9 +119,13 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
       setLastSync(new Date().toISOString());
       setError(null);
       setState('ok');
+      setFirstSync('done');
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sync failed');
       setState('error');
+      setFirstSync((f) => (f === 'waiting' ? 'failed' : f));
+      return false;
     } finally {
       busy.current = false;
     }
@@ -141,9 +160,25 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
       if (e) return /registered/i.test(e.message) ? 'That email already has an account. Sign in instead.' : e.message;
       return data.session ? null : 'Account made. Check your email to confirm it, then sign in.';
     },
-    signOut: async () => {
+    authReady, firstSync,
+    retryFirstSync: () => { if (user) { setFirstSync('waiting'); sync(user.id); } },
+    skipFirstSync: () => setFirstSync('done'),
+    resetPassword: async (email) => {
+      const { error: e } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: CLOUD.resetPage });
+      return e ? (/rate|seconds/i.test(e.message) ? 'Too many tries. Wait a minute and try again.' : e.message) : null;
+    },
+    signOut: async (force) => {
+      if (user && !force) {
+        for (let i = 0; i < 40 && busy.current; i++) await new Promise((r) => setTimeout(r, 250));
+        const ok = await sync(user.id);
+        if (!ok) return 'Could not save your latest work to the cloud. Check your connection, or sign out anyway and lose changes made since the last sync.';
+        await backupPhotos(user.id, snapshot()).catch(() => 0);
+      }
       await supabase.auth.signOut().catch(() => {});
+      await clearMeta();
+      appRef.current.resetAll(true);
       setLastSync(null);
+      return null;
     },
     deleteAccount: async () => {
       try {
@@ -156,7 +191,7 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     },
     syncNow: async () => { if (user) await sync(user.id); },
     backupNow: async (onProgress) => (user ? backupPhotos(user.id, snapshot(), onProgress) : 0),
-  }), [user, state, lastSync, error, sync, snapshot]);
+  }), [user, state, lastSync, error, sync, snapshot, authReady, firstSync]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

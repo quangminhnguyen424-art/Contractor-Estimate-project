@@ -263,6 +263,52 @@ export function Stepper({ label, value, onChange, min = 0 }: { label: string; va
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
+/** A white card holding rows separated by thin lines (like a phone settings list). */
+export function List({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const items = React.Children.toArray(children).filter(Boolean);
+  return (
+    <View style={[{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }, style]}>
+      {items.map((c, i) => <View key={i} style={i ? { borderTopWidth: 1, borderColor: C.lineSoft } : null}>{c}</View>)}
+    </View>
+  );
+}
+
+/** One tappable row in a List: icon, title, a short line under it, and an arrow (or a value on the right). */
+export function ListRow({ icon, title, sub, right, onPress, tone, danger }: {
+  icon?: IconName; title: string; sub?: string; right?: string; onPress: () => void; tone?: string; danger?: boolean;
+}) {
+  const color = danger ? C.danger : tone ?? C.accent;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, minHeight: 56, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
+      {icon ? (
+        <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: danger ? C.badBg : `${color}1A`, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={18} color={color} />
+        </View>
+      ) : null}
+      <View style={{ flex: 1, gap: 1 }}>
+        <Text style={{ color: danger ? C.danger : C.ink, fontSize: 16, fontWeight: '500' }} numberOfLines={1}>{title}</Text>
+        {sub ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={2}>{sub}</Text> : null}
+      </View>
+      {right ? <Text style={{ color: C.ink2, fontSize: 14, fontWeight: '600' }}>{right}</Text> : null}
+      {danger ? null : <Ionicons name="chevron-forward" size={16} color={C.muted} />}
+    </Pressable>
+  );
+}
+
+/** A round action with a label under it (a row of 3–4 of these sits under a page title). */
+export function Action({ icon, label, onPress, badge }: { icon: IconName; label: string; onPress: () => void; badge?: boolean }) {
+  return (
+    <PressScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} scaleTo={0.92} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+      <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name={icon} size={23} color={C.accent} />
+        {badge ? <View style={{ position: 'absolute', top: 2, right: 2, width: 12, height: 12, borderRadius: 6, backgroundColor: C.orange, borderWidth: 2, borderColor: C.bg }} /> : null}
+      </View>
+      <Text style={{ color: C.ink2, fontSize: 12, fontWeight: '600', textAlign: 'center' }} numberOfLines={2}>{label}</Text>
+    </PressScale>
+  );
+}
+
 /** A big square shortcut with an icon (home screen). */
 export function Tile({ icon, title, sub, onPress, tone = 'yellow', index = 0 }: {
   icon: IconName; title: string; sub?: string; onPress: () => void; tone?: 'yellow' | 'sky' | 'slate'; index?: number;

@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { Platform, Pressable, View, type ColorValue } from 'react-native';
+import { Pressable, View, type ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C } from '@/ui/kit';
 import { Pulse } from '@/ui/motion';
@@ -17,7 +18,7 @@ const icon = (outline: IconName, filled: IconName) =>
 function PlusButton() {
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -18 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -14 }}>
         <Pulse min={0.97} max={1.04}>
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.card,
             shadowColor: C.orange, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
@@ -30,6 +31,9 @@ function PlusButton() {
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  // Room for the iPhone home bar plus a little extra, so the buttons sit comfortably above the edge.
+  const bottom = Math.max(insets.bottom, 10) + 8;
   return (
     <Tabs
       screenOptions={{
@@ -40,7 +44,8 @@ export default function TabsLayout() {
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: { fontFamily: FONT.semibold, fontSize: 12 },
-        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.line, height: Platform.OS === 'web' ? 64 : undefined, paddingTop: 4 },
+        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.line, height: 60 + bottom, paddingTop: 8, paddingBottom: bottom },
+        tabBarItemStyle: { height: 52 },
         sceneStyle: { backgroundColor: C.bg },
         headerRight: () => (
           <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={10} style={{ paddingHorizontal: 16 }}>

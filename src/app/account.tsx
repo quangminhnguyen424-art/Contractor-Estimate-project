@@ -1,32 +1,16 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
 
 import { useCloud } from '@/cloud/CloudProvider';
-import { Banner, Button, C, Card, Field, H2, Muted, Screen, Segmented } from '@/ui/kit';
+import { Banner, Button, C, Card, H2, Muted, Screen } from '@/ui/kit';
 import { confirmAction } from '@/ui/notify';
 import { Text } from '@/ui/text';
 
 /** Bidwell cloud: sign in so data and photos are backed up, the AI works without a key, and clients can sign online. */
 export default function AccountScreen() {
   const cloud = useCloud();
-  const welcome = useLocalSearchParams<{ welcome?: string }>().welcome === '1';
-  // After setup: once the account is made, go straight to the app.
-  useEffect(() => { if (welcome && cloud.user) router.back(); }, [welcome, cloud.user]);
-  const [mode, setMode] = useState<'in' | 'up'>('up');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'warn' | 'ok' | 'info'; text: string } | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
-
-  const go = async () => {
-    setBusy(true); setMsg(null);
-    const err = mode === 'in' ? await cloud.signIn(email, password) : await cloud.signUp(email, password);
-    setBusy(false);
-    if (err) setMsg({ tone: /confirm/i.test(err) ? 'info' : 'warn', text: err });
-    else setPassword('');
-  };
 
   if (!cloud.configured) return <Screen><Banner tone="info" title="Bidwell cloud is not set up in this version." /></Screen>;
 
@@ -56,7 +40,13 @@ export default function AccountScreen() {
           <Muted>• Bidwell’s AI works without your own API key.</Muted>
           <Muted>• Clients can sign quotes and change orders from a link on their own phone.</Muted>
         </Card>
-        <Button kind="secondary" title="Sign out" icon="log-out-outline" onPress={() => cloud.signOut()} />
+        <Button kind="secondary" title={progress === 'out' ? 'Saving and logging out…' : 'Log out'} icon="log-out-outline" disabled={!!progress}
+          onPress={() => confirmAction('Log out?', 'Your work is saved to your account first. This phone is then cleared until you log in again.', 'Log out', async () => {
+            setProgress('out');
+            const err = await cloud.signOut();
+            setProgress(null);
+            if (err) confirmAction('Not saved to the cloud', err, 'Log out anyway', () => { cloud.signOut(true); });
+          })} />
         <Button kind="danger" title="Delete my account"
           onPress={() => confirmAction('Delete your Bidwell account?', 'Your account, the cloud copy of your data and all backed-up photos are deleted for good. Data on this phone stays until you erase it in Settings.', 'Delete', async () => {
             const err = await cloud.deleteAccount();
@@ -67,21 +57,12 @@ export default function AccountScreen() {
   }
 
   return (
-    <Screen footer={<Button title={busy ? 'One moment…' : mode === 'in' ? 'Sign in' : 'Create account'} icon="checkmark" disabled={busy || !/\S+@\S+\.\S+/.test(email) || password.length < 8} onPress={go} />}>
-      <View style={{ gap: 4 }}>
-        <Text style={{ color: C.ink, fontSize: 24, fontWeight: '700' }}>{welcome ? 'Last step: your free account' : 'Bidwell cloud'}</Text>
-        <Muted>Turns on the AI with no key, backs up your jobs and photos, and lets clients sign online. Free.</Muted>
-      </View>
-      <Segmented options={[{ value: 'up', label: 'New account' }, { value: 'in', label: 'Sign in' }]} value={mode} onChange={setMode} />
+    <Screen>
       <Card>
-        <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" maxLength={120} />
-        <Field label="Password (8 or more characters)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none"
-          autoComplete={mode === 'up' ? 'new-password' : 'current-password'} textContentType={mode === 'up' ? 'newPassword' : 'password'} maxLength={72} />
-        {msg ? <Banner tone={msg.tone} title={msg.text} /> : null}
+        <H2>You’re not logged in</H2>
+        <Muted>Log in to back up your work, use Bidwell’s AI and let clients sign online.</Muted>
+        <Button title="Log in" icon="log-in-outline" onPress={() => router.push('/login')} />
       </Card>
-      {welcome ? <Button kind="secondary" title="Skip for now" onPress={() => router.back()} /> : null}
-      {welcome ? <Muted style={{ fontSize: 12 }}>You can make the account later in Settings. Without it, the AI needs your own Claude API key.</Muted> : null}
-      <Muted style={{ fontSize: 12 }}>By creating an account you agree to the Terms of Use and Privacy Policy you accepted in the app. You can delete your account here at any time.</Muted>
     </Screen>
   );
 }
