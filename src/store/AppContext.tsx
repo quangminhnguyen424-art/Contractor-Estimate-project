@@ -49,7 +49,7 @@ export interface Draft {
   /** Floor plan rooms (scanned or measured). */
   plan?: PlanRoom[];
   /** Answers Claude filled in, and where from, so the contractor confirms them. */
-  aiFilled?: Record<string, 'notes' | 'photo'>;
+  aiFilled?: Record<string, 'notes' | 'photo' | 'satellite'>;
 }
 
 export { DEFAULT_SCHEDULE };

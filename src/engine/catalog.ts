@@ -113,6 +113,26 @@ export const MATERIALS: Material[] = [
   { id: 'floor_protection', name: 'Floor protection (Ram Board)', unit: 'roll', price: 65, category: 'Site & disposal' },
   { id: 'plastic_sheeting', name: 'Plastic sheeting', unit: 'roll', price: 25, category: 'Site & disposal' },
   { id: 'painters_tape', name: "Painter's tape", unit: 'roll', price: 7.5, category: 'Site & disposal' },
+
+  // Roofing (per bundle, roll or piece; a "square" is 100 SF of roof)
+  { id: 'shingle_bundle', name: 'Architectural shingles, bundle (1/3 square)', unit: 'bundle', price: 44, category: 'Roofing', finishSensitive: true },
+  { id: 'synthetic_underlay', name: 'Synthetic underlayment, roll (10 squares)', unit: 'roll', price: 120, category: 'Roofing' },
+  { id: 'ice_water', name: 'Ice & water shield, roll (~65 LF x 3 ft)', unit: 'roll', price: 135, category: 'Roofing' },
+  { id: 'starter_strip', name: 'Starter strip shingles, bundle (~105 LF)', unit: 'bundle', price: 58, category: 'Roofing' },
+  { id: 'ridge_cap', name: 'Hip & ridge cap shingles, bundle (~31 LF)', unit: 'bundle', price: 78, category: 'Roofing', finishSensitive: true },
+  { id: 'drip_edge', name: 'Drip edge, 10 ft', unit: 'ea', price: 12, category: 'Roofing' },
+  { id: 'roof_nails', name: '1-1/4" coil roofing nails (7,200)', unit: 'box', price: 62, category: 'Roofing' },
+  { id: 'ridge_vent', name: 'Shingle-over ridge vent, 4 ft', unit: 'ea', price: 19, category: 'Roofing' },
+  { id: 'box_vent', name: 'Roof box vent', unit: 'ea', price: 34, category: 'Roofing' },
+  { id: 'pipe_boot', name: 'Pipe boot flashing', unit: 'ea', price: 24, category: 'Roofing' },
+  { id: 'step_flashing', name: 'Step flashing, bundle of 100', unit: 'bundle', price: 48, category: 'Roofing' },
+  { id: 'chimney_flash_kit', name: 'Chimney counter-flashing and cricket materials', unit: 'set', price: 140, category: 'Roofing' },
+  { id: 'skylight_flash_kit', name: 'Skylight flashing kit', unit: 'set', price: 185, category: 'Roofing' },
+  { id: 'roof_sealant', name: 'Roof sealant, tube', unit: 'ea', price: 9, category: 'Roofing' },
+  { id: 'osb_716', name: '7/16" OSB roof sheathing 4x8', unit: 'sheet', price: 24, category: 'Roofing' },
+  { id: 'metal_panels_sq', name: 'Standing seam metal panels and trim, per square', unit: 'SQ', price: 460, category: 'Roofing', finishSensitive: true },
+  { id: 'hightemp_underlay', name: 'High-temp underlayment, roll (2 squares)', unit: 'roll', price: 145, category: 'Roofing' },
+  { id: 'dumpster_30', name: '30-yard dumpster, delivered and hauled', unit: 'ea', price: 690, category: 'Site & disposal' },
 ];
 
 const m = (materialId: string, perUnit: number) => ({ materialId, perUnit });
@@ -239,6 +259,28 @@ export const ASSEMBLIES: Assembly[] = [
   { id: 'site_protection', name: 'Floor and wall protection, dust control', vi: 'Bảo vệ sàn, tường và chống bụi', trade: 'general', unit: 'EA', labor: 400,
     materials: [m('floor_protection', 2), m('plastic_sheeting', 1), m('painters_tape', 4)] },
   { id: 'cleanup_final', name: 'Final cleanup', vi: 'Dọn dẹp hoàn công', trade: 'general', unit: 'EA', labor: 450, materials: [] },
+
+  // Roofing (SQ = one square, 100 SF of roof)
+  { id: 'roof_tearoff', name: 'Tear off existing roofing, per layer', vi: 'Gỡ mái cũ, mỗi lớp', trade: 'roofing', unit: 'SQ', labor: 85, materials: [] },
+  { id: 'roof_dumpster', name: 'Dumpster and haul-away', vi: 'Thùng rác và chở đi', trade: 'roofing', unit: 'EA', labor: 0, materials: [m('dumpster_30', 1)] },
+  { id: 'roof_sheathing', name: 'Replace damaged roof sheathing', vi: 'Thay ván mái bị hư', trade: 'roofing', unit: 'sheet', labor: 45, materials: [m('osb_716', 1)] },
+  { id: 'roof_shingles', name: 'Architectural shingles over synthetic underlayment', vi: 'Ngói asphalt kiến trúc trên lớp lót tổng hợp', trade: 'roofing', unit: 'SQ', labor: 150,
+    materials: [m('shingle_bundle', 3), m('synthetic_underlay', 0.1), m('roof_nails', 0.12)] },
+  { id: 'roof_metal', name: 'Standing seam metal roof over high-temp underlayment', vi: 'Mái kim loại standing seam trên lớp lót chịu nhiệt', trade: 'roofing', unit: 'SQ', labor: 380,
+    materials: [m('metal_panels_sq', 1), m('hightemp_underlay', 0.5)] },
+  { id: 'roof_ice_water', name: 'Ice & water shield at eaves and valleys', vi: 'Màng chống thấm ở mép mái và khe mái', trade: 'roofing', unit: 'LF', labor: 1.2, materials: [m('ice_water', 1 / 60)] },
+  { id: 'roof_starter', name: 'Starter course at eaves and rakes', vi: 'Hàng ngói khởi đầu ở mép mái', trade: 'roofing', unit: 'LF', labor: 0.6, materials: [m('starter_strip', 1 / 100)] },
+  { id: 'roof_drip_edge', name: 'Drip edge at eaves and rakes', vi: 'Viền nhỏ giọt ở mép mái', trade: 'roofing', unit: 'LF', labor: 1, materials: [m('drip_edge', 0.11)] },
+  { id: 'roof_ridge_cap', name: 'Hip and ridge cap', vi: 'Ngói úp nóc và sống mái', trade: 'roofing', unit: 'LF', labor: 2.5, materials: [m('ridge_cap', 1 / 30)] },
+  { id: 'roof_ridge_vent', name: 'Ridge vent', vi: 'Thông gió nóc mái', trade: 'roofing', unit: 'LF', labor: 4, materials: [m('ridge_vent', 0.26)] },
+  { id: 'roof_box_vent', name: 'Roof box vent', vi: 'Lỗ thông gió mái', trade: 'roofing', unit: 'EA', labor: 60, materials: [m('box_vent', 1), m('roof_sealant', 0.5)] },
+  { id: 'roof_pipe_boot', name: 'Pipe boot flashing', vi: 'Gioăng ống xuyên mái', trade: 'roofing', unit: 'EA', labor: 45, materials: [m('pipe_boot', 1), m('roof_sealant', 0.3)] },
+  { id: 'roof_wall_flashing', name: 'Step flashing at walls', vi: 'Tôn chống thấm chân tường', trade: 'roofing', unit: 'LF', labor: 4, materials: [m('step_flashing', 0.012)] },
+  { id: 'roof_chimney', name: 'Chimney flashing', vi: 'Chống thấm quanh ống khói', trade: 'roofing', unit: 'EA', labor: 380, materials: [m('chimney_flash_kit', 1), m('roof_sealant', 1)] },
+  { id: 'roof_skylight', name: 'Skylight re-flash', vi: 'Chống thấm lại giếng trời', trade: 'roofing', unit: 'EA', labor: 320, materials: [m('skylight_flash_kit', 1)] },
+  { id: 'roof_steep', name: 'Steep roof charge (8/12 and up)', vi: 'Phụ phí mái dốc (từ 8/12)', trade: 'roofing', unit: 'SQ', labor: 35, materials: [] },
+  { id: 'roof_very_steep', name: 'Very steep roof charge (10/12 and up)', vi: 'Phụ phí mái rất dốc (từ 10/12)', trade: 'roofing', unit: 'SQ', labor: 30, materials: [] },
+  { id: 'roof_high', name: 'Two-story or higher access', vi: 'Phụ phí nhà từ hai tầng', trade: 'roofing', unit: 'SQ', labor: 18, materials: [] },
 ];
 
 export const MATERIAL_BY_ID: Record<string, Material> = Object.fromEntries(MATERIALS.map((x) => [x.id, x]));
@@ -246,7 +288,7 @@ export const ASSEMBLY_BY_ID: Record<string, Assembly> = Object.fromEntries(ASSEM
 
 export const TRADE_ORDER: Trade[] = [
   'general', 'demo', 'framing', 'plumbing', 'electrical', 'ventilation', 'drywall',
-  'tile', 'cabinets', 'fixtures', 'carpentry', 'painting',
+  'tile', 'cabinets', 'fixtures', 'carpentry', 'painting', 'roofing',
 ];
 
 export const TRADE_NAMES: Record<Trade, { en: string; vi: string }> = {
@@ -261,5 +303,6 @@ export const TRADE_NAMES: Record<Trade, { en: string; vi: string }> = {
   carpentry: { en: 'Doors & trim', vi: 'Cửa & nẹp' },
   painting: { en: 'Painting', vi: 'Sơn' },
   fixtures: { en: 'Fixtures & install', vi: 'Thiết bị & lắp đặt' },
+  roofing: { en: 'Roofing', vi: 'Mái nhà' },
   general: { en: 'Site protection & cleanup', vi: 'Bảo vệ công trình & dọn dẹp' },
 };

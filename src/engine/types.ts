@@ -15,6 +15,7 @@ export type Trade =
   | 'carpentry'
   | 'painting'
   | 'fixtures'
+  | 'roofing'
   | 'general';
 
 export type FinishLevel = 'basic' | 'mid' | 'high';
@@ -38,6 +39,7 @@ export type MaterialCategory =
   | 'Doors & trim'
   | 'Paint'
   | 'Fixtures'
+  | 'Roofing'
   | 'Site & disposal';
 
 export interface Material {

@@ -14,6 +14,7 @@ import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
 import { Button, C, Card, Chip, Field, H2, Label, Muted, NumberField, Screen, Segmented, Select } from '@/ui/kit';
 import { AiNote } from '@/ui/AiNote';
 import { QuestionEditor } from '@/ui/QuestionEditor';
+import { RoofSatellite } from '@/ui/RoofSatellite';
 
 export default function Questions() {
   const { draft, setDraft, commitDraft, priceBook, customQuestions, saveQuestions, presets, savePresets } = useApp();
@@ -111,6 +112,19 @@ export default function Questions() {
         <Muted>Answer what you know. Anything you skip uses a standard assumption, and it’s flagged on the estimate.</Muted>
       )}
 
+      {draft.jobTypeId === 'roofing' ? (
+        <RoofSatellite address={draft.address} onUse={(answers, summary, address) => setDraft({
+          ...draft,
+          answers: { ...draft.answers, ...answers },
+          aiFilled: { ...draft.aiFilled, ...Object.fromEntries(Object.keys(answers).map((k) => [k, 'satellite' as const])) },
+          scopeNote: draft.scopeNote || summary,
+          address: draft.address || address,
+          // An estimate measured from satellite is a detailed one.
+          mode: 'detailed',
+        })} />
+      ) : null}
+
+      {draft.jobTypeId === 'roofing' ? null : (
       <Card>
         <H2>Floor plan</H2>
         {draft.plan?.length ? (
@@ -122,6 +136,7 @@ export default function Questions() {
         )}
         <Button kind="ghost" title={draft.plan?.length ? 'Open floor plan' : '+ Scan or measure rooms'} onPress={() => router.push('/floor-plan')} />
       </Card>
+      )}
 
       <Label>Finish level</Label>
       <Segmented<FinishLevel>
@@ -146,8 +161,9 @@ export default function Questions() {
             <View key={qq.id} style={{ gap: 4 }}>
               <QuestionInput q={qq} value={draft.answers[qq.id]} onChange={(v) => set(qq.id, v)} />
               {draft.aiFilled?.[qq.id] ? (
-                <Text style={{ fontSize: 12, fontWeight: '600', color: draft.aiFilled[qq.id] === 'photo' ? C.warnInk : C.okInk }}>
-                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Bidwell from a photo: check it' : '● Filled in from your notes'}
+                <Text style={{ fontSize: 12, fontWeight: '600', color: draft.aiFilled[qq.id] === 'notes' ? C.okInk : C.warnInk }}>
+                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Bidwell from a photo: check it'
+                    : draft.aiFilled[qq.id] === 'satellite' ? '● Measured from satellite: check on site' : '● Filled in from your notes'}
                 </Text>
               ) : null}
             </View>

@@ -403,6 +403,88 @@ function quick(
   };
 }
 
+// ---- Roofing (detailed: squares, pitch, edges and penetrations; can be filled from a satellite measurement) ----
+const roofing: JobType = {
+  id: 'roofing', name: 'Roof replacement', vi: 'Thay mái', detailed: true, unit: 'SF', category: 'Exterior',
+  defaultPreset: { basic: 7, mid: 9.5, high: 14 },
+  questions: [
+    { ...size(2000, 'Roof area (along the slope)'), group: 'Roof size', help: 'Not the footprint. Tap “Measure from satellite” to fill this in.' },
+    { id: 'pitch', label: 'Main pitch', kind: 'number', unit: '/12', default: 6, group: 'Roof size', help: 'Rise in inches per 12 inches. 8/12 and up is a steep roof.' },
+    { id: 'complexity', label: 'Roof shape', kind: 'choice', default: 'average', group: 'Roof size',
+      options: [{ value: 'simple', label: 'Simple (gable): 10% waste' }, { value: 'average', label: 'Average (hip): 15% waste' }, { value: 'cut', label: 'Cut-up (many valleys): 20% waste' }] },
+    { id: 'stories', label: 'Height', kind: 'choice', default: '1', group: 'Roof size',
+      options: [{ value: '1', label: 'One story' }, { value: '2', label: 'Two stories' }, { value: '3', label: 'Three or more' }] },
+    { id: 'material', label: 'New roof', kind: 'choice', default: 'shingle', group: 'Roofing',
+      options: [{ value: 'shingle', label: 'Architectural shingles' }, { value: 'metal', label: 'Standing seam metal' }, { value: 'membrane', label: 'Low slope membrane (bid separately)' }] },
+    { id: 'layers', label: 'Layers to tear off', kind: 'number', default: 1, group: 'Roofing', help: 'Look at the edge of the roof. 0 if the deck is bare.' },
+    { id: 'sheathing', label: 'Sheathing allowance', kind: 'number', unit: 'sheets', default: 5, group: 'Roofing', help: 'Damaged decking to replace; extra sheets are billed per sheet.' },
+    { id: 'eavesLf', label: 'Eaves (bottom edges)', kind: 'number', unit: 'LF', default: 140, group: 'Edges' },
+    { id: 'rakesLf', label: 'Rakes (gable edges)', kind: 'number', unit: 'LF', default: 80, group: 'Edges' },
+    { id: 'ridgeLf', label: 'Ridges and hips', kind: 'number', unit: 'LF', default: 50, group: 'Edges' },
+    { id: 'valleysLf', label: 'Valleys', kind: 'number', unit: 'LF', default: 0, group: 'Edges' },
+    { id: 'wallLf', label: 'Roof meets a wall', kind: 'number', unit: 'LF', default: 0, group: 'Edges', help: 'Step flashing where the roof runs into a wall.' },
+    { id: 'ridgeVent', label: 'Ridge vent', kind: 'yesno', default: true, group: 'Vents & flashing' },
+    { id: 'ventLf', label: 'Ridge vent length', kind: 'number', unit: 'LF', default: 36, group: 'Vents & flashing' },
+    { id: 'boxVents', label: 'Box vents', kind: 'number', default: 0, group: 'Vents & flashing' },
+    { id: 'pipeBoots', label: 'Pipes through the roof', kind: 'number', default: 3, group: 'Vents & flashing' },
+    { id: 'chimneys', label: 'Chimneys', kind: 'number', default: 0, group: 'Vents & flashing' },
+    { id: 'skylights', label: 'Skylights', kind: 'number', default: 0, group: 'Vents & flashing' },
+    yearBuilt,
+  ],
+  scope: (a) => {
+    const s: ScopeItem[] = [];
+    const sq = num(a, 'sizeSf') / 100;
+    const waste = str(a, 'complexity') === 'simple' ? 0.1 : str(a, 'complexity') === 'cut' ? 0.2 : 0.15;
+    const order = Math.ceil(sq * (1 + waste) * 3) / 3;
+    const layers = Math.min(4, Math.round(num(a, 'layers')));
+    const material = str(a, 'material') || 'shingle';
+    const pitch = num(a, 'pitch');
+    const eaves = num(a, 'eavesLf');
+    const rakes = num(a, 'rakesLf');
+    add(s, 'site_protection', 1);
+    if (layers > 0) {
+      add(s, 'roof_tearoff', sq * layers);
+      add(s, 'roof_dumpster', Math.max(1, Math.ceil((sq * layers) / 28)));
+    }
+    add(s, 'roof_sheathing', num(a, 'sheathing'));
+    if (material === 'metal') add(s, 'roof_metal', order);
+    else if (material === 'shingle') {
+      add(s, 'roof_shingles', order);
+      add(s, 'roof_starter', eaves + rakes);
+      add(s, 'roof_ridge_cap', num(a, 'ridgeLf'));
+    }
+    if (material !== 'membrane') {
+      add(s, 'roof_ice_water', eaves + num(a, 'valleysLf'));
+      add(s, 'roof_drip_edge', eaves + rakes);
+      if (yes(a, 'ridgeVent')) add(s, 'roof_ridge_vent', num(a, 'ventLf'));
+      add(s, 'roof_box_vent', num(a, 'boxVents'));
+      add(s, 'roof_pipe_boot', num(a, 'pipeBoots'));
+      add(s, 'roof_wall_flashing', num(a, 'wallLf'));
+      add(s, 'roof_chimney', num(a, 'chimneys'));
+      add(s, 'roof_skylight', num(a, 'skylights'));
+      if (pitch >= 8) add(s, 'roof_steep', order);
+      if (pitch >= 10) add(s, 'roof_very_steep', order);
+      if (Number(str(a, 'stories') || '1') >= 2) add(s, 'roof_high', order);
+    }
+    add(s, 'cleanup_final', 1);
+    return s;
+  },
+  exclusions: [
+    ...COMMON_EXCLUSIONS,
+    'Sheathing beyond the allowance listed (billed per sheet)',
+    'Rotted rafters or framing',
+    'Gutters and downspouts unless listed',
+    'Satellite measurements are confirmed on site before materials are ordered',
+  ],
+  exclusionsVi: [
+    ...COMMON_EXCLUSIONS_VI,
+    'Ván mái vượt số tấm đã tính (tính theo từng tấm)',
+    'Kèo hoặc khung mái bị mục',
+    'Máng xối và ống xả trừ khi có ghi',
+    'Số đo từ vệ tinh được kiểm tra tại công trình trước khi đặt vật tư',
+  ],
+};
+
 const ROT: [string, string] = ['Replacement of rotted sheathing or framing beyond what is listed', 'Thay ván hoặc khung bị mục ngoài phạm vi đã liệt kê'];
 const MORE_TYPES: JobType[] = [
   // Remodel
@@ -415,7 +497,6 @@ const MORE_TYPES: JobType[] = [
   quick('demolition', 'Interior demolition', 'Phá dỡ bên trong', 'Remodel', 'SF', 'Area to demo', 500, { basic: 4, mid: 6, high: 10 }, { house: true }),
   quick('insulation', 'Insulation', 'Cách nhiệt', 'Remodel', 'SF', 'Area to insulate', 1000, { basic: 1.5, mid: 2.5, high: 4 }),
   // Exterior
-  quick('roofing', 'Roof replacement', 'Thay mái', 'Exterior', 'SF', 'Roof area', 2000, { basic: 7, mid: 9.5, high: 14 }, { house: true, exclusions: [ROT] }),
   quick('siding', 'Siding', 'Ốp tường ngoài (siding)', 'Exterior', 'SF', 'Wall area', 1800, { basic: 9, mid: 12, high: 18 }, { house: true, exclusions: [ROT] }),
   quick('extpaint', 'Exterior painting', 'Sơn ngoại thất', 'Exterior', 'SF', 'Wall area to paint', 2000, { basic: 3, mid: 4, high: 6 }, { house: true }),
   quick('deck', 'Deck', 'Sàn deck', 'Exterior', 'SF', 'Deck area', 300, { basic: 45, mid: 65, high: 100 }),
@@ -435,7 +516,7 @@ const MORE_TYPES: JobType[] = [
   quick('commercial', 'Commercial tenant improvement', 'Cải tạo mặt bằng thương mại', 'New construction', 'SF', 'Space size', 2000, { basic: 60, mid: 90, high: 150 }),
 ];
 
-const BUILT_IN: JobType[] = [bathroom, kitchen, basement, flooring, painting, ...MORE_TYPES, adu, newbuild, small];
+const BUILT_IN: JobType[] = [bathroom, kitchen, basement, flooring, painting, roofing, ...MORE_TYPES, adu, newbuild, small];
 const BUILT_IN_QUESTIONS = new Map(BUILT_IN.map((j) => [j.id, j.questions]));
 
 /** Shown for an estimate whose own job type was later deleted, so old estimates never break. */
