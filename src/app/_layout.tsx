@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CloudProvider, useCloud } from '@/cloud/CloudProvider';
@@ -10,6 +10,7 @@ import { AppProvider, useApp } from '@/store/AppContext';
 import { ConfettiHost } from '@/ui/celebrate';
 import { inClaudeApp } from '@/ui/host';
 import { LoginScreen } from '@/ui/LoginScreen';
+import { SUPPORT_EMAIL } from '@/engine/legal';
 import { IntroVideo } from '@/ui/IntroVideo';
 import { Onboarding } from '@/ui/Onboarding';
 import { QuickTour } from '@/ui/QuickTour';
@@ -189,5 +190,20 @@ export default function RootLayout() {
         </CloudProvider>
       </AppProvider>
     </SafeAreaProvider>
+  );
+}
+
+/** If a screen crashes: a calm message, try again, or tell support (instead of a white screen). */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Promise<void> }) {
+  const body = `What I was doing:\n\n\n---\n${error.name}: ${error.message}\n${(error.stack ?? '').split('\n').slice(0, 6).join('\n')}`;
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg, padding: 28, gap: 14 }}>
+      <Text style={{ fontSize: 44 }}>🛠️</Text>
+      <Text style={{ color: C.ink, fontSize: 22, fontWeight: '700', textAlign: 'center' }}>Something went wrong</Text>
+      <Text style={{ color: C.ink2, fontSize: 15, textAlign: 'center' }}>Your work is saved. Try again, and if it keeps happening, send us a report so we can fix it.</Text>
+      <Button title="Try again" icon="refresh" onPress={() => { retry(); }} style={{ alignSelf: 'stretch' }} />
+      <Button kind="secondary" title="Send a report" icon="mail-outline" style={{ alignSelf: 'stretch' }}
+        onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bidwell AI crashed')}&body=${encodeURIComponent(body)}`)} />
+    </View>
   );
 }

@@ -1,3 +1,4 @@
+import { logoHtml, payHtml } from './brand';
 // After the client says yes: their signature on the quote, change orders, invoices and payments for one job.
 // Amounts follow the quote: milestone and change-order amounts are before tax, and sales tax is added on each invoice.
 import { dateFmt, money } from './format';
@@ -209,7 +210,7 @@ const L = {
   },
 };
 
-const header = (profile: Profile, title: string, right: string) => `<div class="top"><div><h1>${esc(profile.companyName)}</h1>
+const header = (profile: Profile, title: string, right: string) => `<div class="top"><div>${logoHtml(profile)}<h1>${esc(profile.companyName)}</h1>
 <div class="muted">${[profile.contactName, profile.phone, profile.email].filter(Boolean).map(esc).join(' · ')}</div>
 ${profile.license ? `<div class="muted">WA Reg. ${esc(profile.license)}</div>` : ''}</div>
 <div class="r"><div style="font-size:18px;font-weight:700">${title}</div>${right}</div></div>`;
@@ -236,6 +237,7 @@ ${t.changes ? `<tr><td>${T.changes}</td><td class="r">${money2(t.changesWithTax)
 <tr><td>${T.paidToDate}</td><td class="r">${money2(t.paid)}</td></tr>
 <tr><td><b>${T.balance}</b></td><td class="r"><b>${money2(t.balance)}</b></td></tr>
 </table></div>
+${payHtml(profile, lang)}
 <p>${T.payable} <b>${esc(profile.companyName)}</b>. ${T.thanks}</p></body></html>`;
 }
 

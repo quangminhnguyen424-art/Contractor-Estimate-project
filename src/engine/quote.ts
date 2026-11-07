@@ -1,3 +1,4 @@
+import { logoHtml, payHtml } from './brand';
 import { fillNotice } from './legal';
 import { TRADE_NAMES } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
@@ -125,7 +126,7 @@ td{padding:5px 0;border-bottom:1px solid #E2E0DA;vertical-align:top}.sec td{font
 ul{margin:2px 0 6px 16px;padding:0;color:#3F444A}.tot td{font-size:15px;font-weight:700;border-bottom:none}
 .sig{display:flex;gap:40px;margin-top:28px}.sig>div{flex:1;border-top:1px solid #1B1E22;padding-top:4px}
 </style></head><body>
-<div class="top"><div><h1>${esc(profile.companyName)}</h1>
+<div class="top"><div>${logoHtml(profile)}<h1>${esc(profile.companyName)}</h1>
 <div class="muted">${esc(profile.contactName)} · ${esc(profile.phone)} · ${esc(profile.email)}</div>
 ${profile.license ? `<div class="muted">${T.registration} ${esc(profile.license)}</div>` : ''}</div>
 <div class="r"><div style="font-size:18px;font-weight:700">${T.quote}</div><div>${T.quoteNo} ${quoteNo}</div>
@@ -144,6 +145,7 @@ ${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${plan
 <h2>${T.schedule}</h2><table>${sched.map((s) => row(`${esc(s.label)} (${s.pct}%)`, money(s.amount))).join('')}</table>
 <div class="muted">${lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</div>
 ${wd.notes ? `<h2>${lang === 'vi' ? 'Ghi chú' : 'Notes'}</h2><div>${esc(wd.notes).replace(/\n/g, '<br>')}</div>` : ''}
+${payHtml(profile, lang)}
 <h2>${T.terms}</h2><ul>${T.termsLines.map((t) => `<li>${t}</li>`).join('')}</ul>
 <h2>${T.acceptance}</h2>${accepted ?? `<div class="sig"><div>${T.owner}</div><div>${T.date}</div></div>
 <div class="sig"><div>${esc(profile.companyName)}</div><div>${T.date}</div></div>`}

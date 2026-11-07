@@ -19,7 +19,7 @@ import { confirmAction, notify } from '@/ui/notify';
 
 export default function EstimateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, updateEstimate, deleteEstimate, setDraft, profile, pastJobs, projects, projectForEstimate, contracts, followups } = useApp();
+  const { estimates, updateEstimate, deleteEstimate, setDraft, commitDraft, profile, pastJobs, projects, projectForEstimate, contracts, followups } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
@@ -53,6 +53,18 @@ export default function EstimateScreen() {
     router.push('/questions');
   };
 
+  // Same job for another client (or the next unit): a new draft with the same scope, prices and quote wording.
+  const copy = () => {
+    const id = commitDraft({
+      jobTypeId: est.jobTypeId, mode: est.mode, title: `${jt.name} (copy)`, clientName: '', address: '',
+      description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: [], finish: est.finish,
+      answers: est.answers, customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan,
+    });
+    if (est.quoteEdits) updateEstimate(id, { quoteEdits: est.quoteEdits });
+    router.replace(`/estimate/${id}`);
+    notify('Copied', 'A new draft with the same work and prices. Add the client and send it.');
+  };
+
   const changeMarkup = (n: number) => {
     const go = () => updateEstimate(est.id, { markupPct: n });
     if (est.status === 'draft' || okToRepriceSent) return go();
@@ -78,6 +90,11 @@ export default function EstimateScreen() {
         </View>
       }>
       <Stack.Screen options={{ title: est.status === 'draft' ? 'Estimate (internal)' : 'Estimate' }} />
+      {est.clientNotes?.length && est.status !== 'won' ? (
+        <Banner tone="warn" title={`${est.clientNotes[est.clientNotes.length - 1].name || 'The client'} asked for changes`}>
+          {`“${est.clientNotes[est.clientNotes.length - 1].text}”\n${new Date(est.clientNotes[est.clientNotes.length - 1].at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. Update the quote, then send a new link.`}
+        </Banner>
+      ) : null}
       <View style={{ gap: 4 }}>
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{est.title}</Text>
         <Muted>{jt.name} · {FINISH_LABELS[est.finish].en} · {est.mode === 'quick' ? 'Quick' : 'Detailed'}</Muted>
@@ -233,6 +250,7 @@ export default function EstimateScreen() {
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Button kind="secondary" title="Edit answers" style={{ flex: 1 }} onPress={edit} />
+        <Button kind="secondary" title="Copy for another client" icon="copy-outline" style={{ flex: 1 }} onPress={copy} />
       </View>
       <Pressable accessibilityRole="button" onPress={remove} style={{ alignSelf: 'center', padding: 12 }}>
         <Text style={{ color: C.danger, fontWeight: '600' }}>Delete estimate</Text>

@@ -19,6 +19,8 @@ export interface SignedRequest {
 /** Makes a signing link for a document. Older open links for the same document stop working. */
 export async function createSignLink(input: {
   uid: string; kind: 'quote' | 'change'; estimateId: string; changeId?: string; title: string; company: string; clientName: string; total: number; html: string;
+  /** Shown on the signing page so the client can call, text or pay. */
+  phone?: string; email?: string; payLink?: string;
 }): Promise<string> {
   let cancel = supabase.from('sign_requests').update({ status: 'cancelled' }).eq('owner', input.uid).eq('estimate_id', input.estimateId).eq('kind', input.kind).eq('status', 'pending');
   cancel = input.changeId ? cancel.eq('change_id', input.changeId) : cancel;
@@ -26,6 +28,8 @@ export async function createSignLink(input: {
   const { data, error } = await supabase.from('sign_requests').insert({
     owner: input.uid, kind: input.kind, estimate_id: input.estimateId, change_id: input.changeId ?? null,
     title: input.title, company: input.company, client_name: input.clientName, total: input.total, html: input.html,
+    company_phone: input.phone?.slice(0, 40) || null, company_email: input.email?.slice(0, 120) || null,
+    pay_link: input.payLink && /^https:\/\//.test(input.payLink) ? input.payLink.slice(0, 300) : null,
   }).select('token').single();
   if (error || !data) throw new Error(error?.message ?? 'Could not make the link.');
   return `${CLOUD.signPage}?t=${data.token as string}`;
@@ -62,3 +66,18 @@ IP ${escapeHtml(sig.audit?.ip ?? '')} · ${escapeHtml((sig.audit?.userAgent ?? '
 }
 
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+export interface ClientNote { id: string; estimate_id: string; kind: 'quote' | 'change'; client_note: string; client_note_name: string; client_note_at: string }
+
+/** Change requests clients sent from a signing link that the app hasn't shown yet. */
+export async function fetchClientNotes(uid: string): Promise<ClientNote[]> {
+  const { data, error } = await supabase.from('sign_requests')
+    .select('id, estimate_id, kind, client_note, client_note_name, client_note_at')
+    .eq('owner', uid).eq('note_seen', false).not('client_note_at', 'is', null).limit(50);
+  if (error) return []; // older database without the columns: nothing to show
+  return (data ?? []) as ClientNote[];
+}
+
+export async function markNoteSeen(id: string) {
+  await supabase.from('sign_requests').update({ note_seen: true }).eq('id', id);
+}

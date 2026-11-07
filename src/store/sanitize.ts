@@ -89,6 +89,9 @@ export function sanitizeProfile(v: unknown): Profile | null {
     schedule: scheduleOk ? schedule : DEFAULT_SCHEDULE,
     about: str(v.about).slice(0, 2000),
     ...(v.tipsOk === true && typeof v.tipsAt === 'string' ? { tipsOk: true, tipsAt: v.tipsAt } : {}),
+    ...(typeof v.logo === 'string' && /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(v.logo) && v.logo.length <= 250_000 ? { logo: v.logo } : {}),
+    ...(typeof v.payLink === 'string' && /^https:\/\/\S+$/.test(v.payLink.trim()) ? { payLink: v.payLink.trim().slice(0, 300) } : {}),
+    ...(typeof v.payNote === 'string' && v.payNote.trim() ? { payNote: v.payNote.trim().slice(0, 240) } : {}),
     ...(isObj(v.work) ? { work: sanitizeWork(v.work) } : {}),
     ...(isObj(v.notices) ? { notices: {
       waDisclosure: v.notices.waDisclosure === true, regExpires: str(v.notices.regExpires).slice(0, 20), bond: str(v.notices.bond).slice(0, 120),
@@ -294,6 +297,10 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
+    clientNotes: Array.isArray(e.clientNotes)
+      ? e.clientNotes.filter((n): n is { at: string; name: string; text: string } => isObj(n) && typeof n.at === 'string' && typeof n.text === 'string')
+        .slice(-20).map((n) => ({ at: n.at, name: str(n.name).slice(0, 120), text: n.text.slice(0, 2000) }))
+      : undefined,
     plan: sanitizePlan(e.plan),
     job: isObj(e.job) && typeof e.job.name === 'string' && UNITS.includes(e.job.unit)
       ? { name: e.job.name, vi: str(e.job.vi, e.job.name), unit: e.job.unit,

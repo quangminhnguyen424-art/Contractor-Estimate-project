@@ -9,7 +9,7 @@ import { notify } from '@/ui/notify';
 
 import { callFunction, supabase } from './client';
 import { CLOUD, cloudConfigured } from './config';
-import { fetchNewSignatures, markApplied, signedHtml, toSignature } from './sign';
+import { fetchClientNotes, fetchNewSignatures, markApplied, markNoteSeen, signedHtml, toSignature } from './sign';
 import { decide } from './decide';
 import { backupPhotos, clearMeta, loadMeta, pullWorkspace, pushWorkspace, restorePhotos, saveMeta } from './sync';
 
@@ -66,6 +66,18 @@ async function applySignatures(uid: string, a: ReturnType<typeof useApp>) {
   }
 }
 
+/** "Request changes" from clients: kept on the estimate and shown as a notice, once. */
+async function applyClientNotes(uid: string, a: ReturnType<typeof useApp>) {
+  for (const n of await fetchClientNotes(uid)) {
+    const est = a.estimates.find((e) => e.id === n.estimate_id);
+    if (est) {
+      a.updateEstimate(est.id, { addClientNote: { at: n.client_note_at, name: n.client_note_name, text: n.client_note } });
+      notify(`${n.client_note_name || 'Your client'} asked for changes`, `“${est.title}”: ${n.client_note}`);
+    }
+    await markNoteSeen(n.id);
+  }
+}
+
 const device = `${Platform.OS} ${String(Platform.Version ?? '')}`.trim();
 
 /** Signs in to Bidwell cloud, keeps data and photos in step, and records quotes clients signed online. */
@@ -118,6 +130,7 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         await saveMeta({ uid, remoteAt: remote.updatedAt, syncedChange: localChange });
       }
       await applySignatures(uid, appRef.current);
+      await applyClientNotes(uid, appRef.current);
       setLastSync(new Date().toISOString());
       setError(null);
       setState('ok');

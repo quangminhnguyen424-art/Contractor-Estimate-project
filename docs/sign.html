@@ -5,12 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Review and sign</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg: #F4F6FB; --card: #FFFFFF; --ink: #0B1324; --ink2: #334155; --muted: #5B6475; --line: #DDE3EC; --accent: #FF6B1A; --ok: #0E9F6E; --bad: #DC2626; }
+  :root { --bg: #F4F6FB; --card: #FFFFFF; --ink: #0B1324; --ink2: #334155; --muted: #5B6475; --line: #DDE3EC; --accent: #2457F5; --ok: #0E9F6E; --bad: #DC2626; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Lexend', system-ui, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; }
   .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
   .brand { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
   .brand b { color: var(--ink); }
@@ -28,13 +26,19 @@
   .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
   .agree { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--ink2); }
   .agree input { width: 22px; height: 22px; margin-top: 1px; accent-color: var(--accent); }
-  button { height: 56px; border: 0; border-radius: 16px; background: var(--accent); color: #fff; font: 600 17px 'Lexend', sans-serif; cursor: pointer; width: 100%; box-shadow: 0 8px 22px rgba(255, 107, 26, 0.35); }
+  button { height: 56px; border: 0; border-radius: 16px; background: var(--accent); color: #fff; font: 600 17px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; cursor: pointer; width: 100%; box-shadow: 0 8px 22px rgba(36, 87, 245, 0.30); }
   button:disabled { opacity: .45; box-shadow: none; cursor: default; }
   .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; width: auto; height: auto; box-shadow: none; text-decoration: underline; }
   .done { text-align: center; padding: 30px 18px; }
   .done .tick { width: 72px; height: 72px; border-radius: 50%; background: #D1FAE5; color: var(--ok); display: inline-flex; align-items: center; justify-content: center; font-size: 38px; animation: pop .5s ease-out; }
   @keyframes pop { from { transform: scale(.3); opacity: 0 } to { transform: scale(1); opacity: 1 } }
   .err { color: var(--bad); font-size: 14px; }
+  .contact { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .contact a { flex: 1; min-width: 90px; text-align: center; padding: 10px; border-radius: 12px; background: #EEF3FF; color: var(--accent); font-weight: 600; text-decoration: none; font-size: 15px; }
+  .secondary { background: #fff; color: var(--accent); border: 1px solid var(--line); box-shadow: none; }
+  textarea { width: 100%; min-height: 110px; border-radius: 12px; border: 1px solid var(--line); padding: 12px 14px; font: inherit; font-size: 16px; resize: vertical; }
+  .ok { color: var(--ok); font-size: 15px; }
+  .pay { display: block; margin-top: 16px; padding: 16px; border-radius: 16px; background: var(--accent); color: #fff; font-weight: 600; font-size: 17px; text-decoration: none; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -50,6 +54,7 @@
       <h1 id="title"></h1>
       <div class="muted" id="what"></div>
       <div class="total"><span class="muted">Total with tax / Tổng (gồm thuế)</span><b id="total"></b></div>
+      <div class="contact" id="contact" hidden></div>
     </div>
   </section>
   <iframe id="frame" title="Document" sandbox="" hidden></iframe>
@@ -67,10 +72,25 @@
     </div>
   </section>
 
+  <section class="card" id="askCard" hidden>
+    <div id="askClosed">
+      <p class="muted" style="margin:0 0 10px">Not ready to sign? / Chưa muốn ký?</p>
+      <button class="secondary" id="askOpen" type="button">Ask a question or request changes / Hỏi hoặc yêu cầu sửa</button>
+    </div>
+    <div id="askForm" hidden style="display:flex;flex-direction:column;gap:12px">
+      <div><label for="askName">Your name / Tên</label><input id="askName" type="text" maxlength="80" autocomplete="name"></div>
+      <div><label for="askText">What would you like to change or ask? / Anh/chị muốn sửa hoặc hỏi gì?</label><textarea id="askText" maxlength="2000"></textarea></div>
+      <button id="askSend" type="button">Send to the contractor / Gửi cho nhà thầu</button>
+      <div class="err" id="askErr" role="alert"></div>
+    </div>
+    <p class="ok" id="askDone" hidden>Sent. Your contractor will get back to you. / Đã gửi. Nhà thầu sẽ liên hệ lại.</p>
+  </section>
+
   <section class="card done" id="done" hidden>
     <div class="tick">✓</div>
     <h1>Signed. Thank you!</h1>
     <p class="muted">Đã ký. Cảm ơn quý khách! Your contractor has been notified and will send you a copy.</p>
+    <a class="pay" id="pay" href="#" target="_blank" rel="noopener" hidden>Pay online / Thanh toán online</a>
   </section>
 </main>
 <script src="./cloud-config.js"></script>
@@ -87,7 +107,7 @@
       body: JSON.stringify(body),
     }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   }
-  function show(id) { ['loading', 'gone', 'doc', 'signCard', 'done', 'frame'].forEach(function (x) { $(x).hidden = true; }); [].concat(id).forEach(function (x) { $(x).hidden = false; }); }
+  function show(id) { ['loading', 'gone', 'doc', 'signCard', 'askCard', 'done', 'frame'].forEach(function (x) { $(x).hidden = true; }); [].concat(id).forEach(function (x) { $(x).hidden = false; }); }
 
   // Signature pad: strokes kept as x,y pairs in the pad's own size, the same shape the app stores.
   var canvas = $('canvas'), ctx = canvas.getContext('2d'), strokes = [], cur = null, W = 0, H = 0;
@@ -117,9 +137,28 @@
   $('submit').onclick = function () {
     $('submit').disabled = true; $('err').textContent = '';
     rpc('submit_signature', { p_token: token, p_name: $('name').value.trim(), p_strokes: strokes, p_w: W, p_h: H, p_consent: $('agree').checked })
-      .then(function (ok) { if (ok) show('done'); else { $('err').textContent = 'This link is no longer open for signing. / Link này không còn ký được.'; } })
+      .then(function (ok) { if (ok) { show(['doc', 'done']); } else { $('err').textContent = 'This link is no longer open for signing. / Link này không còn ký được.'; } })
       .catch(function () { $('err').textContent = 'Could not send. Check your connection and try again. / Không gửi được, hãy thử lại.'; check(); });
   };
+
+  // Ask a question or request changes instead of signing.
+  $('askOpen').onclick = function () { $('askClosed').hidden = true; $('askForm').hidden = false; $('askName').value = $('askName').value || $('name').value; $('askText').focus(); };
+  $('askSend').onclick = function () {
+    var name = $('askName').value.trim(), text = $('askText').value.trim();
+    if (name.length < 1 || text.length < 3) { $('askErr').textContent = 'Please add your name and a message. / Vui lòng ghi tên và nội dung.'; return; }
+    $('askSend').disabled = true; $('askErr').textContent = '';
+    rpc('request_changes', { p_token: token, p_name: name, p_message: text })
+      .then(function (ok) { if (ok) { $('askForm').hidden = true; $('askDone').hidden = false; } else { $('askErr').textContent = 'This link is closed. Please contact your contractor. / Link đã đóng.'; $('askSend').disabled = false; } })
+      .catch(function () { $('askErr').textContent = 'Could not send. Try again. / Không gửi được, hãy thử lại.'; $('askSend').disabled = false; });
+  };
+  function contact(r) {
+    var c = $('contact'), html = '';
+    var tel = (r.company_phone || '').replace(/[^0-9+]/g, '');
+    if (tel) html += '<a href="tel:' + tel + '">Call / Gọi</a><a href="sms:' + tel + '">Text / Nhắn</a>';
+    if (r.company_email && /^[^@\s]+@[^@\s]+$/.test(r.company_email)) html += '<a href="mailto:' + encodeURIComponent(r.company_email) + '">Email</a>';
+    c.innerHTML = html; c.hidden = !html;
+  }
+  function pay(r) { if (r.pay_link && /^https:\/\//.test(r.pay_link)) { $('pay').href = r.pay_link; $('pay').hidden = false; } }
 
   if (!cfg.url || !token) { show('gone'); return; }
   rpc('get_sign_request', { p_token: token }).then(function (rows) {
@@ -129,9 +168,10 @@
     $('what').textContent = (r.kind === 'change' ? 'Change order for ' : 'Quote for ') + (r.client_name || 'you');
     $('name').value = r.client_name || '';
     $('frame').srcdoc = r.html;
+    contact(r); pay(r);
     if (r.status === 'signed') { show(['doc', 'frame', 'done']); return; }
     if (r.expired) { $('goneTitle').textContent = 'This link has expired'; show('gone'); return; }
-    show(['doc', 'frame', 'signCard']); size();
+    show(['doc', 'frame', 'signCard', 'askCard']); size();
   }).catch(function () { show('gone'); });
 })();
 </script>

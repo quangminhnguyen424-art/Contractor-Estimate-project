@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, useWindowDimensions, View } from 'react-native';
+import { Linking, Platform, Pressable, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 import { Text } from '@/ui/text';
@@ -11,6 +11,9 @@ import { FINISH_LABELS } from '@/engine/jobTypes';
 import { acceptedBlock, changedSinceSigned } from '@/engine/contract';
 import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, quoteWritePrompt, scheduleAmounts, type QuoteWriteTarget } from '@/engine/quote';
 import { aiFor } from '@/ui/host';
+import { ActionSheet } from '@/ui/Sheet';
+import { useCloud } from '@/cloud/CloudProvider';
+import { createSignLink } from '@/cloud/sign';
 import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
@@ -24,6 +27,8 @@ export default function QuoteScreen() {
   const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const cloud = useCloud();
   const { width } = useWindowDimensions();
   const planWidth = Math.min(width, 760) - 80;
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
@@ -35,6 +40,29 @@ export default function QuoteScreen() {
   const excl = wd.exclusions;
   const isSigned = contracts.some((c) => c.estimateId === est.id && c.accepted);
   const blocking = est.checks.filter((c) => c.level === 'warn');
+
+  // Text or email the client a link to read and sign on their own phone (the PDF is inside the link).
+  const sendLink = async (via: 'sms' | 'email') => {
+    if (!cloud.user) { router.push('/login'); return; }
+    setBusy(true);
+    try {
+      const link = await createSignLink({
+        uid: cloud.user.id, kind: 'quote', estimateId: est.id, title: est.title, company: profile.companyName,
+        clientName: est.clientName, total: est.total, html: quoteHtml(est, profile, lang),
+        phone: profile.phone, email: profile.email, payLink: profile.payLink,
+      });
+      const msg = lang === 'vi'
+        ? `${profile.companyName}: báo giá cho ${est.title} đã sẵn sàng. Mời anh/chị xem và ký tại đây: ${link}`
+        : `${profile.companyName}: your quote for ${est.title} is ready. Please review and sign here: ${link}`;
+      if (via === 'sms') await Linking.openURL(Platform.OS === 'ios' ? `sms:&body=${encodeURIComponent(msg)}` : `sms:?body=${encodeURIComponent(msg)}`);
+      else await Linking.openURL(`mailto:?subject=${encodeURIComponent(`${T.quote}: ${est.title}`)}&body=${encodeURIComponent(msg)}`);
+      if (est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
+    } catch (e) {
+      notify('Could not make the link', e instanceof Error ? e.message : 'Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const send = async () => {
     setBusy(true);
@@ -66,7 +94,7 @@ export default function QuoteScreen() {
           <Button kind="secondary" title="Edit" icon="create-outline" style={{ flex: 1 }} onPress={() => setEditing(true)} />
           <Button kind="secondary" title={isSigned ? 'Signed ✓' : 'Sign'} icon="pencil" style={{ flex: 1 }}
             onPress={() => router.push(`/estimate/${est.id}/sign`)} />
-          <Button title={busy ? '…' : 'Share'} icon="share-outline" disabled={busy} style={{ flex: 1.3 }} onPress={send} />
+          <Button title={busy ? '…' : 'Send'} icon="paper-plane-outline" disabled={busy} style={{ flex: 1.3 }} onPress={() => setMenu(true)} />
         </View>
       </View>
     )}>
@@ -78,6 +106,11 @@ export default function QuoteScreen() {
         <QuoteEditor key={lang} est={est} lang={lang} profile={profile} signed={isSigned}
           onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.back()} />
       ) : null}
+      <ActionSheet visible={menu} onClose={() => setMenu(false)} title="Send the quote" actions={[
+        { icon: 'chatbubble-ellipses', label: 'Text a link to sign', sub: 'The client reads and signs on their phone. You are told when they sign.', onPress: () => sendLink('sms') },
+        { icon: 'mail', label: 'Email a link to sign', onPress: () => sendLink('email') },
+        { icon: 'document-attach', label: 'Share the PDF', sub: 'Email, text, AirDrop or save', onPress: send },
+      ]} />
       {editing ? null : <>
       {blocking.length > 0 ? (
         <Banner tone="warn" title={`${blocking.length} item${blocking.length > 1 ? 's' : ''} to review before sending`}>

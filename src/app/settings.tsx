@@ -14,6 +14,7 @@ import { Banner, Button, C, Field, Label, List, ListRow, Muted, NumberField, Scr
 import { hostSave, inClaudeApp } from '@/ui/host';
 import { EMPTY_WORK } from '@/engine/profile';
 import { JobTypeChips } from '@/ui/JobTypes';
+import { LogoPicker } from '@/ui/LogoPicker';
 import { WorkProfileForm } from '@/ui/WorkProfileForm';
 import { confirmAction, notify } from '@/ui/notify';
 
@@ -148,6 +149,15 @@ export default function Settings() {
         <Field label="Phone" value={p.phone} onChangeText={(v) => set('phone', v)} keyboardType="phone-pad" />
         <Field label="Email" value={p.email} onChangeText={(v) => set('email', v)} autoCapitalize="none" keyboardType="email-address" />
         <Field label="Contractor registration #" value={p.license} onChangeText={(v) => set('license', v)} autoCapitalize="characters" />
+        <LogoPicker value={p.logo} onChange={(v) => set('logo', v)} />
+      </Fold>
+
+      <Fold title="Getting paid">
+        <Field label="Online payment link (optional)" value={p.payLink ?? ''} onChangeText={(v) => set('payLink', v.trim() || undefined)}
+          placeholder="https://buy.stripe.com/… or your Square / PayPal link" autoCapitalize="none" keyboardType="url"
+          help="Your own link from Stripe, Square or PayPal. Clients see a Pay online button on quotes, invoices and after they sign. Money goes straight to you." />
+        <Field label="Other ways to pay (optional)" value={p.payNote ?? ''} onChangeText={(v) => set('payNote', v || undefined)} multiline maxLength={240}
+          placeholder="e.g. Zelle 253-555-0100 · Checks payable to Smith Remodeling LLC" />
       </Fold>
 
       <Fold title="Work you do">

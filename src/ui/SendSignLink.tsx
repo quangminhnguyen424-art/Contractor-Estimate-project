@@ -33,6 +33,7 @@ export function SendSignLink(props: {
       const link = await createSignLink({
         uid: cloud.user.id, kind: props.kind, estimateId: props.estimateId, changeId: madeId || props.changeId, title: props.title,
         company, clientName: props.clientName, total: props.total, html: props.html(),
+        phone: profile?.phone, email: profile?.email, payLink: profile?.payLink,
       });
       const what = props.kind === 'quote' ? 'quote' : 'change order';
       await Share.share({ message: `${company}: here is your ${what} for ${props.title}. Please review and sign here: ${link}` });

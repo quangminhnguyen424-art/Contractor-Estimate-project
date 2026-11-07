@@ -195,6 +195,12 @@ export interface Profile {
   work?: WorkProfile;
   /** State-required notices added to every quote (Washington disclosure, three-day right to cancel). */
   notices?: import('./legal').Notices;
+  /** Company logo as a small image (data URL), printed on quotes, contracts and invoices. */
+  logo?: string;
+  /** Where clients pay online (the contractor's own Stripe, Square or PayPal link). */
+  payLink?: string;
+  /** Other ways to pay, printed on documents (e.g. "Zelle: 253-555-0100, checks to Smith Remodeling LLC"). */
+  payNote?: string;
   /** The contractor agreed to get setup tips and product news from Bidwell by text or email (optional), and when. */
   tipsOk?: boolean;
   tipsAt?: string;
@@ -317,4 +323,6 @@ export interface Estimate {
   checks: Check[];
   comparison: PriceComparison;
   quoteEdits?: QuoteEdits;
+  /** "Request changes" messages the client sent from a signing link, newest last. */
+  clientNotes?: { at: string; name: string; text: string }[];
 }
