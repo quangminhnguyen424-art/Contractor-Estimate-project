@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { View } from 'react-native';
 
 import { useCloud } from '@/cloud/CloudProvider';
-import { Banner, Button, C, Card, H2, Muted, Screen } from '@/ui/kit';
-import { confirmAction } from '@/ui/notify';
+import { Banner, Button, C, Card, Field, H2, Muted, Screen } from '@/ui/kit';
+import { PASSWORD_RULES } from '@/ui/LoginScreen';
+import { confirmAction, notify } from '@/ui/notify';
 import { Text } from '@/ui/text';
 
 /** Bidwell cloud: sign in so data and photos are backed up, the AI works without a key, and clients can sign online. */
@@ -33,8 +35,9 @@ export default function AccountScreen() {
             }} />
           {msg ? <Banner tone={msg.tone} title={msg.text} /> : null}
         </Card>
+        <ChangePassword />
         <Card>
-          <H2>What the cloud does</H2>
+          <H2>What your account does</H2>
           <Muted>• Your estimates, jobs, money and calendar are saved to your private account and come back on a new phone.</Muted>
           <Muted>• Job photos and receipts are backed up privately. Only you can open them.</Muted>
           <Muted>• Bidwell’s AI works without your own API key.</Muted>
@@ -64,5 +67,43 @@ export default function AccountScreen() {
         <Button title="Log in" icon="log-in-outline" onPress={() => router.push('/login')} />
       </Card>
     </Screen>
+  );
+}
+
+/** Change password, like any app: current password, a new one that meets the rules, typed twice. */
+function ChangePassword() {
+  const cloud = useCloud();
+  const [open, setOpen] = useState(false);
+  const [cur, setCur] = useState('');
+  const [next, setNext] = useState('');
+  const [again, setAgain] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ tone: 'warn' | 'ok'; text: string } | null>(null);
+  const strong = PASSWORD_RULES.every((r) => r.ok(next));
+  if (!open) return <Button kind="secondary" title="Change password" icon="key-outline" onPress={() => { setOpen(true); setMsg(null); }} />;
+  const save = async () => {
+    if (!strong) { setMsg({ tone: 'warn', text: `New password needs: ${PASSWORD_RULES.filter((r) => !r.ok(next)).map((r) => r.label.toLowerCase()).join(', ')}.` }); return; }
+    if (next !== again) { setMsg({ tone: 'warn', text: 'The two new passwords don’t match.' }); return; }
+    setBusy(true);
+    const err = await cloud.changePassword(cur, next);
+    setBusy(false);
+    if (err) { setMsg({ tone: 'warn', text: err }); return; }
+    setCur(''); setNext(''); setAgain(''); setOpen(false);
+    setMsg(null);
+    notify('Password changed', 'Use your new password the next time you log in.');
+  };
+  return (
+    <Card>
+      <H2>Change password</H2>
+      <Field label="Current password" value={cur} onChangeText={setCur} secureTextEntry autoCapitalize="none" autoComplete="current-password" textContentType="password" />
+      <Field label="New password" value={next} onChangeText={setNext} secureTextEntry autoCapitalize="none" autoComplete="new-password" textContentType="newPassword"
+        help="At least 8 characters with an uppercase letter, a lowercase letter and a number." />
+      <Field label="New password again" value={again} onChangeText={setAgain} secureTextEntry autoCapitalize="none" autoComplete="new-password" textContentType="newPassword" />
+      {msg ? <Banner tone={msg.tone} title={msg.text} /> : null}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Button kind="secondary" title="Cancel" onPress={() => setOpen(false)} style={{ flex: 1 }} />
+        <Button title={busy ? 'Saving…' : 'Save'} disabled={busy || !cur || !next} onPress={save} style={{ flex: 1 }} />
+      </View>
+    </Card>
   );
 }

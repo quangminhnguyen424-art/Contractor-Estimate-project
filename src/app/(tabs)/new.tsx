@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Platform, Pressable, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 
 import { Text } from '@/ui/text';
 import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
@@ -17,9 +17,10 @@ import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { contactsAvailable, pickClient } from '@/ui/contacts';
 import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
-import { HudPanel, Readout } from '@/ui/hud';
 import { JobTypeChips } from '@/ui/JobTypes';
-import { Banner, Button, C, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
+import { Banner, C, Chip, Field, Label, Muted, Screen } from '@/ui/kit';
+import { Composer } from '@/ui/Composer';
+import { QuickPrice } from '@/ui/QuickPrice';
 import { notify } from '@/ui/notify';
 import { aiFor, inClaudeApp } from '@/ui/host';
 import { toAiImages } from '@/ui/photos';
@@ -37,7 +38,7 @@ export default function NewEstimate() {
     setLastParam(params.type);
     if (params.type && isJobTypeId(params.type)) setJobTypeId(params.type);
   }
-  const [mode, setMode] = useState<EstimateMode>('detailed');
+  const mode: EstimateMode = 'detailed';
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
   const [address, setAddress] = useState('');
@@ -45,6 +46,7 @@ export default function NewEstimate() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<WorkJob | null>(null);
+  const [kind, setKind] = useState<'describe' | 'quick'>('describe');
 
   const mine = profile?.specialties ?? [];
   // After an indoor 3D scan, only indoor work is offered (outdoor work can be shown on purpose).
@@ -143,43 +145,78 @@ export default function NewEstimate() {
     setPendingPlan(null);
   };
 
+  const pickContact = async () => {
+    try {
+      const c = await pickClient();
+      if (!c) return;
+      if (c.name) setClientName(c.name);
+      if (c.address && !address.trim()) setAddress(c.address);
+    } catch {
+      notify('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.');
+    }
+  };
+  const send = () => {
+    if (!effectiveType) { notify('Pick the type of work', 'Tap one of the job types above, or describe the job so Bidwell can pick it.'); return; }
+    next();
+  };
+
+  if (kind === 'quick') {
+    return (
+      <Screen>
+        <KindSwitch kind={kind} onChange={setKind} />
+        <QuickPrice initialType={effectiveType} />
+      </Screen>
+    );
+  }
+
   return (
-    <Screen footer={<Button title={busy ? (claudeOn ? 'Bidwell is reading your notes and photos…' : 'Reading your notes…') : 'Continue'} disabled={!effectiveType || busy} onPress={next} />}>
+    <Screen footer={
+      <View style={{ gap: 8 }}>
+        {photos.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+            {photos.map((uri) => (
+              <Pressable key={uri} accessibilityLabel="Remove photo" onPress={() => setPhotos((p) => p.filter((x) => x !== uri))}>
+                <Image source={{ uri }} style={{ width: 52, height: 52, borderRadius: 10 }} />
+                <View style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(11,19,36,0.7)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="close" size={12} color="#FFFFFF" />
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+        <Composer value={description} onChange={setDescription} onSend={send} sending={busy} sendLabel="Continue"
+          placeholder={effectiveType ? `Describe the ${jobType(effectiveType).name.toLowerCase()}…` : 'Describe the job, or talk…'}
+          actions={[
+            { icon: 'camera', label: 'Take photos', sub: 'Bidwell looks for sizes, conditions and code issues', onPress: () => addPhotos(true) },
+            { icon: 'images', label: 'Choose photos', onPress: () => addPhotos(false) },
+            { icon: 'scan', label: 'Scan rooms in 3D', sub: 'Measures walls, doors and windows', onPress: () => router.push('/scan') },
+            ...(contactsAvailable ? [{ icon: 'person-add' as const, label: 'Client from Contacts', onPress: pickContact }] : []),
+          ]} />
+      </View>
+    }>
       <AiWorking job={working} />
+      <KindSwitch kind={kind} onChange={setKind} />
       {pendingPlan?.length ? (
         <Banner tone="ok" title={`Floor plan ready: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${planTotals(pendingPlan).floorSf} SF`}>
           It’s added to this estimate and fills in the areas. <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => setPendingPlan(null)}>Remove</Text>
         </Banner>
-      ) : (
-        <Pressable accessibilityRole="button" onPress={() => router.push('/scan')}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accent, opacity: pressed ? 0.8 : 1 })}>
-          <Ionicons name="scan-outline" size={26} color={C.accent} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.ink, fontWeight: '700' }}>Bigger job? Scan the rooms in 3D</Text>
-            <Text style={{ color: C.muted, fontSize: 13 }}>Measures walls, doors and windows and draws the floor plan.</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={C.accent} />
-        </Pressable>
-      )}
-      <Label>Project type</Label>
+      ) : null}
+      <Label>Type of work</Label>
       {suggestions.length ? (
-        <HudPanel>
-          <Readout color={C.accentDark}>Bidwell suggests · indoor work from your scan</Readout>
-          {suggestions.map((s) => (
-            <Pressable key={s.jobTypeId} accessibilityRole="button" onPress={() => setJobTypeId(s.jobTypeId)}
+        <View style={{ backgroundColor: C.infoBg, borderRadius: 16, padding: 12, gap: 6 }}>
+          <Text style={{ color: C.accentDark, fontWeight: '700' }}>Suggested from your scan</Text>
+          {suggestions.map((sg) => (
+            <Pressable key={sg.jobTypeId} accessibilityRole="button" onPress={() => setJobTypeId(sg.jobTypeId)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 }}>
-              <Ionicons name={effectiveType === s.jobTypeId ? 'radio-button-on' : 'radio-button-off'} size={20} color={C.accent} />
+              <Ionicons name={effectiveType === sg.jobTypeId ? 'radio-button-on' : 'radio-button-off'} size={20} color={C.accent} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{jobType(s.jobTypeId).name}</Text>
-                <Text style={{ color: C.muted, fontSize: 13 }}>{s.why}</Text>
+                <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{jobType(sg.jobTypeId).name}</Text>
+                <Text style={{ color: C.muted, fontSize: 13 }}>{sg.why}</Text>
               </View>
             </Pressable>
           ))}
-          <Text style={{ color: C.muted, fontSize: 13 }}>
-            Outdoor work (roof, siding, decks, fences, concrete, yard) is hidden for an indoor scan.{' '}
-            <Text style={{ color: C.accent, fontWeight: '700' }} onPress={() => setAllowOutdoor(!allowOutdoor)}>{allowOutdoor ? 'Hide it again' : 'Show it anyway'}</Text>
-          </Text>
-        </HudPanel>
+          <Text style={{ color: C.accent, fontWeight: '600', fontSize: 13 }} onPress={() => setAllowOutdoor(!allowOutdoor)}>{allowOutdoor ? 'Hide outdoor work' : 'Show outdoor work too'}</Text>
+        </View>
       ) : null}
       <JobTypeChips selected={effectiveType ? [effectiveType] : []} onToggle={(id) => setJobTypeId(id)}
         only={(showAll ? JOB_TYPES.map((j) => j.id) : [...mine, ...(effectiveType && !mine.includes(effectiveType) ? [effectiveType] : [])])
@@ -187,89 +224,43 @@ export default function NewEstimate() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Chip label={showAll ? 'Show mine only' : 'All types of work…'} onPress={() => setShowAll(!showAll)} />
         <Chip label="Small job / repairs" selected={effectiveType === 'small'} onPress={() => setJobTypeId('small')} />
-        <Chip label="+ Add your own" onPress={() => router.push('/pricing')} />
       </View>
       {guessed && !jobTypeId ? <Muted style={{ fontSize: 13 }}>Picked {jobType(guessed).name} from your description. Tap another to change.</Muted> : null}
 
-      <H2 style={{ marginTop: 6 }}>Describe the job</H2>
-      <Field
-        label="Job notes (private)"
-        multiline
-        value={description}
-        onChangeText={setDescription}
-        placeholder="e.g. Basement, 3 rooms to 4 bedrooms, 45 ft of new walls, 2 new showers, washer, range and dryer, 100 sf tile…"
-        help={`${Platform.OS === 'web' ? '' : 'Tap the microphone on your keyboard to talk. '}Sizes and counts get filled in for you. These notes stay private and never go on the quote.`}
-      />
+      <Field label="Client name" value={clientName} onChangeText={setClientName} placeholder="Optional" />
+      <Field label="Job address" value={address} onChangeText={setAddress} placeholder="Optional" />
 
-      <Label>Photos</Label>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <PhotoButton icon="camera-outline" label="Take photo" onPress={() => addPhotos(true)} />
-        <PhotoButton icon="images-outline" label="From library" onPress={() => addPhotos(false)} />
+      <View style={{ backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 14, gap: 6 }}>
+        <Text style={{ color: C.ink, fontWeight: '700' }}>How it works</Text>
+        <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>
+          Type or tap the microphone and describe the job like you would to a helper: rooms, sizes, what’s changing. Tap + to add photos or scan the rooms. Then tap the arrow: Bidwell fills in the quantities with your prices.
+        </Text>
+        <Text style={{ color: C.muted, fontSize: 12 }}>Your notes stay private and never go on the client’s quote.</Text>
       </View>
-      {photos.length > 0 ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {photos.map((uri) => (
-            <Pressable key={uri} accessibilityLabel="Remove photo" onLongPress={() => setPhotos((p) => p.filter((x) => x !== uri))}>
-              <Image source={{ uri }} style={{ width: 72, height: 72, borderRadius: 8 }} />
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-      <Muted style={{ fontSize: 13 }}>
-        {claudeOn
-          ? 'Bidwell looks at up to 8 photos for conditions, code issues and quantities.'
-          : 'Photos are saved with the job. Add your Claude key in Settings to have them analyzed.'}
-      </Muted>
-
-      <H2 style={{ marginTop: 6 }}>Client</H2>
-      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
-        <Field label="Client name" value={clientName} onChangeText={setClientName} style={{ flex: 1 }} />
-        {contactsAvailable ? (
-          <Button kind="secondary" title="Contacts" icon="person-add-outline" style={{ height: 50 }}
-            onPress={async () => {
-              try {
-                const c = await pickClient();
-                if (!c) return;
-                if (c.name) setClientName(c.name);
-                if (c.address && !address.trim()) setAddress(c.address);
-              } catch {
-                notify('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.');
-              }
-            }} />
-        ) : null}
-      </View>
-      <Field label="Job address" value={address} onChangeText={setAddress} />
-      <Field label="Estimate name (optional)" value={title} onChangeText={setTitle} placeholder="Defaults to client + job type" />
-
-      <Label>Estimate detail</Label>
-      <Segmented<EstimateMode>
-        value={effectiveMode}
-        onChange={setMode}
-        options={[
-          { value: 'quick', label: `Quick (${effectiveType ? perUnit(jobType(effectiveType).unit).trim() : '$/SF'})`, disabled: !quickAllowed },
-          { value: 'detailed', label: 'Detailed', disabled: !detailedAllowed },
-        ]}
-      />
-      {!detailedAllowed ? (
-        <Banner tone="info" title="Priced from your rates">This type of work uses your price per unit and your own questions. Detailed takeoffs for it are coming in a later version.</Banner>
-      ) : (
-        <Muted style={{ fontSize: 13 }}>
-          {effectiveMode === 'quick' ? 'Quantity × your price, plus your own priced questions. Fast price for a first call.' : 'Trade-by-trade price, material list and code checks.'}
-        </Muted>
-      )}
     </Screen>
   );
 }
 
-function PhotoButton({ icon, label, onPress }: { icon: 'camera-outline' | 'images-outline'; label: string; onPress: () => void }) {
+/** Two ways to price: describe the job (AI, photos, scan) or a quick price per unit for repeat work. */
+function KindSwitch({ kind, onChange }: { kind: 'describe' | 'quick'; onChange: (k: 'describe' | 'quick') => void }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({ flex: 1, height: 72, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card,
-        alignItems: 'center', justifyContent: 'center', gap: 4, opacity: pressed ? 0.7 : 1 })}>
-      <Ionicons name={icon} size={24} color={C.ink} />
-      <Text style={{ fontSize: 14, color: C.ink }}>{label}</Text>
+    <View style={{ flexDirection: 'row', gap: 10 }}>
+      <KindItem k="describe" kind={kind} onChange={onChange} icon="sparkles" title="Describe the job" sub="Talk, photos or scan. Bidwell builds it." />
+      <KindItem k="quick" kind={kind} onChange={onChange} icon="flash" title="Quick price" sub="Size × your price. Repeat jobs in 30 s." />
+    </View>
+  );
+}
+
+function KindItem({ k, kind, onChange, icon, title, sub }: {
+  k: 'describe' | 'quick'; kind: 'describe' | 'quick'; onChange: (k: 'describe' | 'quick') => void; icon: 'sparkles' | 'flash'; title: string; sub: string;
+}) {
+  const on = kind === k;
+  return (
+    <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
+      style={{ flex: 1, borderRadius: 18, padding: 12, gap: 4, borderWidth: on ? 2 : 1, borderColor: on ? C.accent : C.line, backgroundColor: on ? C.accentTint : C.card }}>
+      <Ionicons name={icon} size={20} color={on ? C.accent : C.ink2} />
+      <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{title}</Text>
+      <Text style={{ color: C.muted, fontSize: 12 }}>{sub}</Text>
     </Pressable>
   );
 }

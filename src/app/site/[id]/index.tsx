@@ -6,7 +6,7 @@ import { Pressable, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
 import { buyTotals, emptyMoney, projectBooks } from '@/engine/books';
-import { newId } from '@/engine/format';
+import { money as moneyFmt, newId } from '@/engine/format';
 import { dayLabel, upcoming } from '@/engine/schedule';
 import { AREA_PRESETS, beforeAfterPairs, emptyRoom, localDay, projectProgress, roomProgress, type PhotoKind, type SitePhoto } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
@@ -32,7 +32,7 @@ export default function ProjectScreen() {
     return (
       <Screen>
         <Muted>This project was deleted.</Muted>
-        <Button title="Back to job sites" onPress={() => router.replace('/sites')} />
+        <Button title="Back to jobs" onPress={() => router.replace('/jobs')} />
       </Screen>
     );
   }
@@ -69,7 +69,7 @@ export default function ProjectScreen() {
     confirmAction('Delete this project?', 'All its photos, tasks and logs are deleted from this phone. The estimate stays.', 'Delete', () => {
       deletePhotosLater([...p.rooms.flatMap((r) => r.photos.map((ph) => ph.uri)), ...(p.money?.costs.flatMap((c) => (c.receiptUri ? [c.receiptUri] : [])) ?? [])]);
       deleteProject(p.id);
-      router.replace('/sites');
+      router.replace('/jobs');
     });
 
   const cover = p.rooms.flatMap((r) => r.photos).sort((x, y) => y.takenAt.localeCompare(x.takenAt))[0];
@@ -107,7 +107,8 @@ export default function ProjectScreen() {
       {/* Three numbers that matter, one tap each. */}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Summary icon="checkmark-circle" color={C.accent} title="To-dos" sub={pr.total ? `${openTasks} left` : 'None yet'} onPress={() => (p.rooms[0] ? go(`room/${p.rooms[0].id}`) : setAdding(true))} />
-        <Summary icon="document-text" color="#9333EA" title="Paperwork" sub={est ? 'Contract' : 'No estimate'} onPress={() => (est ? router.push(`/estimate/${est.id}/contract`) : undefined)} />
+        <Summary icon="document-text" color="#9333EA" title="Quote" sub={est ? `${moneyFmt(est.total)} · ${est.status === 'won' ? 'Won' : est.status === 'sent' ? 'Sent' : est.status === 'lost' ? 'Lost' : 'Draft'}` : 'Add an estimate'}
+          onPress={() => router.push(est ? `/estimate/${est.id}` : '/new')} />
         <Summary icon="cash" color={C.okInk} title="Money" sub={money && p.money?.costs.length ? `${money.profit.marginPct}% profit` : 'Track costs'} onPress={() => go('money')} />
       </View>
 
@@ -184,6 +185,7 @@ export default function ProjectScreen() {
 
       <Section title="More" />
       <List>
+        {est ? <ListRow icon="wallet" title="Contract & payments" sub="Signature, change orders, invoices" onPress={() => router.push(`/estimate/${est.id}/contract`)} /> : null}
         <ListRow icon="cart" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'Materials from the estimate'} onPress={() => go('buy')} />
         <ListRow icon="calendar" title="Schedule a visit" sub={nextVisit ? `Next: ${dayLabel(nextVisit.date, today)}` : 'Crew day, inspection, walkthrough'} onPress={() => router.push(`/event?project=${p.id}`)} />
         <ListRow icon="people" title="Crew work order" sub="English, Tiếng Việt, Español · no prices" onPress={() => go('share?mode=crew')} />

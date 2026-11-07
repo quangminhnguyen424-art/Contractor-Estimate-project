@@ -125,13 +125,13 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
         <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
           <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => router.push('/jobs')} />
           <Glance label="Quotes out" value={String(waiting)} onPress={() => router.push('/jobs')} divider />
-          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => router.push('/sites')} divider />
+          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => router.push('/jobs')} divider />
         </View>
       </Reveal>
 
       {photos.length ? (
         <Reveal index={4} style={{ gap: 8 }}>
-          <Section title="Recent photos" link="Job sites" onLink={() => router.push('/sites')} />
+          <Section title="Recent photos" link="All jobs" onLink={() => router.push('/jobs')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>
@@ -188,7 +188,7 @@ function ConnectClaude() {
         <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
           <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>AI is turned off</Text>
           <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>You chose not to send job notes and photos to the AI. Turn it on in Settings to get estimates drafted for you.</Text>
-          <Button kind="secondary" title="Open Settings" icon="settings-outline" onPress={() => router.push('/settings')} />
+          <Button kind="secondary" title="Open Settings" icon="settings-outline" onPress={() => router.push('/me')} />
         </Card>
       </Reveal>
     );
@@ -204,7 +204,7 @@ function ConnectClaude() {
           One minute, just an email and password. It turns on the AI (no key needed), backs up your jobs and photos, and lets clients sign quotes from a link.
         </Text>
         {cloud.configured ? <Button title="Log in or create account" icon="person-add-outline" onPress={() => router.push('/login')} /> : null}
-        <Button kind="secondary" title="I have my own Claude API key" icon="key-outline" onPress={() => router.push('/settings')} />
+        <Button kind="secondary" title="I have my own Claude API key" icon="key-outline" onPress={() => router.push('/me')} />
       </Card>
     </Reveal>
   );

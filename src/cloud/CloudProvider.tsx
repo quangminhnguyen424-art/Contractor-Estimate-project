@@ -30,6 +30,8 @@ interface CloudCtx {
   retryFirstSync: () => void;
   skipFirstSync: () => void;
   resetPassword: (email: string) => Promise<string | null>;
+  /** Checks the current password, then sets a new one. Returns a message on failure. */
+  changePassword: (current: string, next: string) => Promise<string | null>;
   /** Saves to the cloud, signs out and clears this phone. Returns a message if the data could not be saved first. */
   signOut: (force?: boolean) => Promise<string | null>;
   deleteAccount: () => Promise<string | null>;
@@ -166,6 +168,13 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     resetPassword: async (email) => {
       const { error: e } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: CLOUD.resetPage });
       return e ? (/rate|seconds/i.test(e.message) ? 'Too many tries. Wait a minute and try again.' : e.message) : null;
+    },
+    changePassword: async (current, next) => {
+      if (!user?.email) return 'Log in first.';
+      const { error: wrong } = await supabase.auth.signInWithPassword({ email: user.email, password: current });
+      if (wrong) return 'Your current password is not right.';
+      const { error: e } = await supabase.auth.updateUser({ password: next });
+      return e ? (/different/i.test(e.message) ? 'Choose a password different from your current one.' : e.message) : null;
     },
     signOut: async (force) => {
       if (user && !force) {

@@ -32,9 +32,9 @@ function PlusButton() {
 
 const TABS: Record<string, { label: string; icon: IconName; active: IconName }> = {
   index: { label: 'Home', icon: 'home-outline', active: 'home' },
-  jobs: { label: 'Estimates', icon: 'document-text-outline', active: 'document-text' },
-  sites: { label: 'Job sites', icon: 'construct-outline', active: 'construct' },
+  jobs: { label: 'Jobs', icon: 'briefcase-outline', active: 'briefcase' },
   schedule: { label: 'Schedule', icon: 'calendar-outline', active: 'calendar' },
+  me: { label: 'Me', icon: 'person-circle-outline', active: 'person-circle' },
 };
 
 /** Floating tab bar like Facebook's: a rounded bar lifted off the bottom edge, the open tab in a soft blue pill, the orange + in the middle. */
@@ -80,20 +80,18 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: C.bg },
         headerRight: () => (
           <View style={{ flexDirection: 'row' }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Help and support" onPress={() => router.push('/help')} hitSlop={10} style={{ paddingHorizontal: 10 }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Help and support" onPress={() => router.push('/help')} hitSlop={10} style={{ paddingHorizontal: 16 }}>
             <Ionicons name="help-circle-outline" size={24} color={C.ink} />
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={10} style={{ paddingLeft: 6, paddingRight: 16 }}>
-            <Ionicons name="settings-outline" size={22} color={C.ink} />
           </Pressable>
           </View>
         ),
       }}>
       <Tabs.Screen name="index" options={{ title: 'Bidwell AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
-      <Tabs.Screen name="jobs" options={{ title: 'Estimates', tabBarLabel: 'Estimates', tabBarIcon: icon('document-text-outline', 'document-text') }} />
+      <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarLabel: 'Jobs', tabBarIcon: icon('briefcase-outline', 'briefcase') }} />
       <Tabs.Screen name="new" options={{ title: 'New estimate', tabBarLabel: '', tabBarButton: () => <PlusButton /> }} />
-      <Tabs.Screen name="sites" options={{ title: 'Job sites', tabBarLabel: 'Job Site', tabBarIcon: icon('construct-outline', 'construct') }} />
+      <Tabs.Screen name="sites" options={{ title: 'Job sites', href: null }} />
       <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: icon('calendar-outline', 'calendar') }} />
+      <Tabs.Screen name="me" options={{ title: 'Me', headerRight: () => null }} />
       <Tabs.Screen name="pricing" options={{ title: 'My pricing', href: null }} />
     </Tabs>
   );
