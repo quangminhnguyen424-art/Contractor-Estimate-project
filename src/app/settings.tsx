@@ -138,6 +138,7 @@ export default function Settings() {
         <ListRow icon="pricetags" title="My pricing" sub="Your rates and price book" onPress={() => router.push('/pricing')} />
         <ListRow icon="people" title="Crew & subs" sub="Who works your jobs and their rates" onPress={() => router.push('/team')} />
         <ListRow icon="git-network" title="Connected apps" sub="QuickBooks, Sheets, Calendar, Zapier" onPress={() => router.push('/connections')} />
+        <ListRow icon="chatbubbles" title="Help & support" sub="Chat with Bidwell AI, report a problem" onPress={() => router.push('/help')} />
         <ListRow icon="shield-checkmark" title="Terms, privacy and AI" onPress={() => router.push('/terms')} />
       </List>
       <Text style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>Tap a section to open it.</Text>

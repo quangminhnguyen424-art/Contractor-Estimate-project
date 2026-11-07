@@ -140,6 +140,8 @@ function RootStack() {
         <Stack.Screen name="estimate/[id]/follow" options={{ title: 'Follow-ups' }} />
         <Stack.Screen name="team" options={{ title: 'Crew & subs' }} />
         <Stack.Screen name="account" options={{ title: "Account" }} />
+        <Stack.Screen name="help" options={{ title: "Help & support" }} />
+        <Stack.Screen name="report" options={{ title: "Report a problem" }} />
       </Stack.Protected>
       {/* After logging in: on first launch (and after the Terms change) it is the only screen; later it opens from Settings. */}
       <Stack.Protected guard={in_}>

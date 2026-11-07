@@ -79,9 +79,14 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontWeight: '600', fontSize: 12 },
         sceneStyle: { backgroundColor: C.bg },
         headerRight: () => (
-          <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={10} style={{ paddingHorizontal: 16 }}>
+          <View style={{ flexDirection: 'row' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Help and support" onPress={() => router.push('/help')} hitSlop={10} style={{ paddingHorizontal: 10 }}>
+            <Ionicons name="help-circle-outline" size={24} color={C.ink} />
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={10} style={{ paddingLeft: 6, paddingRight: 16 }}>
             <Ionicons name="settings-outline" size={22} color={C.ink} />
           </Pressable>
+          </View>
         ),
       }}>
       <Tabs.Screen name="index" options={{ title: 'Bidwell AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
