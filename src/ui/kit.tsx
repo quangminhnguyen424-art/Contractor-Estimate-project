@@ -1,7 +1,8 @@
 import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { HeaderHeightContext } from 'expo-router/react-navigation';
 import {
-  Modal, Pressable, ScrollView, StyleSheet, View,
+  KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View,
   type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +50,19 @@ export const P = { paper: '#FFFFFF', ink: '#1B1E22', ink2: '#3F444A', muted: '#5
 
 export const mono = NUM;
 
+/**
+ * Keeps whatever is at the bottom (a chat box, a footer button) above the keyboard. The offset is the height of
+ * the screen's header, so the box lands right on top of the keyboard instead of hiding behind it.
+ */
+export function KeyboardSafe({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const header = React.useContext(HeaderHeightContext) ?? 0;
+  return (
+    <KeyboardAvoidingView style={[{ flex: 1 }, style]} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={header}>
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
 export function Screen({ children, scroll = true, padded = true, footer, scrollEnabled = true }: {
   children: React.ReactNode; scroll?: boolean; padded?: boolean; footer?: React.ReactNode; scrollEnabled?: boolean;
 }) {
@@ -56,9 +70,10 @@ export function Screen({ children, scroll = true, padded = true, footer, scrollE
   // On a computer screen, keep content at a comfortable reading width.
   const pad = padded ? { padding: 16, gap: 14, width: '100%' as const, maxWidth: 760, alignSelf: 'center' as const } : null;
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
+    <KeyboardSafe style={{ backgroundColor: C.bg }}>
       {scroll ? (
-        <ScrollView contentContainerStyle={[pad, { paddingBottom: 32 }]} keyboardShouldPersistTaps="handled" scrollEnabled={scrollEnabled}>
+        <ScrollView contentContainerStyle={[pad, { paddingBottom: 32 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
+          scrollEnabled={scrollEnabled}>
           {children}
         </ScrollView>
       ) : (
@@ -69,7 +84,7 @@ export function Screen({ children, scroll = true, padded = true, footer, scrollE
           <View style={{ width: '100%', maxWidth: 728, alignSelf: 'center', gap: 10 }}>{footer}</View>
         </View>
       ) : null}
-    </View>
+    </KeyboardSafe>
   );
 }
 

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View, type ScrollViewInstance } from 'react-native';
+import { Pressable, ScrollView, View, type ScrollViewInstance } from 'react-native';
 
 import { Text, TextInput } from '@/ui/text';
 import { assistantSystem, parseAssistantReply } from '@/engine/assistant';
@@ -11,7 +11,7 @@ import { useApp } from '@/store/AppContext';
 import { useChat, type ChatMessage } from '@/store/chat';
 import { aiFor, inClaudeApp } from '@/ui/host';
 import { Dashboard } from '@/ui/Dashboard';
-import { C } from '@/ui/kit';
+import { C, KeyboardSafe } from '@/ui/kit';
 import { TypingDots, Wave } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { startEstimateFromChat } from '@/ui/startEstimate';
@@ -100,7 +100,7 @@ export default function Assistant() {
 
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <KeyboardSafe style={{ backgroundColor: C.bg }}>
       {messages.length ? (
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, paddingHorizontal: 12, paddingTop: 4 }}>
         <Pressable accessibilityRole="switch" accessibilityState={{ checked: settings.speak }} accessibilityLabel="Read answers aloud"
@@ -181,6 +181,6 @@ export default function Assistant() {
           </Pressable>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardSafe>
   );
 }

@@ -2,13 +2,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Linking, Pressable, ScrollView, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ChatTurn } from '@/engine/ai';
 import { HELP_TOPICS, helpSystem, parseHelpReply, searchHelp, type HelpTopic } from '@/engine/help';
 import { SUPPORT_EMAIL } from '@/engine/legal';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
-import { C, List, ListRow, Section } from '@/ui/kit';
+import { C, KeyboardSafe, List, ListRow, Section } from '@/ui/kit';
 import { Text } from '@/ui/text';
 
 const HELP_CENTER = 'https://quangminhnguyen424-art.github.io/Contractor-Estimate-project/help.html';
@@ -23,6 +24,8 @@ export default function HelpScreen() {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const scroll = useRef<ScrollViewInstance>(null);
+  const insets = useSafeAreaInsets();
+  const [typing, setTyping] = useState(false);
 
   const ask = async (q: string) => {
     const question = q.trim();
@@ -53,8 +56,8 @@ export default function HelpScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 24, width: '100%', maxWidth: 640, alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
+    <KeyboardSafe style={{ backgroundColor: C.bg }}>
+      <ScrollView ref={scroll} keyboardDismissMode="interactive" onContentSizeChange={() => { if (msgs.length) scroll.current?.scrollToEnd({ animated: true }); }} contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 24, width: '100%', maxWidth: 640, alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
@@ -113,16 +116,16 @@ export default function HelpScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'flex-end' }}>
+      <View style={{ flexDirection: 'row', gap: 8, padding: 12, paddingBottom: typing ? 12 : 12 + insets.bottom, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'flex-end' }}>
         <TextInput value={text} onChangeText={setText} placeholder="Ask a question…" placeholderTextColor={C.muted} multiline maxLength={1000}
-          accessibilityLabel="Ask a question"
+          accessibilityLabel="Ask a question" onFocus={() => setTyping(true)} onBlur={() => setTyping(false)}
           style={{ flex: 1, minHeight: 44, maxHeight: 120, borderRadius: 22, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 16, color: C.ink, backgroundColor: C.bg }} />
         <Pressable accessibilityRole="button" accessibilityLabel="Send" onPress={() => ask(text)} disabled={busy || !text.trim()}
           style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: text.trim() && !busy ? C.accent : C.cardHi, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="arrow-up" size={22} color={text.trim() && !busy ? '#FFFFFF' : C.muted} />
         </Pressable>
       </View>
-    </View>
+    </KeyboardSafe>
   );
 }
 
