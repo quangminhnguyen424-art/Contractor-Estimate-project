@@ -27,7 +27,7 @@ function SaveWarning() {
     <View accessibilityRole="alert" pointerEvents="none"
       style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 14, padding: 12 }}>
       <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Could not save your latest changes</Text>
-      <Text style={{ color: '#FFFFFF', fontSize: 13 }}>Storage is full. Delete old photos or finished job sites, then try again.</Text>
+      <Text style={{ color: '#FFFFFF', fontSize: 13 }}>Storage is full. Delete old photos or finished jobs, then try again.</Text>
     </View>
   );
 }
@@ -114,8 +114,9 @@ function RootStack() {
       </Stack.Protected>
       <Stack.Protected guard={in_ && termsOk && !!profile}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="questions" options={{ title: 'A few questions' }} />
-        <Stack.Screen name="estimate/[id]/index" options={{ title: 'Estimate' }} />
+        <Stack.Screen name="questions" options={{ title: 'Check the details' }} />
+        <Stack.Screen name="job/[id]" options={{ title: 'Job' }} />
+        <Stack.Screen name="estimate/[id]/index" options={{ title: 'Price details' }} />
         <Stack.Screen name="estimate/[id]/quote" options={{ title: 'Client quote' }} />
         <Stack.Screen name="estimate/[id]/materials" options={{ title: 'Material list' }} />
         <Stack.Screen name="past-job" options={{ title: 'Past job', presentation: 'modal' }} />
@@ -123,25 +124,25 @@ function RootStack() {
         <Stack.Screen name="job-type" options={{ title: 'Type of work' }} />
         <Stack.Screen name="floor-plan" options={{ title: 'Floor plan' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-        <Stack.Screen name="site/[id]/index" options={{ title: 'Job site' }} />
-        <Stack.Screen name="site/[id]/room/[roomId]" options={{ title: 'Room' }} />
+        <Stack.Screen name="site/[id]/index" options={{ title: 'Job' }} />
+        <Stack.Screen name="pricing" options={{ title: 'My pricing' }} />
+        <Stack.Screen name="site/[id]/room/[roomId]" options={{ title: 'Area' }} />
         <Stack.Screen name="site/[id]/photo/[photoId]" options={{ title: 'Photo' }} />
         <Stack.Screen name="site/[id]/log" options={{ title: 'Daily log' }} />
         <Stack.Screen name="site/[id]/share" options={{ title: 'Share' }} />
         <Stack.Screen name="scan" options={{ title: 'Scan 3D' }} />
         <Stack.Screen name="connections" options={{ title: 'Connected apps' }} />
         <Stack.Screen name="event" options={{ title: 'Appointment', presentation: 'modal' }} />
-        <Stack.Screen name="quick" options={{ headerShown: false, presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
         <Stack.Screen name="estimate/[id]/sign" options={{ title: 'Client signature' }} />
-        <Stack.Screen name="estimate/[id]/contract" options={{ title: 'Contract & payments' }} />
+        <Stack.Screen name="estimate/[id]/contract" options={{ title: 'Contract and payments' }} />
         <Stack.Screen name="estimate/[id]/change" options={{ title: 'Change order' }} />
-        <Stack.Screen name="site/[id]/money" options={{ title: 'Job money' }} />
+        <Stack.Screen name="site/[id]/money" options={{ title: 'Costs and receipts' }} />
         <Stack.Screen name="site/[id]/buy" options={{ title: 'Buy list' }} />
         <Stack.Screen name="site/[id]/cost" options={{ title: 'Add a cost', presentation: 'modal' }} />
         <Stack.Screen name="estimate/[id]/follow" options={{ title: 'Follow-ups' }} />
-        <Stack.Screen name="team" options={{ title: 'Crew & subs' }} />
+        <Stack.Screen name="team" options={{ title: 'Crew and subs' }} />
         <Stack.Screen name="account" options={{ title: "Account" }} />
-        <Stack.Screen name="help" options={{ title: "Help & support" }} />
+        <Stack.Screen name="help" options={{ title: "Help and support" }} />
         <Stack.Screen name="report" options={{ title: "Report a problem" }} />
       </Stack.Protected>
       {/* After logging in: on first launch (and after the Terms change) it is the only screen; later it opens from Settings. */}

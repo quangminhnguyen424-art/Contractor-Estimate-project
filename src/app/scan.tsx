@@ -65,13 +65,14 @@ export default function ScanScreen() {
 
   const toEstimate = () => {
     setPendingPlan(rooms);
-    router.replace('/new');
+    // Back to the New estimate tab (the scan was opened on top of it).
+    router.dismissTo('/new');
   };
 
   const toSite = (projectId: string) => {
     updateProject(projectId, (p) => ({ ...p, rooms: [...p.rooms, ...rooms.filter((r) => !p.rooms.some((x) => x.name === r.name)).map((r) => emptyRoom(newId(), r.name))] }));
     notify('Rooms added to the job site', rooms.map((r) => r.name).join(', '));
-    router.replace(`/site/${projectId}`);
+    router.replace(`/job/${projectId}?tab=photos`);
   };
 
   return (
@@ -111,7 +112,7 @@ export default function ScanScreen() {
           <HudPanel>
             <Readout color={C.accentDark}>Bidwell suggests · indoor work only</Readout>
             {suggestFromScan(rooms).map((sg) => (
-              <Pressable key={sg.jobTypeId} accessibilityRole="button" onPress={() => { setPendingPlan(rooms); router.replace(`/new?type=${sg.jobTypeId}`); }}
+              <Pressable key={sg.jobTypeId} accessibilityRole="button" onPress={() => { setPendingPlan(rooms); router.dismissTo(`/new?type=${sg.jobTypeId}`); }}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, opacity: pressed ? 0.7 : 1 })}>
                 <Ionicons name="sparkles" size={18} color={C.accent} />
                 <View style={{ flex: 1 }}>

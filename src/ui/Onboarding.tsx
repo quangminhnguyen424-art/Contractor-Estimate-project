@@ -101,7 +101,7 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
             </Reveal>
             <H1>Your company</H1>
             <Banner tone="info" title="This information is printed on your quotes">
-              Your company name, your name, phone, email and registration number appear at the top of every quote, contract and PDF you send to clients. Use the details you want clients to see. You can change them any time in Settings.
+              Your company name, your name, phone, email and registration number appear at the top of every quote, contract and PDF you send to clients. Use the details you want clients to see. You can change them any time in the Me tab.
             </Banner>
             <Field label="Company name *" value={companyName} onChangeText={setCompanyName} placeholder="e.g. Smith Remodeling LLC" error={tried1 && !companyName.trim() ? 'Company name is required' : null} />
             <Field label="Your name" value={contactName} onChangeText={setContactName} />
@@ -137,7 +137,7 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
         {step === 3 && (
           <>
             <H1>Your typical jobs</H1>
-            <Muted>A few questions so Bidwell learns how you work. It reads your answers with every job. Skip anything; change it anytime in Settings.</Muted>
+            <Muted>A few questions so Bidwell learns how you work. It reads your answers with every job. Skip anything; change it anytime in the Me tab.</Muted>
             <WorkProfileForm value={work} onChange={setWork} />
             <Field label="Anything else Bidwell should know? (optional)" multiline value={about} onChangeText={setAbout} maxLength={2000}
               placeholder="e.g. Most of my work is basement ADU conversions for investors. I aim for 25% margin. I use LVP, not carpet." />

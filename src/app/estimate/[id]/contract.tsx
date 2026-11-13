@@ -78,7 +78,7 @@ export default function ContractScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: 'Contract & payments' }} />
+      <Stack.Screen options={{ title: 'Contract and payments' }} />
       <Reveal style={{ gap: 4 }}>
         <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{est.title}</Text>
         <Muted>{[est.clientName, est.address].filter(Boolean).join(' · ')}</Muted>

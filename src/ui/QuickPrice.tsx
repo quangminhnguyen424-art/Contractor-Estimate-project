@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { buildEstimate, presetFor } from '@/engine/estimator';
 import { money } from '@/engine/format';
 import { defaultAnswers, FINISH_LABELS, JOB_TYPES, jobType, perUnit } from '@/engine/jobTypes';
+import type { SiteProject } from '@/engine/site';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 
@@ -17,7 +18,7 @@ const UNIT_WORD: Record<string, string> = { SF: 'SF', LF: 'LF', EA: 'items', JOB
  * Quick price: no photos, no questions. Pick the work, the size, how many of the same, and your price per unit;
  * the quote is ready to send. For repeat work like three identical bathrooms.
  */
-export function QuickPrice({ initialType }: { initialType?: JobTypeId | null }) {
+export function QuickPrice({ initialType, project }: { initialType?: JobTypeId | null; project?: SiteProject }) {
   const { profile, presets, savePresets, priceBook, pastJobs, commitDraft } = useApp();
   const mine = (profile?.specialties ?? []).filter((id) => id !== 'small');
   const options = [...mine, ...JOB_TYPES.map((j) => j.id).filter((id) => id !== 'small' && !mine.includes(id))];
@@ -26,8 +27,8 @@ export function QuickPrice({ initialType }: { initialType?: JobTypeId | null }) 
   const [finish, setFinish] = useState<FinishLevel>(profile?.work?.finish ?? 'mid');
   const [size, setSize] = useState<number>(Number(defaultAnswers(type).sizeSf) || 0);
   const [count, setCount] = useState(1);
-  const [client, setClient] = useState('');
-  const [address, setAddress] = useState('');
+  const [client, setClient] = useState(project?.clientName ?? '');
+  const [address, setAddress] = useState(project?.address ?? '');
   const price = presetFor(type, finish, presets);
   const unit = UNIT_WORD[jt.unit] ?? '';
   const perJob = jt.unit === 'JOB';
@@ -47,15 +48,18 @@ export function QuickPrice({ initialType }: { initialType?: JobTypeId | null }) 
 
   const create = () => {
     const name = jt.name;
-    const many = count > 1 ? `${count} × ${name.toLowerCase()}` : name;
+    const many = count > 1 ? `${count} × ${name}` : name;
     const scope = perJob
       ? (count > 1 ? `${count} × ${name}, same scope each.` : '')
       : count > 1 ? `${count} × ${name}, ${size.toLocaleString('en-US')} ${unit} each (${qty.toLocaleString('en-US')} ${unit} total), same scope and finish.` : '';
     const id = commitDraft({
       jobTypeId: type, mode: 'quick', title: `${client.trim() ? `${client.trim()} — ` : ''}${many}`, clientName: client.trim(), address: address.trim(),
       description: '', scopeNote: scope, photos: [], finish, answers: perJob ? { ...answers, sizeSf: 1 } : answers, customItems: [], heard: [],
+      ...(project ? { projectId: project.id } : {}),
     });
-    router.push(`/estimate/${id}/quote`);
+    // Start clean next time, and open the job on top of the tabs so Back works.
+    setClient(''); setAddress(''); setCount(1);
+    router.push(`/job/${id}`);
   };
 
   return (

@@ -115,8 +115,8 @@ export default function ConnectionsScreen() {
       </Service>
 
       <Service index={6} icon="cloud-outline" color="#94A3B8" title="Google Drive · Dropbox · iCloud" sub="PDFs and backups">
-        <Muted style={{ fontSize: 13 }}>Every PDF (quotes, invoices, work orders) opens the share sheet: pick Drive, Dropbox or Files to save it there. A full backup is in Settings.</Muted>
-        <Button kind="ghost" title="Back up all data" onPress={() => router.push('/me')} />
+        <Muted style={{ fontSize: 13 }}>Every PDF (quotes, invoices, work orders) opens the share sheet: pick Drive, Dropbox or Files to save it there. A full backup is under Me → Backup.</Muted>
+        <Button kind="ghost" title="Back up all data" onPress={() => router.push('/settings?s=backup')} />
       </Service>
     </Screen>
   );

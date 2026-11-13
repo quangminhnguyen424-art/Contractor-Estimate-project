@@ -59,11 +59,21 @@ npx eslint src
 
 | Folder | What's in it |
 |---|---|
-| `src/engine/` | Pure TypeScript estimating engine: catalog (materials, assemblies), job types and questions, estimator, checks, demo AI, quote/PDF HTML. No React — reusable on a server. |
-| `src/app/` | Screens (expo-router) |
+| `src/engine/` | Pure TypeScript, no React: catalog, job types and questions, estimator, checks, quote/contract HTML, and `job.ts` (what stage a job is at and its next step). Tested with vitest. |
+| `src/app/` | Screens (expo-router). One file per screen. |
 | `src/store/` | App state and on-phone storage |
-| `src/ui/` | Shared UI components |
-| `server/` | Optional Claude backend |
+| `src/cloud/` | Supabase: login, sync, online signing, support tickets |
+| `src/ui/` | Shared components. `kit.tsx` (buttons, fields, lists), `theme.ts` (colors), `Sheet.tsx` (the one bottom sheet), `Composer.tsx` (the one message box), `job/` (the parts of the job page). |
+| `supabase/` | Database migrations and edge functions |
+
+### How the app is organized
+
+The app follows one line: **say the job → get the price → send the quote → client signs → run the job → get paid.**
+
+- **Tabs:** Home (what needs you today + ask Bidwell), Jobs (every job, one list), **+** (new estimate), Schedule, Me (settings, one page per topic at `/settings?s=…`).
+- **One job, one page:** `/job/[id]` shows the stage (Estimate → Sent → Signed → Finished), the one next step, and three views: Overview, Job site, Money. The id is the estimate's id, or the job site's id for a photo-only job; `engine/job.ts` joins the two records.
+- **Screens under a job** do one thing each: `estimate/[id]` (private price details), `estimate/[id]/quote`, `sign`, `contract`, `change`, `follow`, `materials`, and `site/[id]/room`, `photo`, `log`, `share`, `money`, `buy`, `cost`.
+- **Going back:** screens opened from a tab are pushed on top of the tabs (`router.push`). To return to a tab from deeper in, use `router.dismissTo('/jobs')`, never `router.replace` (that would stack a second copy of the tabs).
 
 ## Publishing to the App Store / Google Play
 

@@ -17,8 +17,7 @@ import type { EstimateMode, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { contactsAvailable, pickClient } from '@/ui/contacts';
 import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
-import { JobTypeChips } from '@/ui/JobTypes';
-import { Banner, C, Chip, Field, Label, Muted, Screen } from '@/ui/kit';
+import { Banner, C, Field, Muted, Screen, Select } from '@/ui/kit';
 import { Composer } from '@/ui/Composer';
 import { QuickPrice } from '@/ui/QuickPrice';
 import { notify } from '@/ui/notify';
@@ -26,12 +25,10 @@ import { aiFor, inClaudeApp } from '@/ui/host';
 import { toAiImages } from '@/ui/photos';
 
 export default function NewEstimate() {
-  const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons } = useApp();
+  const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects } = useApp();
   const claudeOn = aiAllowed && (!!apiKey || inClaudeApp);
-  const [showAll, setShowAll] = useState(false);
-  const params = useLocalSearchParams<{ type?: string }>();
+  const params = useLocalSearchParams<{ type?: string; project?: string }>();
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(params.type && isJobTypeId(params.type) ? params.type : null);
-  const [allowOutdoor, setAllowOutdoor] = useState(false);
   // Coming from a Bidwell suggestion on the scan screen picks that type (also when this tab was already open).
   const [lastParam, setLastParam] = useState(params.type);
   if (params.type !== lastParam) {
@@ -47,10 +44,19 @@ export default function NewEstimate() {
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<WorkJob | null>(null);
   const [kind, setKind] = useState<'describe' | 'quick'>('describe');
+  // "Price this job" on a photo-only job: the estimate joins that job, starting with its client and address.
+  const [forProject, setForProject] = useState<string | null>(null);
+  const [seenProject, setSeenProject] = useState<string | undefined>(undefined);
+  if (params.project !== seenProject) {
+    setSeenProject(params.project);
+    const p = params.project ? projects.find((x) => x.id === params.project && !x.estimateId) : undefined;
+    if (p) { setForProject(p.id); setClientName(p.clientName); setAddress(p.address); setTitle(p.title); setKind('describe'); }
+  }
+  const linked = projects.find((x) => x.id === forProject && !x.estimateId);
 
   const mine = profile?.specialties ?? [];
-  // After an indoor 3D scan, only indoor work is offered (outdoor work can be shown on purpose).
-  const indoorOnly = !!pendingPlan?.length && !allowOutdoor;
+  // After an indoor 3D scan, only indoor work is offered.
+  const indoorOnly = !!pendingPlan?.length;
   const suggestions = pendingPlan?.length ? suggestFromScan(pendingPlan) : [];
   const guessedRaw = !jobTypeId && description.length > 10 ? guessJobType(description) : undefined;
   const guessed = guessedRaw && (!indoorOnly || isIndoorType(guessedRaw)) ? guessedRaw : undefined;
@@ -58,6 +64,13 @@ export default function NewEstimate() {
   const detailedAllowed = effectiveType ? jobType(effectiveType).detailed : true;
   const quickAllowed = effectiveType !== 'small';
   const effectiveMode: EstimateMode = !detailedAllowed ? 'quick' : !quickAllowed ? 'detailed' : mode;
+
+  // One drop-down: what the scan suggests first, then the contractor's own work, then everything else.
+  const order = [...suggestions.map((x) => x.jobTypeId), ...mine, ...JOB_TYPES.map((j) => j.id)].filter((id) => id !== 'small');
+  const typeOptions = [...new Set<JobTypeId>([...order, 'small'])].filter((id) => !indoorOnly || isIndoorType(id) || id === jobTypeId).map((id) => ({
+    value: id, label: jobType(id).name,
+    sub: suggestions.find((x) => x.jobTypeId === id)?.why ?? (id === 'small' ? 'Pick single items from your price book' : mine.includes(id) ? 'Your work' : undefined),
+  }));
 
   const addPhotos = async (camera: boolean) => {
     try {
@@ -138,11 +151,14 @@ export default function NewEstimate() {
       ...(pendingPlan?.length ? { plan: pendingPlan } : {}),
       aiNotes: parsed.notes ?? [],
       aiFilled: parsed.sources ?? Object.fromEntries(Object.keys(parsed.answers).map((k) => [k, 'notes' as const])),
+      ...(linked ? { projectId: linked.id } : {}),
     });
     router.push('/questions');
     // Clear the form so the next estimate starts fresh (the draft keeps everything).
     setJobTypeId(null); setTitle(''); setClientName(''); setAddress(''); setDescription(''); setPhotos([]);
     setPendingPlan(null);
+    setForProject(null);
+    router.setParams({ project: undefined });
   };
 
   const pickContact = async () => {
@@ -156,7 +172,7 @@ export default function NewEstimate() {
     }
   };
   const send = () => {
-    if (!effectiveType) { notify('Pick the type of work', 'Tap one of the job types above, or describe the job so Bidwell can pick it.'); return; }
+    if (!effectiveType) { notify('Pick the type of work', 'Choose it under “Type of work”, or describe the job so Bidwell can pick it.'); return; }
     next();
   };
 
@@ -164,7 +180,7 @@ export default function NewEstimate() {
     return (
       <Screen>
         <KindSwitch kind={kind} onChange={setKind} />
-        <QuickPrice initialType={effectiveType} />
+        <QuickPrice key={linked?.id ?? 'new'} initialType={effectiveType} project={linked} />
       </Screen>
     );
   }
@@ -184,7 +200,7 @@ export default function NewEstimate() {
             ))}
           </ScrollView>
         ) : null}
-        <Composer value={description} onChange={setDescription} onSend={send} sending={busy} sendLabel="Continue"
+        <Composer value={description} onChange={setDescription} onSend={send} sending={busy} sendLabel="Continue" inputLabel="Describe the job" allowEmpty
           placeholder={effectiveType ? `Describe the ${jobType(effectiveType).name.toLowerCase()}…` : 'Describe the job, or talk…'}
           actions={[
             { icon: 'camera', label: 'Take photos', sub: 'Bidwell looks for sizes, conditions and code issues', onPress: () => addPhotos(true) },
@@ -201,42 +217,19 @@ export default function NewEstimate() {
           It’s added to this estimate and fills in the areas. <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => setPendingPlan(null)}>Remove</Text>
         </Banner>
       ) : null}
-      <Label>Type of work</Label>
-      {suggestions.length ? (
-        <View style={{ backgroundColor: C.infoBg, borderRadius: 16, padding: 12, gap: 6 }}>
-          <Text style={{ color: C.accentDark, fontWeight: '700' }}>Suggested from your scan</Text>
-          {suggestions.map((sg) => (
-            <Pressable key={sg.jobTypeId} accessibilityRole="button" onPress={() => setJobTypeId(sg.jobTypeId)}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 }}>
-              <Ionicons name={effectiveType === sg.jobTypeId ? 'radio-button-on' : 'radio-button-off'} size={20} color={C.accent} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{jobType(sg.jobTypeId).name}</Text>
-                <Text style={{ color: C.muted, fontSize: 13 }}>{sg.why}</Text>
-              </View>
-            </Pressable>
-          ))}
-          <Text style={{ color: C.accent, fontWeight: '600', fontSize: 13 }} onPress={() => setAllowOutdoor(!allowOutdoor)}>{allowOutdoor ? 'Hide outdoor work' : 'Show outdoor work too'}</Text>
-        </View>
-      ) : null}
-      <JobTypeChips selected={effectiveType ? [effectiveType] : []} onToggle={(id) => setJobTypeId(id)}
-        only={(showAll ? JOB_TYPES.map((j) => j.id) : [...mine, ...(effectiveType && !mine.includes(effectiveType) ? [effectiveType] : [])])
-          .filter((id) => !indoorOnly || isIndoorType(id))} />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Chip label={showAll ? 'Show mine only' : 'All types of work…'} onPress={() => setShowAll(!showAll)} />
-        <Chip label="Small job / repairs" selected={effectiveType === 'small'} onPress={() => setJobTypeId('small')} />
-      </View>
-      {guessed && !jobTypeId ? <Muted style={{ fontSize: 13 }}>Picked {jobType(guessed).name} from your description. Tap another to change.</Muted> : null}
 
-      <Field label="Client name" value={clientName} onChangeText={setClientName} placeholder="Optional" />
-      <Field label="Job address" value={address} onChangeText={setAddress} placeholder="Optional" />
-
-      <View style={{ backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 14, gap: 6 }}>
-        <Text style={{ color: C.ink, fontWeight: '700' }}>How it works</Text>
-        <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>
-          Type or tap the microphone and describe the job like you would to a helper: rooms, sizes, what’s changing. Tap + to add photos or scan the rooms. Then tap the arrow: Bidwell fills in the quantities with your prices.
-        </Text>
-        <Text style={{ color: C.muted, fontSize: 12 }}>Your notes stay private and never go on the client’s quote.</Text>
+      {linked ? <Banner tone="info" title={`Pricing “${linked.title}”`}>The estimate joins this job, with the photos already taken.</Banner> : null}
+      <View style={{ gap: 4 }}>
+        <Text style={{ color: C.ink, fontSize: 22, fontWeight: '700', letterSpacing: -0.3 }}>What’s the job?</Text>
+        <Muted>Say it like you would to a helper: the rooms, the sizes, what’s changing. Tap + to add photos or scan the rooms.</Muted>
       </View>
+
+      <Select<JobTypeId> label="Type of work" value={effectiveType} onChange={setJobTypeId} placeholder="Bidwell picks it from what you say"
+        options={typeOptions}
+        help={guessed && !jobTypeId ? `Picked from your description. Tap to change.` : undefined} />
+      <Field label="Client" value={clientName} onChangeText={setClientName} placeholder="Name (optional)" />
+      <Field label="Job address" value={address} onChangeText={setAddress} placeholder="Street, city (optional)" />
+      <Muted style={{ fontSize: 12 }}>Your notes stay private. Only the quote you approve goes to the client.</Muted>
     </Screen>
   );
 }

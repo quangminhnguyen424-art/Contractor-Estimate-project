@@ -10,7 +10,7 @@ export const HELP_TOPICS = TOPICS as HelpTopic[];
 /** Screens the assistant may link to (anything else is dropped). */
 export const HELP_ROUTES: Record<string, string> = {
   '/new': 'New estimate', '/jobs': 'Jobs', '/schedule': 'Schedule', '/me': 'Me',
-  '/pricing': 'My pricing', '/price-book': 'Price Book', '/team': 'Crew & subs', '/account': 'Account', '/connections': 'Connected apps',
+  '/pricing': 'My pricing', '/price-book': 'Price Book', '/team': 'Crew and subs', '/account': 'Account', '/connections': 'Connected apps',
   '/terms': 'Terms and AI', '/scan': 'Scan rooms', '/report': 'Report a problem',
 };
 

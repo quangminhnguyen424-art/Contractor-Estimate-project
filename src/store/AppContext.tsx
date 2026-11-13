@@ -50,6 +50,8 @@ export interface Draft {
   plan?: PlanRoom[];
   /** Answers Claude filled in, and where from, so the contractor confirms them. */
   aiFilled?: Record<string, 'notes' | 'photo' | 'satellite'>;
+  /** Pricing a photo-only job: the new estimate joins that job instead of starting another one. */
+  projectId?: string;
 }
 
 export { DEFAULT_SCHEDULE };
@@ -252,8 +254,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const est = compute(d, prev, existing);
       update((cur) => {
         const estimates = [est, ...cur.estimates.filter((e) => e.id !== est.id)];
+        // Pricing a photo-only job: its photos and costs now belong to this estimate's job.
+        const projects = d.projectId ? cur.projects.map((p) => (p.id === d.projectId && !p.estimateId ? { ...p, estimateId: est.id } : p)) : cur.projects;
         // An edited won job updates what the app learned from it.
-        return { ...cur, estimates, pastJobs: wonToPastJobs({ ...cur, estimates }, est.id, est.status) };
+        return { ...cur, estimates, projects, pastJobs: wonToPastJobs({ ...cur, estimates }, est.id, est.status) };
       });
       return est.id;
     },

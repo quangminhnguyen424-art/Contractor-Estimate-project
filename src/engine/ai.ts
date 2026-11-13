@@ -129,10 +129,10 @@ function guessBuiltIn(t: string): JobTypeId | undefined {
 export const demoAI: EstimatorAI = {
   name: 'Demo AI (offline)',
   async complete() {
-    throw new Error('Bidwell is not connected. Open the app inside Claude, or add your Claude key in Settings.');
+    throw new Error('Bidwell is not connected. Open the app inside Claude, or add your Claude key under Me → Bidwell AI.');
   },
   async chat() {
-    return 'I can only answer when Bidwell is connected. Open this app inside the Claude app, or add your Claude key in Settings. You can still create estimates in the New tab.';
+    return 'I can only answer when Bidwell is connected. Open this app inside the Claude app, or add your Claude key under Me → Bidwell AI. You can still create estimates with the orange +.';
   },
   async parseScope(text, jobTypeId) {
     const jt = jobTypeId ?? guessJobType(text);
@@ -493,7 +493,7 @@ async function callClaudeTurns(
       detail = typeof err.error === 'string' ? err.error : err.error?.message ?? '';
     } catch { /* ignore */ }
     if (viaCloud && (res.status === 401 || res.status === 429 || res.status === 413 || res.status === 503)) throw new Error(detail || 'Bidwell AI is not available right now.');
-    if (res.status === 401) throw new Error('Claude API key is not valid. Check it in Settings.');
+    if (res.status === 401) throw new Error('Claude API key is not valid. Check it under Me → Bidwell AI.');
     if (res.status === 429) throw new Error('Bidwell is busy or your rate limit was reached. Try again in a minute.');
     if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
     throw new Error(`Bidwell error (${res.status})${detail ? `: ${detail}` : ''}`);

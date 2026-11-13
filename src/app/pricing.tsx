@@ -64,7 +64,7 @@ export default function Pricing() {
       <Card>
         <H2>Add a type of work</H2>
         <Muted style={{ fontSize: 13 }}>
-          Any work you do that isn’t listed. To turn listed types on or off, use Settings → Work you do.
+          Any work you do that isn’t listed. To turn listed types on or off, go to Me → Work you do.
         </Muted>
         <AddOwnType onAdd={addOwn} />
       </Card>

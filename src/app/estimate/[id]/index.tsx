@@ -1,36 +1,33 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Image, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 import { Text } from '@/ui/text';
 import { TRADE_NAMES } from '@/engine/catalog';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { money, qtyFmt } from '@/engine/format';
-import { nextFollowUp } from '@/engine/followup';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
-import type { EstimateStatus, Trade } from '@/engine/types';
-import { quoteHtml } from '@/engine/quote';
+import type { Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { SendSignLink } from '@/ui/SendSignLink';
-import { Banner, Button, C, Card, Chip, H2, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
+import { Banner, Button, C, Card, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
 import { AiNote } from '@/ui/AiNote';
 import { confirmAction, notify } from '@/ui/notify';
 
-export default function EstimateScreen() {
+/** Price details: the private side of an estimate (cost, markup, checks, trade breakdown). Opened from the job page. */
+export default function PriceDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, updateEstimate, deleteEstimate, setDraft, commitDraft, profile, pastJobs, projects, projectForEstimate, contracts, followups } = useApp();
+  const { estimates, updateEstimate, setDraft, profile } = useApp();
   const [open, setOpen] = useState<Trade | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === id);
-  const contract = contracts.find((c) => c.estimateId === id);
 
   if (!est || !profile) {
     return (
       <Screen>
         <Muted>This estimate was deleted.</Muted>
-        <Button title="Back to jobs" onPress={() => router.replace('/jobs')} />
+        <Button title="Back to jobs" onPress={() => router.dismissTo('/jobs')} />
       </Screen>
     );
   }
@@ -53,18 +50,6 @@ export default function EstimateScreen() {
     router.push('/questions');
   };
 
-  // Same job for another client (or the next unit): a new draft with the same scope, prices and quote wording.
-  const copy = () => {
-    const id = commitDraft({
-      jobTypeId: est.jobTypeId, mode: est.mode, title: `${jt.name} (copy)`, clientName: '', address: '',
-      description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: [], finish: est.finish,
-      answers: est.answers, customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan,
-    });
-    if (est.quoteEdits) updateEstimate(id, { quoteEdits: est.quoteEdits });
-    router.replace(`/estimate/${id}`);
-    notify('Copied', 'A new draft with the same work and prices. Add the client and send it.');
-  };
-
   const changeMarkup = (n: number) => {
     const go = () => updateEstimate(est.id, { markupPct: n });
     if (est.status === 'draft' || okToRepriceSent) return go();
@@ -75,30 +60,13 @@ export default function EstimateScreen() {
     });
   };
 
-  const remove = () => {
-    confirmAction('Delete estimate?', 'This cannot be undone.', 'Delete', () => { deleteEstimate(est.id); router.replace('/jobs'); });
-  };
-
   return (
-    <Screen
-      footer={
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {est.mode === 'detailed' ? (
-            <Button kind="secondary" title="Materials" style={{ flex: 1 }} onPress={() => router.push(`/estimate/${est.id}/materials`)} />
-          ) : null}
-          <Button title="Client quote" style={{ flex: 1 }} onPress={() => router.push(`/estimate/${est.id}/quote`)} />
-        </View>
-      }>
-      <Stack.Screen options={{ title: est.status === 'draft' ? 'Estimate (internal)' : 'Estimate' }} />
-      {est.clientNotes?.length && est.status !== 'won' ? (
-        <Banner tone="warn" title={`${est.clientNotes[est.clientNotes.length - 1].name || 'The client'} asked for changes`}>
-          {`“${est.clientNotes[est.clientNotes.length - 1].text}”\n${new Date(est.clientNotes[est.clientNotes.length - 1].at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. Update the quote, then send a new link.`}
-        </Banner>
-      ) : null}
+    <Screen footer={<Button title={est.status === 'draft' ? 'Review and send quote' : 'Open client quote'} icon="document-text-outline" onPress={() => router.push(`/estimate/${est.id}/quote`)} />}>
+      <Stack.Screen options={{ title: 'Price details' }} />
       <View style={{ gap: 4 }}>
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{est.title}</Text>
         <Muted>{jt.name} · {FINISH_LABELS[est.finish].en} · {est.mode === 'quick' ? 'Quick' : 'Detailed'}</Muted>
-        <Muted style={{ fontSize: 12 }}>Internal view. Your client never sees cost, labor or markup.</Muted>
+        <Muted style={{ fontSize: 12 }}>Private. Your client never sees cost, labor or markup.</Muted>
       </View>
 
       <View style={{ backgroundColor: C.dark, borderRadius: 22, padding: 18, gap: 12, borderWidth: 1, borderColor: "#D6E0FF" }}>
@@ -210,51 +178,7 @@ export default function EstimateScreen() {
         </ScrollView>
       ) : null}
 
-      <H2>Status</H2>
-      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-        {(['draft', 'sent', 'won', 'lost'] as EstimateStatus[]).map((st) => (
-          <Chip key={st} label={st[0].toUpperCase() + st.slice(1)} selected={est.status === st} onPress={() => updateEstimate(est.id, { status: st })} />
-        ))}
-      </View>
-      <Muted style={{ fontSize: 13 }}>
-        {est.status === 'won' && pastJobs.some((j) => j.id === `won_${est.id}`)
-          ? 'Won: saved to your past jobs, so your prices for this type of work keep learning.'
-          : est.status === 'won' ? 'Won. (Not added to past jobs: it needs a quantity and a price to learn from.)'
-          : 'Mark it Won when you get the job. It’s added to your past jobs so the app learns what you really charge.'}
-      </Muted>
-
-      {est.status === 'sent' && !contract?.accepted ? (
-        <View style={{ gap: 10 }}>
-          <Button title="Client signs on this phone" icon="create-outline" onPress={() => router.push(`/estimate/${est.id}/sign`)} />
-          {profile ? (
-            <SendSignLink kind="quote" estimateId={est.id} title={est.title} clientName={est.clientName} total={est.total}
-              html={() => quoteHtml(est, profile, profile.quoteLanguage)} />
-          ) : null}
-          <Button kind="secondary" icon="notifications-outline" onPress={() => router.push(`/estimate/${est.id}/follow`)}
-            title={(() => {
-              const f = followups?.find((x) => x.estimateId === est.id);
-              if (!f || f.consent === 'not-asked') return 'Follow-ups: ask the client';
-              if (f.stopped) return 'Follow-ups: stopped';
-              const n = nextFollowUp(f, est.status);
-              return n ? `Follow-ups: next ${n.date}` : 'Follow-ups: all sent';
-            })()} />
-        </View>
-      ) : null}
-      {est.status === 'won' || contract?.accepted ? (
-        <View style={{ gap: 10 }}>
-          <Button title={projects.some((x) => x.estimateId === est.id) ? 'Open job site' : 'Start job site'} icon="construct-outline"
-            onPress={() => { const pid = projectForEstimate(est.id); if (pid) router.push(`/site/${pid}`); }} />
-          <Button kind="secondary" title="Contract & payments" icon="wallet-outline" onPress={() => router.push(`/estimate/${est.id}/contract`)} />
-        </View>
-      ) : null}
-
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button kind="secondary" title="Edit answers" style={{ flex: 1 }} onPress={edit} />
-        <Button kind="secondary" title="Copy for another client" icon="copy-outline" style={{ flex: 1 }} onPress={copy} />
-      </View>
-      <Pressable accessibilityRole="button" onPress={remove} style={{ alignSelf: 'center', padding: 12 }}>
-        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete estimate</Text>
-      </Pressable>
+      <Button kind="secondary" title="Edit job details" icon="create-outline" onPress={edit} />
     </Screen>
   );
 }

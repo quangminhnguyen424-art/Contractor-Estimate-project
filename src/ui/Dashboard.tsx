@@ -6,6 +6,7 @@ import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
+import { isLive, listJobs } from '@/engine/job';
 import { KINDS, timeLabel, upcoming } from '@/engine/schedule';
 import type { SitePhoto } from '@/engine/site';
 import { useCloud } from '@/cloud/CloudProvider';
@@ -17,20 +18,9 @@ import { PhotoView } from './SitePhotoView';
 import { Text } from './text';
 import { useToday } from './useToday';
 
-const DAY = 86400000;
-
-/** Jobs whose client hasn't seen new photos in a while (photos taken since the last update, or never updated). */
-export function staleUpdates(projects: ReturnType<typeof useApp>['projects'], now = Date.now()) {
-  return projects.filter((p) => p.status === 'active').map((p) => {
-    const photos = p.rooms.flatMap((r) => r.photos);
-    const last = p.lastClientUpdateAt ? Date.parse(p.lastClientUpdateAt) : Date.parse(p.createdAt);
-    const newer = photos.filter((ph) => Date.parse(ph.takenAt) > (p.lastClientUpdateAt ? last : 0)).length;
-    return { p, newer, days: Math.floor((now - last) / DAY) };
-  }).filter((x) => x.newer > 0 && x.days >= 3).sort((a, b) => b.days - a.days);
-}
 
 /** Home screen before the chat starts: one clear action, then today, money and recent photos. */
-export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic: () => void; onAsk: (q: string) => void }) {
+export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
   const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
   const { width } = useWindowDimensions();
   const today = useToday();
@@ -48,8 +38,9 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
     overdue += Object.values(invoiceStates(c, today, est.salesTaxPct)).filter((s) => s.state === 'overdue').length;
   }
   const checkIns = dailyCheckIn({ projects, estimates, contracts, profile, events, team, followups, today });
-  const waiting = estimates.filter((e) => e.status === 'sent').length;
-  const activeJobs = projects.filter((p) => p.status === 'active').length;
+  const jobs = listJobs(estimates, projects, contracts, profile);
+  const waiting = jobs.filter((j) => j.stage === 'sent').length;
+  const activeJobs = jobs.filter(isLive).length;
   const photos: { ph: SitePhoto; pid: string; rid: string }[] = projects.flatMap((p) => p.rooms.flatMap((r) => r.photos.map((ph) => ({ ph, pid: p.id, rid: r.id }))))
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
   const cardW = Math.min(width, 760) - 32;
@@ -77,21 +68,16 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
 
       {!claudeOn ? <ConnectClaude /> : null}
 
-      {/* The one main action, and three other ways to start. */}
-      <Reveal index={1} style={{ gap: 10 }}>
+      {/* The one main action. */}
+      <Reveal index={1}>
         <View style={{ overflow: 'hidden', borderRadius: 16 }}>
           <Button title="New estimate" icon="add" onPress={() => router.push('/new')} style={{ height: 56 }} />
           <Shine width={cardW} height={56} />
         </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Chip icon="mic" label="Talk" onPress={onMic} />
-          <Chip icon="scan" label="Scan 3D" onPress={() => router.push('/scan')} />
-          <Chip icon="camera" label="Photo" onPress={() => router.push('/quick')} />
-        </View>
       </Reveal>
 
       <Reveal index={2} style={{ gap: 8 }}>
-        <Section title={rows.length ? 'Today' : 'Today'} link="Schedule" onLink={() => router.push('/schedule')} />
+        <Section title="Needs you today" link="Schedule" onLink={() => router.push('/schedule')} />
         <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
           {shown.length ? shown.map((r, i) => (
             <Pressable key={r.id} accessibilityRole="button" onPress={() => router.push(r.route as never)}
@@ -101,7 +87,7 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
                 <Ionicons name={r.icon} size={18} color={r.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: C.ink, fontSize: 15, lineHeight: 20 }} numberOfLines={2}>{r.title}</Text>
+                <Text style={{ color: C.ink, fontSize: 15, lineHeight: 20 }} numberOfLines={3}>{r.title}</Text>
                 {r.sub ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{r.sub}</Text> : null}
               </View>
               {r.action ? <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{r.action}</Text> : <Ionicons name="chevron-forward" size={16} color={C.muted} />}
@@ -123,15 +109,15 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
       {/* Money and work at a glance: one card, three numbers. */}
       <Reveal index={3}>
         <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
-          <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => router.push('/jobs')} />
-          <Glance label="Quotes out" value={String(waiting)} onPress={() => router.push('/jobs')} divider />
-          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => router.push('/jobs')} divider />
+          <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => router.push('/jobs?show=active')} />
+          <Glance label="Quotes out" value={String(waiting)} onPress={() => router.push('/jobs?show=quote')} divider />
+          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => router.push('/jobs?show=active')} divider />
         </View>
       </Reveal>
 
       {photos.length ? (
         <Reveal index={4} style={{ gap: 8 }}>
-          <Section title="Recent photos" link="All jobs" onLink={() => router.push('/jobs')} />
+          <Section title="Recent photos" link="All jobs" onLink={() => router.push('/jobs?show=all')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>
@@ -142,7 +128,16 @@ export function Dashboard({ claudeOn, onMic, onAsk }: { claudeOn: boolean; onMic
         </Reveal>
       ) : null}
 
-      <Text style={{ color: C.muted, fontSize: 13, textAlign: 'center' }}>Ask Bidwell anything below: prices, materials, permits, client messages.</Text>
+      {chatCount ? (
+        <Pressable accessibilityRole="button" onPress={onOpenChat}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 14 }}>
+          <Ionicons name="chatbubbles" size={20} color={C.accent} />
+          <Text style={{ color: C.ink, flex: 1, fontSize: 15, fontWeight: '500' }}>Continue your chat with Bidwell</Text>
+          <Ionicons name="chevron-forward" size={16} color={C.muted} />
+        </Pressable>
+      ) : (
+        <Text style={{ color: C.muted, fontSize: 13, textAlign: 'center' }}>Ask Bidwell below: prices, materials, permits, what to write to a client.</Text>
+      )}
     </View>
   );
 }
@@ -165,19 +160,6 @@ function Glance({ label, value, sub, bad, divider, onPress }: { label: string; v
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 
-/** Light pill under the main button: another way to start. */
-function Chip({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  return (
-    <PressScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} scaleTo={0.95}
-      style={{ flex: 1, height: 44, borderRadius: 14, backgroundColor: C.cardHi, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <Ionicons name={icon} size={18} color={C.accent} />
-      <Text style={{ color: C.ink, fontSize: 14, fontWeight: '600' }}>{label}</Text>
-    </PressScale>
-  );
-}
-
-
-
 /** Shown until the AI is on: create a free Bidwell account (no key needed), or use your own Claude key. */
 function ConnectClaude() {
   const { aiAllowed } = useApp();
@@ -187,8 +169,8 @@ function ConnectClaude() {
       <Reveal index={1}>
         <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
           <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>AI is turned off</Text>
-          <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>You chose not to send job notes and photos to the AI. Turn it on in Settings to get estimates drafted for you.</Text>
-          <Button kind="secondary" title="Open Settings" icon="settings-outline" onPress={() => router.push('/me')} />
+          <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>You chose not to send job notes and photos to the AI. Turn it on to get estimates drafted for you.</Text>
+          <Button kind="secondary" title="Turn on Bidwell AI" icon="sparkles" onPress={() => router.push('/settings?s=ai')} />
         </Card>
       </Reveal>
     );
@@ -204,7 +186,7 @@ function ConnectClaude() {
           One minute, just an email and password. It turns on the AI (no key needed), backs up your jobs and photos, and lets clients sign quotes from a link.
         </Text>
         {cloud.configured ? <Button title="Log in or create account" icon="person-add-outline" onPress={() => router.push('/login')} /> : null}
-        <Button kind="secondary" title="I have my own Claude API key" icon="key-outline" onPress={() => router.push('/me')} />
+        <Button kind="secondary" title="I have my own Claude API key" icon="key-outline" onPress={() => router.push('/settings?s=ai')} />
       </Card>
     </Reveal>
   );

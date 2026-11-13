@@ -75,9 +75,9 @@ export default function Questions() {
     await atLeast(started, ms);
     setWorking(null);
     setDraft(null);
-    // Editing: the estimate screen is already underneath, so just go back to it.
+    // Editing: the job is already underneath, so just go back to it.
     if (editing && router.canGoBack()) router.back();
-    else router.replace(`/estimate/${id}`);
+    else router.replace(`/job/${id}`);
   };
 
   return (

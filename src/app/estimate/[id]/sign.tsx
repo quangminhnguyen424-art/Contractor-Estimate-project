@@ -51,7 +51,8 @@ export default function SignScreen() {
     emit('quote.signed', { estimate: { id: est.id, title: est.title, client: est.clientName, total: est.total }, signedBy: sig.name, signedAt: sig.signedAt });
     celebrate();
     notify(lang === 'vi' ? 'Đã ký' : 'Signed', lang === 'vi' ? 'Báo giá đã được chấp nhận. Công việc chuyển sang "Đã nhận".' : 'The quote is accepted and the job is marked Won.');
-    router.replace(`/estimate/${est.id}/contract`);
+    // Back to the job, which now shows Signed and the next step.
+    router.dismissTo(`/job/${est.id}`);
   };
 
   const share = async () => {
@@ -82,7 +83,7 @@ export default function SignScreen() {
         </View>
         <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
         <Button title={busy ? 'Creating PDF…' : 'Share signed quote PDF'} icon="share-outline" disabled={busy} onPress={share} />
-        <Button kind="secondary" title="Contract & payments" icon="wallet-outline" onPress={() => router.replace(`/estimate/${est.id}/contract`)} />
+        <Button kind="secondary" title="Contract and payments" icon="wallet-outline" onPress={() => router.push(`/estimate/${est.id}/contract`)} />
         <Button kind="danger" title="Remove signature (client signs again)"
           onPress={() => confirmAction('Remove the signature?', 'The client will need to sign again.', 'Remove',
             () => updateContract(est.id, (c) => ({ ...c, accepted: undefined, terms: c.invoices.length ? c.terms : undefined })))} />

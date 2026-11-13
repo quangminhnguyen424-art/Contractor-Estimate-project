@@ -90,7 +90,7 @@ export function runChecks(input: CheckInput): Check[] {
 
   if (!(input.salesTaxPct > 0)) {
     out.push({ id: 'tax', level: 'warn', title: 'Sales tax rate not set',
-      detail: 'Set your sales tax rate in Settings so the client total is correct.' });
+      detail: 'Set your sales tax rate under Me → Markup, tax and quote defaults so the client total is correct.' });
   }
 
   return out.sort((x, y) => (x.level === y.level ? 0 : x.level === 'warn' ? -1 : 1));

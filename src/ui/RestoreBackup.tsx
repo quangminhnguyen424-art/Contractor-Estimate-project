@@ -28,7 +28,7 @@ export function RestoreBackup() {
   return (
     <Card>
       <H2>Restore a backup</H2>
-      <Muted style={{ fontSize: 13 }}>Moving from another phone or computer? Restore the backup you exported in Settings.</Muted>
+      <Muted style={{ fontSize: 13 }}>Moving from another phone or computer? Restore the backup you exported under Me → Backup.</Muted>
       {Platform.OS === 'web' ? <Button kind="ghost" title="Choose backup file…" onPress={pickFile} /> : null}
       <Field label="Backup text" multiline value={text} onChangeText={(v) => { setText(v); setError(null); }}
         placeholder="Paste the backup text here" autoCapitalize="none" autoCorrect={false} />

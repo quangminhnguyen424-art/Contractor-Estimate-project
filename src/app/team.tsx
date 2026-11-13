@@ -92,7 +92,7 @@ export default function TeamScreen() {
 
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <H2 style={{ flex: 1 }}>Crew & subs</H2>
+          <H2 style={{ flex: 1 }}>Crew and subs</H2>
           <Button kind="ghost" title="Add" icon="add" onPress={() => setEdit(newMember(newId()))} />
         </View>
         {team.length === 0 ? <Muted>Add the people you work with. Their rate stays private; it is only used to add labor to your job costs.</Muted> : null}

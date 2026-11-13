@@ -78,7 +78,7 @@ export default function MoneyScreen() {
       ))}
       {b.owner.overdueCount > 0 ? (
         <Banner tone="warn" title={`${b.owner.overdueCount} overdue item${b.owner.overdueCount > 1 ? 's' : ''} · ${money(b.owner.overdueAmount)}`}>
-          {est ? 'Open Contract & payments to send a reminder.' : 'Mark items paid back below when the owner pays.'}
+          {est ? 'Open Contract and payments to send a reminder.' : 'Mark items paid back below when the owner pays.'}
         </Banner>
       ) : null}
 

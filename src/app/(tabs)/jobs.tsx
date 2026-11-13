@@ -1,40 +1,36 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 
-import { contractTotals } from '@/engine/contract';
 import { money, newId } from '@/engine/format';
+import { listJobs, type Job, type JobStage } from '@/engine/job';
 import { estimateJob } from '@/engine/jobTypes';
-import { emptyRoom, projectProgress, type SitePhoto, type SiteProject } from '@/engine/site';
-import type { Estimate } from '@/engine/types';
+import { emptyRoom, projectProgress, type SiteProject } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Empty, Field } from '@/ui/kit';
 import { PressScale, Reveal } from '@/ui/motion';
 import { PhotoView } from '@/ui/SitePhotoView';
 import { Text } from '@/ui/text';
 
-type Stage = 'quote' | 'active' | 'closed';
-interface Job {
-  key: string;
-  title: string;
-  client: string;
-  address: string;
-  est?: Estimate;
-  project?: SiteProject;
-  stage: Stage;
-  label: string;
-  tone: string;
-  bg: string;
-  price?: number;
-  cover?: SitePhoto;
-  updated: string;
-  sub?: string;
-}
-
-const FILTERS: { value: 'all' | Stage; label: string }[] = [
+type Group = 'quote' | 'active' | 'closed';
+const GROUP: Record<JobStage, Group> = { draft: 'quote', sent: 'quote', won: 'active', site: 'active', done: 'closed', lost: 'closed' };
+const FILTERS: { value: 'all' | Group; label: string }[] = [
   { value: 'all', label: 'All' }, { value: 'quote', label: 'Quotes' }, { value: 'active', label: 'Active' }, { value: 'closed', label: 'Closed' },
 ];
+const PILL: Record<JobStage, { fg: string; bg: string }> = {
+  draft: { fg: C.ink2, bg: C.cardHi }, sent: { fg: C.accent, bg: C.accentTint }, won: { fg: C.okInk, bg: C.okBg }, site: { fg: C.okInk, bg: C.okBg },
+  done: { fg: C.muted, bg: C.cardHi }, lost: { fg: C.muted, bg: C.cardHi },
+};
+
+/** The small line under a job: money collected, to-dos, or the type of work. */
+function subLine(j: Job): string {
+  if (j.paid > 0 && j.total) return `Paid ${money(j.paid)} of ${money(j.total)}`;
+  const pr = j.project ? projectProgress(j.project) : null;
+  if (pr?.total) return `${pr.done}/${pr.total} to-dos done`;
+  if (j.est) return estimateJob(j.est).name;
+  return pr ? `${pr.photos} photo${pr.photos === 1 ? '' : 's'}` : '';
+}
 
 /**
  * Jobs: one list for everything (like CompanyCam's Projects). A job is a quote until it's won, then the same job
@@ -42,51 +38,25 @@ const FILTERS: { value: 'all' | Stage; label: string }[] = [
  */
 export default function Jobs() {
   const { estimates, projects, contracts, profile, addProject } = useApp();
-  const [filter, setFilter] = useState<'all' | Stage>('all');
+  const params = useLocalSearchParams<{ show?: string }>();
+  const [filter, setFilter] = useState<'all' | Group>('all');
+  // Home's numbers open the list already filtered (also when this tab was open before).
+  const [lastShow, setLastShow] = useState<string | undefined>(undefined);
+  if (params.show !== lastShow) {
+    setLastShow(params.show);
+    if (params.show === 'quote' || params.show === 'active' || params.show === 'closed' || params.show === 'all') setFilter(params.show);
+  }
   const [q, setQ] = useState('');
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
 
-  const jobs = useMemo<Job[]>(() => {
-    const out: Job[] = [];
-    for (const e of estimates) {
-      const p = projects.find((x) => x.estimateId === e.id);
-      const c = contracts.find((x) => x.estimateId === e.id);
-      const t = c && profile ? contractTotals(e, profile, c) : null;
-      const done = p?.status === 'done';
-      const stage: Stage = e.status === 'lost' || done ? 'closed' : e.status === 'won' ? 'active' : 'quote';
-      const label = done ? 'Done' : e.status === 'won' ? (c?.accepted ? 'Signed' : 'Won') : e.status === 'sent' ? 'Sent' : e.status === 'lost' ? 'Lost' : 'Draft';
-      const tone = label === 'Done' || label === 'Lost' ? C.muted : e.status === 'won' ? C.okInk : e.status === 'sent' ? C.accent : C.ink2;
-      const bg = label === 'Done' || label === 'Lost' ? C.cardHi : e.status === 'won' ? C.okBg : e.status === 'sent' ? C.accentTint : C.cardHi;
-      const pr = p ? projectProgress(p) : null;
-      out.push({
-        key: e.id, title: e.title, client: e.clientName, address: e.address, est: e, project: p, stage, label, tone, bg,
-        price: t?.total ?? e.total, cover: p ? latest(p) : undefined, updated: e.updatedAt,
-        sub: t && t.paid > 0 ? `Paid ${money(t.paid)} of ${money(t.total)}` : pr && pr.total ? `${pr.done}/${pr.total} tasks done` : estimateJob(e).name,
-      });
-    }
-    for (const p of projects.filter((x) => !x.estimateId || !estimates.some((e) => e.id === x.estimateId))) {
-      const pr = projectProgress(p);
-      out.push({
-        key: `p_${p.id}`, title: p.title, client: p.clientName, address: p.address, project: p,
-        stage: p.status === 'done' ? 'closed' : 'active', label: p.status === 'done' ? 'Done' : 'Active',
-        tone: p.status === 'done' ? C.muted : C.okInk, bg: p.status === 'done' ? C.cardHi : C.okBg,
-        cover: latest(p), updated: p.createdAt, sub: pr.total ? `${pr.done}/${pr.total} tasks done` : `${pr.photos} photos`,
-      });
-    }
-    return out.sort((a, b) => b.updated.localeCompare(a.updated));
-  }, [estimates, projects, contracts, profile]);
-
+  const jobs = useMemo(() => listJobs(estimates, projects, contracts, profile), [estimates, projects, contracts, profile]);
   const needle = q.trim().toLowerCase();
-  const shown = jobs.filter((j) => (filter === 'all' || j.stage === filter)
+  const shown = jobs.filter((j) => (filter === 'all' || GROUP[j.stage] === filter)
     && (!needle || `${j.title} ${j.client} ${j.address}`.toLowerCase().includes(needle)));
-  const count = (s: 'all' | Stage) => (s === 'all' ? jobs.length : jobs.filter((j) => j.stage === s).length);
+  const count = (g: 'all' | Group) => (g === 'all' ? jobs.length : jobs.filter((j) => GROUP[j.stage] === g).length);
 
-  const open = (j: Job) => {
-    if (j.project) router.push(`/site/${j.project.id}`);
-    else if (j.est) router.push(`/estimate/${j.est.id}`);
-  };
   const createSite = () => {
     const p: SiteProject = {
       id: newId(), title: title.trim(), clientName: '', address: address.trim(), status: 'active',
@@ -94,7 +64,7 @@ export default function Jobs() {
     };
     addProject(p);
     setAdding(false); setTitle(''); setAddress('');
-    router.push(`/site/${p.id}`);
+    router.push(`/job/${p.id}`);
   };
 
   return (
@@ -122,42 +92,46 @@ export default function Jobs() {
       <View style={{ flex: 1 }}>
         <ScrollList>
           {jobs.length === 0 ? (
-            <Empty art="jobs" title="No jobs yet" text="Tap the orange + to price your first job. Every estimate becomes a job here, and when you win it, its photos, money and crew live in the same place." />
+            <Empty art="jobs" title="No jobs yet" text="Tap the orange + to price your first job. Each job keeps its quote, signature, photos and money on one page." />
           ) : shown.length === 0 ? (
             <Text style={{ color: C.muted, textAlign: 'center', marginTop: 24 }}>No jobs match.</Text>
           ) : (
             <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
-              {shown.map((j, i) => (
-                <Reveal key={j.key} index={Math.min(i, 8)}>
-                  <PressScale accessibilityRole="button" accessibilityLabel={`${j.title}, ${j.label}`} onPress={() => open(j)} scaleTo={0.99}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderTopWidth: i ? 1 : 0, borderColor: C.lineSoft }}>
-                    {j.cover ? (
-                      <View style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={j.cover} width={56} /></View>
-                    ) : (
-                      <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                        <Ionicons name={j.est ? 'document-text' : 'construct'} size={24} color={C.accent} />
+              {shown.map((j, i) => {
+                const sub = subLine(j);
+                const who = [j.client, j.address].filter(Boolean).join(' · ');
+                return (
+                  <Reveal key={j.key} index={Math.min(i, 8)}>
+                    <PressScale accessibilityRole="button" accessibilityLabel={`${j.title}, ${j.label}`} onPress={() => router.push(`/job/${j.key}`)} scaleTo={0.99}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderTopWidth: i ? 1 : 0, borderColor: C.lineSoft }}>
+                      {j.cover ? (
+                        <View style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={j.cover} width={56} /></View>
+                      ) : (
+                        <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name={j.est ? 'document-text' : 'camera'} size={24} color={C.accent} />
+                        </View>
+                      )}
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{j.title}</Text>
+                        <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{who || sub}</Text>
+                        {who && sub ? <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={1}>{sub}</Text> : null}
                       </View>
-                    )}
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{j.title}</Text>
-                      <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{[j.client, j.address].filter(Boolean).join(' · ') || j.sub}</Text>
-                      {j.client || j.address ? <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={1}>{j.sub}</Text> : null}
-                    </View>
-                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                      {j.price ? <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{money(j.price)}</Text> : null}
-                      <View style={{ backgroundColor: j.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
-                        <Text style={{ color: j.tone, fontSize: 12, fontWeight: '700' }}>{j.label}</Text>
+                      <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                        {j.total ? <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{money(j.total)}</Text> : null}
+                        <View style={{ backgroundColor: PILL[j.stage].bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+                          <Text style={{ color: PILL[j.stage].fg, fontSize: 12, fontWeight: '700' }}>{j.label}</Text>
+                        </View>
                       </View>
-                    </View>
-                  </PressScale>
-                </Reveal>
-              ))}
+                    </PressScale>
+                  </Reveal>
+                );
+              })}
             </View>
           )}
 
           {adding ? (
             <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 }}>
-              <Text style={{ color: C.ink, fontWeight: '700', fontSize: 16 }}>Job without an estimate</Text>
+              <Text style={{ color: C.ink, fontWeight: '700', fontSize: 16 }}>Photo-only job</Text>
               <Field label="Job name" value={title} onChangeText={setTitle} placeholder="e.g. Kim bathroom" maxLength={80} />
               <Field label="Address" value={address} onChangeText={setAddress} placeholder="Street, city" />
               <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -167,17 +141,13 @@ export default function Jobs() {
             </View>
           ) : (
             <Pressable accessibilityRole="button" onPress={() => setAdding(true)} style={{ alignSelf: 'center', padding: 12 }}>
-              <Text style={{ color: C.accent, fontWeight: '600' }}>+ Job without an estimate (photos only)</Text>
+              <Text style={{ color: C.accent, fontWeight: '600' }}>+ Photo-only job (no estimate)</Text>
             </Pressable>
           )}
         </ScrollList>
       </View>
     </View>
   );
-}
-
-function latest(p: SiteProject): SitePhoto | undefined {
-  return p.rooms.flatMap((r) => r.photos).sort((a, b) => b.takenAt.localeCompare(a.takenAt))[0];
 }
 
 function ScrollList({ children }: { children: React.ReactNode }) {

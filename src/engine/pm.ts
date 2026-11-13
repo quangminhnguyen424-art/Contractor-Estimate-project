@@ -47,6 +47,8 @@ export function dailyCheckIn(input: {
   for (const p of projects.filter((x) => x.status === 'active')) {
     const est = estimates.find((e) => e.id === p.estimateId);
     const contract = contracts.find((c) => c.estimateId === p.estimateId);
+    // Photos taken while pricing don't make it a running job: only won jobs (or photo-only jobs) get check-ins.
+    if (est && est.status !== 'won' && !contract?.accepted) continue;
     if (p.money?.costs.length || contract) {
       const b = projectBooks({ est, profile, contract, money: p.money ?? { salesTaxPct: null, incomeTaxPct: 30, costs: [], buy: [] }, today });
       if (b.funds.status === 'request') out.push({ id: `funds-${p.id}`, priority: 2, icon: 'cash-outline', text: `${p.title}: you've spent more than the owner has paid. Ask for the next payment?`, route: `/site/${p.id}/money`, action: 'Open' });
@@ -57,7 +59,7 @@ export function dailyCheckIn(input: {
     const last = p.lastClientUpdateAt?.slice(0, 10) ?? p.createdAt.slice(0, 10);
     if (daysBetween(last, today) >= 5) out.push({ id: `photos-${p.id}`, priority: 4, icon: 'images-outline', text: `${p.clientName || 'The client'} hasn't had a photo update on ${p.title} in ${daysBetween(last, today)} days.`, route: `/site/${p.id}/share?mode=client`, action: 'Send' });
     const flagged = p.rooms.reduce((t, r) => t + r.tasks.filter((x) => x.review && !x.done).length, 0);
-    if (flagged) out.push({ id: `review-${p.id}`, priority: 3, icon: 'flag-outline', text: `${p.title}: ${flagged} task${flagged > 1 ? 's need' : ' needs'} a second look.`, route: `/site/${p.id}`, action: 'Open' });
+    if (flagged) out.push({ id: `review-${p.id}`, priority: 3, icon: 'flag-outline', text: `${p.title}: ${flagged} task${flagged > 1 ? 's need' : ' needs'} a second look.`, route: `/job/${est?.id ?? p.id}?tab=photos`, action: 'Open' });
     const yesterday = addDays(today, -1);
     const workedYesterday = events.some((e) => e.date === yesterday && (e.projectId === p.id || (!!p.estimateId && e.estimateId === p.estimateId)) && e.kind === 'crew');
     if (workedYesterday && !p.logs.some((l) => l.date === yesterday)) out.push({ id: `log-${p.id}`, priority: 5, icon: 'book-outline', text: `How did yesterday go at ${p.title}? Bidwell can write the daily log.`, route: `/site/${p.id}/log`, action: 'Write' });

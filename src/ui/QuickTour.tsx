@@ -9,9 +9,9 @@ import { Text } from './text';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'add-circle', title: 'Price your first job', text: 'Tap the orange +. Talk, scan the room or snap a photo, and Bidwell drafts the estimate with your prices.' },
-  { icon: 'camera', title: 'Keep every job site in one place', text: 'Photos by room, before and after, tasks your crew marks done, and a work order in their language.' },
-  { icon: 'document-text', title: 'Send the quote and get it signed', text: 'Edit the wording, let the client sign on your phone or from a link, then share the PDF.' },
+  { icon: 'add-circle', title: 'Say the job, get the price', text: 'Tap the orange +. Describe the job by voice or text, add photos or a 3D scan, and Bidwell drafts the estimate with your prices.' },
+  { icon: 'paper-plane', title: 'Send the quote and get it signed', text: 'Edit the wording, text the client a link, and they sign on their phone or on yours.' },
+  { icon: 'camera', title: 'Run the job from one page', text: 'Each job keeps its photos by area, to-dos for the crew, and the money: what’s paid, what’s owed, what it cost.' },
   { icon: 'sparkles', title: 'Let Bidwell check in each day', text: 'Home shows what needs you today: crew, follow-ups, money owed. Ask Bidwell anything at the bottom.' },
 ];
 

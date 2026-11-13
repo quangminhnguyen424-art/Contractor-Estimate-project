@@ -182,7 +182,7 @@ export default function QuoteScreen() {
           {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
         </View>
       </View>
-      <Muted style={{ fontSize: 13 }}>Tap Edit to change the wording, Sign to have the client sign on this phone, or Share to send the PDF by text or email. Sharing marks the estimate as Sent.</Muted>
+      <Muted style={{ fontSize: 13 }}>Edit changes the wording. Sign lets the client sign on this phone. Send texts or emails a link to sign, or shares the PDF, and marks the job as Sent.</Muted>
       </>}
     </Screen>
   );

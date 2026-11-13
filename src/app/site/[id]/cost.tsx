@@ -56,7 +56,7 @@ export default function CostScreen() {
     // A second retake before saving: the in-between photo is never kept.
     if (receiptUri && receiptUri !== editing?.receiptUri) deletePhotosLater([receiptUri]);
     setReceiptUri(saved.uri);
-    if (!aiAllowed) { setMsg({ tone: 'info', text: 'Photo saved. Turn on AI sharing in Settings to have Bidwell read receipts; for now, type the amount.' }); return; }
+    if (!aiAllowed) { setMsg({ tone: 'info', text: 'Photo saved. Turn on AI sharing under Me → Bidwell AI to have Bidwell read receipts; for now, type the amount.' }); return; }
     setReading(true);
     try {
       const img = await toAiImage(r.assets[0].uri);

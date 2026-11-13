@@ -15,7 +15,7 @@ import { toAiImages } from '@/ui/photos';
 import { readablePhotoUri } from '@/ui/photoStore';
 import { addSitePhotos, KIND_LABEL, PhotoView } from '@/ui/SitePhotoView';
 
-/** One room: photos with drawings and notes, the room's instructions, and the crew's task list. */
+/** One area of a job (a room, the siding, a repair spot): photos with drawings and notes, instructions, and the crew's to-do list. */
 export default function RoomScreen() {
   const { id, roomId } = useLocalSearchParams<{ id: string; roomId: string }>();
   const { projects, updateProject, apiKey, deletePhotosLater, aiAllowed } = useApp();
@@ -28,7 +28,7 @@ export default function RoomScreen() {
   const [newTask, setNewTask] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
 
-  if (!p || !room) return <Screen><Muted>This room was deleted.</Muted></Screen>;
+  if (!p || !room) return <Screen><Muted>This area was deleted.</Muted></Screen>;
   const thumb = Math.floor((Math.min(width, 760) - 32 - 16) / 3);
   const setRoom = (fn: (r: SiteRoom) => SiteRoom) =>
     updateProject(p.id, (x) => ({ ...x, rooms: x.rooms.map((r) => (r.id === room.id ? fn(r) : r)) }));
@@ -44,7 +44,7 @@ export default function RoomScreen() {
 
   const makeSteps = async () => {
     if (!notes.trim() && !room.photos.some((ph) => ph.note.trim()) && room.photos.length === 0) {
-      return notify('Add instructions first', 'Write or say what needs doing in this room, or add photos with notes.');
+      return notify('Add instructions first', 'Write or say what needs doing in this area, or add photos with notes.');
     }
     setBusy('steps');
     try {
@@ -125,7 +125,7 @@ export default function RoomScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: room.name }} />
-      <Field label="Room" value={name} maxLength={40}
+      <Field label="Area name" value={name} maxLength={40}
         onChangeText={(v) => { setName(v); if (v.trim()) setRoom((r) => ({ ...r, name: v.trim() })); }}
         onBlur={() => { if (!name.trim()) setName(room.name); }} />
 
@@ -150,7 +150,7 @@ export default function RoomScreen() {
       </Card>
 
       <Card>
-        <H2>Instructions for this room</H2>
+        <H2>Instructions for this area</H2>
         <Field label="What needs doing" multiline value={notes}
           onChangeText={(v) => { setNotes(v); setRoom((r) => ({ ...r, notes: v })); }}
           placeholder="e.g. Demo vanity and tile to studs. Move the outlet 12 in left, box at 44 in AFF. New fan vented outside."
@@ -170,14 +170,14 @@ export default function RoomScreen() {
         </View>
       </Card>
 
-      <Button title="Send this room to the crew" onPress={() => router.push(`/site/${p.id}/share?mode=crew&room=${room.id}` as never)} />
+      <Button title="Send this area to the crew" onPress={() => router.push(`/site/${p.id}/share?mode=crew&room=${room.id}` as never)} />
       <Pressable accessibilityRole="button" style={{ alignSelf: 'center', padding: 12 }}
-        onPress={() => confirmAction('Delete this room?', 'Its photos and tasks are deleted.', 'Delete', () => {
+        onPress={() => confirmAction('Delete this area?', 'Its photos and tasks are deleted.', 'Delete', () => {
           updateProject(p.id, (x) => ({ ...x, rooms: x.rooms.filter((r) => r.id !== room.id) }));
           deletePhotosLater(room.photos.map((ph) => ph.uri));
           router.back();
         })}>
-        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete room</Text>
+        <Text style={{ color: C.danger, fontWeight: '600' }}>Delete area</Text>
       </Pressable>
     </Screen>
   );

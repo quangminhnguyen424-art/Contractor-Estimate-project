@@ -51,7 +51,7 @@ export default function AccountScreen() {
             if (err) confirmAction('Not saved to the cloud', err, 'Log out anyway', () => { cloud.signOut(true); });
           })} />
         <Button kind="danger" title="Delete my account"
-          onPress={() => confirmAction('Delete your Bidwell account?', 'Your account, the cloud copy of your data and all backed-up photos are deleted for good. Data on this phone stays until you erase it in Settings.', 'Delete', async () => {
+          onPress={() => confirmAction('Delete your Bidwell account?', 'Your account, the cloud copy of your data and all backed-up photos are deleted for good. Data on this phone stays until you erase it under Me → Backup.', 'Delete', async () => {
             const err = await cloud.deleteAccount();
             setMsg(err ? { tone: 'warn', text: err } : { tone: 'ok', text: 'Your account was deleted.' });
           })} />

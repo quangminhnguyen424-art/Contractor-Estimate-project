@@ -14,11 +14,11 @@ const icon = (outline: IconName, filled: IconName) =>
     return <Ionicons name={focused ? filled : outline} color={typeof color === 'string' ? color : C.muted} size={size} />;
   };
 
-/** The raised orange + in the middle of the tab bar: opens the quick menu (estimate, job photo, scan, appointment). */
+/** The raised orange + in the middle of the tab bar: a new estimate, the one thing the app is for. */
 function PlusButton() {
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Quick add" onPress={() => router.push('/quick')} style={{ marginTop: -22 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="New estimate" onPress={() => router.push('/new')} style={{ marginTop: -22 }}>
         <Pulse min={0.97} max={1.04}>
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.card,
             shadowColor: C.orange, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
@@ -89,10 +89,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Bidwell AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
       <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarLabel: 'Jobs', tabBarIcon: icon('briefcase-outline', 'briefcase') }} />
       <Tabs.Screen name="new" options={{ title: 'New estimate', tabBarLabel: '', tabBarButton: () => <PlusButton /> }} />
-      <Tabs.Screen name="sites" options={{ title: 'Job sites', href: null }} />
       <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: icon('calendar-outline', 'calendar') }} />
       <Tabs.Screen name="me" options={{ title: 'Me', headerRight: () => null }} />
-      <Tabs.Screen name="pricing" options={{ title: 'My pricing', href: null }} />
     </Tabs>
   );
 }
