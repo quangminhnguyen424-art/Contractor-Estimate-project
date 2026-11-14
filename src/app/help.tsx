@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ChatTurn } from '@/engine/ai';
 import { HELP_TOPICS, helpSystem, parseHelpReply, searchHelp, type HelpTopic } from '@/engine/help';
 import { SUPPORT_EMAIL } from '@/engine/legal';
+import { aiLanguageLine } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { Composer } from '@/ui/Composer';
 import { aiFor } from '@/ui/host';
@@ -38,7 +39,7 @@ export default function HelpScreen() {
     const turns: ChatTurn[] = next.slice(-10).map((m) => ({ role: m.role, content: m.text }));
     let reply: Msg;
     try {
-      const raw = await aiFor(apiKey, aiAllowed).chat(turns, helpSystem({ company: profile?.companyName }));
+      const raw = await aiFor(apiKey, aiAllowed).chat(turns, helpSystem({ company: profile?.companyName }) + aiLanguageLine());
       const offline = /not connected|only answer when/i.test(raw);
       if (offline) throw new Error('offline');
       const p = parseHelpReply(raw);
@@ -64,7 +65,7 @@ export default function HelpScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>Chat with Bidwell AI</Text>
-            <Text style={{ color: C.muted, fontSize: 13 }}>Ask how to do anything in the app. English or Tiếng Việt, any time.</Text>
+            <Text style={{ color: C.muted, fontSize: 13 }}>Ask how to do anything in the app, any time, in your language.</Text>
           </View>
         </View>
 

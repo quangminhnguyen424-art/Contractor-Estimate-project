@@ -6,10 +6,10 @@ import { SvgXml } from 'react-native-svg';
 import { acceptedBlock, changedSinceSigned, hasInk, signatureSvg, termsFrom } from '@/engine/contract';
 import { dateFmt, money } from '@/engine/format';
 import { quoteHtml } from '@/engine/quote';
-import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
 import { Art } from '@/ui/art';
-import { Banner, Button, C, Field, Muted, P, Screen, Segmented } from '@/ui/kit';
+import { Banner, Button, C, Field, Muted, P, Screen } from '@/ui/kit';
 import { Reveal } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -29,7 +29,7 @@ export default function SignScreen() {
   const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === id);
   const contract = contracts.find((c) => c.estimateId === id);
-  const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
+  const lang = clientLang(est);
   const [name, setName] = useState(est?.clientName ?? '');
   const [strokes, setStrokes] = useState<number[][]>([]);
   const [drawing, setDrawing] = useState(false);
@@ -81,7 +81,7 @@ export default function SignScreen() {
         <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 12 }}>
           <SvgXml xml={signatureSvg(signed, '#0F172A')} width={padW - 24} height={Math.round(((padW - 24) * signed.h) / signed.w)} />
         </View>
-        <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+        <ClientLanguage est={est} />
         <Button title={busy ? 'Creating PDF…' : 'Share signed quote PDF'} icon="share-outline" disabled={busy} onPress={share} />
         <Button kind="secondary" title="Contract and payments" icon="wallet-outline" onPress={() => router.push(`/estimate/${est.id}/contract`)} />
         <Button kind="danger" title="Remove signature (client signs again)"
@@ -93,7 +93,7 @@ export default function SignScreen() {
 
   return (
     <Screen scrollEnabled={!drawing}>
-      <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+      <ClientLanguage est={est} />
       <Muted style={{ fontSize: 13 }}>Hand the phone to your client. They check the total and sign with a finger.</Muted>
       <Reveal>
         <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 18, gap: 10 }}>

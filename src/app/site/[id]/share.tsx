@@ -1,3 +1,4 @@
+import { dateLocale } from '@/engine/locale';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
@@ -10,7 +11,8 @@ import { Text } from '@/ui/text';
 import { translateAll, writeClientUpdate, writePost } from '@/engine/siteAI';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
-import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
+import { clientLang as jobLang } from '@/ui/ClientLanguage';
+import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, Screen, Segmented, Select } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { photoDataUrl, resolvePhotoUri } from '@/ui/photoStore';
 import { sharePdf } from '@/ui/share';
@@ -34,16 +36,19 @@ async function photoSources(p: SiteProject, ids: Set<string>) {
 
 export default function ShareScreen() {
   const { id, mode: modeParam, room } = useLocalSearchParams<{ id: string; mode?: Mode; room?: string }>();
-  const { projects, updateProject, apiKey, profile, aiAllowed } = useApp();
+  const { projects, estimates, updateEstimate, updateProject, apiKey, profile, aiAllowed } = useApp();
   const { width } = useWindowDimensions();
   const p = projects.find((x) => x.id === id);
   const [mode, setMode] = useState<Mode>(modeParam === 'client' || modeParam === 'post' ? modeParam : 'crew');
   const [rooms, setRooms] = useState<string[]>(room ? [room] : p?.rooms.map((r) => r.id) ?? []);
   const [lang, setLang] = useState<CrewLang>('en');
-  const [clientLang, setClientLang] = useState<'en' | 'vi'>(profile?.quoteLanguage ?? 'en');
+  const [picked, setClientLang] = useState<'en' | 'vi' | null>(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   if (!p) return <Screen><Muted>This project was deleted.</Muted></Screen>;
+  // The update goes out in the language chosen for this client's quote, unless it is changed here.
+  const est = estimates.find((e) => e.id === p.estimateId);
+  const clientLang = picked ?? jobLang(mode === 'client' ? est : undefined);
   const company = profile?.companyName ?? '';
   const pairs = beforeAfterPairs(p);
   // Photos the client hasn't seen: everything since the last update (or the last 7 days), newest 12.
@@ -168,7 +173,9 @@ export default function ShareScreen() {
               ? 'What’s finished and what’s next, with before and after photos. No prices or internal notes.'
               : 'A short post about the finished work. Never the client’s name, address or prices.'}
           </Muted>
-          <Segmented<'en' | 'vi'> value={clientLang} onChange={setClientLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+          <Select<'en' | 'vi'> label={mode === 'client' ? 'Client’s language' : 'Post language'} value={clientLang}
+            onChange={(v) => { setClientLang(v); if (est && mode === 'client') updateEstimate(est.id, { clientLang: v }); }}
+            options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
           <Button kind="secondary" title={busy === 'write' ? 'Bidwell is writing…' : 'Write it with Bidwell'} disabled={!!busy} onPress={write} />
           <Field label={mode === 'client' ? 'Message' : 'Post'} multiline value={text} onChangeText={setText}
             placeholder={mode === 'client' ? 'Hi! Here’s where we are…' : 'Before and after: hall bath…'} />
@@ -191,7 +198,7 @@ export default function ShareScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {recent.map((ph) => <PhotoView key={ph.id} photo={{ ...ph, markup: [] }} width={Math.floor((Math.min(width, 760) - 32 - 32 - 12) / 3)} />)}
           </View>
-          {p.lastClientUpdateAt ? <Muted style={{ fontSize: 12 }}>Last update sent {new Date(p.lastClientUpdateAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.</Muted> : null}
+          {p.lastClientUpdateAt ? <Muted style={{ fontSize: 12 }}>Last update sent {new Date(p.lastClientUpdateAt).toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })}.</Muted> : null}
         </Card>
       ) : null}
 

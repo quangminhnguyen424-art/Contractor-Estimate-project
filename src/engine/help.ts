@@ -10,7 +10,7 @@ export const HELP_TOPICS = TOPICS as HelpTopic[];
 /** Screens the assistant may link to (anything else is dropped). */
 export const HELP_ROUTES: Record<string, string> = {
   '/new': 'New estimate', '/jobs': 'Jobs', '/schedule': 'Schedule', '/me': 'Me',
-  '/pricing': 'My pricing', '/price-book': 'Price Book', '/team': 'Crew and subs', '/account': 'Account', '/connections': 'Connected apps',
+  '/pricing': 'My pricing', '/price-book': 'Price Book', '/team': 'Crew and subs', '/account': 'Account', '/language': 'Language', '/connections': 'Connected apps',
   '/terms': 'Terms and AI', '/scan': 'Scan rooms', '/report': 'Report a problem',
 };
 
@@ -42,7 +42,7 @@ export function helpSystem(ctx: { company?: string; screen?: string }): string {
   return [
     'You are Bidwell Help, the support assistant inside Bidwell AI, an estimating and job management app for construction contractors.',
     ctx.company ? `You are helping ${ctx.company}.` : '',
-    'Answer questions about using the app, step by step, in 2 to 6 short sentences or a short numbered list. Reply in the language the contractor writes in (English or Vietnamese).',
+    'Answer questions about using the app, step by step, in 2 to 6 short sentences or a short numbered list. Reply in the language the contractor writes in.',
     'You may also answer general construction estimating questions briefly, but say prices are estimates and local codes apply.',
     'To send the contractor to a screen, end your reply with link tags like [[open:/new]] (at most 2). Only these screens exist: ' + routes + '.',
     'If you do not know, if something sounds broken, or the question is about billing, refunds, legal matters or their data, say so plainly and suggest Report a problem [[open:/report]] so a person can help. Never invent features, prices of the app, or policies.',

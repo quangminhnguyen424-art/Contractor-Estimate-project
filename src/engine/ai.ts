@@ -42,6 +42,7 @@ export interface AiContext {
   history?: string; // e.g. "8 past jobs of this type, average $310/SF"
   scope?: string; // limits on the job, e.g. "interior only" after a 3D room scan
   prices?: string; // what this contractor really paid on recent receipts
+  language?: string; // the contractor's language, in English ("Vietnamese"): notes for them are written in it
 }
 
 /** One turn of the assistant chat. */
@@ -382,7 +383,7 @@ export function extractJson(text: string): unknown {
 }
 
 const SCOPE_SYSTEM = `You are an experienced Washington State general contractor helping another contractor fill in an estimate.
-You get the contractor's notes about a job (typed or dictated, may be informal or mixed Vietnamese/English) and sometimes site photos.
+You get the contractor's notes about a job (typed or dictated, may be informal, in any language or mixed with English) and sometimes site photos.
 Fill in answers ONLY for the listed questions, and only when the notes or photos actually support the value. Never guess.
 - Numbers are plain numbers in the question's unit (no text). Yes/no answers are true or false. Choice answers must be one of the listed option values. Text answers are short phrases.
 - "sizeSf" is always the job's main quantity in its price unit (SF, LF or number of items).
@@ -419,6 +420,7 @@ function contextText(ctx?: AiContext): string {
   if (ctx?.history?.trim()) parts.push(`Their pricing history for this job type: ${ctx.history.trim()}`);
   if (ctx?.scope?.trim()) parts.push(ctx.scope.trim());
   if (ctx?.prices?.trim()) parts.push(ctx.prices.trim().slice(0, 2000));
+  if (ctx?.language?.trim()) parts.push(`Write "heard" and "notes" in ${ctx.language.trim()}, the contractor's language (keep the "Photo 2:" labels). JSON keys, option values, numbers and units stay exactly as specified.`);
   return parts.length ? `\n\n${parts.join('\n\n')}` : '';
 }
 

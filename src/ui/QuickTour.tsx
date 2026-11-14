@@ -33,7 +33,7 @@ export function QuickTour({ name, onDone }: { name?: string; onDone: (route?: st
                 <Ionicons name={s.icon} size={24} color={C.accent} />
               </View>
               <View style={{ flex: 1, gap: 3 }}>
-                <Text style={{ color: C.ink, fontSize: 16, fontWeight: '700' }}>{i + 1}. {s.title}</Text>
+                <Text style={{ color: C.ink, fontSize: 16, fontWeight: '700' }}>{`${i + 1}. `}<Text>{s.title}</Text></Text>
                 <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>{s.text}</Text>
               </View>
             </View>

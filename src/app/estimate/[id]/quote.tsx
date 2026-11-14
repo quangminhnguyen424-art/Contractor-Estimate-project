@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Linking, Platform, Pressable, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { Text } from '@/ui/text';
+import { Text, Untranslated } from '@/ui/text';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
 import { FINISH_LABELS } from '@/engine/jobTypes';
@@ -16,6 +16,7 @@ import { useCloud } from '@/cloud/CloudProvider';
 import { createSignLink } from '@/cloud/sign';
 import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -24,7 +25,7 @@ export default function QuoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { estimates, profile, updateEstimate, contracts } = useApp();
   const est = estimates.find((e) => e.id === id);
-  const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
+  const lang = clientLang(est);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -101,7 +102,7 @@ export default function QuoteScreen() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Text style={{ flex: 1, color: C.ink, fontSize: 20, fontWeight: '700' }}>{editing ? 'Edit your quote' : 'Your quote is ready'}</Text>
       </View>
-      <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+      <ClientLanguage est={est} />
       {editing ? (
         <QuoteEditor key={lang} est={est} lang={lang} profile={profile} signed={isSigned}
           onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.back()} />
@@ -120,6 +121,7 @@ export default function QuoteScreen() {
         </Banner>
       ) : null}
 
+      <Untranslated>
       <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 20, gap: 14, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 2, borderColor: P.accent, paddingBottom: 10 }}>
           <View style={{ flex: 1, gap: 2 }}>
@@ -182,6 +184,7 @@ export default function QuoteScreen() {
           {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
         </View>
       </View>
+      </Untranslated>
       <Muted style={{ fontSize: 13 }}>Edit changes the wording. Sign lets the client sign on this phone. Send texts or emails a link to sign, or shares the PDF, and marks the job as Sent.</Muted>
       </>}
     </Screen>
@@ -237,7 +240,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
   return (
     <View style={{ gap: 12 }}>
       {signed ? <Banner tone="info" title="The client already signed. The signed copy stays as signed; edits change only new copies." /> : null}
-      <Muted style={{ fontSize: 13 }}>Editing the {lang === 'vi' ? 'Vietnamese' : 'English'} quote. Changes save as you type. Prices come from the estimate.</Muted>
+      <Muted style={{ fontSize: 13 }}>Changes save as you type, for this client’s language. Prices come from the estimate.</Muted>
       <Card>
         <H2>Scope of work</H2>
         <Field label="Scope summary (shown under the title)" value={w.scopeNote ?? est.scopeNote ?? ''} multiline
@@ -279,7 +282,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
       </Card>
       {est.quoteEdits ? (
         <Button kind="secondary" icon="refresh-outline" title="Undo all edits"
-          onPress={() => confirmAction('Undo all edits?', 'The quote goes back to the wording Bidwell wrote, in both languages.', 'Undo', () => onSave(null))} />
+          onPress={() => confirmAction('Undo all edits?', 'The quote goes back to the wording Bidwell wrote, in every language.', 'Undo', () => onSave(null))} />
       ) : null}
     </View>
   );

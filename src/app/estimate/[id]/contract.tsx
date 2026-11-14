@@ -9,10 +9,10 @@ import {
 } from '@/engine/contract';
 import { dateFmt, money, newId } from '@/engine/format';
 import { addDays } from '@/engine/schedule';
-import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
+import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
 import { Art } from '@/ui/art';
-import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Section, Segmented, Stat, mono, Select } from '@/ui/kit';
+import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Section, Stat, mono, Select } from '@/ui/kit';
 import { Progress, Reveal } from '@/ui/motion';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -35,7 +35,7 @@ export default function ContractScreen() {
   const today = useToday();
   const est = estimates.find((e) => e.id === id);
   const c = contracts.find((x) => x.estimateId === id) ?? emptyContract(id ?? '');
-  const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
+  const lang = clientLang(est);
   const [dueDays, setDueDays] = useState(7);
   const [busy, setBusy] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
@@ -119,7 +119,7 @@ export default function ContractScreen() {
         </Card>
       )}
 
-      <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'Documents in English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+      {est ? <ClientLanguage est={est} /> : null}
 
       <Section title="Change orders" />
       <Card style={{ gap: 0, paddingVertical: 6 }}>

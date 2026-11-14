@@ -17,13 +17,12 @@ const MAX = 80;
 
 export interface ChatSettings {
   speak: boolean; // read answers aloud
-  lang: 'en-US' | 'vi-VN'; // voice input language
 }
 
 /** The assistant conversation, kept on this device only (not in backups). */
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [settings, setSettingsState] = useState<ChatSettings>({ speak: false, lang: 'en-US' });
+  const [settings, setSettingsState] = useState<ChatSettings>({ speak: false });
   const ref = useRef<ChatMessage[]>([]);
 
   useEffect(() => {
@@ -42,7 +41,7 @@ export function useChat() {
         const s = await AsyncStorage.getItem(SETTINGS_KEY);
         if (s) {
           const v = JSON.parse(s) as Partial<ChatSettings>;
-          setSettingsState({ speak: v.speak === true, lang: v.lang === 'vi-VN' ? 'vi-VN' : 'en-US' });
+          setSettingsState({ speak: v.speak === true });
         }
       } catch {
         // Start with an empty chat.

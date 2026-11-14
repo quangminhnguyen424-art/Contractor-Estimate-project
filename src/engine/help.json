@@ -53,9 +53,9 @@
   { "id": "ai", "title": "How the AI works (and its limits)", "vi": "AI hoạt động thế nào", "route": "/terms", "link": "Terms and AI",
     "keys": ["ai", "wrong", "mistake", "claude", "limit", "accurate", "sai"],
     "answer": "Bidwell's AI drafts estimates, quote wording and messages from your notes and photos, using your own prices. It can be wrong: always check quantities and prices before sending. Each account has a daily AI limit that resets every day." },
-  { "id": "language", "title": "Quotes in Vietnamese", "vi": "Báo giá tiếng Việt", "route": "/jobs", "link": "Jobs",
+  { "id": "language", "title": "Language", "vi": "Ngôn ngữ", "route": "/language", "link": "Language",
     "keys": ["vietnamese", "tiếng việt", "language", "spanish", "ngôn ngữ"],
-    "answer": "On the Client quote screen choose English or Tiếng Việt; each language can be edited separately. The default is under Me > Markup, tax and quote defaults. Crew work orders also come in Español." },
+    "answer": "The whole app, Bidwell’s answers and the voice follow one language: change it under Me > Language. What the client receives follows “Client’s language” on that job’s quote screen (English or Tiếng Việt), so you can work in your language and still send an English quote. Crew work orders go out in each person’s language." },
   { "id": "connect", "title": "QuickBooks, Google Sheets, Calendar", "vi": "Kết nối QuickBooks, Sheets, Lịch", "route": "/connections", "link": "Connected apps",
     "keys": ["quickbooks", "sheets", "calendar", "zapier", "connect", "export", "kết nối"],
     "answer": "Me > Connected apps sends won jobs, invoices and payments to your other tools through Zapier, Make or a webhook, and can export to a spreadsheet." }

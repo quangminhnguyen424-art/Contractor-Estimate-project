@@ -1,3 +1,4 @@
+import { dateLocale } from '@/engine/locale';
 import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
@@ -53,7 +54,7 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
     ...checkIns.map((c) => ({ id: c.id, icon: c.icon as IconName, color: C.accent, title: c.text, action: c.action, route: c.route })),
     ...[...todays, ...nextUp].map((e) => ({
       id: e.id, icon: 'calendar' as IconName, color: KINDS[e.kind].color, title: e.title, route: `/event?id=${e.id}`,
-      sub: `${e.date === today ? 'Today' : new Date(`${e.date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' })} · ${timeLabel(e)}${e.address ? ` · ${e.address}` : ''}`,
+      sub: `${e.date === today ? 'Today' : new Date(`${e.date}T12:00:00`).toLocaleDateString(dateLocale(), { weekday: 'short' })} · ${timeLabel(e)}${e.address ? ` · ${e.address}` : ''}`,
     })),
   ];
   const shown = allItems ? rows : rows.slice(0, 4);
@@ -61,7 +62,7 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   return (
     <View style={{ gap: 22 }}>
       <Reveal style={{ gap: 2 }}>
-        <Text style={{ color: C.muted, fontSize: 14, fontWeight: '500' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+        <Text style={{ color: C.muted, fontSize: 14, fontWeight: '500' }}>{new Date().toLocaleDateString(dateLocale(), { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
         <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
         {summary ? <Text style={{ color: C.muted, fontSize: 14 }}>{summary}</Text> : null}
       </Reveal>

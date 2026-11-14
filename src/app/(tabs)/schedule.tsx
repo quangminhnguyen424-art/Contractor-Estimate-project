@@ -1,3 +1,4 @@
+import { dateLocale } from '@/engine/locale';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -46,7 +47,7 @@ export default function ScheduleScreen() {
           return (
             <PressScale key={d} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={dayLabel(d, today)} onPress={() => setDay(d)}
               style={{ width: 54, paddingVertical: 10, borderRadius: 14, alignItems: 'center', gap: 4, backgroundColor: on ? C.accent : C.card, borderWidth: 1, borderColor: on ? C.accent : d === today ? C.sky : C.line }}>
-              <Text style={{ color: on ? C.onAccent : C.muted, fontSize: 11, fontWeight: '600' }}>{date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}</Text>
+              <Text style={{ color: on ? C.onAccent : C.muted, fontSize: 11, fontWeight: '600' }}>{date.toLocaleDateString(dateLocale(), { weekday: 'short' }).toUpperCase()}</Text>
               <Text style={{ color: on ? C.onAccent : C.ink, fontSize: 19, fontWeight: '800' }}>{date.getDate()}</Text>
               <View style={{ flexDirection: 'row', gap: 2, height: 6 }}>
                 {Array.from({ length: Math.min(3, count) }, (_, i) => <View key={i} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: on ? C.onAccent : C.accent }} />)}
@@ -56,7 +57,7 @@ export default function ScheduleScreen() {
         })}
       </ScrollView>
 
-      <Section title={dayLabel(day, today) + (day !== today ? '' : ` · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`)} />
+      <Section title={dayLabel(day, today) + (day !== today ? '' : ` · ${new Date().toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })}`)} />
       {onDay.length === 0 && dueInvoices.length === 0 ? (
         <Empty art="calendar" title="Nothing scheduled" text="Add site visits, crew days, client calls, deliveries and inspections. You’ll get a reminder on your phone." width={220} />
       ) : null}

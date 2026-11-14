@@ -12,7 +12,7 @@ export function Tick({ on, onPress, children, required }: { on: boolean; onPress
       <Ionicons name={on ? 'checkbox' : 'square-outline'} size={26} color={on ? C.accent : C.ink2} />
       <View style={{ flex: 1, gap: 2 }}>
         {children}
-        {!required ? <Text style={{ color: C.muted, fontSize: 12 }}>Optional · Không bắt buộc</Text> : null}
+        {!required ? <Text style={{ color: C.muted, fontSize: 12 }}>Optional</Text> : null}
       </View>
     </Pressable>
   );

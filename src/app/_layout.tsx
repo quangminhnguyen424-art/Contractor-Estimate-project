@@ -6,9 +6,11 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { CloudProvider, useCloud } from '@/cloud/CloudProvider';
 import { cloudConfigured } from '@/cloud/config';
+import { initLanguage, setTranslationAI, useLanguage, useT } from '@/i18n';
 import { AppProvider, useApp } from '@/store/AppContext';
 import { ConfettiHost } from '@/ui/celebrate';
-import { inClaudeApp } from '@/ui/host';
+import { aiFor, inClaudeApp } from '@/ui/host';
+import { LanguageScreen } from '@/ui/LanguageScreen';
 import { LoginScreen } from '@/ui/LoginScreen';
 import { SUPPORT_EMAIL } from '@/engine/legal';
 import { IntroVideo } from '@/ui/IntroVideo';
@@ -28,6 +30,18 @@ function SaveWarning() {
       style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 64, backgroundColor: '#B42318', borderRadius: 14, padding: 12 }}>
       <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Could not save your latest changes</Text>
       <Text style={{ color: '#FFFFFF', fontSize: 13 }}>Storage is full. Delete old photos or finished jobs, then try again.</Text>
+    </View>
+  );
+}
+
+/** While Bidwell translates the app into a language that is not built in: a small note, so mixed screens make sense. */
+function TranslationProgress() {
+  const { language, progress } = useLanguage();
+  const insets = useSafeAreaInsets();
+  if (!language || !progress.total || progress.done >= progress.total) return null;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 6, alignSelf: 'center', backgroundColor: C.ink, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7, opacity: 0.92 }}>
+      <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '600' }}>{`Bidwell is learning ${language.name}… ${Math.round((progress.done / progress.total) * 100)}%`}</Text>
     </View>
   );
 }
@@ -64,9 +78,30 @@ function Welcome({ onDone }: { onDone: (route?: string) => void }) {
   return <QuickTour name={profile?.contactName?.split(' ')[0]} onDone={onDone} />;
 }
 
+/** Lets the app translate itself into a language that is not built in, once there is an AI to ask. */
+function useTranslationAI() {
+  const { apiKey } = useApp();
+  const cloud = useCloud();
+  const can = inClaudeApp || !!apiKey?.trim() || !!cloud.user;
+  useEffect(() => {
+    // Only the app's own wording is sent, never anything the user typed, so this does not wait for the AI-sharing choice.
+    setTranslationAI(can ? (prompt, maxTokens) => aiFor(apiKey, true).complete(prompt, undefined, maxTokens) : null);
+    return () => setTranslationAI(null);
+  }, [can, apiKey]);
+}
+
+/** Screen titles in the header, in the user's language. */
+function HeaderTitle({ children }: { children: string }) {
+  return <Text numberOfLines={1} style={{ fontWeight: '700', color: C.ink, fontSize: 17 }}>{children}</Text>;
+}
+
 function RootStack() {
   const { ready, profile, termsOk } = useApp();
   const cloud = useCloud();
+  const lang = useLanguage();
+  const t = useT();
+  useTranslationAI();
+  useEffect(() => { void initLanguage(); }, []);
   // Inside the Claude app the AI comes from Claude itself, so the account is optional there; everywhere else you log in first.
   const needLogin = cloudConfigured && !inClaudeApp && !cloud.user;
   const in_ = !needLogin;
@@ -83,13 +118,15 @@ function RootStack() {
     const t = setTimeout(() => { router.push(goTo as never); setGoTo(null); }, 60);
     return () => clearTimeout(t);
   }, [goTo]);
-  if (!ready || !cloud.authReady) {
+  if (!ready || !cloud.authReady || !lang.ready) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg }}>
         <ActivityIndicator color={C.accent} />
       </View>
     );
   }
+  // The very first screen: which language? Everything after it, login included, is shown in that language.
+  if (!lang.chosen) return <LanguageScreen first onDone={() => {}} />;
   if (needLogin) return <LoginScreen gate />;
   if (cloud.user && cloud.firstSync !== 'done') return <FirstSync />;
   if (termsOk && profile && welcomed[who] === false) {
@@ -105,8 +142,9 @@ function RootStack() {
         headerStyle: { backgroundColor: C.bg },
         headerTintColor: C.ink,
         headerTitleStyle: { fontWeight: '700', color: C.ink },
+        headerTitle: HeaderTitle,
         headerShadowVisible: false,
-        headerBackTitle: 'Back',
+        headerBackTitle: t('Back'),
         contentStyle: { backgroundColor: C.bg },
       }}>
       <Stack.Protected guard={in_ && termsOk && !profile}>
@@ -124,6 +162,7 @@ function RootStack() {
         <Stack.Screen name="job-type" options={{ title: 'Type of work' }} />
         <Stack.Screen name="floor-plan" options={{ title: 'Floor plan' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="language" options={{ title: 'Language' }} />
         <Stack.Screen name="site/[id]/index" options={{ title: 'Job' }} />
         <Stack.Screen name="pricing" options={{ title: 'My pricing' }} />
         <Stack.Screen name="site/[id]/room/[roomId]" options={{ title: 'Area' }} />
@@ -187,6 +226,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           <RootStack />
           <SaveWarning />
+          <TranslationProgress />
           <ConfettiHost />
         </CloudProvider>
       </AppProvider>

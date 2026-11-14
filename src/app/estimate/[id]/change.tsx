@@ -5,9 +5,9 @@ import { SvgXml } from 'react-native-svg';
 
 import { changeOrderHtml, emptyContract, hasInk, nextChangeNo, signatureSvg, taxOn, termsOf, type ChangeOrder } from '@/engine/contract';
 import { dateFmt, money, newId } from '@/engine/format';
-import type { Lang } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { SendSignLink } from '@/ui/SendSignLink';
+import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
 import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -33,9 +33,9 @@ export default function ChangeOrderScreen() {
   const [name, setName] = useState(est?.clientName ?? '');
   const [strokes, setStrokes] = useState<number[][]>([]);
   const [drawing, setDrawing] = useState(false);
-  const [lang, setLang] = useState<Lang>(profile?.quoteLanguage ?? 'en');
   const [busy, setBusy] = useState(false);
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
+  const lang = clientLang(est);
   if (coId && !saved) return <Screen><Muted>This change order was deleted.</Muted></Screen>;
   const padW = Math.min(width, 760) - 32;
   const status = saved?.status ?? 'pending';
@@ -112,7 +112,7 @@ export default function ChangeOrderScreen() {
         </Card>
       )}
 
-      <Segmented<Lang> value={lang} onChange={setLang} options={[{ value: 'en', label: 'English PDF' }, { value: 'vi', label: 'PDF tiếng Việt' }]} />
+      <ClientLanguage est={est} />
       <Button kind="secondary" title={busy ? 'Creating PDF…' : locked ? 'Share signed change order' : 'Send for review (PDF)'} icon="share-outline"
         disabled={busy || (!locked && !title.trim())} onPress={share} />
 

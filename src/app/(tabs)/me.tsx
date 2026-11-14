@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Image, Pressable, View } from 'react-native';
 
 import { useCloud } from '@/cloud/CloudProvider';
+import { useLanguage } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { inClaudeApp } from '@/ui/host';
 import { C, List, ListRow, Muted, Screen, Section } from '@/ui/kit';
@@ -16,6 +17,7 @@ const open = (s: SettingsPage) => router.push(`/settings?s=${s}`);
 export default function Me() {
   const { profile, team = [], aiAllowed, apiKey, presets } = useApp();
   const cloud = useCloud();
+  const { language } = useLanguage();
   if (!profile) return null;
   const types = profile.specialties.filter((id) => id !== 'small').length;
   const priced = Object.keys(presets).length;
@@ -69,6 +71,7 @@ export default function Me() {
 
       <Section title="App" />
       <List>
+        <ListRow icon="language" title="Language" right={language?.name ?? 'English'} onPress={() => router.push('/language')} />
         <ListRow icon="sparkles" title="Bidwell AI" sub={aiOn ? 'On' : 'Off'} onPress={() => open('ai')} />
         <ListRow icon="cloud-done" title="Backup" sub={cloud.user ? 'Backed up to your account' : 'Only on this phone · export a copy'} onPress={() => open('backup')} />
         <ListRow icon="chatbubbles" title="Help and support" sub="Chat with Bidwell, report a problem" onPress={() => router.push('/help')} />

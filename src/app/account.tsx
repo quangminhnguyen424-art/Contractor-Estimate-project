@@ -1,3 +1,4 @@
+import { dateLocale } from '@/engine/locale';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -23,7 +24,7 @@ export default function AccountScreen() {
         <Card>
           <H2>Signed in</H2>
           <Text style={{ color: C.ink, fontSize: 16 }}>{cloud.user.email}</Text>
-          <Muted>Sync: {status}{cloud.lastSync ? ` · ${new Date(cloud.lastSync).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : ''}</Muted>
+          <Muted>Sync: {status}{cloud.lastSync ? ` · ${new Date(cloud.lastSync).toLocaleTimeString(dateLocale(), { hour: 'numeric', minute: '2-digit' })}` : ''}</Muted>
           {cloud.error ? <Banner tone="warn" title={cloud.error} /> : null}
           <Button kind="secondary" title="Sync now" icon="sync-outline" disabled={cloud.state === 'syncing'} onPress={() => cloud.syncNow()} />
           <Button kind="secondary" title={progress ?? 'Back up all photos now'} icon="cloud-upload-outline" disabled={!!progress}

@@ -1,4 +1,5 @@
 // The contractor's calendar: site visits, crew days, client calls and inspections, with reminders.
+import { dateLocale } from './locale';
 import { localDay } from './site';
 
 export type EventKind = 'visit' | 'crew' | 'call' | 'inspection' | 'delivery' | 'other';
@@ -90,7 +91,7 @@ export function timeLabel(e: Pick<CalEvent, 'time' | 'durationMin'>): string {
 export function dayLabel(ymd: string, today: string): string {
   if (ymd === today) return 'Today';
   if (ymd === addDays(today, 1)) return 'Tomorrow';
-  return new Date(`${ymd}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return new Date(`${ymd}T12:00:00`).toLocaleDateString(dateLocale(), { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 /** A calendar file (.ics) for one event, so it can be added to the phone's own calendar or sent to the crew. */

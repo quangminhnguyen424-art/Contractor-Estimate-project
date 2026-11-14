@@ -74,6 +74,7 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerTintColor: C.ink,
         headerTitleStyle: { fontWeight: '700', fontSize: 18 },
+        headerTitle: ({ children }) => <Text numberOfLines={1} style={{ fontWeight: '700', fontSize: 18, color: C.ink }}>{children}</Text>,
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: { fontWeight: '600', fontSize: 12 },

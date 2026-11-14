@@ -1,3 +1,4 @@
+import { dateLocale } from '@/engine/locale';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -127,9 +128,9 @@ export function JobPhotos({ project, onStart }: {
       <Section title="Share" />
       <List>
         <ListRow icon="images" title="Photo update for the client"
-          sub={p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Bidwell writes the message for you'}
+          sub={p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })}` : 'Bidwell writes the message for you'}
           onPress={() => go('share?mode=client')} />
-        <ListRow icon="people" title="Work order for the crew" sub="English, Tiếng Việt, Español · never shows prices" onPress={() => go('share?mode=crew')} />
+        <ListRow icon="people" title="Work order for the crew" sub="In each person’s language · never shows prices" onPress={() => go('share?mode=crew')} />
         <ListRow icon="book" title="Daily log" sub={p.logs.length ? `${p.logs.length} day${p.logs.length > 1 ? 's' : ''} written` : 'What got done today, in one tap'} onPress={() => go('log')} />
         <ListRow icon="logo-facebook" title="Before and after post" sub={pairs.length ? `${pairs.length} pair${pairs.length > 1 ? 's' : ''} ready` : 'Needs a before and an after photo'} onPress={() => go('share?mode=post')} />
       </List>

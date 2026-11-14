@@ -1,3 +1,4 @@
+import { dateLocale } from '@/engine/locale';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
@@ -48,7 +49,7 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
     <>
       {lastNote && job.stage !== 'won' && job.stage !== 'done' ? (
         <Banner tone="warn" title={`${lastNote.name || 'The client'} asked for changes`}>
-          {`“${lastNote.text}”\n${new Date(lastNote.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. Update the quote, then send a new link.`}
+          {`“${lastNote.text}”\n${new Date(lastNote.at).toLocaleString(dateLocale(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. Update the quote, then send a new link.`}
         </Banner>
       ) : null}
 

@@ -323,6 +323,8 @@ export interface Estimate {
   checks: Check[];
   comparison: PriceComparison;
   quoteEdits?: QuoteEdits;
+  /** The language this job's quote, contract and invoices are written in (the client's). Unset: the contractor's. */
+  clientLang?: Lang;
   /** "Request changes" messages the client sent from a signing link, newest last. */
   clientNotes?: { at: string; name: string; text: string }[];
 }

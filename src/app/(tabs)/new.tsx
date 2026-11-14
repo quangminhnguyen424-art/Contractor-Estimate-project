@@ -14,6 +14,7 @@ import { defaultAnswers, isJobTypeId, JOB_TYPES, jobType, perUnit } from '@/engi
 import { INDOOR_NOTE, isIndoorType, suggestFromScan } from '@/engine/recommend';
 import { workSummary } from '@/engine/profile';
 import type { EstimateMode, JobTypeId } from '@/engine/types';
+import { aiLanguage } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { contactsAvailable, pickClient } from '@/ui/contacts';
 import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
@@ -126,6 +127,7 @@ export default function NewEstimate() {
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
       scope: pendingPlan?.length && isIndoorType(type) ? INDOOR_NOTE : undefined,
       prices: lessonsContext(lessons ?? []),
+      language: aiLanguage(),
     };
     if (description.trim() || images.length > 0) {
       parsed = await ai.parseScope(description, type, images, ctx)

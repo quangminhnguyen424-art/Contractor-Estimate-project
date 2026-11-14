@@ -1,7 +1,11 @@
 import { Alert, Platform } from 'react-native';
 
+import { tr } from '@/i18n';
+
 /** Show a message on phone and web (React Native's Alert does nothing in a browser). */
-export function notify(title: string, message?: string) {
+export function notify(titleEn: string, messageEn?: string) {
+  const title = tr(titleEn);
+  const message = messageEn ? tr(messageEn) : undefined;
   if (Platform.OS === 'web') {
     try {
       window.alert(message ? `${title}\n\n${message}` : title);
@@ -14,7 +18,10 @@ export function notify(title: string, message?: string) {
 }
 
 /** Ask before doing something that can't be undone. */
-export function confirmAction(title: string, message: string, actionLabel: string, onConfirm: () => void) {
+export function confirmAction(titleEn: string, messageEn: string, actionEn: string, onConfirm: () => void) {
+  const title = tr(titleEn);
+  const message = tr(messageEn);
+  const actionLabel = tr(actionEn);
   if (Platform.OS === 'web') {
     let ok = false;
     try {
@@ -26,7 +33,7 @@ export function confirmAction(title: string, message: string, actionLabel: strin
     return;
   }
   Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
+    { text: tr('Cancel'), style: 'cancel' },
     { text: actionLabel, style: 'destructive', onPress: onConfirm },
   ]);
 }

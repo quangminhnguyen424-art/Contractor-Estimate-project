@@ -2,6 +2,9 @@ import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
 
 import { isVietnamese, speakable } from '@/engine/assistant';
+import { currentLanguage, tr, voiceTag } from '@/i18n';
+
+const voiceLanguage = (): string | undefined => { const l = currentLanguage(); return l ? voiceTag(l) : 'en-US'; };
 
 /**
  * Voice in (speech to text) and voice over (reading answers aloud).
@@ -41,10 +44,8 @@ export function voiceInputAvailable(): boolean {
   }
 }
 
-export type VoiceLang = 'en-US' | 'vi-VN';
-
-/** Listens once. Partial words stream to onPartial; the finished sentence goes to onFinal. */
-export async function listen(lang: VoiceLang, h: {
+/** Listens once, in the app's language. Partial words stream to onPartial; the finished sentence goes to onFinal. */
+export async function listen(h: {
   onPartial: (text: string) => void; onFinal: (text: string) => void; onError: (message: string) => void; onEnd: () => void;
 }): Promise<{ stop(): void } | null> {
   const mod = recognition();
@@ -52,11 +53,11 @@ export async function listen(lang: VoiceLang, h: {
   try {
     const perm = await mod.requestPermissionsAsync();
     if (!perm.granted) {
-      h.onError('Microphone access is off. Allow it in Settings, or use the microphone on your keyboard.');
+      h.onError(tr('Microphone access is off. Allow it in Settings, or use the microphone on your keyboard.'));
       return null;
     }
   } catch {
-    h.onError('Microphone is not available here. Use the microphone on your keyboard.');
+    h.onError(tr('Microphone is not available here. Use the microphone on your keyboard.'));
     return null;
   }
   let latest = '';
@@ -85,7 +86,9 @@ export async function listen(lang: VoiceLang, h: {
   }));
   subs.push(mod.addListener('end', finish));
   try {
-    mod.start({ lang, interimResults: true, continuous: false, addsPunctuation: true });
+    // A language the user typed in has no voice tag: the phone listens in its own language.
+    const lang = voiceLanguage();
+    mod.start({ ...(lang ? { lang } : {}), interimResults: true, continuous: false, addsPunctuation: true } as Parameters<RecognitionModule['start']>[0]);
   } catch {
     finish();
     h.onError('Could not start listening. Use the microphone on your keyboard.');
@@ -94,13 +97,13 @@ export async function listen(lang: VoiceLang, h: {
   return { stop: () => { try { mod.stop(); } catch { finish(); } } };
 }
 
-/** Reads text aloud in English or Vietnamese (picked from the text itself). */
+/** Reads text aloud: Vietnamese text in a Vietnamese voice, anything else in the app's language. */
 export function speak(text: string) {
   const words = speakable(text);
   if (!words) return;
   try {
     Speech.stop();
-    Speech.speak(words, { language: isVietnamese(words) ? 'vi-VN' : 'en-US', rate: Platform.OS === 'ios' ? 0.52 : 1 });
+    Speech.speak(words, { language: isVietnamese(words) ? 'vi-VN' : voiceLanguage() ?? 'en-US', rate: Platform.OS === 'ios' ? 0.52 : 1 });
   } catch {
     // No voice available on this device: the answer is still on screen.
   }

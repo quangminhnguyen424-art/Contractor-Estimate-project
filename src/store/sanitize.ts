@@ -297,6 +297,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
+    ...(e.clientLang === 'vi' || e.clientLang === 'en' ? { clientLang: e.clientLang } : {}),
     clientNotes: Array.isArray(e.clientNotes)
       ? e.clientNotes.filter((n): n is { at: string; name: string; text: string } => isObj(n) && typeof n.at === 'string' && typeof n.text === 'string')
         .slice(-20).map((n) => ({ at: n.at, name: str(n.name).slice(0, 120), text: n.text.slice(0, 2000) }))

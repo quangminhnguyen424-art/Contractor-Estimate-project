@@ -6,6 +6,7 @@ import { useCloud } from '@/cloud/CloudProvider';
 import type { ChatTurn } from '@/engine/ai';
 import { assistantSystem, parseAssistantReply } from '@/engine/assistant';
 import { newId } from '@/engine/format';
+import { aiLanguageLine } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { useChat, type ChatMessage } from '@/store/chat';
 import { Composer } from '@/ui/Composer';
@@ -52,7 +53,7 @@ export default function Assistant() {
       .map((m) => ({ role: m.role, content: m.text || '(started an estimate)' }));
     while (turns.length && turns[0].role !== 'user') turns.shift();
     try {
-      const reply = await aiFor(apiKey, aiAllowed).chat(turns, assistantSystem({ profile, presets, pastJobs, estimates }));
+      const reply = await aiFor(apiKey, aiAllowed).chat(turns, assistantSystem({ profile, presets, pastJobs, estimates }) + aiLanguageLine());
       const { text: answer, action } = parseAssistantReply(reply);
       add({ id: newId(), role: 'assistant', text: answer, action });
       if (settings.speak) speak(answer);
@@ -91,10 +92,6 @@ export default function Assistant() {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8 }}>
             <Ionicons name={settings.speak ? 'volume-high' : 'volume-mute'} size={20} color={settings.speak ? C.accent : C.muted} />
             <Text style={{ color: settings.speak ? C.accent : C.muted, fontSize: 13, fontWeight: '600' }}>{settings.speak ? 'Voice on' : 'Voice off'}</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Voice language: ${settings.lang === 'en-US' ? 'English' : 'Tiếng Việt'}`}
-            onPress={() => setSettings({ ...settings, lang: settings.lang === 'en-US' ? 'vi-VN' : 'en-US' })} style={{ padding: 8 }}>
-            <Text style={{ color: C.muted, fontSize: 13, fontWeight: '700' }}>{settings.lang === 'en-US' ? 'EN' : 'VI'}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Clear chat" style={{ padding: 8 }}
             onPress={() => confirmAction('Clear the chat?', 'Your jobs are not affected.', 'Clear', () => { stopSpeaking(); clear(); setChatOpen(false); })}>
@@ -147,7 +144,7 @@ export default function Assistant() {
 
       <View style={{ borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg, padding: 10 }}>
         <View style={{ width: '100%', maxWidth: 740, alignSelf: 'center' }}>
-          <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} lang={settings.lang} inputLabel="Ask Bidwell"
+          <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} inputLabel="Ask Bidwell"
             placeholder="Ask Bidwell anything…" />
         </View>
       </View>

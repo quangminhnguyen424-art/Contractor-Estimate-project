@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { money, newId } from '@/engine/format';
 import { listJobs, type Job, type JobStage } from '@/engine/job';
@@ -11,7 +11,7 @@ import { useApp } from '@/store/AppContext';
 import { Button, C, Empty, Field } from '@/ui/kit';
 import { PressScale, Reveal } from '@/ui/motion';
 import { PhotoView } from '@/ui/SitePhotoView';
-import { Text } from '@/ui/text';
+import { Text, TextInput } from '@/ui/text';
 
 type Group = 'quote' | 'active' | 'closed';
 const GROUP: Record<JobStage, Group> = { draft: 'quote', sent: 'quote', won: 'active', site: 'active', done: 'closed', lost: 'closed' };

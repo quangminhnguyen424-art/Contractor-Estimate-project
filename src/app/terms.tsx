@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native';
 
 import { CONSENT_ITEMS, missingRequired, PRIVACY_SUMMARY, SUPPORT_EMAIL, TERMS, TERMS_VERSION } from '@/engine/legal';
 import { useApp } from '@/store/AppContext';
-import { Button, C, Card, H2, Muted, Screen, Segmented } from '@/ui/kit';
+import { Button, C, Card, H2, Muted, Screen } from '@/ui/kit';
 import { Text } from '@/ui/text';
 import { Tick } from '@/ui/tick';
 
@@ -15,7 +15,6 @@ import { Tick } from '@/ui/tick';
  */
 export default function TermsScreen() {
   const { termsOk, acceptTerms, consent, setAiSharing, profile } = useApp();
-  const [lang, setLang] = useState<'en' | 'vi'>('en');
   const [ticked, setTicked] = useState<Record<string, boolean>>(() => ({ 'ai-share': consent?.ai === true }));
   const [full, setFull] = useState(false);
   const missing = missingRequired(ticked);
@@ -42,21 +41,19 @@ export default function TermsScreen() {
       <View style={{ gap: 6, paddingTop: 12 }}>
         <Text style={{ color: C.accent, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>BIDWELL AI · BETA</Text>
         <Text style={{ color: C.ink, fontSize: 28, fontWeight: '800' }}>{termsOk ? 'Terms and AI' : 'Before you start'}</Text>
-        <Muted>Please read and agree. It takes a minute. · Vui lòng đọc và đồng ý.</Muted>
+        <Muted>Please read and agree. It takes a minute.</Muted>
       </View>
-
-      <Segmented options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} value={lang} onChange={setLang} />
 
       <Card>
         {CONSENT_ITEMS.map((c) => (
           termsOk && c.required ? (
             <View key={c.id} style={{ flexDirection: 'row', gap: 12, paddingVertical: 8 }}>
               <Ionicons name="checkmark-circle" size={22} color={C.okInk} />
-              <Text style={{ flex: 1, color: C.ink2, fontSize: 15 }}>{c[lang]}</Text>
+              <Text style={{ flex: 1, color: C.ink2, fontSize: 15 }}>{c.en}</Text>
             </View>
           ) : (
             <Tick key={c.id} on={!!ticked[c.id]} required={c.required} onPress={() => setTicked((t) => ({ ...t, [c.id]: !t[c.id] }))}>
-              <Text style={{ color: C.ink, fontSize: 16, lineHeight: 22 }}>{c[lang]}</Text>
+              <Text style={{ color: C.ink, fontSize: 16, lineHeight: 22 }}>{c.en}</Text>
             </Tick>
           )
         ))}

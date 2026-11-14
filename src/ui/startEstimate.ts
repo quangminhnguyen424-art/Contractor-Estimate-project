@@ -1,3 +1,4 @@
+import { aiLanguage } from '@/i18n';
 import { router } from 'expo-router';
 
 import type { EstimateAction } from '@/engine/assistant';
@@ -22,6 +23,7 @@ export async function startEstimateFromChat(
     work: workSummary(opts.profile?.work),
     history: h.perSf ? `${h.count} past jobs, average ${money(h.perSf)}${perUnit(jt.unit)}` : undefined,
     prices: lessonsContext(opts.lessons ?? []),
+    language: aiLanguage(),
   });
   opts.setDraft({
     jobTypeId: action.jobTypeId,

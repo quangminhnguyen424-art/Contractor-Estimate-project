@@ -7,9 +7,9 @@ import { Text } from '@/ui/text';
 import { Tick } from '@/ui/tick';
 import { defaultNotices } from '@/engine/legal';
 import { CLAUDE_MODEL, testClaudeKey } from '@/engine/ai';
-import type { JobTypeId, Lang, PaymentMilestone, Profile } from '@/engine/types';
+import type { JobTypeId, PaymentMilestone, Profile } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Field, Label, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
+import { Banner, Button, C, Field, Muted, NumberField, Screen } from '@/ui/kit';
 import { hostSave, inClaudeApp } from '@/ui/host';
 import { EMPTY_WORK } from '@/engine/profile';
 import { JobTypeChips } from '@/ui/JobTypes';
@@ -217,9 +217,6 @@ export default function Settings() {
           <NumberField label="Sales tax rate" suffix="%" value={p.salesTaxPct} onChange={(v) => set('salesTaxPct', v)}
             help="Added to the client total. Use the rate where the work is done." />
           <NumberField label="Quote valid for" suffix="days" value={p.quoteValidDays} onChange={(v) => set('quoteValidDays', v)} decimals={false} />
-          <Label>Default quote language</Label>
-          <Segmented<Lang> value={p.quoteLanguage} onChange={(v) => set('quoteLanguage', v)}
-            options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
         </>
       ) : page === 'work' ? (
         <>

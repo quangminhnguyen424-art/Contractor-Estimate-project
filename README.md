@@ -14,7 +14,7 @@ Phone app (iPhone + Android, one codebase) that turns a job description into a p
 | **Detailed estimate** | Built from assemblies (labor + materials per unit), trade-by-trade cost, markup you can adjust, sales tax, purchase quantities rounded to whole boxes/sheets/rolls |
 | **Check before sending** | Margin below your minimum, lead-safe (pre-1978), basement egress, panel capacity for 240V circuits, bath fans, smoke/CO detectors, 6/3 wire for 50A range, slab trenching, permits, missing tax rate |
 | **"Your price" check** | Compares the estimate's $/SF with your preset and with your own past jobs; flags anything 20%+ off |
-| **Client quote** | Branded quote, English or Vietnamese, scope by trade, exclusions, payment schedule, terms, signature lines; shared as a PDF. Never shows cost, labor or markup |
+| **Client quote** | Branded quote in the client’s language (English or Vietnamese, chosen per job), scope by trade, exclusions, payment schedule, terms, signature lines; shared as a PDF. Never shows cost, labor or markup |
 | **Material list** | Grouped by category with quantities and prices; shared as a PDF |
 | **My pricing** | Edit $/SF presets, add past jobs (or paste an old quote and the app pulls out type, size and total), and see the $/SF it learned from your jobs |
 | **Price book** | Override any labor rate or material price with your own |
@@ -64,6 +64,7 @@ npx eslint src
 | `src/store/` | App state and on-phone storage |
 | `src/cloud/` | Supabase: login, sync, online signing, support tickets |
 | `src/ui/` | Shared components. `kit.tsx` (buttons, fields, lists), `theme.ts` (colors), `Sheet.tsx` (the one bottom sheet), `Composer.tsx` (the one message box), `job/` (the parts of the job page). |
+| `src/i18n/` | The app's language: the translator, the list of languages, and the dictionaries. |
 | `supabase/` | Database migrations and edge functions |
 
 ### How the app is organized
@@ -74,6 +75,15 @@ The app follows one line: **say the job → get the price → send the quote →
 - **One job, one page:** `/job/[id]` shows the stage (Estimate → Sent → Signed → Finished), the one next step, and three views: Overview, Job site, Money. The id is the estimate's id, or the job site's id for a photo-only job; `engine/job.ts` joins the two records.
 - **Screens under a job** do one thing each: `estimate/[id]` (private price details), `estimate/[id]/quote`, `sign`, `contract`, `change`, `follow`, `materials`, and `site/[id]/room`, `photo`, `log`, `share`, `money`, `buy`, `cost`.
 - **Going back:** screens opened from a tab are pushed on top of the tabs (`router.push`). To return to a tab from deeper in, use `router.dismissTo('/jobs')`, never `router.replace` (that would stack a second copy of the tabs).
+
+### Languages
+
+The app asks for the user's language on first open (`ui/LanguageScreen.tsx`) and the whole interface, Bidwell's answers and the voice follow it. Change it later under Me > Language.
+
+- **Write screens in English.** The app's `Text` component translates what it draws, so screens need no translation keys. Text the user typed (client names, notes) is never translated.
+- **After changing any wording, run `node scripts/i18n-extract.mjs`.** It rebuilds `src/i18n/catalog.json`, the list of every sentence the app can show. Then add the new sentences to `src/i18n/vi.json`; `npm test` fails when more than a few are missing.
+- **Tiếng Việt is built in** (`vi.json`). Spanish has its first screens built in (`es.json`). Every other language, and the rest of Spanish, is translated by the AI once after login and kept on the phone.
+- **Client documents are separate.** Quotes, contracts and invoices are written in the "Client’s language" chosen on each job (English or Vietnamese), not the app's language.
 
 ## Publishing to the App Store / Google Play
 

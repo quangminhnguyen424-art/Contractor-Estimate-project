@@ -1,8 +1,10 @@
-import { createContext, useContext } from 'react';
+import { Children, createContext, isValidElement, useContext, type ReactNode } from 'react';
 import {
   Platform, StyleSheet, Text as RNText, TextInput as RNTextInput,
   type TextInputProps, type TextProps, type TextStyle,
 } from 'react-native';
+
+import { useT } from '@/i18n';
 
 /**
  * Everything uses the phone's own font: San Francisco on iPhone (the font of Facebook, Messages and most iPhone apps),
@@ -35,6 +37,15 @@ export function fontFor(_weight: Weight): string {
   return SYSTEM;
 }
 
+/**
+ * Inside this, texts are shown exactly as written. Used around what the client will read (a quote preview, the
+ * signing screen): those follow the client's language, not the app's.
+ */
+const AsWritten = createContext(false);
+export function Untranslated({ children }: { children: ReactNode }) {
+  return <AsWritten.Provider value>{children}</AsWritten.Provider>;
+}
+
 // Nested text (a bold word inside a sentence) inherits the weight of the text around it, as in plain React Native.
 const WeightCtx = createContext<Weight>(undefined);
 
@@ -50,16 +61,36 @@ function useFontStyle(style: TextProps['style']) {
   return { weight, style: [rest, { fontFamily: SYSTEM, fontWeight: weight }] };
 }
 
-export function Text({ style, children, ...props }: TextProps) {
+/**
+ * Puts a text into the user's language as it is drawn. A whole sentence (words and values, no elements inside)
+ * is translated as one; with a <Text> inside it, each run of words is translated by itself.
+ * Only the app's own wording changes: names, titles and anything else the user typed stay as they are.
+ */
+function translated(children: ReactNode, t: (s: string) => string): ReactNode {
+  if (typeof children === 'string') return t(children);
+  if (!Array.isArray(children)) return children;
+  const flat = Children.toArray(children);
+  if (flat.every((c) => typeof c === 'string' || typeof c === 'number')) return t(flat.join(''));
+  return flat.map((c) => (typeof c === 'string' ? t(c) : isValidElement(c) || typeof c === 'number' ? c : null));
+}
+
+export function Text({ style, children, raw, ...props }: TextProps & {
+  /** Show exactly this text, never translated (a document preview, an AI answer). Rarely needed. */
+  raw?: boolean;
+}) {
   const f = useFontStyle(style);
+  const t = useT();
+  const asWritten = useContext(AsWritten) || raw;
   return (
     <WeightCtx.Provider value={f.weight}>
-      <RNText {...props} style={f.style}>{children}</RNText>
+      <RNText {...props} style={f.style}>{asWritten ? children : translated(children, t)}</RNText>
     </WeightCtx.Provider>
   );
 }
 
-export function TextInput({ style, ...props }: TextInputProps) {
+export function TextInput({ style, placeholder, ...props }: TextInputProps) {
   const flat = (StyleSheet.flatten(style) ?? {}) as TextStyle;
-  return <RNTextInput {...props} style={[flat, { fontFamily: SYSTEM }]} />;
+  const t = useT();
+  const asWritten = useContext(AsWritten);
+  return <RNTextInput {...props} placeholder={placeholder && !asWritten ? t(placeholder) : placeholder} style={[flat, { fontFamily: SYSTEM }]} />;
 }

@@ -7,7 +7,7 @@ import { notify } from './notify';
 import { ActionSheet, type SheetAction } from './Sheet';
 import { TextInput } from './text';
 import { C } from './theme';
-import { listen, voiceInputAvailable, type VoiceLang } from './voice';
+import { listen, voiceInputAvailable } from './voice';
 
 export type ComposerAction = SheetAction;
 
@@ -15,11 +15,11 @@ export type ComposerAction = SheetAction;
  * The one message box of the app (Home, New estimate, Help): + for photos and more, the text, a microphone to
  * talk, and an arrow to send. Talking fills the box (it does not send by itself), so a word can be fixed first.
  */
-export function Composer({ value, onChange, onSend, actions = [], placeholder, sending, lang = 'en-US', sendLabel = 'Send', inputLabel = 'Message', allowEmpty, maxLength = 4000 }: {
+export function Composer({ value, onChange, onSend, actions = [], placeholder, sending, sendLabel = 'Send', inputLabel = 'Message', allowEmpty, maxLength = 4000 }: {
   value: string; onChange: (t: string) => void; onSend: () => void;
   /** What the + offers. Leave out for a plain message box without the +. */
   actions?: ComposerAction[];
-  placeholder: string; sending?: boolean; lang?: VoiceLang; sendLabel?: string; inputLabel?: string;
+  placeholder: string; sending?: boolean; sendLabel?: string; inputLabel?: string;
   /** New estimate can go on with photos or a scan and no words. */
   allowEmpty?: boolean; maxLength?: number;
 }) {
@@ -37,7 +37,7 @@ export function Composer({ value, onChange, onSend, actions = [], placeholder, s
     }
     before.current = value.trim() ? `${value.trim()} ` : '';
     setListening(true);
-    const h = await listen(lang, {
+    const h = await listen({
       onPartial: (t) => onChange(before.current + t),
       onFinal: (t) => onChange(before.current + t),
       onError: (m) => notify('Voice', m),
