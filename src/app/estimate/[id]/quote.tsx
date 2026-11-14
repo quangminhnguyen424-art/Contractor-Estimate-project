@@ -8,7 +8,7 @@ import { Text, Untranslated } from '@/ui/text';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
 import { FINISH_LABELS } from '@/engine/jobTypes';
-import { acceptedBlock, changedSinceSigned } from '@/engine/contract';
+import { changedSinceSigned } from '@/engine/contract';
 import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, quoteWritePrompt, scheduleAmounts, type QuoteWriteTarget } from '@/engine/quote';
 import { aiFor } from '@/ui/host';
 import { ActionSheet } from '@/ui/Sheet';
@@ -16,7 +16,7 @@ import { useCloud } from '@/cloud/CloudProvider';
 import { createSignLink } from '@/cloud/sign';
 import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
-import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
+import { ClientLanguage, signedQuoteHtml, translateFailed, useClientDocs } from '@/ui/ClientLanguage';
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -25,7 +25,8 @@ export default function QuoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { estimates, profile, updateEstimate, contracts } = useApp();
   const est = estimates.find((e) => e.id === id);
-  const lang = clientLang(est);
+  const docs = useClientDocs(est);
+  const lang = docs.lang;
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -49,17 +50,18 @@ export default function QuoteScreen() {
     try {
       const link = await createSignLink({
         uid: cloud.user.id, kind: 'quote', estimateId: est.id, title: est.title, company: profile.companyName,
-        clientName: est.clientName, total: est.total, html: quoteHtml(est, profile, lang),
+        clientName: est.clientName, total: est.total, html: await docs.doc(quoteHtml(est, profile, lang)),
         phone: profile.phone, email: profile.email, payLink: profile.payLink,
       });
       const msg = lang === 'vi'
         ? `${profile.companyName}: báo giá cho ${est.title} đã sẵn sàng. Mời anh/chị xem và ký tại đây: ${link}`
-        : `${profile.companyName}: your quote for ${est.title} is ready. Please review and sign here: ${link}`;
+        : await docs.message('{0}: your quote for {1} is ready. Please review and sign here: {2}', profile.companyName, est.title, link);
+      const subject = docs.target ? await docs.message('Quote: {0}', est.title) : `${T.quote}: ${est.title}`;
       if (via === 'sms') await Linking.openURL(Platform.OS === 'ios' ? `sms:&body=${encodeURIComponent(msg)}` : `sms:?body=${encodeURIComponent(msg)}`);
-      else await Linking.openURL(`mailto:?subject=${encodeURIComponent(`${T.quote}: ${est.title}`)}&body=${encodeURIComponent(msg)}`);
+      else await Linking.openURL(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`);
       if (est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
     } catch (e) {
-      notify('Could not make the link', e instanceof Error ? e.message : 'Check your connection and try again.');
+      if (!translateFailed(e, docs.target)) notify('Could not make the link', e instanceof Error ? e.message : 'Check your connection and try again.');
     } finally {
       setBusy(false);
     }
@@ -71,14 +73,13 @@ export default function QuoteScreen() {
       const c = contracts.find((x) => x.estimateId === est.id);
       const signed = c?.accepted;
       // A signed quote is shared exactly as signed. If the estimate changed since, share it unsigned.
-      const html = signed && !changedSinceSigned(est, c)
-        ? signed.html?.[lang] ?? quoteHtml(est, profile, lang, acceptedBlock(signed, profile, lang))
-        : quoteHtml(est, profile, lang);
+      const asSigned = signed && !changedSinceSigned(est, c);
+      const html = asSigned ? await signedQuoteHtml(est, profile, signed, docs) : await docs.doc(quoteHtml(est, profile, lang));
       if (signed && changedSinceSigned(est, c)) notify('Shared without the signature', 'The quote changed after the client signed, so this copy is unsigned. Have them sign again or use a change order.');
       const shared = await sharePdf(html, `${T.quote} — ${est.title}`);
       if (shared && est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
-    } catch {
-      notify('Could not create the PDF', 'Please try again.');
+    } catch (e) {
+      if (!translateFailed(e, docs.target)) notify('Could not create the PDF', 'Please try again.');
     } finally {
       setBusy(false);
     }
@@ -95,7 +96,7 @@ export default function QuoteScreen() {
           <Button kind="secondary" title="Edit" icon="create-outline" style={{ flex: 1 }} onPress={() => setEditing(true)} />
           <Button kind="secondary" title={isSigned ? 'Signed ✓' : 'Sign'} icon="pencil" style={{ flex: 1 }}
             onPress={() => router.push(`/estimate/${est.id}/sign`)} />
-          <Button title={busy ? '…' : 'Send'} icon="paper-plane-outline" disabled={busy} style={{ flex: 1.3 }} onPress={() => setMenu(true)} />
+          <Button title={busy ? (docs.target ? 'Translating…' : '…') : 'Send'} icon="paper-plane-outline" disabled={busy} style={{ flex: 1.3 }} onPress={() => setMenu(true)} />
         </View>
       </View>
     )}>

@@ -11,8 +11,9 @@ import { Text } from '@/ui/text';
 import { translateAll, writeClientUpdate, writePost } from '@/engine/siteAI';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
-import { clientLang as jobLang } from '@/ui/ClientLanguage';
-import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, Screen, Segmented, Select } from '@/ui/kit';
+import type { Language } from '@/i18n';
+import { clientLanguage, LanguageSelect, translateFailed, useClientWriter } from '@/ui/ClientLanguage';
+import { Banner, Button, C, Card, Chip, Field, H2, Label, Muted, Screen, Segmented } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { photoDataUrl, resolvePhotoUri } from '@/ui/photoStore';
 import { sharePdf } from '@/ui/share';
@@ -42,13 +43,15 @@ export default function ShareScreen() {
   const [mode, setMode] = useState<Mode>(modeParam === 'client' || modeParam === 'post' ? modeParam : 'crew');
   const [rooms, setRooms] = useState<string[]>(room ? [room] : p?.rooms.map((r) => r.id) ?? []);
   const [lang, setLang] = useState<CrewLang>('en');
-  const [picked, setClientLang] = useState<'en' | 'vi' | null>(null);
+  const [picked, setPicked] = useState<Language | null>(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
+  // The update goes out in the language chosen for this client's quote, unless it is changed here. A post starts in the contractor's own.
+  const est = estimates.find((e) => e.id === p?.estimateId);
+  const language = picked ?? clientLanguage(mode === 'client' ? est : undefined);
+  const writer = useClientWriter(language, [p?.clientName, p?.address, p?.title, ...text.split('\n')]);
+  const clientLang = writer.lang;
   if (!p) return <Screen><Muted>This project was deleted.</Muted></Screen>;
-  // The update goes out in the language chosen for this client's quote, unless it is changed here.
-  const est = estimates.find((e) => e.id === p.estimateId);
-  const clientLang = picked ?? jobLang(mode === 'client' ? est : undefined);
   const company = profile?.companyName ?? '';
   const pairs = beforeAfterPairs(p);
   // Photos the client hasn't seen: everything since the last update (or the last 7 days), newest 12.
@@ -112,7 +115,7 @@ export default function ShareScreen() {
   const write = async () => {
     setBusy('write');
     try {
-      setText(mode === 'client' ? await writeClientUpdate(ai, p, clientLang) : await writePost(ai, p, pairs.length, clientLang));
+      setText(mode === 'client' ? await writeClientUpdate(ai, p, clientLang, writer.target?.english) : await writePost(ai, p, pairs.length, clientLang, writer.target?.english));
     } catch (e) {
       notify('Bidwell could not write it', e instanceof Error ? e.message : 'Try again.');
     } finally {
@@ -124,14 +127,14 @@ export default function ShareScreen() {
     setBusy('pdf');
     try {
       const ids = new Set([...pairs.flatMap((x) => [x.before.id, x.after.id]), ...recent.map((ph) => ph.id)]);
-      const shared = await sharePdf(clientUpdateHtml(p, text.trim(), await photoSources(p, ids), company, clientLang, recent.map((ph) => ph.id)), `Progress update — ${p.title}`);
+      const shared = await sharePdf(await writer.doc(clientUpdateHtml(p, text.trim(), await photoSources(p, ids), company, clientLang, recent.map((ph) => ph.id))), `Progress update — ${p.title}`);
       // The share sheet can't tell us whether it was really sent, so ask before counting it as the client's update.
       if (shared) {
         confirmAction('Did you send it to the client?', 'Then these photos count as seen, and the home screen reminds you again when there are new ones.', 'Yes, sent',
           () => updateProject(p.id, (x) => ({ ...x, lastClientUpdateAt: new Date().toISOString() })));
       }
-    } catch {
-      notify('Could not make the PDF', 'Try again.');
+    } catch (e) {
+      if (!translateFailed(e, writer.target)) notify('Could not make the PDF', 'Try again.');
     } finally {
       setBusy(null);
     }
@@ -173,9 +176,9 @@ export default function ShareScreen() {
               ? 'What’s finished and what’s next, with before and after photos. No prices or internal notes.'
               : 'A short post about the finished work. Never the client’s name, address or prices.'}
           </Muted>
-          <Select<'en' | 'vi'> label={mode === 'client' ? 'Client’s language' : 'Post language'} value={clientLang}
-            onChange={(v) => { setClientLang(v); if (est && mode === 'client') updateEstimate(est.id, { clientLang: v }); }}
-            options={[{ value: 'en', label: 'English' }, { value: 'vi', label: 'Tiếng Việt' }]} />
+          <LanguageSelect key={mode} label={mode === 'client' ? 'Client’s language' : 'Post language'} value={language}
+            help={mode === 'post' ? 'Bidwell writes the post in it.' : undefined}
+            onChange={(l) => { setPicked(l); if (est && mode === 'client') updateEstimate(est.id, { clientLang: l.code, clientLangName: l.name }); }} />
           <Button kind="secondary" title={busy === 'write' ? 'Bidwell is writing…' : 'Write it with Bidwell'} disabled={!!busy} onPress={write} />
           <Field label={mode === 'client' ? 'Message' : 'Post'} multiline value={text} onChangeText={setText}
             placeholder={mode === 'client' ? 'Hi! Here’s where we are…' : 'Before and after: hall bath…'} />

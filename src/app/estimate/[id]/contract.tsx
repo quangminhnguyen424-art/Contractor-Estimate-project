@@ -10,7 +10,7 @@ import {
 import { dateFmt, money, newId } from '@/engine/format';
 import { addDays } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
-import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
+import { ClientLanguage, translateFailed, useClientDocs } from '@/ui/ClientLanguage';
 import { Art } from '@/ui/art';
 import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Section, Stat, mono, Select } from '@/ui/kit';
 import { Progress, Reveal } from '@/ui/motion';
@@ -35,7 +35,8 @@ export default function ContractScreen() {
   const today = useToday();
   const est = estimates.find((e) => e.id === id);
   const c = contracts.find((x) => x.estimateId === id) ?? emptyContract(id ?? '');
-  const lang = clientLang(est);
+  const docs = useClientDocs(est);
+  const lang = docs.lang;
   const [dueDays, setDueDays] = useState(7);
   const [busy, setBusy] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
@@ -55,9 +56,9 @@ export default function ContractScreen() {
         ?? issueInvoice(est.id, { id: newId(), date: today, dueDate: addDays(today, dueDays), itemKey: item.key, label: item.label, amount: item.amount, tax: item.tax });
       if (!inv) return;
       const withInv: Contract = { ...c, terms: c.terms ?? termsFrom(est, profile), invoices: c.invoices.some((v) => v.id === inv.id) ? c.invoices : [...c.invoices, inv] };
-      await sharePdf(invoiceHtml(est, profile, withInv, inv, lang), `Invoice ${inv.number} — ${est.title}`);
-    } catch {
-      notify('Could not create the invoice', 'Please try again.');
+      await sharePdf(await docs.doc(invoiceHtml(est, profile, withInv, inv, lang)), `Invoice ${inv.number} — ${est.title}`);
+    } catch (e) {
+      if (!translateFailed(e, docs.target)) notify('Could not create the invoice', 'Please try again.');
     } finally {
       setBusy(null);
     }

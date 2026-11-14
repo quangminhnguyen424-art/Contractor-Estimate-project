@@ -360,7 +360,6 @@
 "Buy list": "Danh sách mua",
 "Buy list: {0} (planned {1})": "Danh sách mua: {0} (dự kiến {1})",
 "By signing, I accept the quote from {0} for {1} including sales tax, with its scope, exclusions, payment schedule and terms.": "By signing, I accept the quote from {0} for {1} including sales tax, with its scope, exclusions, payment schedule and terms.",
-"Bằng việc ký tên, tôi đồng ý báo giá của {0} với tổng {1} (gồm thuế), cùng phạm vi công việc, các mục không bao gồm, lịch thanh toán và điều khoản.": "Bằng việc ký tên, tôi đồng ý báo giá của {0} với tổng {1} (gồm thuế), cùng phạm vi công việc, các mục không bao gồm, lịch thanh toán và điều khoản.",
 "CLIENT PRICE": "GIÁ CHO KHÁCH",
 "CONTRACT PRICE": "GIÁ HỢP ĐỒNG",
 "Cabinet run (upper + lower)": "Dãy tủ (trên + dưới)",
@@ -2269,7 +2268,6 @@
 "{0}: quote from {1}": "{0}: báo giá từ {1}",
 "{0}: thanks {1}, you agreed to reminders about \"{2}\" by {3} ({4} after the quote). Reply STOP to end them anytime.": "{0}: thanks {1}, you agreed to reminders about \"{2}\" by {3} ({4} after the quote). Reply STOP to end them anytime.",
 "{0}: you've spent more than the owner has paid. Ask for the next payment?": "{0}: bạn đã chi nhiều hơn số chủ nhà đã trả. Yêu cầu đợt thanh toán tiếp theo?",
-"{0}: your quote for {1} is ready. Please review and sign here: {2}": "{0}: your quote for {1} is ready. Please review and sign here: {2}",
 "{0}: {1} SF floor": "{0}: {1} SF sàn",
 "{0}: {1} is {2}% over budget. Extra work for a change order?": "{0}: {1} vượt ngân sách {2}%. Có việc phát sinh cần lập change order không?",
 "{0}: {1} payment is overdue.": "{0}: {1} khoản thanh toán quá hạn.",
@@ -2306,5 +2304,16 @@
 "Post language": "Ngôn ngữ bài đăng",
 "Add your people in Me > Crew and subs with their rate and language (English, Tiếng Việt, Español). On a job, Job site > Work order for the crew makes a to-do list in their language with no prices. Each morning Home asks if your crew showed up; Worked adds the labor cost to the job.": "Thêm người của bạn ở Tôi > Thợ và thầu phụ, kèm giá công và ngôn ngữ (English, Tiếng Việt, Español). Trong một job, Công trình > Phiếu công việc cho thợ tạo danh sách việc bằng ngôn ngữ của họ, không có giá. Mỗi sáng Trang chủ hỏi thợ có đi làm không; bấm Có làm thì tiền công được cộng vào job.",
 "The whole app, Bidwell’s answers and the voice follow one language: change it under Me > Language. What the client receives follows “Client’s language” on that job’s quote screen (English or Tiếng Việt), so you can work in your language and still send an English quote. Crew work orders go out in each person’s language.": "Cả app, câu trả lời của Bidwell và giọng nói đều theo một ngôn ngữ: đổi ở Tôi > Ngôn ngữ. Những gì khách nhận thì theo “Ngôn ngữ của khách” trên màn hình báo giá của job đó (English hoặc Tiếng Việt), nên bạn dùng app bằng tiếng của mình mà vẫn gửi được báo giá tiếng Anh. Phiếu công việc cho thợ được viết bằng ngôn ngữ của từng người.",
-"days": "ngày"
+"days": "ngày",
+"Bidwell translates what you send into it. You keep the English version.": "Bidwell dịch những gì bạn gửi sang ngôn ngữ đó. Bạn vẫn giữ bản tiếng Anh.",
+"Bidwell writes the post in it.": "Bidwell viết bài đăng bằng ngôn ngữ này.",
+"Could not open the message": "Không mở được tin nhắn",
+"Quote: {0}": "Báo giá: {0}",
+"Translating a document sends it to the AI, and AI sharing is off (Me > Bidwell AI).": "Dịch tài liệu cần gửi nó tới AI, mà chia sẻ với AI đang tắt (Tôi > Bidwell AI).",
+"Translating…": "Đang dịch…",
+"that language": "ngôn ngữ đó",
+"Bidwell translates what you send into {0}. You keep the English version.": "Bidwell dịch những gì bạn gửi sang {0}. Bạn vẫn giữ bản tiếng Anh.",
+"Could not translate into {0}": "Không dịch được sang {0}",
+"{0} Try again, or set Client’s language to English.": "{0} Thử lại, hoặc đổi Ngôn ngữ của khách thành English.",
+"{0}: here is your change order for {1}. Please review and sign here: {2}": "{0}: change order cho {1}. Mời anh/chị xem và ký tại đây: {2}"
 }

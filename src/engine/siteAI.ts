@@ -52,10 +52,11 @@ export async function writeDailyLog(ai: EstimatorAI, p: SiteProject, date: strin
   return plain(await ai.complete(dailyLogPrompt(p, date), [], 700));
 }
 
-export async function writeClientUpdate(ai: EstimatorAI, p: SiteProject, lang: 'en' | 'vi'): Promise<string> {
-  return plain(await ai.complete(clientUpdatePrompt(p, lang), [], 700));
+/** `language`: any other language to write in, by its English name ("Korean"). */
+export async function writeClientUpdate(ai: EstimatorAI, p: SiteProject, lang: 'en' | 'vi', language?: string): Promise<string> {
+  return plain(await ai.complete(clientUpdatePrompt(p, lang, language), [], 700));
 }
 
-export async function writePost(ai: EstimatorAI, p: SiteProject, pairs: number, lang: 'en' | 'vi'): Promise<string> {
-  return plain(await ai.complete(postPrompt(p, pairs, lang), [], 700));
+export async function writePost(ai: EstimatorAI, p: SiteProject, pairs: number, lang: 'en' | 'vi', language?: string): Promise<string> {
+  return plain(await ai.complete(postPrompt(p, pairs, lang, language), [], 700));
 }

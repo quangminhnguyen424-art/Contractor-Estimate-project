@@ -10,6 +10,7 @@ import {
 import { addDays, type CalEvent } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Chip, Field, H2, Muted, Screen, Select } from '@/ui/kit';
+import { translateFailed, useClientDocs } from '@/ui/ClientLanguage';
 import { notify } from '@/ui/notify';
 import { cancelReminder, scheduleReminder } from '@/ui/reminders';
 import { Text } from '@/ui/text';
@@ -40,12 +41,17 @@ export default function FollowScreen() {
   const [p, setP] = useState<FollowUpPlan>(() => saved ?? newPlan(id ?? '', today));
   const [daysText, setDaysText] = useState((saved?.days ?? []).join(', '));
   const [confirm, setConfirm] = useState<{ client: string; contractor: string } | null>(null);
+  const docs = useClientDocs(est);
   if (!est) return <Screen><Muted>This estimate was deleted.</Muted></Screen>;
   const company = profile?.companyName || 'Your contractor';
   const problems = planProblems(p);
   const next = nextFollowUp(saved, est.status);
   const set = (patch: Partial<FollowUpPlan>) => setP((x) => ({ ...x, ...patch }));
   const to = (c: FollowChannel) => (c === 'text' ? p.phone : p.email);
+  // What the client receives is in the client's language (chosen on the quote screen).
+  const send = async (c: FollowChannel, text: string, subject: string) => {
+    try { await compose(c, to(c), await docs.say(text), await docs.say(subject)); } catch (e) { if (!translateFailed(e, docs.language)) notify('Could not open the message', 'Try again.'); }
+  };
 
   // One reminder on the calendar per follow-up day, so it rings on the contractor's phone.
   const syncCalendar = async (plan: FollowUpPlan) => {
@@ -89,7 +95,7 @@ export default function FollowScreen() {
     if (!next || !saved) return;
     if (!okToSendNow(new Date())) { notify('Quiet hours', 'Send between 8 AM and 8 PM so you don’t wake the client.'); return; }
     const n = saved.sent.length + 1;
-    await compose(channel, to(channel), followUpText(n, company, est.clientName, est.title), `${est.title}: quote from ${company}`);
+    await send(channel, followUpText(n, company, est.clientName, est.title), `${est.title}: quote from ${company}`);
     const plan = { ...saved, sent: [...saved.sent, { day: next.day, at: new Date().toISOString(), channel }] };
     saveFollowUp(plan);
     setP(plan);
@@ -105,7 +111,7 @@ export default function FollowScreen() {
           <Text style={{ color: C.ink2, lineHeight: 21 }}>{confirm.client}</Text>
           {p.channels.map((c) => (
             <Button key={c} kind="secondary" title={c === 'text' ? 'Text it to the client' : 'Email it to the client'} icon={c === 'text' ? 'chatbubble-outline' : 'mail-outline'}
-              onPress={() => compose(c, to(c), confirm.client, `Reminders from ${company}`)} />
+              onPress={() => send(c, confirm.client, `Reminders from ${company}`)} />
           ))}
         </Card>
         <Card>

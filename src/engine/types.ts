@@ -323,8 +323,13 @@ export interface Estimate {
   checks: Check[];
   comparison: PriceComparison;
   quoteEdits?: QuoteEdits;
-  /** The language this job's quote, contract and invoices are written in (the client's). Unset: the contractor's. */
-  clientLang?: Lang;
+  /**
+   * The language the client reads: a code from the language list (`ko-KR`), or `x-…` with `clientLangName` for one
+   * the contractor typed in. Unset: the contractor's own. Documents are written in English or Vietnamese and
+   * translated into any other language when they are sent. (`en` / `vi` were saved by earlier versions.)
+   */
+  clientLang?: string;
+  clientLangName?: string;
   /** "Request changes" messages the client sent from a signing link, newest last. */
   clientNotes?: { at: string; name: string; text: string }[];
 }

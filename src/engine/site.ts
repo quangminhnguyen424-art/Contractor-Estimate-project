@@ -236,20 +236,20 @@ ${act || '(nothing recorded today)'}
 Write 3 to 6 short lines: work done, what's next, anything to watch. Only use the facts above. No headings, no markdown.`;
 }
 
-export function clientUpdatePrompt(p: SiteProject, lang: 'en' | 'vi'): string {
+export function clientUpdatePrompt(p: SiteProject, lang: 'en' | 'vi', language?: string): string {
   const rooms = p.rooms.map((r) => {
     const pr = roomProgress(r);
     return `${r.name}: ${pr.done} of ${pr.total} tasks done${r.tasks.some((t) => t.done && !isQuestion(t)) ? ` (${r.tasks.filter((t) => t.done && !isQuestion(t)).map((t) => t.text).join('; ')})` : ''}`;
   }).join('\n');
-  return `Write a friendly progress update from a contractor to their client${p.clientName ? `, ${p.clientName}` : ''}, in ${lang === 'vi' ? 'Vietnamese' : 'English'}.
+  return `Write a friendly progress update from a contractor to their client${p.clientName ? `, ${p.clientName}` : ''}, in ${language ?? (lang === 'vi' ? 'Vietnamese' : 'English')}.
 Job: ${p.title}. Progress by room:
 ${rooms}
 4 to 7 short lines: what's finished, what's next, a thank-you. Plain text, no prices, no internal notes, no promises of dates that aren't given.`;
 }
 
-export function postPrompt(p: SiteProject, pairs: number, lang: 'en' | 'vi'): string {
+export function postPrompt(p: SiteProject, pairs: number, lang: 'en' | 'vi', language?: string): string {
   const done = p.rooms.flatMap((r) => r.tasks.filter((t) => t.done).map((t) => `${r.name}: ${t.text}`)).slice(0, 25);
-  return `Write a Facebook post for a contractor showing a finished job, in ${lang === 'vi' ? 'Vietnamese (natural, for the Vietnamese community in the Seattle area)' : 'English'}.
+  return `Write a Facebook post for a contractor showing a finished job, in ${language ?? (lang === 'vi' ? 'Vietnamese (natural, for the Vietnamese community in the Seattle area)' : 'English')}.
 Job: ${p.title}. ${pairs} before-and-after photo pair(s) will be attached.
 Work done:
 ${done.join('\n') || p.rooms.map((r) => r.name).join(', ')}

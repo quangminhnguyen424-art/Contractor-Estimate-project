@@ -297,7 +297,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
-    ...(e.clientLang === 'vi' || e.clientLang === 'en' ? { clientLang: e.clientLang } : {}),
+    ...(typeof e.clientLang === 'string' && /^[\p{L}\p{N}-]{2,60}$/u.test(e.clientLang) ? { clientLang: e.clientLang, ...(typeof e.clientLangName === 'string' && e.clientLangName.trim() ? { clientLangName: e.clientLangName.trim().slice(0, 40) } : {}) } : {}),
     clientNotes: Array.isArray(e.clientNotes)
       ? e.clientNotes.filter((n): n is { at: string; name: string; text: string } => isObj(n) && typeof n.at === 'string' && typeof n.text === 'string')
         .slice(-20).map((n) => ({ at: n.at, name: str(n.name).slice(0, 120), text: n.text.slice(0, 2000) }))
@@ -423,7 +423,7 @@ export function sanitizeContracts(v: unknown): Contract[] {
       return [{ id: x.id, date: str(x.date), amount, method: PAY.includes(x.method as PayMethod) ? (x.method as PayMethod) : 'other', note: str(x.note).slice(0, 300) }];
     }).slice(0, 500);
     const html = isObj(c.accepted) && isObj(c.accepted.html)
-      ? Object.fromEntries(Object.entries(c.accepted.html).filter(([k, x]) => (k === 'en' || k === 'vi') && typeof x === 'string' && x.length < 600000))
+      ? Object.fromEntries(Object.entries(c.accepted.html).filter(([k, x]) => (k === 'en' || k === 'vi' || k === 'client') && typeof x === 'string' && x.length < 600000))
       : undefined;
     const terms = sanitizeTerms(c.terms);
     return [{

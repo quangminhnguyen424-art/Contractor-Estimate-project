@@ -7,7 +7,7 @@ import { changeOrderHtml, emptyContract, hasInk, nextChangeNo, signatureSvg, tax
 import { dateFmt, money, newId } from '@/engine/format';
 import { useApp } from '@/store/AppContext';
 import { SendSignLink } from '@/ui/SendSignLink';
-import { ClientLanguage, clientLang } from '@/ui/ClientLanguage';
+import { ClientLanguage, translateFailed, useClientDocs } from '@/ui/ClientLanguage';
 import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
@@ -34,8 +34,9 @@ export default function ChangeOrderScreen() {
   const [strokes, setStrokes] = useState<number[][]>([]);
   const [drawing, setDrawing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const docs = useClientDocs(est);
+  const lang = docs.lang;
   if (!est || !profile) return <Screen><Muted>Estimate not found.</Muted></Screen>;
-  const lang = clientLang(est);
   if (coId && !saved) return <Screen><Muted>This change order was deleted.</Muted></Screen>;
   const padW = Math.min(width, 760) - 32;
   const status = saved?.status ?? 'pending';
@@ -70,9 +71,9 @@ export default function ChangeOrderScreen() {
     try {
       const cur = locked && saved ? saved : persist();
       const withCur = { ...contract, changeOrders: [...contract.changeOrders.filter((x) => x.id !== cur.id), cur] };
-      await sharePdf(changeOrderHtml(est, profile, withCur, cur, lang), `Change order ${cur.number} — ${est.title}`);
-    } catch {
-      notify('Could not create the PDF', 'Please try again.');
+      await sharePdf(await docs.doc(changeOrderHtml(est, profile, withCur, cur, lang)), `Change order ${cur.number} — ${est.title}`);
+    } catch (e) {
+      if (!translateFailed(e, docs.target)) notify('Could not create the PDF', 'Please try again.');
     } finally {
       setBusy(false);
     }
@@ -125,8 +126,10 @@ export default function ChangeOrderScreen() {
             html={() => {
               const cur: ChangeOrder = { ...(saved ?? { id: coId, number, status: 'pending' as const, createdAt: new Date().toISOString() }), title: title.trim(), description, amount: value(credit, amount) } as ChangeOrder;
               const withCur = { ...contract, changeOrders: [...contract.changeOrders.filter((x) => x.id !== cur.id), cur] };
-              return changeOrderHtml(est, profile, withCur, cur, 'en');
-            }} />
+              return docs.doc(changeOrderHtml(est, profile, withCur, cur, lang));
+            }}
+            message={(link) => docs.say(`${profile.companyName}: here is your change order for ${est.title}. Please review and sign here: ${link}`)}
+            failed={(e) => translateFailed(e, docs.target)} />
           <Banner tone="info" title="Client approves on your phone">They type their name and sign below. The change is added to the contract and can be invoiced.</Banner>
           <Field label="Client name" value={name} onChangeText={setName} maxLength={80} />
           <SignaturePad width={padW} strokes={strokes} onChange={setStrokes} onDrawing={setDrawing} />

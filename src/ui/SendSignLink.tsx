@@ -13,7 +13,11 @@ import { notify } from './notify';
 export function SendSignLink(props: {
   kind: 'quote' | 'change'; estimateId: string; changeId?: string; title: string; clientName: string; total: number;
   /** The document exactly as the client will see it. Called when the link is made. */
-  html: () => string;
+  html: () => string | Promise<string>;
+  /** The text sent with the link, in the client's language. Without it: English. */
+  message?: (link: string) => Promise<string>;
+  /** Explain an error to the user; return true when it was handled. */
+  failed?: (e: unknown) => boolean;
   /** Run before sending (e.g. save the change order first); may return the id the document got. */
   before?: () => string | void;
   disabled?: boolean;
@@ -32,14 +36,14 @@ export function SendSignLink(props: {
       const company = profile?.companyName ?? '';
       const link = await createSignLink({
         uid: cloud.user.id, kind: props.kind, estimateId: props.estimateId, changeId: madeId || props.changeId, title: props.title,
-        company, clientName: props.clientName, total: props.total, html: props.html(),
+        company, clientName: props.clientName, total: props.total, html: await props.html(),
         phone: profile?.phone, email: profile?.email, payLink: profile?.payLink,
       });
       const what = props.kind === 'quote' ? 'quote' : 'change order';
-      await Share.share({ message: `${company}: here is your ${what} for ${props.title}. Please review and sign here: ${link}` });
+      await Share.share({ message: props.message ? await props.message(link) : `${company}: here is your ${what} for ${props.title}. Please review and sign here: ${link}` });
       setSent(true);
     } catch (e) {
-      notify('Could not make the link', e instanceof Error ? e.message : 'Check your connection and try again.');
+      if (!props.failed?.(e)) notify('Could not make the link', e instanceof Error ? e.message : 'Check your connection and try again.');
     } finally {
       setBusy(false);
     }

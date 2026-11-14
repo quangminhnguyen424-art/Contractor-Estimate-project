@@ -20,7 +20,7 @@ import { postHook } from '@/ui/webhook';
 import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
-  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, Lang, QuoteEdits, PastJob, PlanRoom, Presets, PriceBook, Profile,
+  Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, QuoteEdits, PastJob, PlanRoom, Presets, PriceBook, Profile,
   Question, ScopeItem,
 } from '@/engine/types';
 
@@ -118,7 +118,7 @@ interface Ctx extends Persisted {
   deletePhotosLater: (uris: string[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
-  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: Lang; addClientNote?: { at: string; name: string; text: string } }) => void;
+  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; addClientNote?: { at: string; name: string; text: string } }) => void;
   deleteEstimate: (id: string) => void;
   /** Erases everything on this device. keepPhotos leaves photo files (used on sign-out: they are matched again on the next sign-in). */
   resetAll: (keepPhotos?: boolean) => void;
@@ -420,7 +420,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               const n = patch.addClientNote;
               if (!(next.clientNotes ?? []).some((x) => x.at === n.at)) next = { ...next, clientNotes: [...(next.clientNotes ?? []), n].slice(-20) };
             }
-            if (patch.clientLang) next = { ...next, clientLang: patch.clientLang };
+            if (patch.clientLang) next = { ...next, clientLang: patch.clientLang, clientLangName: patch.clientLang.startsWith('x-') ? patch.clientLangName : undefined };
             if (patch.quoteEdits !== undefined) {
               const { quoteEdits: _old, ...rest } = next;
               next = patch.quoteEdits ? { ...rest, quoteEdits: patch.quoteEdits, updatedAt: new Date().toISOString() } : { ...rest, updatedAt: new Date().toISOString() };

@@ -65,7 +65,8 @@ export interface Terms {
 export interface Contract {
   estimateId: string;
   /** The client's acceptance of the quote, with the total they agreed to and the signed quote itself. */
-  accepted?: Signature & { total: number; html?: Partial<Record<Lang, string>> };
+  /** `html`: the exact quote that was signed. `client` is the copy in the client's own language, when that is neither English nor Vietnamese. */
+  accepted?: Signature & { total: number; html?: Partial<Record<Lang | 'client', string>> };
   /** Frozen terms: later edits to the estimate or the payment schedule in Settings never change a running job. */
   terms?: Terms;
   changeOrders: ChangeOrder[];

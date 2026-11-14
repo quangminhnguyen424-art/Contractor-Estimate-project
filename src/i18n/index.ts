@@ -137,6 +137,9 @@ export function setTranslationAI(fn: Complete | null) {
   if (fn && queue.size) schedule();
 }
 
+/** The AI as the translator reaches it, or null before login. Client documents use it too (see documents.ts). */
+export const translationAI = (): Complete | null => complete;
+
 function deviceTag(): string | undefined {
   try { return Intl.DateTimeFormat().resolvedOptions().locale; } catch { return undefined; }
 }
