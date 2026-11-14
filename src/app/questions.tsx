@@ -85,7 +85,7 @@ export default function Questions() {
       disabled={!!working || (isSmall && draft.customItems.length === 0)} />}>
       <AiWorking job={working} />
       <View style={{ gap: 4 }}>
-        <H2>{draft.title}</H2>
+        <H2 raw>{draft.title}</H2>
         <Muted>{jt.name} · {quick ? `Quick (your price${perUnit(jt.unit)})` : 'Detailed'}</Muted>
       </View>
 

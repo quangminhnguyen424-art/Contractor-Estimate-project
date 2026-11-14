@@ -1,7 +1,7 @@
 // What every user agrees to before using the app. DRAFT: have a Washington attorney review before opening to the public.
 // Bump TERMS_VERSION whenever the text changes in a way users must agree to again; the app then asks again.
 
-export const TERMS_VERSION = '2026-11-05';
+export const TERMS_VERSION = '2026-11-14';
 export const PUBLISHER = 'YM LLC, Federal Way, Washington (the developer of Bidwell AI)';
 export const SUPPORT_EMAIL = 'justin.ngminh@gmail.com';
 
@@ -36,8 +36,8 @@ export const CONSENT_ITEMS: ConsentItem[] = [
   },
   {
     id: 'ai-share', required: false,
-    en: 'Use AI: send the job notes, photos and voice recordings I choose to Anthropic (the maker of Claude) so Bidwell can read them and draft estimates. They are not used to train AI models. You can turn this off in Settings.',
-    vi: 'Dùng AI: gửi ghi chú, ảnh và ghi âm tôi chọn cho Anthropic (công ty làm ra Claude) để Bidwell đọc và soạn báo giá. Dữ liệu không dùng để huấn luyện AI. Có thể tắt trong Cài đặt.',
+    en: 'Use AI: send what Bidwell needs to answer me to Anthropic (the maker of Claude): the job notes and photos I choose, my questions, and my business details, prices and recent job names. They are not used to train AI models. I can turn this off under Me > Bidwell AI.',
+    vi: 'Dùng AI: gửi những gì Bidwell cần để trả lời tôi cho Anthropic (công ty làm ra Claude): ghi chú và ảnh job tôi chọn, câu hỏi của tôi, thông tin công ty, bảng giá và tên các job gần đây. Dữ liệu không dùng để huấn luyện AI. Tôi có thể tắt ở Tôi > Bidwell AI.',
   },
 ];
 
@@ -47,7 +47,7 @@ export interface TermsSection { title: string; body: string }
 export const TERMS: TermsSection[] = [
   {
     title: '1. Who we are and this agreement',
-    body: `Bidwell AI ("the app") is provided by ${PUBLISHER} ("we", "us"). By using the app you agree to these Terms and to the Privacy Policy. If you use the app for a company, you agree for that company. The app is in beta: features change, and it may have bugs.`,
+    body: `Bidwell AI ("the app") is provided by ${PUBLISHER} ("we", "us"). By using the app you agree to these Terms and to the Privacy Policy. If you use the app for a company, you agree for that company. Features change over time, and the app may have bugs.`,
   },
   {
     title: '2. Who may use it',
@@ -63,7 +63,7 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '5. Messages to your clients, workers and subcontractors',
-    body: 'Only send messages, including follow-ups, reminders and photo updates, to people who agreed to receive them. Honor every request to stop right away. In the beta, the app prepares messages and you send them from your own phone or email. When automatic sending is added, you must collect and keep each person’s consent, and the app will record it. Do not use the app for spam, harassment or anything unlawful.',
+    body: 'Only send messages, including follow-ups, reminders and photo updates, to people who agreed to receive them. Honor every request to stop right away. The app prepares messages and you send them from your own phone or email. If automatic sending is added, you must collect and keep each person’s consent, and the app will record it. Do not use the app for spam, harassment or anything unlawful.',
   },
   {
     title: '6. Electronic signatures',
@@ -71,15 +71,15 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '7. Your data',
-    body: 'You own the information you put in the app: estimates, prices, photos, client details, receipts and notes. You give us permission to store and process it only to run the app for you. Your prices and lessons stay in your account and are never used for other users. Do not upload anything you have no right to share. You can export your data or delete your account in Settings at any time.',
+    body: 'You own the information you put in the app: estimates, prices, photos, client details, receipts and notes. You give us permission to store and process it only to run the app for you. Your prices and lessons stay in your account and are never used for other users. Do not upload anything you have no right to share. You can export your data (Me > Backup) or delete your account (Me > your account) at any time.',
   },
   {
     title: '8. AI providers and other services',
-    body: 'When you turn on AI, the content you choose is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it. Cloud storage and sign-in use Supabase. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.',
+    body: 'When you turn on AI, what Bidwell needs to answer you is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it: the job notes and photos you choose, your questions, and your business details, prices and recent job names. When you translate a document for a client, its text is sent the same way. When you use Measure roof, the job address is sent to Google to find and measure the roof. Voice typing uses your phone’s own speech service. Cloud storage and sign-in use Supabase. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.',
   },
   {
     title: '9. Payments and changes',
-    body: 'The beta is free. If we add paid plans, we will show the price before you pay, and payments on iPhone follow Apple’s rules. We may change or stop features. If we change these Terms in a way that matters, the app will ask you to agree again.',
+    body: 'The app is free to use today. If we add paid plans, we will show the price before you pay, and payments on iPhone follow Apple’s rules. We may change or stop features. If we change these Terms in a way that matters, the app will ask you to agree again.',
   },
   {
     title: '10. No warranty',
@@ -107,9 +107,9 @@ export const TERMS: TermsSection[] = [
 export const PRIVACY_SUMMARY = [
   'We collect what you enter: company profile, estimates, prices, client names and addresses, photos (and the place a photo was taken if you allow location), receipts, notes and voice recordings you choose to have read.',
   'We use it only to run the app for you. We do not sell it or show ads.',
-  'With AI turned on, the content you choose is sent to Anthropic to process each request; it is not used to train AI models.',
+  'With AI turned on, the job notes and photos you choose, your questions, and your business details, prices and recent job names are sent to Anthropic to process each request; they are not used to train AI models. Measure roof sends the job address to Google.',
   'With cloud sign-in, your data and photos are stored privately in your own account (Supabase, USA). Clients only see what you send them.',
-  'Delete your account in Settings and everything in the cloud is deleted.',
+  'Delete your account under Me > your account and everything in the cloud and on this phone is deleted.',
 ];
 
 export const missingRequired = (ticked: Record<string, boolean>) => CONSENT_ITEMS.filter((c) => c.required && !ticked[c.id]).map((c) => c.id);

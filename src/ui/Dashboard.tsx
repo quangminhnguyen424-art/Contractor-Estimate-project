@@ -21,6 +21,9 @@ import { useToday } from './useToday';
 
 
 /** Home screen before the chat starts: one clear action, then today, money and recent photos. */
+/** Opens the Jobs tab filtered. `n` makes every tap a new request, so the same filter can be asked for twice. */
+const showJobs = (show: 'all' | 'quote' | 'active') => router.push(`/jobs?show=${show}&n=${Date.now()}`);
+
 export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
   const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
   const { width } = useWindowDimensions();
@@ -28,14 +31,17 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   const first = (profile?.contactName ?? '').trim().split(/\s+/)[0];
   const hour = new Date().getHours();
   const hello = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
-  const todays = upcoming(events, today, 0).slice(0, 3);
-  const nextUp = todays.length ? [] : upcoming(events, today, 7).slice(0, 2);
+  // Follow-up reminders show as their own check-in (with Send), so they are left out of the appointment rows.
+  const visits = events.filter((e) => !e.title.startsWith('Follow up:'));
+  const todays = upcoming(visits, today, 0).slice(0, 3);
+  const nextUp = todays.length ? [] : upcoming(visits, today, 7).slice(0, 2);
 
+  // "To collect": everything still unpaid on jobs the client has agreed to, invoiced yet or not.
   let due = 0, overdue = 0;
   for (const c of contracts) {
     const est = estimates.find((e) => e.id === c.estimateId);
     if (!est || !profile) continue;
-    due += contractTotals(est, profile, c).due;
+    if (est.status === 'won' || c.accepted) due += Math.max(0, contractTotals(est, profile, c).balance);
     overdue += Object.values(invoiceStates(c, today, est.salesTaxPct)).filter((s) => s.state === 'overdue').length;
   }
   const checkIns = dailyCheckIn({ projects, estimates, contracts, profile, events, team, followups, today });
@@ -110,15 +116,15 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
       {/* Money and work at a glance: one card, three numbers. */}
       <Reveal index={3}>
         <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
-          <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => router.push('/jobs?show=active')} />
-          <Glance label="Quotes out" value={String(waiting)} onPress={() => router.push('/jobs?show=quote')} divider />
-          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => router.push('/jobs?show=active')} divider />
+          <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => showJobs('all')} />
+          <Glance label="Quotes out" value={String(waiting)} onPress={() => showJobs('quote')} divider />
+          <Glance label="Active jobs" value={String(activeJobs)} onPress={() => showJobs('active')} divider />
         </View>
       </Reveal>
 
       {photos.length ? (
         <Reveal index={4} style={{ gap: 8 }}>
-          <Section title="Recent photos" link="All jobs" onLink={() => router.push('/jobs?show=all')} />
+          <Section title="Recent photos" link="All jobs" onLink={() => showJobs('all')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>

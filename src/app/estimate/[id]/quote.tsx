@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import { Linking, Platform, Pressable, Share, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 import { Text, Untranslated } from '@/ui/text';
@@ -58,8 +58,9 @@ export default function QuoteScreen() {
         ? `${profile.companyName}: báo giá cho ${est.title} đã sẵn sàng. Mời anh/chị xem và ký tại đây: ${link}`
         : await docs.message('{0}: your quote for {1} is ready. Please review and sign here: {2}', profile.companyName, est.title, link);
       const subject = docs.target ? await docs.message('Quote: {0}', est.title) : `${T.quote}: ${est.title}`;
-      if (via === 'sms') await Linking.openURL(Platform.OS === 'ios' ? `sms:&body=${encodeURIComponent(msg)}` : `sms:?body=${encodeURIComponent(msg)}`);
-      else await Linking.openURL(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`);
+      const url = via === 'sms' ? (Platform.OS === 'ios' ? `sms:&body=${encodeURIComponent(msg)}` : `sms:?body=${encodeURIComponent(msg)}`) : `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
+      // No Messages or Mail set up on this phone: the link is made, so offer every other way to send it.
+      await Linking.openURL(url).catch(() => Share.share({ message: msg }));
       if (est.status === 'draft') updateEstimate(est.id, { status: 'sent' });
     } catch (e) {
       if (!translateFailed(e, docs.target)) notify('Could not make the link', e instanceof Error ? e.message : 'Check your connection and try again.');
@@ -107,7 +108,7 @@ export default function QuoteScreen() {
       <ClientLanguage est={est} />
       {editing ? (
         <QuoteEditor key={lang} est={est} lang={lang} profile={profile} signed={isSigned}
-          onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.back()} />
+          onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.dismissTo(`/estimate/${est.id}`)} />
       ) : null}
       <ActionSheet visible={menu} onClose={() => setMenu(false)} title="Send the quote" actions={[
         { icon: 'chatbubble-ellipses', label: 'Text a link to sign', sub: 'The client reads and signs on their phone. You are told when they sign.', onPress: () => sendLink('sms') },
@@ -119,7 +120,7 @@ export default function QuoteScreen() {
         <Banner tone="warn" title={`${blocking.length} item${blocking.length > 1 ? 's' : ''} to review before sending`}>
           {blocking.map((b) => b.title).join(' · ')}
           {'  '}
-          <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => router.back()}>Review</Text>
+          <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => router.dismissTo(`/estimate/${est.id}`)}>Review</Text>
         </Banner>
       ) : null}
 

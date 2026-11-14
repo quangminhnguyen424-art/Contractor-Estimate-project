@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { demoAI, getAI, type SampleFn } from '@/engine/ai';
+import { getAI, sharingOffAI, type SampleFn } from '@/engine/ai';
 import { accessToken } from '@/cloud/client';
 import { CLOUD, cloudConfigured } from '@/cloud/config';
 
@@ -40,7 +40,7 @@ export const hostSample = () => capability<SampleFn>('sample');
  * Nothing leaves the phone unless the user allowed AI sharing (Apple 5.1.2(i)); then only the offline reader is used.
  */
 export const aiFor = (apiKey: string | undefined, allowed: boolean) => {
-  if (!allowed) return demoAI;
+  if (!allowed) return sharingOffAI();
   if (inClaudeApp) return getAI({ host: hostSample });
   if (apiKey?.trim()) return getAI({ apiKey });
   // No key of your own: Bidwell cloud's AI, with the signed-in account (the key stays on the server).

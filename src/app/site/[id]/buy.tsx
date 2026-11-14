@@ -1,7 +1,8 @@
+import { shareText } from '@/ui/shareText';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Share, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { buyListFromEstimate, buyTotals, emptyMoney, type BuyItem } from '@/engine/books';
 import { money, money2, newId, qtyFmt } from '@/engine/format';
@@ -31,9 +32,7 @@ export default function BuyScreen() {
     setName(''); setQty(1); setUnit(''); setCost(0);
   };
   // For the store or a worker picking up materials: quantities only, never prices.
-  const share = () => Share.share({
-    message: `${p.title}: materials to buy\n${items.filter((i) => !i.bought).map((i) => `☐ ${qtyFmt(i.qty)} ${i.unit} ${i.name}`).join('\n')}`,
-  }).catch(() => {});
+  const share = () => shareText(`${p.title}: materials to buy\n${items.filter((i) => !i.bought).map((i) => `☐ ${qtyFmt(i.qty)} ${i.unit} ${i.name}`).join('\n')}`, p.title);
 
   return (
     <Screen>

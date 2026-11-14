@@ -92,7 +92,7 @@ export default function RoomScreen() {
           {t.done ? <Text style={{ color: C.onAccent, fontWeight: '800' }}>✓</Text> : null}
         </Pressable>
         <View style={{ flex: 1, gap: 6 }}>
-          <Text style={{ color: t.done ? C.muted : C.ink, fontSize: 15, textDecorationLine: t.done ? 'line-through' : 'none' }}>{t.text}</Text>
+          <Text raw style={{ color: t.done ? C.muted : C.ink, fontSize: 15, textDecorationLine: t.done ? 'line-through' : 'none' }}>{t.text}</Text>
           {t.review ? (
             <View style={{ alignSelf: 'flex-start', backgroundColor: C.warnBg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
               <Text style={{ color: C.warnInk, fontSize: 12, fontWeight: '700' }}>NEEDS A LOOK</Text>

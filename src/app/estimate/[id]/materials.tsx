@@ -35,7 +35,7 @@ export default function MaterialsScreen() {
   return (
     <Screen footer={<Button title={busy ? 'Creating PDF…' : 'Share material list'} disabled={busy} onPress={share} />}>
       <View style={{ gap: 4 }}>
-        <H2>{est.title}</H2>
+        <H2 raw>{est.title}</H2>
         <Muted>{est.materials.length} items · {money(est.materialTotal)} before tax. Quantities are rounded up to whole boxes, sheets and rolls.</Muted>
       </View>
       {[...groups.entries()].map(([cat, rows]) => (

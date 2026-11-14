@@ -126,14 +126,29 @@ function guessBuiltIn(t: string): JobTypeId | undefined {
   return undefined;
 }
 
+/** Why the AI did not answer when it is simply not on, in words that say what to do about it. */
+export const AI_OFF = {
+  sharing: 'AI sharing is off. Turn it on under Me > Bidwell AI. Estimates, quotes, signing and payments work without it.',
+  connect: 'Bidwell AI is not connected. Log in to your Bidwell account under Me to use it.',
+};
+/** The AI is off (not a failure): callers can fall back quietly or show the message. */
+export class AiOffError extends Error {}
+
+/** The offline reader, for a user who has not turned AI sharing on: its messages point at the switch. */
+export const sharingOffAI = (): EstimatorAI => ({
+  ...demoAI,
+  async complete() { throw new AiOffError(AI_OFF.sharing); },
+  async chat() { throw new AiOffError(AI_OFF.sharing); },
+});
+
 /** Rule-based stand-in for Claude: pulls quantities out of a spoken or typed job description. */
 export const demoAI: EstimatorAI = {
   name: 'Demo AI (offline)',
   async complete() {
-    throw new Error('Bidwell is not connected. Open the app inside Claude, or add your Claude key under Me → Bidwell AI.');
+    throw new AiOffError(AI_OFF.connect);
   },
   async chat() {
-    return 'I can only answer when Bidwell is connected. Open this app inside the Claude app, or add your Claude key under Me → Bidwell AI. You can still create estimates with the orange +.';
+    throw new AiOffError(AI_OFF.connect);
   },
   async parseScope(text, jobTypeId) {
     const jt = jobTypeId ?? guessJobType(text);
@@ -451,7 +466,7 @@ async function callClaude(apiKey: ClaudeAuth, system: string, content: unknown[]
 }
 
 async function callClaudeTurns(
-  apiKey: ClaudeAuth, system: string, messages: { role: 'user' | 'assistant'; content: unknown }[], maxTokens: number,
+  apiKey: ClaudeAuth, system: string, messages: { role: 'user' | 'assistant'; content: unknown }[], maxTokens: number, keepPartial = false,
 ): Promise<string> {
   let res: Response;
   const controller = new AbortController();
@@ -501,8 +516,14 @@ async function callClaudeTurns(
     throw new Error(`Bidwell error (${res.status})${detail ? `: ${detail}` : ''}`);
   }
   const data = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
-  if (data.stop_reason === 'max_tokens') throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
-  return (data.content ?? []).map((c) => c.text ?? '').join('');
+  const text = (data.content ?? []).map((c) => c.text ?? '').join('');
+  if (data.stop_reason === 'max_tokens') {
+    // A chat answer that ran long is still worth reading; a cut-off JSON answer cannot be used.
+    if (keepPartial && text.trim()) return `${text.trim()} …`;
+    throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
+  }
+  if (data.stop_reason === 'refusal' && !text.trim()) throw new Error('Bidwell could not help with that request.');
+  return text;
 }
 
 /** Parse Claude's JSON reply, turning parser errors into a message a contractor can act on. */
@@ -518,7 +539,7 @@ export function directClaudeAI(apiKey: ClaudeAuth): EstimatorAI {
   return {
     name: `Bidwell (${CLAUDE_MODEL})`,
     async chat(turns, system) {
-      return callClaudeTurns(apiKey, system, turns.map((t) => ({ role: t.role, content: t.content })), 1500);
+      return callClaudeTurns(apiKey, system, turns.map((t) => ({ role: t.role, content: t.content })), 2000, true);
     },
     async complete(prompt, images, maxTokens = 1500) {
       const content: unknown[] = (images ?? []).slice(0, 8).flatMap((img, i) => [

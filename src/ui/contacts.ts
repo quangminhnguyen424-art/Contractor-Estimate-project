@@ -7,7 +7,7 @@ export async function pickClient(): Promise<{ name: string; phone: string; addre
   const c = await Contact.presentPicker();
   if (!c) return null;
   const [name, phones, addresses] = await Promise.all([
-    c.getFullName().catch(() => ''), c.getPhones().catch(() => []), c.getAddresses().catch(() => []),
+    c.getFullName(), c.getPhones().catch(() => []), c.getAddresses().catch(() => []), // the name throws when access is refused: the caller says so
   ]);
   const a = addresses[0];
   const address = a ? [a.street, a.city, [a.state, a.postcode].filter(Boolean).join(' ')].filter((x) => x && String(x).trim()).join(', ') : '';

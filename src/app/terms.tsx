@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, View } from 'react-native';
 
 import { CONSENT_ITEMS, missingRequired, PRIVACY_SUMMARY, SUPPORT_EMAIL, TERMS, TERMS_VERSION } from '@/engine/legal';
@@ -18,6 +19,7 @@ export default function TermsScreen() {
   const [ticked, setTicked] = useState<Record<string, boolean>>(() => ({ 'ai-share': consent?.ai === true }));
   const [full, setFull] = useState(false);
   const missing = missingRequired(ticked);
+  const insets = useSafeAreaInsets();
 
   const [accepted, setAccepted] = useState(false);
   const agree = () => {
@@ -38,10 +40,11 @@ export default function TermsScreen() {
         {missing.length ? <Muted style={{ textAlign: 'center', fontSize: 13 }}>Tick the required boxes to continue.</Muted> : null}
       </View>
     )}>
-      <View style={{ gap: 6, paddingTop: 12 }}>
-        <Text style={{ color: C.accent, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>BIDWELL AI · BETA</Text>
+      {/* First run has no header: start below the clock and the camera cut-out. */}
+      <View style={{ gap: 6, paddingTop: termsOk ? 12 : insets.top + 12 }}>
+        <Text style={{ color: C.accent, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>BIDWELL AI</Text>
         <Text style={{ color: C.ink, fontSize: 28, fontWeight: '800' }}>{termsOk ? 'Terms and AI' : 'Before you start'}</Text>
-        <Muted>Please read and agree. It takes a minute.</Muted>
+        <Muted>{termsOk ? 'What you agreed to, and your AI sharing choice.' : 'Please read and agree. It takes a minute.'}</Muted>
       </View>
 
       <Card>
@@ -57,6 +60,7 @@ export default function TermsScreen() {
             </Tick>
           )
         ))}
+        <Muted style={{ fontSize: 13 }}>{'Without AI you can still build estimates with Quick price or by filling in the questions, and send quotes, sign and take payments. You can turn it on or off any time under Me > Bidwell AI.'}</Muted>
       </Card>
 
       <Card>

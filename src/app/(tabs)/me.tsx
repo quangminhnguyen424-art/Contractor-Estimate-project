@@ -37,7 +37,7 @@ export default function Me() {
           </View>
         )}
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ color: C.ink, fontSize: 19, fontWeight: '700' }} numberOfLines={1}>{profile.companyName}</Text>
+          <Text raw style={{ color: C.ink, fontSize: 19, fontWeight: '700' }} numberOfLines={1}>{profile.companyName}</Text>
           <Text style={{ color: C.muted, fontSize: 14 }} numberOfLines={1}>{[profile.contactName, profile.phone].filter(Boolean).join(' · ') || 'Add your name and phone'}</Text>
           <Text style={{ color: C.accent, fontSize: 13, fontWeight: '600' }}>{profile.logo ? 'Edit company info' : 'Add your logo and details'}</Text>
         </View>

@@ -84,14 +84,14 @@ export default function ChangeOrderScreen() {
     <Screen scrollEnabled={!drawing}>
       <Stack.Screen options={{ title: `Change order #${number}` }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ color: C.ink, fontSize: 20, fontWeight: '800', flex: 1 }}>{est.title}</Text>
+        <Text raw style={{ color: C.ink, fontSize: 20, fontWeight: '800', flex: 1 }}>{est.title}</Text>
         <Badge label={status === 'approved' ? 'Signed' : status === 'declined' ? 'Declined' : 'Waiting for client'} tone={status === 'approved' ? 'ok' : status === 'declined' ? 'bad' : 'warn'} />
       </View>
 
       {shown ? (
         <Card>
-          <H2>{shown.title}</H2>
-          {shown.description ? <Text style={{ color: C.ink2, lineHeight: 21 }}>{shown.description}</Text> : null}
+          <H2 raw>{shown.title}</H2>
+          {shown.description ? <Text raw style={{ color: C.ink2, lineHeight: 21 }}>{shown.description}</Text> : null}
           <Text style={{ color: C.accent, fontSize: 24, fontWeight: '800', fontFamily: '__numbers__' }}>{money(shown.amount)} <Text style={{ color: C.muted, fontSize: 14 }}>+ {money(taxOn(shown.amount, pct))} tax</Text></Text>
           {shown.signature ? (
             <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 10, gap: 4 }}>

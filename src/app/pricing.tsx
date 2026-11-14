@@ -81,7 +81,7 @@ export default function Pricing() {
           <Pressable key={j.id} accessibilityRole="button" onPress={() => router.push({ pathname: '/past-job', params: { id: j.id } })}>
             <Card style={{ gap: 4 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-                <Text style={{ fontWeight: '600', color: C.ink, flex: 1 }} numberOfLines={1}>{j.title}</Text>
+                <Text raw style={{ fontWeight: '600', color: C.ink, flex: 1 }} numberOfLines={1}>{j.title}</Text>
                 <Text style={{ fontFamily: mono, color: C.ink }}>{money(j.price)}</Text>
               </View>
               <Muted style={{ fontSize: 13 }}>

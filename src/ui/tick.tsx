@@ -11,7 +11,8 @@ export function Tick({ on, onPress, children, required }: { on: boolean; onPress
       style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 10 }}>
       <Ionicons name={on ? 'checkbox' : 'square-outline'} size={26} color={on ? C.accent : C.ink2} />
       <View style={{ flex: 1, gap: 2 }}>
-        {children}
+        {/* Plain words get the app's text style; a bare string inside a View crashes on a phone. */}
+        {typeof children === 'string' ? <Text style={{ color: C.ink, fontSize: 15, lineHeight: 21 }}>{children}</Text> : children}
         {!required ? <Text style={{ color: C.muted, fontSize: 12 }}>Optional</Text> : null}
       </View>
     </Pressable>

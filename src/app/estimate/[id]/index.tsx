@@ -65,7 +65,7 @@ export default function PriceDetails() {
     <Screen footer={<Button title={est.status === 'draft' ? 'Review and send quote' : 'Open client quote'} icon="document-text-outline" onPress={() => router.push(`/estimate/${est.id}/quote`)} />}>
       <Stack.Screen options={{ title: 'Price details' }} />
       <View style={{ gap: 4 }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{est.title}</Text>
+        <Text raw style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{est.title}</Text>
         <Muted>{jt.name} · {FINISH_LABELS[est.finish].en} · {est.mode === 'quick' ? 'Quick' : 'Detailed'}</Muted>
         <Muted style={{ fontSize: 12 }}>Private. Your client never sees cost, labor or markup.</Muted>
       </View>

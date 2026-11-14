@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 import { KINDS, reminderAt, timeLabel, type CalEvent } from '@/engine/schedule';
 
@@ -10,6 +11,9 @@ Notifications.setNotificationHandler({
 export const remindersAvailable = true;
 
 async function allowed(): Promise<boolean> {
+  // Android 13+ shows the permission question only once a channel exists.
+  // eslint-disable-next-line import/namespace -- the enum is re-exported through `export *`, which the lint rule cannot follow
+  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('default', { name: 'Reminders', importance: Notifications.AndroidImportance.HIGH }).catch(() => {});
   const cur = await Notifications.getPermissionsAsync();
   if (cur.granted) return true;
   if (!cur.canAskAgain) return false;

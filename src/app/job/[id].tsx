@@ -128,7 +128,7 @@ export default function JobScreen() {
       }} />
       <Screen footer={view === 'photos' && project ? <Button title="Take photos" icon="camera" onPress={openCamera} /> : undefined}>
         <View style={{ gap: 4 }}>
-          <Text style={{ fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.3 }}>{job.title}</Text>
+          <Text raw style={{ fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.3 }}>{job.title}</Text>
           <Muted>{[job.client, job.address].filter(Boolean).join(' · ') || (est ? `${estimateJob(est).name} · no client yet` : 'No address yet')}</Muted>
         </View>
         {est ? <StageBar job={job} /> : null}

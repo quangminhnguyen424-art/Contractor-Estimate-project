@@ -48,8 +48,9 @@ export async function translateAll(ai: EstimatorAI, texts: string[], lang: CrewL
 
 const plain = (s: string) => s.replace(/^#+\s*/gm, '').replace(/\*\*/g, '').trim();
 
-export async function writeDailyLog(ai: EstimatorAI, p: SiteProject, date: string): Promise<string> {
-  return plain(await ai.complete(dailyLogPrompt(p, date), [], 700));
+/** `notes`: what the contractor already typed, to keep. `language`: the language to write in, by its English name. */
+export async function writeDailyLog(ai: EstimatorAI, p: SiteProject, date: string, notes = '', language = 'English'): Promise<string> {
+  return plain(await ai.complete(dailyLogPrompt(p, date, notes, language), [], 700));
 }
 
 /** `language`: any other language to write in, by its English name ("Korean"). */

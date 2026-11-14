@@ -226,13 +226,13 @@ Reply with ONLY a JSON array of ${texts.length} strings.
 ${JSON.stringify(texts)}`;
 }
 
-export function dailyLogPrompt(p: SiteProject, date: string): string {
+export function dailyLogPrompt(p: SiteProject, date: string, notes = '', language = 'English'): string {
   const act = dayActivity(p, date).map((a) =>
     `${a.room}: ${a.done.length} task(s) finished${a.done.length ? ` (${a.done.map((t) => t.text).join('; ')})` : ''}; ${a.photos.length} photo(s)${a.photos.filter((x) => x.note.trim()).map((x) => ` [${x.kind}: ${x.note.trim()}]`).join('')}; still open: ${a.open.length}`).join('\n');
-  return `Write a short daily log for a construction job, in plain English, the way a superintendent would.
+  return `Write a short daily log for a construction job, in plain ${language}, the way a superintendent would.
 Job: ${p.title}${p.address ? `, ${p.address}` : ''}. Date: ${date}.
 What happened today, by room:
-${act || '(nothing recorded today)'}
+${act || '(nothing recorded today)'}${notes ? `\nThe contractor's own notes for the day (keep every fact in them):\n${notes.slice(0, 1500)}` : ''}
 Write 3 to 6 short lines: work done, what's next, anything to watch. Only use the facts above. No headings, no markdown.`;
 }
 

@@ -27,8 +27,12 @@ export default function PastJobScreen() {
   const [finish, setFinish] = useState<FinishLevel>(existing?.finish ?? 'mid');
   const [date, setDate] = useState(existing?.date.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
 
+  const [reading, setReading] = useState(false);
+
   const read = async () => {
-    const r = await aiFor(apiKey, aiAllowed).extractPastJob(paste);
+    if (reading) return;
+    setReading(true);
+    const r = await aiFor(apiKey, aiAllowed).extractPastJob(paste).finally(() => setReading(false));
     if (r.error) notify('Bidwell could not read this', `${r.error}\n\nUsed the offline reader instead.`);
     const got: string[] = [];
     if (r.jobTypeId) { setJobTypeId(r.jobTypeId); got.push('job type'); }
@@ -55,7 +59,7 @@ export default function PastJobScreen() {
           <H2>Paste an old quote or invoice</H2>
           <Muted>Copy the text from an email, PDF or text message. The app pulls out the job type, size and total.</Muted>
           <Field label="Quote text" multiline value={paste} onChangeText={setPaste} placeholder={'e.g. Hall bath remodel, 45 sq ft, mid grade… Total $18,500'} />
-          <Button kind="secondary" title="Read it" disabled={paste.trim().length < 5} onPress={read} />
+          <Button kind="secondary" title={reading ? 'Reading…' : 'Read it'} disabled={reading || paste.trim().length < 5} onPress={read} />
           {found ? <Banner tone="info" title={found} /> : null}
         </Card>
       ) : null}

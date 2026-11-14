@@ -166,15 +166,16 @@ function RootStack() {
         <Stack.Screen name="site/[id]/index" options={{ title: 'Job' }} />
         <Stack.Screen name="pricing" options={{ title: 'My pricing' }} />
         <Stack.Screen name="site/[id]/room/[roomId]" options={{ title: 'Area' }} />
-        <Stack.Screen name="site/[id]/photo/[photoId]" options={{ title: 'Photo' }} />
+        <Stack.Screen name="site/[id]/photo/[photoId]" options={{ title: 'Photo', gestureEnabled: false }} />
         <Stack.Screen name="site/[id]/log" options={{ title: 'Daily log' }} />
         <Stack.Screen name="site/[id]/share" options={{ title: 'Share' }} />
         <Stack.Screen name="scan" options={{ title: 'Scan 3D' }} />
         <Stack.Screen name="connections" options={{ title: 'Connected apps' }} />
         <Stack.Screen name="event" options={{ title: 'Appointment', presentation: 'modal' }} />
-        <Stack.Screen name="estimate/[id]/sign" options={{ title: 'Client signature' }} />
+        {/* No swipe-back where a finger draws: a signature is a left-to-right stroke and would close the screen. */}
+        <Stack.Screen name="estimate/[id]/sign" options={{ title: 'Client signature', gestureEnabled: false }} />
         <Stack.Screen name="estimate/[id]/contract" options={{ title: 'Contract and payments' }} />
-        <Stack.Screen name="estimate/[id]/change" options={{ title: 'Change order' }} />
+        <Stack.Screen name="estimate/[id]/change" options={{ title: 'Change order', gestureEnabled: false }} />
         <Stack.Screen name="site/[id]/money" options={{ title: 'Costs and receipts' }} />
         <Stack.Screen name="site/[id]/buy" options={{ title: 'Buy list' }} />
         <Stack.Screen name="site/[id]/cost" options={{ title: 'Add a cost', presentation: 'modal' }} />

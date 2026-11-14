@@ -19,3 +19,15 @@ export async function shareTextFile(name: string, text: string, mimeType: string
   await Sharing.shareAsync(f.uri, { mimeType, ...(uti ? { UTI: uti } : {}) });
   return true;
 }
+
+/** Gives a file the app just made a name a person can read ("Quote — Kim bathroom.pdf"), so that is what the client receives. */
+export function named(uri: string, name: string): string {
+  try {
+    const to = new File(Paths.cache, fileName(name));
+    if (to.exists) to.delete();
+    new File(uri).move(to);
+    return to.uri;
+  } catch {
+    return uri; // the original still shares fine, just under its generated name
+  }
+}

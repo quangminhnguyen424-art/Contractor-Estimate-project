@@ -127,7 +127,7 @@ export default function FollowScreen() {
   return (
     <Screen footer={!stopped && p.consent === 'agreed' ? <Button title={saved?.confirmedBoth ? 'Save changes' : 'Turn on follow-ups'} icon="checkmark" onPress={save} /> : undefined}>
       <View style={{ gap: 2 }}>
-        <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{est.title}</Text>
+        <Text raw style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{est.title}</Text>
         <Muted>{est.clientName || 'Client'} · status {est.status}</Muted>
       </View>
 

@@ -21,9 +21,9 @@ import { Text } from '@/ui/text';
 import { scanRoom, scanSupport } from '../../modules/room-scan/src';
 
 const WHY: Record<Exclude<ReturnType<typeof scanSupport>, 'ok'>, { title: string; text: string }> = {
-  web: { title: '3D scanning works in the iPhone app', text: 'Open Bidwell AI from TestFlight or the App Store on an iPhone Pro to scan. Here you can measure rooms by hand below.' },
+  web: { title: '3D scanning works in the iPhone app', text: 'Open Bidwell AI on an iPhone Pro to scan. Here you can measure rooms by hand below.' },
   android: { title: '3D scanning needs an iPhone Pro', text: 'Android phones don’t have Apple’s room scanner. Measure rooms by hand below; the plan and areas work the same.' },
-  'not-installed': { title: 'Update the app to scan', text: 'This version of the app doesn’t include the scanner. Install the latest build from TestFlight.' },
+  'not-installed': { title: 'Update the app to scan', text: 'This version of the app doesn’t include the scanner. Update Bidwell AI from the App Store.' },
   'no-lidar': { title: 'This iPhone has no LiDAR sensor', text: '3D room scanning needs an iPhone 12 Pro or newer Pro model (or iPad Pro). Measure rooms by hand below instead.' },
 };
 

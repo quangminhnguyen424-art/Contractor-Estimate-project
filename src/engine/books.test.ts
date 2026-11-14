@@ -260,7 +260,10 @@ describe('Bidwell daily check-in', () => {
     const { dailyCheckIn } = await import('./pm');
     const team: TeamMember[] = [{ id: 't', name: 'Tuan', role: 'crew', trade: 'Tile', phone: '', rate: 300, rateUnit: 'day', lang: 'en', active: true }];
     const ev: CalEvent = { id: 'e', title: 'Crew day', kind: 'crew', date: '2026-11-04', time: '07:30', durationMin: 480, address: '', notes: '', remindMin: null, done: false, createdAt: '', crew: ['t'], projectId: 'p1' };
-    const project = { id: 'p1', estimateId: 'e1', title: 'Kim bath', clientName: 'Kim', address: '', status: 'active' as const, createdAt: '2026-10-20T00:00:00Z', rooms: [], logs: [], money: money() };
+    const project = { id: 'p1', estimateId: 'e1', title: 'Kim bath', clientName: 'Kim', address: '', status: 'active' as const, createdAt: '2026-10-20T00:00:00Z',
+      // One photo the client has not been sent yet: without new photos there is nothing to update them about.
+      rooms: [{ id: 'r', name: 'Bath', tasks: [], photos: [{ id: 'ph', uri: 'x', kind: 'progress' as const, takenAt: '2026-10-25T00:00:00Z', note: '' }] }] as never,
+      logs: [], money: money() };
     const sentEst = { ...est, id: 'e2', title: 'Patel kitchen', clientName: 'Raj', status: 'sent', updatedAt: '2026-10-30T00:00:00Z' } as Estimate;
     const follow = { ...newPlan('e3', '2026-11-01'), consent: 'agreed' as const, channels: ['email' as const], email: 'a@b.co', days: [3] };
     const followEst = { ...sentEst, id: 'e3', title: 'Deck', clientName: 'Lopez' } as Estimate;

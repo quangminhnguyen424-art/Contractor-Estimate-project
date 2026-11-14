@@ -10,13 +10,18 @@ import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
 import { Button, C, Card, Field, H2, Muted, Screen } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
+import { shareText } from '@/ui/shareText';
+import { aiLanguage } from '@/i18n';
 import { useToday } from '@/ui/useToday';
 
 /** Daily logs: Claude drafts today's from the photos and finished tasks; you edit and save. */
 export default function LogScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, date } = useLocalSearchParams<{ id: string; date?: string }>();
   const { projects, updateProject, apiKey, aiAllowed } = useApp();
-  const today = useToday();
+  const now = useToday();
+  // Home's "How did yesterday go?" opens yesterday's log; otherwise it is today's.
+  const today = date && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= now ? date : now;
+  const isToday = today === now;
   const p = projects.find((x) => x.id === id);
   const existing = p?.logs.find((l) => l.date === today);
   const [text, setText] = useState(existing?.text ?? '');
@@ -30,7 +35,9 @@ export default function LogScreen() {
   const draft = async () => {
     setBusy(true);
     try {
-      setText(await writeDailyLog(aiFor(apiKey, aiAllowed), p, today));
+      const written = await writeDailyLog(aiFor(apiKey, aiAllowed), p, today, text.trim(), aiLanguage());
+      if (written.trim()) setText(written);
+      else notify('Bidwell had nothing to write', 'Add photos or finished tasks for the day, or type the log yourself.');
     } catch (e) {
       notify('Bidwell could not write the log', e instanceof Error ? e.message : 'Try again.');
     } finally {
@@ -51,11 +58,11 @@ export default function LogScreen() {
     <Screen>
       <Stack.Screen options={{ title: 'Daily log' }} />
       <Card>
-        <H2>Today · {dateFmt(`${today}T12:00:00`)}</H2>
-        <Muted style={{ fontSize: 13 }}>{photosToday} photo{photosToday === 1 ? '' : 's'} and {doneToday} finished task{doneToday === 1 ? '' : 's'} today.</Muted>
-        <Button kind="secondary" title={busy ? 'Bidwell is writing…' : 'Write today’s log with Bidwell'} disabled={busy} onPress={draft} />
+        <H2>{isToday ? 'Today' : 'Yesterday'} · {dateFmt(`${today}T12:00:00`)}</H2>
+        <Muted style={{ fontSize: 13 }}>{photosToday} photo{photosToday === 1 ? '' : 's'} and {doneToday} finished task{doneToday === 1 ? '' : 's'} that day.</Muted>
+        <Button kind="secondary" title={busy ? 'Bidwell is writing…' : 'Write the log with Bidwell'} disabled={busy} onPress={draft} />
         <Field label="Log" multiline value={text} onChangeText={setText} placeholder="Work done, what’s next, anything to watch." />
-        <Button title={existing ? 'Update today’s log' : 'Save today’s log'} disabled={!text.trim()} onPress={save} />
+        <Button title={existing ? 'Update the log' : 'Save the log'} disabled={!text.trim()} onPress={save} />
       </Card>
 
       {p.logs.filter((l) => l.date !== today).length ? <H2>Earlier</H2> : null}
@@ -67,8 +74,11 @@ export default function LogScreen() {
               onPress={() => confirmAction('Delete this log?', '', 'Delete', () => updateProject(p.id, (x) => ({ ...x, logs: x.logs.filter((y) => y.id !== l.id) })))}>
               <Text style={{ color: C.muted }}>Delete</Text>
             </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Share log" hitSlop={8} onPress={() => shareText(`${p.title} · ${dateFmt(`${l.date}T12:00:00`)}\n${l.text}`, p.title)}>
+              <Text style={{ color: C.accent, fontWeight: '600' }}>Share</Text>
+            </Pressable>
           </View>
-          <Text selectable style={{ color: C.ink2, lineHeight: 21 }}>{l.text}</Text>
+          <Text raw selectable style={{ color: C.ink2, lineHeight: 21 }}>{l.text}</Text>
         </Card>
       ))}
     </Screen>

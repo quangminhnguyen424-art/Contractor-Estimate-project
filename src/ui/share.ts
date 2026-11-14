@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { hostSave, inClaudeApp, safeFileName } from './host';
 import { notify } from './notify';
 import { htmlToPdfBlob } from './pdfExport';
+import { named } from './shareFile';
 
 /** Turns HTML into a PDF and opens the share sheet (print dialog on plain web). Returns false if the user cancelled. */
 export async function sharePdf(html: string, name: string) {
@@ -20,7 +21,7 @@ export async function sharePdf(html: string, name: string) {
     await Print.printAsync({ html });
     return true;
   }
-  const { uri } = await Print.printToFileAsync({ html });
+  const uri = named((await Print.printToFileAsync({ html })).uri, `${name}.pdf`);
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: name, UTI: 'com.adobe.pdf' });
   } else {

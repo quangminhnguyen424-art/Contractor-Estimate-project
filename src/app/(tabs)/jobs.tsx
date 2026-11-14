@@ -38,15 +38,18 @@ function subLine(j: Job): string {
  */
 export default function Jobs() {
   const { estimates, projects, contracts, profile, addProject } = useApp();
-  const params = useLocalSearchParams<{ show?: string }>();
+  const params = useLocalSearchParams<{ show?: string; n?: string }>();
   const [filter, setFilter] = useState<'all' | Group>('all');
-  // Home's numbers open the list already filtered (also when this tab was open before).
-  const [lastShow, setLastShow] = useState<string | undefined>(undefined);
-  if (params.show !== lastShow) {
-    setLastShow(params.show);
-    if (params.show === 'quote' || params.show === 'active' || params.show === 'closed' || params.show === 'all') setFilter(params.show);
-  }
   const [q, setQ] = useState('');
+  // Home's numbers open the list already filtered. Each tap carries a fresh `n`, so tapping the same number again
+  // later filters again (a request that looked the same as the last one would not be noticed).
+  const ask = params.show ? `${params.show}|${params.n ?? ''}` : undefined;
+  const [lastAsk, setLastAsk] = useState<string | undefined>(undefined);
+  if (ask !== lastAsk) {
+    setLastAsk(ask);
+    const show = params.show;
+    if (show === 'quote' || show === 'active' || show === 'closed' || show === 'all') { setFilter(show); setQ(''); }
+  }
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
@@ -112,7 +115,7 @@ export default function Jobs() {
                         </View>
                       )}
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{j.title}</Text>
+                        <Text raw style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{j.title}</Text>
                         <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{who || sub}</Text>
                         {who && sub ? <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={1}>{sub}</Text> : null}
                       </View>
@@ -152,7 +155,7 @@ export default function Jobs() {
 
 function ScrollList({ children }: { children: React.ReactNode }) {
   return (
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32, width: '100%', maxWidth: 720, alignSelf: 'center' }}>
+    <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32, width: '100%', maxWidth: 720, alignSelf: 'center' }}>
       {children}
     </ScrollView>
   );

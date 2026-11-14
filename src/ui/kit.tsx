@@ -2,7 +2,7 @@ import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { HeaderHeightContext } from 'expo-router/react-navigation';
 import {
-  KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View,
+  Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View,
   type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,15 +18,29 @@ export { C, P } from './theme';
 export const mono = NUM;
 
 /**
- * Keeps whatever is at the bottom (a chat box, a footer button) above the keyboard. The offset is the height of
- * the screen's header, so the box lands right on top of the keyboard instead of hiding behind it.
+ * Keeps whatever is at the bottom (a chat box, a footer button) above the keyboard.
+ * The keyboard view needs to know how far this view starts from the top of the glass. Under a normal header that
+ * is the header's height; in a pop-up sheet or a screen with no header (setup, first-run terms) it is more, so the
+ * real position is measured: once when laid out and again after the screen has finished sliding in.
  */
 export function KeyboardSafe({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const header = React.useContext(HeaderHeightContext) ?? 0;
+  const ref = React.useRef<React.ComponentRef<typeof View>>(null);
+  const [top, setTop] = React.useState(0);
+  const measure = React.useCallback(() => {
+    ref.current?.measureInWindow((_x: number, y: number) => { if (Number.isFinite(y) && y >= 0 && y < 400) setTop(Math.round(y)); });
+  }, []);
+  React.useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    const timers = [setTimeout(measure, 450), setTimeout(measure, 1000)];
+    return () => timers.forEach(clearTimeout);
+  }, [measure]);
   return (
-    <KeyboardAvoidingView style={[{ flex: 1 }, style]} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={header}>
-      {children}
-    </KeyboardAvoidingView>
+    <View ref={ref} collapsable={false} onLayout={Platform.OS === 'ios' ? measure : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={[{ flex: 1 }, style]} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Math.max(header, top)}>
+        {children}
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -62,14 +76,14 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
 export function H1({ children }: { children: React.ReactNode }) {
   return <Text style={s.h1}>{children}</Text>;
 }
-export function H2({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[s.h2, style]}>{children}</Text>;
+export function H2({ children, style, raw }: { children: React.ReactNode; style?: StyleProp<TextStyle>; /** Shown as written, never translated: a name or title the user typed. */ raw?: boolean }) {
+  return <Text raw={raw} style={[s.h2, style]}>{children}</Text>;
 }
 export function Label({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
   return <Text style={[s.label, style]}>{children}</Text>;
 }
-export function Muted({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[s.muted, style]}>{children}</Text>;
+export function Muted({ children, style, raw }: { children: React.ReactNode; style?: StyleProp<TextStyle>; raw?: boolean }) {
+  return <Text raw={raw} style={[s.muted, style]}>{children}</Text>;
 }
 
 export function Button({ title, onPress, kind = 'primary', disabled, style, accessibilityLabel, icon }: {
@@ -109,7 +123,7 @@ export function Field({ label, help, suffix, style, error, ...props }: TextInput
         <TextInput
           accessibilityLabel={label}
           placeholderTextColor="#64748B"
-          style={[s.input, props.multiline && { height: 120, textAlignVertical: 'top', paddingTop: 12 }]}
+          style={[s.input, props.multiline && { minHeight: 120, textAlignVertical: 'top', paddingTop: 12, paddingBottom: 12 }]}
           {...props}
         />
         {suffix ? <Text style={s.suffix}>{suffix}</Text> : null}
@@ -269,7 +283,7 @@ export function Select<T extends string | number>({ label, value, options, onCha
   return (
     <View style={{ gap: 6 }}>
       {label ? <Label>{label}</Label> : null}
-      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${current?.label ?? placeholder}`} onPress={() => setOpen(true)}
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${current?.label ?? placeholder}`} onPress={() => { Keyboard.dismiss(); setOpen(true); }}
         style={[s.inputWrap, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, minHeight: 52 }, error ? { borderColor: C.danger, borderWidth: 1.5 } : null]}>
         <Text style={{ flex: 1, fontSize: 17, color: current ? C.ink : C.muted }} numberOfLines={1}>{current?.label ?? placeholder}</Text>
         <Ionicons name="chevron-down" size={20} color={C.ink2} />
@@ -377,8 +391,9 @@ export const s = StyleSheet.create({
   btn: { height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingRight: 12 },
-  input: { flex: 1, minHeight: 48, paddingHorizontal: 14, fontSize: 16, color: C.ink },
-  suffix: { color: C.muted, fontSize: 14 },
+  // minWidth 0 lets the box shrink in a narrow field (two side by side), so the unit after it stays inside the border.
+  input: { flex: 1, minWidth: 0, minHeight: 48, paddingHorizontal: 14, fontSize: 16, color: C.ink, ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null) },
+  suffix: { color: C.muted, fontSize: 14, flexShrink: 0 },
   chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   chipText: { fontSize: 15, color: C.ink, fontWeight: '500' },
   seg: { flexDirection: 'row', backgroundColor: '#E7ECF4', borderRadius: 14, padding: 4, gap: 4 },

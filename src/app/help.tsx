@@ -14,10 +14,15 @@ import { aiFor } from '@/ui/host';
 import { C, KeyboardSafe, List, ListRow, Section } from '@/ui/kit';
 import { Text } from '@/ui/text';
 
+const TABS = new Set(['/', '/jobs', '/new', '/schedule', '/me']);
+/** Opens a screen named in a help answer. A tab is returned to (never stacked as a second copy on top of Help). */
+const open = (route: string) => (TABS.has(route.split('?')[0]) ? router.dismissTo(route as never) : router.push(route as never));
+
 const HELP_CENTER = 'https://quangminhnguyen424-art.github.io/Contractor-Estimate-project/help.html';
 const POPULAR = ['new-estimate', 'edit-quote', 'sign', 'photos', 'roof-satellite', 'password'];
 
-interface Msg { role: 'user' | 'assistant'; text: string; links?: { route: string; label: string }[]; topics?: HelpTopic[] }
+/** `own`: a line the app wrote (translated on screen); anything else is shown as written. `why`: why the AI did not answer. */
+interface Msg { role: 'user' | 'assistant'; text: string; links?: { route: string; label: string }[]; topics?: HelpTopic[]; own?: boolean; why?: string }
 
 /** Help and support: chat with Bidwell AI about the app, popular how-tos, report a problem, or reach a person. */
 export default function HelpScreen() {
@@ -36,20 +41,20 @@ export default function HelpScreen() {
     setMsgs(next);
     setBusy(true);
     setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50);
-    const turns: ChatTurn[] = next.slice(-10).map((m) => ({ role: m.role, content: m.text }));
+    const turns: ChatTurn[] = next.filter((m) => !m.own).slice(-10).map((m) => ({ role: m.role, content: m.text }));
+    while (turns.length && turns[0].role !== 'user') turns.shift(); // a conversation sent to the AI starts with the user
     let reply: Msg;
     try {
       const raw = await aiFor(apiKey, aiAllowed).chat(turns, helpSystem({ company: profile?.companyName }) + aiLanguageLine());
-      const offline = /not connected|only answer when/i.test(raw);
-      if (offline) throw new Error('offline');
       const p = parseHelpReply(raw);
       reply = { role: 'assistant', text: p.text, links: p.links };
-    } catch {
-      // No AI right now: answer from the built-in how-to articles.
+    } catch (e) {
+      // No AI right now: say why, and answer from the built-in how-to articles.
+      const why = e instanceof Error ? e.message : undefined;
       const found = searchHelp(question);
       reply = found.length
-        ? { role: 'assistant', text: 'Here is what I found in the how-to guides:', topics: found }
-        : { role: 'assistant', text: 'I could not answer that right now. Tap Report a problem below and a person will get back to you.', links: [{ route: '/report', label: 'Report a problem' }] };
+        ? { role: 'assistant', own: true, why, text: 'Here is what I found in the how-to guides:', topics: found }
+        : { role: 'assistant', own: true, why, text: 'I could not answer that right now. Tap Report a problem below and a person will get back to you.', links: [{ route: '/report', label: 'Report a problem' }] };
     }
     setMsgs((m) => [...m, reply]);
     setBusy(false);
@@ -87,18 +92,19 @@ export default function HelpScreen() {
           <View key={i} style={{ alignItems: m.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
             <View style={{ maxWidth: '88%', backgroundColor: m.role === 'user' ? C.accent : C.card, borderRadius: 18, padding: 12,
               borderWidth: m.role === 'user' ? 0 : 1, borderColor: C.line }}>
-              <Text style={{ color: m.role === 'user' ? '#FFFFFF' : C.ink, fontSize: 15, lineHeight: 21 }}>{m.text}</Text>
+              {m.why ? <Text style={{ color: C.muted, fontSize: 13, lineHeight: 18, marginBottom: 6 }}>{m.why}</Text> : null}
+              <Text raw={!m.own} style={{ color: m.role === 'user' ? '#FFFFFF' : C.ink, fontSize: 15, lineHeight: 21 }}>{m.text}</Text>
             </View>
             {m.topics?.map((t) => (
               <View key={t.id} style={{ maxWidth: '88%', backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 12, gap: 6 }}>
                 <Text style={{ color: C.ink, fontWeight: '700' }}>{t.title}</Text>
                 <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>{t.answer}</Text>
-                <LinkChip label={t.link} onPress={() => router.push(t.route as never)} />
+                <LinkChip label={t.link} onPress={() => open(t.route)} />
               </View>
             ))}
             {m.links?.length ? (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                {m.links.map((l) => <LinkChip key={l.route} label={l.label} onPress={() => router.push(l.route as never)} />)}
+                {m.links.map((l) => <LinkChip key={l.route} label={l.label} onPress={() => open(l.route)} />)}
               </View>
             ) : null}
           </View>

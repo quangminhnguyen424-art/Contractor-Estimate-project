@@ -112,7 +112,7 @@ export default function Assistant() {
                   backgroundColor: m.role === 'user' ? C.accent : m.error ? C.warnBg : C.card,
                   borderWidth: m.role === 'user' ? 0 : 1, borderColor: C.line,
                 }}>
-                  <Text selectable style={{ color: m.role === 'user' ? C.onAccent : m.error ? C.warnInk : C.ink, fontSize: 16, lineHeight: 23 }}>{m.text}</Text>
+                  <Text raw={!m.error} selectable style={{ color: m.role === 'user' ? C.onAccent : m.error ? C.warnInk : C.ink, fontSize: 16, lineHeight: 23 }}>{m.text}</Text>
                 </View>
                 {m.role === 'assistant' && !m.error ? (
                   <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>

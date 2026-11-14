@@ -62,7 +62,7 @@ export default function MoneyScreen() {
       </View>
     )}>
       <View style={{ gap: 2 }}>
-        <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{p.title}</Text>
+        <Text raw style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{p.title}</Text>
         <Muted style={{ fontSize: 13 }}>Private to you. Never shown on client or crew documents.</Muted>
       </View>
 

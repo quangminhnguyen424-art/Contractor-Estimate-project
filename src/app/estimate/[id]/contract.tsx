@@ -86,7 +86,7 @@ export default function ContractScreen() {
     <Screen>
       <Stack.Screen options={{ title: 'Contract and payments' }} />
       <Reveal style={{ gap: 4 }}>
-        <Text style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{est.title}</Text>
+        <Text raw style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{est.title}</Text>
         <Muted>{[est.clientName, est.address].filter(Boolean).join(' · ')}</Muted>
       </Reveal>
 
@@ -134,7 +134,7 @@ export default function ContractScreen() {
           <Pressable key={co.id} accessibilityRole="button" onPress={() => router.push(`/estimate/${est.id}/change?co=${co.id}`)}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, borderBottomWidth: 1, borderColor: C.lineSoft, opacity: pressed ? 0.7 : 1 })}>
             <Text style={{ color: C.muted, fontWeight: '700', width: 30 }}>#{co.number}</Text>
-            <Text style={{ flex: 1, color: C.ink, fontWeight: '600' }} numberOfLines={1}>{co.title || 'Untitled change'}</Text>
+            <Text raw style={{ flex: 1, color: C.ink, fontWeight: '600' }} numberOfLines={1}>{co.title || 'Untitled change'}</Text>
             <Text style={{ color: C.ink, fontFamily: mono }}>{money(co.amount)}</Text>
             <Badge label={co.status === 'approved' ? 'Signed' : co.status === 'declined' ? 'Declined' : 'Waiting'} tone={co.status === 'approved' ? 'ok' : co.status === 'declined' ? 'bad' : 'warn'} />
           </Pressable>

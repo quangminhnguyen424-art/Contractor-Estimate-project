@@ -16,3 +16,6 @@ export async function shareTextFile(name: string, text: string, mimeType: string
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   return true;
 }
+
+/** Files are named when they are saved in the browser; nothing to do here. */
+export const named = (uri: string, _name: string): string => uri;

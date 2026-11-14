@@ -83,7 +83,7 @@ export function Text({ style, children, raw, ...props }: TextProps & {
   const asWritten = useContext(AsWritten) || raw;
   return (
     <WeightCtx.Provider value={f.weight}>
-      <RNText {...props} style={f.style}>{asWritten ? children : translated(children, t)}</RNText>
+      <RNText maxFontSizeMultiplier={1.35} {...props} style={f.style}>{asWritten ? children : translated(children, t)}</RNText>
     </WeightCtx.Provider>
   );
 }
@@ -92,5 +92,5 @@ export function TextInput({ style, placeholder, ...props }: TextInputProps) {
   const flat = (StyleSheet.flatten(style) ?? {}) as TextStyle;
   const t = useT();
   const asWritten = useContext(AsWritten);
-  return <RNTextInput {...props} placeholder={placeholder && !asWritten ? t(placeholder) : placeholder} style={[flat, { fontFamily: SYSTEM }]} />;
+  return <RNTextInput maxFontSizeMultiplier={1.35} {...props} placeholder={placeholder && !asWritten ? t(placeholder) : placeholder} style={[flat, { fontFamily: SYSTEM }]} />;
 }

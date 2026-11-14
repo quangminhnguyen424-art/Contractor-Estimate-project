@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Keyboard, Pressable, View } from 'react-native';
 
 import { Wave } from './motion';
 import { notify } from './notify';
@@ -52,7 +52,7 @@ export function Composer({ value, onChange, onSend, actions = [], placeholder, s
     <>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
         {actions.length ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="More options" onPress={() => setMenu(true)}
+          <Pressable accessibilityRole="button" accessibilityLabel="More options" onPress={() => { Keyboard.dismiss(); setMenu(true); }}
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="add" size={26} color={C.ink} />
           </Pressable>

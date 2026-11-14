@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { demoAI, hostClaudeAI, type SampleFn } from './ai';
+import { demoAI, sharingOffAI, hostClaudeAI, type SampleFn } from './ai';
 import { assistantSystem, isVietnamese, parseAssistantReply, speakable } from './assistant';
 import { buildEstimate } from './estimator';
 import type { Estimate, Profile } from './types';
@@ -56,7 +56,8 @@ describe('chat backends', () => {
     expect(opts.cache).toBe(false);
   });
   it('explains what to do when Claude is not connected', async () => {
-    expect(await demoAI.chat([], '')).toMatch(/Claude is connected|add your Claude key/);
+    await expect(demoAI.chat([], '')).rejects.toThrow(/Log in to your Bidwell account/);
+    await expect(sharingOffAI().chat([], '')).rejects.toThrow(/Turn it on under Me > Bidwell AI/);
     await expect(hostClaudeAI(async () => null).chat([{ role: 'user', content: 'hi' }], 's')).rejects.toThrow(/not available/);
   });
 });

@@ -6,16 +6,17 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "estimatingapp",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.ymllc.estimator",
       "infoPlist": {
         "NSCameraUsageDescription": "Take job photos and scan rooms with LiDAR to draw floor plans for your estimate.",
         "NSPhotoLibraryUsageDescription": "Attach job photos to your estimate.",
+        "NSPhotoLibraryAddUsageDescription": "Save job photos to your photo library.",
         "ITSAppUsesNonExemptEncryption": false,
         "NSContactsUsageDescription": "Pick a client from your contacts to fill in their name and address."
       },
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {

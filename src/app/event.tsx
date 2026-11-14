@@ -153,7 +153,7 @@ export default function EventScreen() {
               ))}
             </View>
           ) : (
-            <Chip label="+ Add your crew and subs" onPress={() => router.push('/team')} />
+            <Chip label="+ Add your crew and subs" onPress={() => router.replace('/team')} />
           )}
         </>
       ) : null}

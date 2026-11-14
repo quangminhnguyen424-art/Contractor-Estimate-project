@@ -100,7 +100,7 @@ export default function TeamScreen() {
           <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderColor: C.lineSoft }}>
             <Ionicons name={m.role === 'sub' ? 'construct-outline' : 'person-outline'} size={20} color={C.accent} />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: C.ink, fontWeight: '600' }}>{m.name}</Text>
+              <Text raw style={{ color: C.ink, fontWeight: '600' }}>{m.name}</Text>
               <Text style={{ color: C.muted, fontSize: 12 }}>{m.role === 'sub' ? 'Subcontractor' : 'Crew'}{m.trade ? ` · ${m.trade}` : ''}{m.rate ? ` · $${m.rate}/${m.rateUnit}` : ''}</Text>
             </View>
             <Button kind="ghost" title="Edit" onPress={() => setEdit(m)} />
