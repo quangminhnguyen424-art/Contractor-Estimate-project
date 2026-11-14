@@ -2,8 +2,8 @@ import { useLanguage } from '@/i18n';
 import { dateLocale } from '@/engine/locale';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, ScrollView, View, type ScrollViewInstance } from 'react-native';
 
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
@@ -23,6 +23,8 @@ export default function ScheduleScreen() {
   const { events, estimates, contracts, projects, profile } = useApp();
   const today = useToday();
   // Until a day is tapped the strip follows today, also when the app stays open past midnight.
+  const strip = useRef<ScrollViewInstance>(null);
+  const placed = useRef(false);
   const [picked, setDay] = useState<string | null>(null);
   const day = picked ?? today;
   // A week back and as far ahead as the appointment form allows (60 days), so nothing saved is out of reach.
@@ -43,8 +45,9 @@ export default function ScheduleScreen() {
 
   return (
     <Screen footer={<Button title={`Add to ${dayLabel(day, today).toLowerCase() === 'today' ? 'today' : dayLabel(day, today)}`} icon="add" onPress={() => router.push(`/event?date=${day}`)} />}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
-        contentOffset={{ x: 3 * 62 - 8, y: 0 }}>
+      {/* The strip starts a week back; it opens with today at the left edge. */}
+      <ScrollView ref={strip} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+        contentOffset={{ x: 7 * 62, y: 0 }} onLayout={() => { if (!placed.current) { placed.current = true; strip.current?.scrollTo({ x: 7 * 62, animated: false }); } }}>
         {days.map((d) => {
           const on = d === day;
           const date = new Date(`${d}T12:00:00`);

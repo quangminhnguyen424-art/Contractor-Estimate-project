@@ -3,7 +3,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Image, Pressable, View } from 'react-native';
 
 import { Button, C, Label } from './kit';
-import { notify } from './notify';
+import { notify, notifySettings } from './notify';
 import { Text } from './text';
 
 /** Pick the company logo: resized small (it travels inside every PDF and signing page) and kept as an image data URL. */
@@ -30,7 +30,7 @@ export function LogoPicker({ value, onChange }: { value?: string; onChange: (v: 
       if (data.length > 240_000) { notify('Logo too large', 'Use a simpler or smaller logo image.'); return; }
       onChange(data);
     } catch {
-      notify('Could not open photos', 'Allow Bidwell AI to use Photos in your iPhone Settings.');
+      notifySettings('Could not open photos', 'Allow Bidwell AI to use Photos in your phone’s Settings.');
     }
   };
   return (

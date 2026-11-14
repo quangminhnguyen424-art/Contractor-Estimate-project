@@ -1,4 +1,4 @@
-import { Alert, Platform } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
 import { tr } from '@/i18n';
 
@@ -35,5 +35,14 @@ export function confirmAction(titleEn: string, messageEn: string, actionEn: stri
   Alert.alert(title, message, [
     { text: tr('Cancel'), style: 'cancel' },
     { text: actionLabel, style: 'destructive', onPress: onConfirm },
+  ]);
+}
+
+/** A permission was refused: say so, with a button that opens this app's page in the phone's Settings. */
+export function notifySettings(titleEn: string, messageEn: string) {
+  if (Platform.OS === 'web') return notify(titleEn, messageEn);
+  Alert.alert(tr(titleEn), tr(messageEn), [
+    { text: tr('Not now'), style: 'cancel' },
+    { text: tr('Open Settings'), onPress: () => { Linking.openSettings().catch(() => {}); } },
   ]);
 }

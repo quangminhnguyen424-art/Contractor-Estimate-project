@@ -21,7 +21,7 @@ import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
 import { Banner, C, Field, Muted, Screen, Select } from '@/ui/kit';
 import { Composer } from '@/ui/Composer';
 import { QuickPrice } from '@/ui/QuickPrice';
-import { notify } from '@/ui/notify';
+import { notify, notifySettings } from '@/ui/notify';
 import { aiFor, inClaudeApp } from '@/ui/host';
 import { useCloud } from '@/cloud/CloudProvider';
 import { toAiImages } from '@/ui/photos';
@@ -90,7 +90,7 @@ export default function NewEstimate() {
     try {
       if (camera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) return notify('Camera access needed', 'Allow camera access in Settings to take job photos.');
+        if (!perm.granted) return notifySettings('Camera access needed', 'Allow camera access in Settings to take job photos.');
       }
       const res = camera
         ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
@@ -191,7 +191,7 @@ export default function NewEstimate() {
       if (c.name) setClientName(c.name);
       if (c.address && !address.trim()) setAddress(c.address);
     } catch {
-      notify('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.');
+      notifySettings('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your phone’s Settings, or type the name.');
     }
   };
   const send = async () => {

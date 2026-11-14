@@ -71,11 +71,11 @@
 "Type its name": "Escribe su nombre",
 "Type the password again": "Escribe la contraseña otra vez",
 "Yes": "Sí",
-"Your account keeps your work backed up, turns on Bidwell’s AI, and lets clients sign online. Next you’ll review the Terms of Use and AI notice.": "Tu cuenta mantiene tu trabajo respaldado, activa la IA de Bidwell y permite que los clientes firmen en línea. Después revisarás los Términos de uso y el aviso de IA.",
 "Your language": "Tu idioma",
 "Your work is saved. Try again, and if it keeps happening, send us a report so we can fix it.": "Tu trabajo está guardado. Inténtalo de nuevo y, si sigue pasando, envíanos un reporte para arreglarlo.",
 "Bidwell is learning {0}… {1}%": "Bidwell está aprendiendo {0}… {1}%",
 "Optional": "Opcional",
 "Please read and agree. It takes a minute.": "Lee y acepta, por favor. Toma un minuto.",
-"days": "días"
+"days": "días",
+"Your account keeps your work backed up, turns on Bidwell’s AI, and lets clients sign online. Next you’ll review the Terms of Use and AI notice.\n{0}": "Tu cuenta mantiene tu trabajo respaldado, activa la IA de Bidwell y permite que los clientes firmen en línea. Después revisarás los Términos de uso y el aviso de IA.\n{0}"
 }

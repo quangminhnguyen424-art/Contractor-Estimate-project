@@ -196,8 +196,6 @@
 "All types of work…": "Tất cả loại công việc…",
 "All upcoming appointments in one calendar file": "Mọi lịch hẹn sắp tới trong một file lịch",
 "All-purpose joint compound, 4.5 gal": "Bột trét đa năng, 4.5 gal",
-"Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.": "Cho phép Bidwell AI dùng Danh bạ trong Cài đặt iPhone, hoặc gõ tên.",
-"Allow Bidwell AI to use Photos in your iPhone Settings.": "Cho phép Bidwell AI dùng Ảnh trong Cài đặt iPhone.",
 "Allow camera access in Settings to take job photos.": "Cho phép dùng camera trong Cài đặt để chụp ảnh công trình.",
 "Allow the camera in your phone settings to snap receipts.": "Cho phép camera trong cài đặt điện thoại để chụp biên lai.",
 "Already invoiced": "Đã xuất hoá đơn",
@@ -1798,7 +1796,6 @@
 "Tub drain, valve and supply": "Ống thoát, van và cấp nước bồn tắm",
 "Turn on Bidwell AI": "Bật Bidwell AI",
 "Turn on follow-ups": "Bật nhắc lại",
-"Turn on notifications for Bidwell AI in your iPhone Settings to get reminders.": "Bật thông báo cho Bidwell AI trong Cài đặt iPhone để nhận lời nhắc.",
 "Turns on the AI, backup and online signing": "Bật AI, sao lưu và ký online",
 "Two main planes with a ridge and two gable ends.": "Hai mặt mái chính với một nóc và hai đầu hồi.",
 "Two stories": "Hai tầng",
@@ -2386,5 +2383,10 @@
 "{0} · {1} · {2} · client pays back by {3}": "{0} · {1} · {2} · khách trả lại trước {3}",
 "{0}: you've spent more than the client has paid. Ask for the next payment?": "{0}: bạn đã chi nhiều hơn số khách đã trả. Đề nghị đợt thanh toán tiếp theo?",
 "{0}{1} for {2}": "{0}{1} cho {2}",
-"· client pays back by {0}": "· khách trả lại trước {0}"
+"· client pays back by {0}": "· khách trả lại trước {0}",
+"Allow Bidwell AI to use Contacts in your phone’s Settings, or type the name.": "Cho phép Bidwell AI dùng Danh bạ trong Cài đặt của điện thoại, hoặc gõ tên.",
+"Allow Bidwell AI to use Photos in your phone’s Settings.": "Cho phép Bidwell AI dùng Ảnh trong Cài đặt của điện thoại.",
+"Not now": "Để sau",
+"Open Settings": "Mở Cài đặt",
+"Turn on notifications for Bidwell AI in your phone’s Settings to get reminders.": "Bật thông báo cho Bidwell AI trong Cài đặt của điện thoại để nhận lời nhắc."
 }

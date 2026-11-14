@@ -7,7 +7,7 @@ import { newId } from '@/engine/format';
 import { markupSvg, type PhotoKind, type SitePhoto } from '@/engine/site';
 
 import { C } from './kit';
-import { notify } from './notify';
+import { notify, notifySettings } from './notify';
 import { savePhoto, usePhotoUri } from './photoStore';
 
 /** A job site photo with its drawings on top, at any width. */
@@ -39,7 +39,7 @@ export async function addSitePhotos(camera: boolean, kind: PhotoKind): Promise<S
     if (camera) {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        notify('Camera access needed', 'Allow camera access in Settings to take job photos.');
+        notifySettings('Camera access needed', 'Allow camera access in Settings to take job photos.');
         return [];
       }
     }

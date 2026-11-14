@@ -8,7 +8,7 @@ import { addDays, dayLabel, eventIcs, isYmd, KINDS, REMINDERS, type CalEvent, ty
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, Chip, Field, Label, Muted, Screen, Select } from '@/ui/kit';
 import { PressScale } from '@/ui/motion';
-import { confirmAction, notify } from '@/ui/notify';
+import { confirmAction, notify, notifySettings } from '@/ui/notify';
 import { cancelReminder, remindersAvailable, scheduleReminder } from '@/ui/reminders';
 import { shareTextFile } from '@/ui/shareFile';
 import { Text } from '@/ui/text';
@@ -71,7 +71,7 @@ export default function EventScreen() {
       const r = await scheduleReminder(e);
       const { notificationId: _old, ...rest } = e;
       saveEvent(r.id ? { ...rest, notificationId: r.id } : rest);
-      if (r.blocked) notify('Saved, but reminders are off', 'Turn on notifications for Bidwell AI in your iPhone Settings to get reminders.');
+      if (r.blocked) notifySettings('Saved, but reminders are off', 'Turn on notifications for Bidwell AI in your phone’s Settings to get reminders.');
       router.back();
     } catch {
       saveEvent(e);
