@@ -143,8 +143,10 @@ export function TakePhotos({ project, onClose, onCapture }: {
   project: SiteProject; onClose: () => void; onCapture: (roomId: string, kind: PhotoKind, camera: boolean) => void;
 }) {
   const [room, setRoom] = useState<string | null>(null);
-  const [kind, setKind] = useState<PhotoKind>('progress');
+  const [kindPicked, setKind] = useState<PhotoKind | null>(null);
   const roomId = room ?? project.rooms[0]?.id;
+  // An area with no photos yet starts with its "before"; after that, progress.
+  const kind: PhotoKind = kindPicked ?? (project.rooms.find((r) => r.id === roomId)?.photos.length ? 'progress' : 'before');
   return (
     <>
       <Select<string> label="Which area?" value={roomId} onChange={setRoom}

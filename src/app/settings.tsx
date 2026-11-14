@@ -1,3 +1,4 @@
+import { shareTextFile } from '@/ui/shareFile';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCloud } from '@/cloud/CloudProvider';
 import { useState } from 'react';
@@ -110,7 +111,8 @@ export default function Settings() {
       }
     }
     try {
-      await Share.share({ title: name, message: json });
+      // A real file (megabytes of JSON as message text does not share well).
+      if (!(await shareTextFile(name, json, 'application/json', 'public.json'))) await Share.share({ title: name, message: json });
     } catch {
       setBackupText(json);
       notify('Copy your backup', 'Sharing failed (the backup may be too large). The backup text is in the box below: copy it and save it somewhere safe.');
@@ -162,7 +164,7 @@ export default function Settings() {
         <>
           <Muted>How clients pay you. Shown on quotes, invoices and after they sign.</Muted>
           <Field label="Online payment link (optional)" value={p.payLink ?? ''} onChangeText={(v) => set('payLink', v.trim() || undefined)}
-            placeholder="https://buy.stripe.com/… or your Square / PayPal link" autoCapitalize="none" keyboardType="url"
+            placeholder="https://…" autoCapitalize="none" keyboardType="url"
             help="Your own link from Stripe, Square or PayPal. Clients see a Pay online button on quotes, invoices and after they sign. Money goes straight to you." />
           <Field label="Other ways to pay (optional)" value={p.payNote ?? ''} onChangeText={(v) => set('payNote', v || undefined)} multiline maxLength={240}
             placeholder="e.g. Zelle 253-555-0100 · Checks payable to Smith Remodeling LLC" />
@@ -173,7 +175,7 @@ export default function Settings() {
           {p.schedule.map((m, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
               <Field label={`Step ${i + 1}`} value={m.label} onChangeText={(v) => setMilestone(i, { label: v })} style={{ flex: 2 }} />
-              <NumberField label="Percent" suffix="%" value={m.pct} onChange={(v) => setMilestone(i, { pct: v })} style={{ flex: 1 }} />
+              <NumberField label="Percent" suffix="%" max={100} value={m.pct} onChange={(v) => setMilestone(i, { pct: v })} style={{ flex: 1 }} />
             </View>
           ))}
           {schedTotal !== 100 ? <Banner tone="warn" title={`Adds up to ${schedTotal}%. It needs to total 100%.`} /> : null}
@@ -211,12 +213,12 @@ export default function Settings() {
       ) : page === 'rules' ? (
         <>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <NumberField label="Default markup" suffix="%" value={p.markupPct} onChange={(v) => set('markupPct', v)} style={{ flex: 1 }} />
-            <NumberField label="Never below" suffix="%" value={p.minMarkupPct} onChange={(v) => set('minMarkupPct', v)} style={{ flex: 1 }} />
+            <NumberField label="Default markup" suffix="%" max={500} value={p.markupPct} onChange={(v) => set('markupPct', v)} style={{ flex: 1 }} />
+            <NumberField label="Never below" suffix="%" max={500} value={p.minMarkupPct} onChange={(v) => set('minMarkupPct', v)} style={{ flex: 1 }} />
           </View>
-          <NumberField label="Sales tax rate" suffix="%" value={p.salesTaxPct} onChange={(v) => set('salesTaxPct', v)}
+          <NumberField label="Sales tax rate" suffix="%" max={25} value={p.salesTaxPct} onChange={(v) => set('salesTaxPct', v)}
             help="Added to the client total. Use the rate where the work is done." />
-          <NumberField label="Quote valid for" suffix="days" value={p.quoteValidDays} onChange={(v) => set('quoteValidDays', v)} decimals={false} />
+          <NumberField label="Quote valid for" suffix="days" max={365} value={p.quoteValidDays} onChange={(v) => set('quoteValidDays', v)} decimals={false} />
         </>
       ) : page === 'work' ? (
         <>

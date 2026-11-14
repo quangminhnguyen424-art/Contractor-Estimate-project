@@ -139,17 +139,21 @@ export function Field({ label, help, suffix, style, error, ...props }: TextInput
 }
 
 /** Numeric input that keeps a local text value so typing "1." or clearing works. */
-export function NumberField({ label, value, onChange, suffix, help, style, decimals = true }: {
+export function NumberField({ label, value, onChange, suffix, help, style, decimals = true, max }: {
   label: string; value: number; onChange: (n: number) => void; suffix?: string; help?: string;
   style?: StyleProp<ViewStyle>; decimals?: boolean;
+  /** The most this can sensibly be (a 25% tax rate, a 100% share): a slipped digit stops here instead of being saved. */
+  max?: number;
 }) {
-  const [text, setText] = React.useState(Number.isFinite(value) ? String(value) : '');
+  // Money with cents shows as money (1691.80, not 1691.8).
+  const show = (v: number) => (!Number.isFinite(v) ? '' : Number.isInteger(v) || Math.abs(v * 100 - Math.round(v * 100)) > 1e-6 ? String(v) : v.toFixed(2));
+  const [text, setText] = React.useState(show(value));
   const [lastValue, setLastValue] = React.useState(value);
   // When the value changes from outside (not from typing here), show the new value.
   if (value !== lastValue && !(Number.isNaN(value) && Number.isNaN(lastValue))) {
     setLastValue(value);
     // An emptied box means 0: leave it empty so the next digit typed is not "05".
-    if ((text === '' ? 0 : parseFloat(text)) !== value) setText(Number.isFinite(value) ? String(value) : '');
+    if ((text === '' ? 0 : parseFloat(text)) !== value) setText(show(value));
   }
   return (
     <Field
@@ -165,9 +169,10 @@ export function NumberField({ label, value, onChange, suffix, help, style, decim
         const dotted = decimals && !t.includes('.') && (t.match(/,/g) ?? []).length === 1 ? t.replace(',', '.') : t;
         const [whole, ...rest] = dotted.replace(/[^0-9.]/g, '').split('.');
         const clean = rest.length ? `${whole}.${rest.join('')}` : whole;
-        setText(clean);
         const n = parseFloat(clean);
-        onChange(Number.isFinite(n) ? n : 0);
+        const over = max != null && Number.isFinite(n) && n > max;
+        setText(over ? show(max) : clean);
+        onChange(over ? max : Number.isFinite(n) ? n : 0);
       }}
     />
   );

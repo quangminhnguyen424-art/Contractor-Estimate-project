@@ -121,7 +121,8 @@ export function projectBooks(input: { est?: Estimate; profile?: Profile | null; 
   const reimb = money.costs.filter((c) => c.ownerOwes);
   const reimbPaid = sum(reimb.filter((c) => c.ownerOwes?.paidOn).map((c) => c.amount));
   const reimbOpen = reimb.filter((c) => !c.ownerOwes?.paidOn);
-  const owes = r2((ct?.invoiced ?? 0) + sum(reimb.map((c) => c.amount)));
+  // A payment taken before its invoice was made still counts as billed, so the three rows always reconcile.
+  const owes = r2(Math.max(ct?.invoiced ?? 0, ct?.paid ?? 0) + sum(reimb.map((c) => c.amount)));
   const received = r2((ct?.paid ?? 0) + reimbPaid);
   const balance = r2((ct?.due ?? 0) + sum(reimbOpen.map((c) => c.amount)));
   let overdueCount = 0;

@@ -56,7 +56,7 @@ export function dailyCheckIn(input: {
     if (est && est.status !== 'won' && !contract?.accepted) continue;
     if (p.money?.costs.length || contract) {
       const b = projectBooks({ est, profile, contract, money: p.money ?? { salesTaxPct: null, incomeTaxPct: 30, costs: [], buy: [] }, today });
-      if (b.funds.status === 'request') out.push({ id: `funds-${p.id}`, priority: 2, icon: 'cash-outline', text: `${p.title}: you've spent more than the owner has paid. Ask for the next payment?`, route: `/site/${p.id}/money`, action: 'Open' });
+      if (b.funds.status === 'request') out.push({ id: `funds-${p.id}`, priority: 2, icon: 'cash-outline', text: `${p.title}: you've spent more than the client has paid. Ask for the next payment?`, route: `/site/${p.id}/money`, action: 'Open' });
       if (b.owner.overdueCount) out.push({ id: `overdue-${p.id}`, priority: 2, icon: 'alert-circle-outline', text: `${p.title}: ${b.owner.overdueCount} payment${b.owner.overdueCount > 1 ? 's are' : ' is'} overdue.`, route: est ? `/estimate/${est.id}/contract` : `/site/${p.id}/money`, action: 'Remind' });
       const o = b.over[0];
       if (o) out.push({ id: `over-${p.id}`, priority: 3, icon: 'trending-up-outline', text: `${p.title}: ${COST_KINDS[o.kind].en.toLowerCase()} is ${o.pct}% over budget. Extra work for a change order?`, route: `/site/${p.id}/money`, action: 'Look' });

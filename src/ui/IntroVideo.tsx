@@ -53,7 +53,7 @@ export function IntroVideo({ onDone }: { onDone: () => void }) {
 
       <View style={{ gap: 10 }}>
         <Button title="Get started — free" icon="arrow-forward" onPress={onDone} />
-        <Text style={{ color: C.muted, textAlign: 'center', fontSize: 12, fontFamily: MONO }}>MADE FOR CONTRACTORS · ENGLISH & TIẾNG VIỆT</Text>
+        <Text style={{ color: C.muted, textAlign: 'center', fontSize: 12, fontFamily: MONO }}>MADE FOR CONTRACTORS</Text>
       </View>
     </View>
   );

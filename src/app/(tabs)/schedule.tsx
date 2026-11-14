@@ -1,3 +1,4 @@
+import { useLanguage } from '@/i18n';
 import { dateLocale } from '@/engine/locale';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
@@ -18,6 +19,7 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 /** The calendar: pick a day on the strip, see what's on, add site visits, crew days, calls and inspections. */
 export default function ScheduleScreen() {
+  useLanguage(); // dates on this screen are written here, so redraw when the language changes
   const { events, estimates, contracts, projects, profile } = useApp();
   const today = useToday();
   // Until a day is tapped the strip follows today, also when the app stays open past midnight.

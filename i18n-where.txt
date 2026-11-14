@@ -1,0 +1,2409 @@
+src/app/(tabs)/_layout.tsx:34	Home
+src/app/(tabs)/_layout.tsx:35	Jobs
+src/app/(tabs)/_layout.tsx:36	Schedule
+src/app/(tabs)/_layout.tsx:37	Me
+src/app/(tabs)/_layout.tsx:90	Bidwell AI
+src/app/(tabs)/_layout.tsx:92	New estimate
+src/app/(tabs)/index.tsx:53	(started an estimate)
+src/app/(tabs)/index.tsx:61	Bidwell could not answer. Try again.
+src/app/(tabs)/index.tsx:73	Could not start the estimate
+src/app/(tabs)/index.tsx:73	Try again, or tap the orange + to start it yourself.
+src/app/(tabs)/index.tsx:94	Voice on
+src/app/(tabs)/index.tsx:94	Voice off
+src/app/(tabs)/index.tsx:97	Clear the chat?
+src/app/(tabs)/index.tsx:97	Your jobs are not affected.
+src/app/(tabs)/index.tsx:97	Clear
+src/app/(tabs)/index.tsx:123	Opening…
+src/app/(tabs)/index.tsx:123	Start this estimate
+src/app/(tabs)/index.tsx:147	Ask Bidwell
+src/app/(tabs)/index.tsx:148	Ask Bidwell anything…
+src/app/(tabs)/jobs.tsx:19	All
+src/app/(tabs)/jobs.tsx:19	Quotes
+src/app/(tabs)/jobs.tsx:19	Active
+src/app/(tabs)/jobs.tsx:19	Closed
+src/app/(tabs)/jobs.tsx:66	Area 1
+src/app/(tabs)/jobs.tsx:78	Search jobs, clients, addresses
+src/app/(tabs)/jobs.tsx:98	No jobs yet
+src/app/(tabs)/jobs.tsx:98	Tap the orange + to price your first job. Each job keeps its quote, signature, photos and money on one page.
+src/app/(tabs)/jobs.tsx:100	No jobs match.
+src/app/(tabs)/jobs.tsx:137	Photo-only job
+src/app/(tabs)/jobs.tsx:138	Job name
+src/app/(tabs)/jobs.tsx:138	e.g. Kim bathroom
+src/app/(tabs)/jobs.tsx:139	Address
+src/app/(tabs)/jobs.tsx:139	Street, city
+src/app/(tabs)/jobs.tsx:141	Cancel
+src/app/(tabs)/jobs.tsx:142	Create
+src/app/(tabs)/jobs.tsx:147	+ Photo-only job (no estimate)
+src/app/(tabs)/me.tsx:41	Add your name and phone
+src/app/(tabs)/me.tsx:42	Edit company info
+src/app/(tabs)/me.tsx:42	Add your logo and details
+src/app/(tabs)/me.tsx:47	Account
+src/app/(tabs)/me.tsx:47	Log in to Bidwell
+src/app/(tabs)/me.tsx:48	Account, password, sync
+src/app/(tabs)/me.tsx:48	Turns on the AI, backup and online signing
+src/app/(tabs)/me.tsx:51	Pricing
+src/app/(tabs)/me.tsx:53	My pricing
+src/app/(tabs)/me.tsx:53	Set what you charge for each type of work
+src/app/(tabs)/me.tsx:54	Markup, tax and quote defaults
+src/app/(tabs)/me.tsx:55	Work you do
+src/app/(tabs)/me.tsx:56	How you work
+src/app/(tabs)/me.tsx:56	What Bidwell should know about your jobs
+src/app/(tabs)/me.tsx:59	Quotes and getting paid
+src/app/(tabs)/me.tsx:61	Getting paid
+src/app/(tabs)/me.tsx:61	Online payment link is on
+src/app/(tabs)/me.tsx:61	Other ways to pay are set
+src/app/(tabs)/me.tsx:61	Add a payment link, Zelle or check details
+src/app/(tabs)/me.tsx:62	Payment schedule
+src/app/(tabs)/me.tsx:63	Notices on quotes
+src/app/(tabs)/me.tsx:63	State notices added to every quote
+src/app/(tabs)/me.tsx:66	Team and apps
+src/app/(tabs)/me.tsx:68	Crew and subs
+src/app/(tabs)/me.tsx:68	Who works your jobs, and their rates
+src/app/(tabs)/me.tsx:69	Connected apps
+src/app/(tabs)/me.tsx:69	QuickBooks, Sheets, Calendar, Zapier
+src/app/(tabs)/me.tsx:72	App
+src/app/(tabs)/me.tsx:74	Language
+src/app/(tabs)/me.tsx:74	English
+src/app/(tabs)/me.tsx:75	On
+src/app/(tabs)/me.tsx:75	Off
+src/app/(tabs)/me.tsx:76	Backup
+src/app/(tabs)/me.tsx:76	Backed up to your account
+src/app/(tabs)/me.tsx:76	Only on this phone · export a copy
+src/app/(tabs)/me.tsx:77	Help and support
+src/app/(tabs)/me.tsx:77	Chat with Bidwell, report a problem
+src/app/(tabs)/me.tsx:78	Terms, privacy and AI
+src/app/(tabs)/new.tsx:86	Pick single items from your price book
+src/app/(tabs)/new.tsx:86	Your work
+src/app/(tabs)/new.tsx:93	Camera access needed
+src/app/(tabs)/new.tsx:93	Allow camera access in Settings to take job photos.
+src/app/(tabs)/new.tsx:103	Photos unavailable
+src/app/(tabs)/new.tsx:103	Could not open photos on this device.
+src/app/(tabs)/new.tsx:113	Reading the job
+src/app/(tabs)/new.tsx:115	Reading your notes
+src/app/(tabs)/new.tsx:115	Starting from your job type
+src/app/(tabs)/new.tsx:118	Indoor only: skipping roof, siding and yard work
+src/app/(tabs)/new.tsx:120	Filling in sizes and counts
+src/app/(tabs)/new.tsx:121	Checking your past jobs
+src/app/(tabs)/new.tsx:152	Bidwell could not read this job.
+src/app/(tabs)/new.tsx:163	Bidwell could not read this job
+src/app/(tabs)/new.tsx:164	s were
+src/app/(tabs)/new.tsx:164	Bidwell looks at up to 8 photos per estimate, and some photos could not be read.
+src/app/(tabs)/new.tsx:164	Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.
+src/app/(tabs)/new.tsx:194	Contacts unavailable
+src/app/(tabs)/new.tsx:194	Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.
+src/app/(tabs)/new.tsx:207	Pick the type of work
+src/app/(tabs)/new.tsx:207	Choose it under “Type of work”, or describe the job so Bidwell can pick it.
+src/app/(tabs)/new.tsx:235	Continue
+src/app/(tabs)/new.tsx:235	Describe the job
+src/app/(tabs)/new.tsx:236	Describe the job, or talk…
+src/app/(tabs)/new.tsx:238	Take photos
+src/app/(tabs)/new.tsx:238	Bidwell looks for sizes, conditions and code issues
+src/app/(tabs)/new.tsx:239	Choose photos
+src/app/(tabs)/new.tsx:240	Scan rooms in 3D
+src/app/(tabs)/new.tsx:240	Measures walls, doors and windows
+src/app/(tabs)/new.tsx:241	Client from Contacts
+src/app/(tabs)/new.tsx:249	It’s added to this estimate and fills in the areas.
+src/app/(tabs)/new.tsx:249	Remove
+src/app/(tabs)/new.tsx:255	The estimate joins this job, with the photos already taken.
+src/app/(tabs)/new.tsx:259	What’s the job?
+src/app/(tabs)/new.tsx:260	Say it like you would to a helper: the rooms, the sizes, what’s changing. Tap + to add photos or scan the rooms.
+src/app/(tabs)/new.tsx:263	Type of work
+src/app/(tabs)/new.tsx:263	Bidwell picks it from what you say
+src/app/(tabs)/new.tsx:265	Picked from your description. Tap to change.
+src/app/(tabs)/new.tsx:266	Client
+src/app/(tabs)/new.tsx:266	Name (optional)
+src/app/(tabs)/new.tsx:267	Job address
+src/app/(tabs)/new.tsx:267	Street, city (optional)
+src/app/(tabs)/new.tsx:268	Your notes stay private. Only the quote you approve goes to the client.
+src/app/(tabs)/new.tsx:277	Talk, photos or scan. Bidwell builds it.
+src/app/(tabs)/new.tsx:278	Quick price
+src/app/(tabs)/new.tsx:278	Size × your price. Repeat jobs in 30 s.
+src/app/(tabs)/schedule.tsx:43	Add to today
+src/app/(tabs)/schedule.tsx:65	Nothing scheduled
+src/app/(tabs)/schedule.tsx:65	Add site visits, crew days, client calls, deliveries and inspections. You’ll get a reminder on your phone.
+src/app/(tabs)/schedule.tsx:80	Coming up
+src/app/(tabs)/schedule.tsx:82	Reminders ring on your phone in the installed iPhone app.
+src/app/_layout.tsx:31	Could not save your latest changes
+src/app/_layout.tsx:32	Storage is full. Delete old photos or finished jobs, then try again.
+src/app/_layout.tsx:57	Loading your account…
+src/app/_layout.tsx:61	Can’t reach Bidwell cloud
+src/app/_layout.tsx:62	Check your internet connection. Your saved work comes back once it connects.
+src/app/_layout.tsx:63	Try again
+src/app/_layout.tsx:64	Continue offline
+src/app/_layout.tsx:147	Back
+src/app/_layout.tsx:155	Check the details
+src/app/_layout.tsx:156	Job
+src/app/_layout.tsx:157	Price details
+src/app/_layout.tsx:158	Client quote
+src/app/_layout.tsx:159	Material list
+src/app/_layout.tsx:160	Past job
+src/app/_layout.tsx:161	Price book
+src/app/_layout.tsx:163	Floor plan
+src/app/_layout.tsx:164	Settings
+src/app/_layout.tsx:168	Area
+src/app/_layout.tsx:169	Photo
+src/app/_layout.tsx:170	Daily log
+src/app/_layout.tsx:171	Share
+src/app/_layout.tsx:172	Scan 3D
+src/app/_layout.tsx:174	Appointment
+src/app/_layout.tsx:176	Client signature
+src/app/_layout.tsx:177	Contract and payments
+src/app/_layout.tsx:178	Change order
+src/app/_layout.tsx:179	Costs and receipts
+src/app/_layout.tsx:180	Buy list
+src/app/_layout.tsx:181	Add a cost
+src/app/_layout.tsx:182	Follow-ups
+src/app/_layout.tsx:186	Report a problem
+src/app/_layout.tsx:190	Terms and AI
+src/app/_layout.tsx:244	Something went wrong
+src/app/_layout.tsx:245	Your work is saved. Try again, and if it keeps happening, send us a report so we can fix it.
+src/app/_layout.tsx:247	Send a report
+src/app/account.tsx:18	Bidwell cloud is not set up in this version.
+src/app/account.tsx:21	Syncing…
+src/app/account.tsx:21	Up to date
+src/app/account.tsx:21	Could not sync
+src/app/account.tsx:25	Signed in
+src/app/account.tsx:29	Sync now
+src/app/account.tsx:30	Back up all photos now
+src/app/account.tsx:32	Starting…
+src/app/account.tsx:37	All photos are already backed up.
+src/app/account.tsx:43	What your account does
+src/app/account.tsx:44	• Your estimates, jobs, money and calendar are saved to your private account and come back on a new phone.
+src/app/account.tsx:45	• Job photos and receipts are backed up privately. Only you can open them.
+src/app/account.tsx:46	• Bidwell’s AI works without your own API key.
+src/app/account.tsx:47	• Clients can sign quotes and change orders from a link on their own phone.
+src/app/account.tsx:49	Saving and logging out…
+src/app/account.tsx:49	Log out
+src/app/account.tsx:50	Log out?
+src/app/account.tsx:50	Your work is saved to your account first. This phone is then cleared until you log in again.
+src/app/account.tsx:54	Not saved to the cloud
+src/app/account.tsx:54	Log out anyway
+src/app/account.tsx:56	Deleting…
+src/app/account.tsx:56	Delete my account
+src/app/account.tsx:57	Delete your Bidwell account?
+src/app/account.tsx:57	Your account, your jobs, clients, prices and all backed-up photos are deleted for good, here and on this phone. This cannot be undone.
+src/app/account.tsx:57	Delete
+src/app/account.tsx:70	You’re not logged in
+src/app/account.tsx:71	Log in to back up your work, use Bidwell’s AI and let clients sign online.
+src/app/account.tsx:72	Log in
+src/app/account.tsx:88	Change password
+src/app/account.tsx:91	The two new passwords don’t match.
+src/app/account.tsx:98	Password changed
+src/app/account.tsx:98	Use your new password the next time you log in.
+src/app/account.tsx:103	Current password
+src/app/account.tsx:104	New password
+src/app/account.tsx:105	At least 8 characters with an uppercase letter, a lowercase letter and a number.
+src/app/account.tsx:106	New password again
+src/app/account.tsx:110	Saving…
+src/app/account.tsx:110	Save
+src/app/connections.tsx:34	Nothing to export yet
+src/app/connections.tsx:36	Could not share the file
+src/app/connections.tsx:38	Please try again.
+src/app/connections.tsx:44	That link won’t work
+src/app/connections.tsx:44	Paste the full https:// link from Zapier or Make.
+src/app/connections.tsx:46	Link saved
+src/app/connections.tsx:46	Link removed
+src/app/connections.tsx:46	New quotes, signatures, invoices and payments are sent to it.
+src/app/connections.tsx:61	Your data, in the apps you already use
+src/app/connections.tsx:62	Spreadsheets, QuickBooks, your calendar, and 5,000+ apps through Zapier or Make.
+src/app/connections.tsx:66	Excel · Google Sheets · Numbers
+src/app/connections.tsx:66	Download your numbers as spreadsheet files
+src/app/connections.tsx:67	Estimates
+src/app/connections.tsx:68	Jobs: contract, paid, balance
+src/app/connections.tsx:69	Payments received
+src/app/connections.tsx:70	Client prices only. Your costs and markup stay in the app.
+src/app/connections.tsx:73	QuickBooks Online
+src/app/connections.tsx:73	Invoices ready for QuickBooks’ invoice import
+src/app/connections.tsx:74	Invoices for QuickBooks (CSV)
+src/app/connections.tsx:76	In QuickBooks: Settings (gear) → Import data → Invoices → upload this file. Check the customer names match.
+src/app/connections.tsx:79	Google Calendar · Outlook · iPhone
+src/app/connections.tsx:79	All upcoming appointments in one calendar file
+src/app/connections.tsx:80	Export my schedule
+src/app/connections.tsx:82	Each appointment can also be added on its own from its page.
+src/app/connections.tsx:85	Phone contacts
+src/app/connections.tsx:85	Pick the client from your contacts
+src/app/connections.tsx:87	In the iPhone app, tap “From contacts” when you start an estimate to fill in the name, phone and address.
+src/app/connections.tsx:87	When you start an estimate, tap “From contacts” to fill in the client’s name and address.
+src/app/connections.tsx:91	Zapier · Make (5,000+ apps)
+src/app/connections.tsx:91	Send each new quote, signature, invoice and payment to a link
+src/app/connections.tsx:92	Connect Google Sheets, Gmail, Slack, your CRM and more. In Zapier: make a Zap with “Webhooks by Zapier → Catch Hook”, copy its link and paste it here. In Make: “Custom webhook”.
+src/app/connections.tsx:95	Webhook link
+src/app/connections.tsx:98	Sending…
+src/app/connections.tsx:98	Send a test
+src/app/connections.tsx:101	Send these
+src/app/connections.tsx:112	Also send my costs and markup (private: only if the link goes to your own sheet)
+src/app/connections.tsx:114	Job name, client name and address, prices and totals, and what happened. Only to the link you paste.
+src/app/connections.tsx:114	What is sent
+src/app/connections.tsx:117	Google Drive · Dropbox · iCloud
+src/app/connections.tsx:117	PDFs and backups
+src/app/connections.tsx:118	Every PDF (quotes, invoices, work orders) opens the share sheet: pick Drive, Dropbox or Files to save it there. A full backup is under Me → Backup.
+src/app/connections.tsx:119	Back up all data
+src/app/estimate/[id]/change.tsx:39	Estimate not found.
+src/app/estimate/[id]/change.tsx:40	This change order was deleted.
+src/app/estimate/[id]/change.tsx:59	Add a short title
+src/app/estimate/[id]/change.tsx:59	For example "Add recessed lights in hallway".
+src/app/estimate/[id]/change.tsx:60	Add the price
+src/app/estimate/[id]/change.tsx:60	Type the price change before the client signs (a credit if work is removed).
+src/app/estimate/[id]/change.tsx:61	Client signature needed
+src/app/estimate/[id]/change.tsx:61	The client types their name and signs in the white box.
+src/app/estimate/[id]/change.tsx:66	The credit is taken off the contract balance.
+src/app/estimate/[id]/change.tsx:76	Could not create the PDF
+src/app/estimate/[id]/change.tsx:88	Signed
+src/app/estimate/[id]/change.tsx:88	Declined
+src/app/estimate/[id]/change.tsx:88	Waiting for client
+src/app/estimate/[id]/change.tsx:88	Draft
+src/app/estimate/[id]/change.tsx:105	What changes
+src/app/estimate/[id]/change.tsx:105	e.g. Add 4 recessed lights in hallway
+src/app/estimate/[id]/change.tsx:106	Details (shown to the client)
+src/app/estimate/[id]/change.tsx:107	Materials, where, anything that changes in the schedule.
+src/app/estimate/[id]/change.tsx:109	Adds to price
+src/app/estimate/[id]/change.tsx:109	Credit (work removed)
+src/app/estimate/[id]/change.tsx:110	Price before tax
+src/app/estimate/[id]/change.tsx:112	Save as waiting for client
+src/app/estimate/[id]/change.tsx:112	Saved
+src/app/estimate/[id]/change.tsx:112	It stays on the job until the client signs or declines.
+src/app/estimate/[id]/change.tsx:117	Creating PDF…
+src/app/estimate/[id]/change.tsx:117	Share signed change order
+src/app/estimate/[id]/change.tsx:117	Send for review (PDF)
+src/app/estimate/[id]/change.tsx:133	They type their name and sign below. The change is added to the contract and can be invoiced.
+src/app/estimate/[id]/change.tsx:133	Client approves on your phone
+src/app/estimate/[id]/change.tsx:134	Client name
+src/app/estimate/[id]/change.tsx:136	Client approves and signs
+src/app/estimate/[id]/change.tsx:138	Client declined
+src/app/estimate/[id]/change.tsx:139	Mark as declined?
+src/app/estimate/[id]/change.tsx:139	It stays on the list but is not added to the contract.
+src/app/estimate/[id]/change.tsx:143	Reopen
+src/app/estimate/[id]/change.tsx:147	Delete change order
+src/app/estimate/[id]/change.tsx:149	Already invoiced
+src/app/estimate/[id]/change.tsx:149	This change order is on an invoice you sent, so it stays on the job. Add a credit change order to undo it.
+src/app/estimate/[id]/change.tsx:150	Delete this change order?
+src/app/estimate/[id]/change.tsx:150	It is signed. Deleting removes it from the contract total.
+src/app/estimate/[id]/contract.tsx:24	Check
+src/app/estimate/[id]/contract.tsx:24	Zelle
+src/app/estimate/[id]/contract.tsx:24	Cash
+src/app/estimate/[id]/contract.tsx:25	Card
+src/app/estimate/[id]/contract.tsx:25	Bank transfer
+src/app/estimate/[id]/contract.tsx:25	Other
+src/app/estimate/[id]/contract.tsx:28	Paid
+src/app/estimate/[id]/contract.tsx:28	Part paid
+src/app/estimate/[id]/contract.tsx:28	Sent
+src/app/estimate/[id]/contract.tsx:28	Overdue
+src/app/estimate/[id]/contract.tsx:61	Could not create the invoice
+src/app/estimate/[id]/contract.tsx:72	Check the amount
+src/app/estimate/[id]/contract.tsx:72	That is more than any job. Type the amount received.
+src/app/estimate/[id]/contract.tsx:75	More than the balance
+src/app/estimate/[id]/contract.tsx:75	Record it
+src/app/estimate/[id]/contract.tsx:82	Payment recorded
+src/app/estimate/[id]/contract.tsx:96	Contract total
+src/app/estimate/[id]/contract.tsx:102	Balance
+src/app/estimate/[id]/contract.tsx:103	Invoiced, unpaid
+src/app/estimate/[id]/contract.tsx:112	Tap to see the signature or share the signed quote.
+src/app/estimate/[id]/contract.tsx:120	Not signed yet
+src/app/estimate/[id]/contract.tsx:121	Your client can sign the quote right on your phone.
+src/app/estimate/[id]/contract.tsx:124	Client signs the quote
+src/app/estimate/[id]/contract.tsx:130	Change orders
+src/app/estimate/[id]/contract.tsx:132	Extra work or changes the client asks for. Price it, the client signs, and it’s added to the contract.
+src/app/estimate/[id]/contract.tsx:137	Untitled change
+src/app/estimate/[id]/contract.tsx:139	Waiting
+src/app/estimate/[id]/contract.tsx:142	+ New change order
+src/app/estimate/[id]/contract.tsx:145	Invoices
+src/app/estimate/[id]/contract.tsx:147	New invoices due
+src/app/estimate/[id]/contract.tsx:147	On receipt
+src/app/estimate/[id]/contract.tsx:158	Credit
+src/app/estimate/[id]/contract.tsx:163	Invoice
+src/app/estimate/[id]/contract.tsx:173	Record each check, Zelle or cash payment so you always know the balance.
+src/app/estimate/[id]/contract.tsx:182	Delete this payment?
+src/app/estimate/[id]/contract.tsx:189	Amount received
+src/app/estimate/[id]/contract.tsx:190	Paid by
+src/app/estimate/[id]/contract.tsx:191	Note (optional)
+src/app/estimate/[id]/contract.tsx:191	e.g. Check #1042
+src/app/estimate/[id]/contract.tsx:194	Save payment
+src/app/estimate/[id]/contract.tsx:198	Record a payment
+src/app/estimate/[id]/follow.tsx:20	in person
+src/app/estimate/[id]/follow.tsx:20	phone call
+src/app/estimate/[id]/follow.tsx:21	Won
+src/app/estimate/[id]/follow.tsx:21	Lost
+src/app/estimate/[id]/follow.tsx:22	Follow up:
+src/app/estimate/[id]/follow.tsx:47	This estimate was deleted.
+src/app/estimate/[id]/follow.tsx:48	Your contractor
+src/app/estimate/[id]/follow.tsx:55	Could not open the message
+src/app/estimate/[id]/follow.tsx:55	Try again.
+src/app/estimate/[id]/follow.tsx:84	the client
+src/app/estimate/[id]/follow.tsx:93	Follow-ups stopped
+src/app/estimate/[id]/follow.tsx:93	No more reminders for this quote.
+src/app/estimate/[id]/follow.tsx:93	The client said no. Bidwell will never remind them about this quote again.
+src/app/estimate/[id]/follow.tsx:103	Follow-ups are on again
+src/app/estimate/[id]/follow.tsx:103	The reminder days count from today.
+src/app/estimate/[id]/follow.tsx:108	Quiet hours
+src/app/estimate/[id]/follow.tsx:108	Send between 8 AM and 8 PM so you don’t wake the client.
+src/app/estimate/[id]/follow.tsx:119	Done
+src/app/estimate/[id]/follow.tsx:120	Follow-ups are on
+src/app/estimate/[id]/follow.tsx:122	1. Send the client their confirmation
+src/app/estimate/[id]/follow.tsx:125	Text it to the client
+src/app/estimate/[id]/follow.tsx:125	Email it to the client
+src/app/estimate/[id]/follow.tsx:130	2. Your record
+src/app/estimate/[id]/follow.tsx:132	Saved with the date and how the client agreed. Reminders are on your calendar.
+src/app/estimate/[id]/follow.tsx:140	Save changes
+src/app/estimate/[id]/follow.tsx:140	Turn on follow-ups
+src/app/estimate/[id]/follow.tsx:147	Signed: follow-ups ended
+src/app/estimate/[id]/follow.tsx:147	Marked lost: follow-ups ended
+src/app/estimate/[id]/follow.tsx:147	Follow-ups are stopped
+src/app/estimate/[id]/follow.tsx:148	The client said no or replied STOP. Bidwell won’t remind them about this quote again.
+src/app/estimate/[id]/follow.tsx:153	Start follow-ups again
+src/app/estimate/[id]/follow.tsx:162	Send text
+src/app/estimate/[id]/follow.tsx:162	Send email
+src/app/estimate/[id]/follow.tsx:165	Your phone’s Messages or Mail opens with the text; you press send.
+src/app/estimate/[id]/follow.tsx:171	1. Ask the client first
+src/app/estimate/[id]/follow.tsx:173	Ask in person, by phone, or send this question. Only a clear yes turns follow-ups on.
+src/app/estimate/[id]/follow.tsx:175	Client said yes
+src/app/estimate/[id]/follow.tsx:176	Not asked yet
+src/app/estimate/[id]/follow.tsx:179	How did they agree?
+src/app/estimate/[id]/follow.tsx:181	Client said no
+src/app/estimate/[id]/follow.tsx:187	2. How and when
+src/app/estimate/[id]/follow.tsx:189	Text
+src/app/estimate/[id]/follow.tsx:190	Email
+src/app/estimate/[id]/follow.tsx:192	Client mobile
+src/app/estimate/[id]/follow.tsx:193	Client email
+src/app/estimate/[id]/follow.tsx:194	Days after the quote was sent (required)
+src/app/estimate/[id]/follow.tsx:195	Required: you must choose the follow-up days for every project. Up to 6, each 1–60.
+src/app/estimate/[id]/follow.tsx:199	Quote sent on (YYYY-MM-DD)
+src/app/estimate/[id]/follow.tsx:202	Before you turn it on
+src/app/estimate/[id]/follow.tsx:204	Messages end with “Reply STOP to opt out”, go out only 8 AM–8 PM, and stop when the quote is signed or marked lost.
+src/app/estimate/[id]/follow.tsx:208	Stop follow-ups
+src/app/estimate/[id]/follow.tsx:209	Follow-ups stay off until the client says yes.
+src/app/estimate/[id]/index.tsx:31	Back to jobs
+src/app/estimate/[id]/index.tsx:44	This type of work was deleted
+src/app/estimate/[id]/index.tsx:58	Change the price on a sent quote?
+src/app/estimate/[id]/index.tsx:58	The client already has this quote. Changing markup changes the price.
+src/app/estimate/[id]/index.tsx:58	Change
+src/app/estimate/[id]/index.tsx:65	Review and send quote
+src/app/estimate/[id]/index.tsx:65	Open client quote
+src/app/estimate/[id]/index.tsx:69	Quick
+src/app/estimate/[id]/index.tsx:69	Detailed
+src/app/estimate/[id]/index.tsx:70	Private. Your client never sees cost, labor or markup.
+src/app/estimate/[id]/index.tsx:75	Client price
+src/app/estimate/[id]/index.tsx:80	Priced
+src/app/estimate/[id]/index.tsx:80	Quantity
+src/app/estimate/[id]/index.tsx:81	Your price
+src/app/estimate/[id]/index.tsx:85	Labor
+src/app/estimate/[id]/index.tsx:86	Materials
+src/app/estimate/[id]/index.tsx:87	Your items
+src/app/estimate/[id]/index.tsx:101	, or switch to Detailed for markup and a trade breakdown
+src/app/estimate/[id]/index.tsx:107	Your price check
+src/app/estimate/[id]/index.tsx:113	Check before sending
+src/app/estimate/[id]/index.tsx:130	Bidwell noticed (from notes and photos)
+src/app/estimate/[id]/index.tsx:138	TRADE
+src/app/estimate/[id]/index.tsx:139	YOUR COST
+src/app/estimate/[id]/index.tsx:152	Total cost
+src/app/estimate/[id]/index.tsx:158	YOUR PRICED QUESTIONS (CLIENT PRICE)
+src/app/estimate/[id]/index.tsx:172	Included on the client quote.
+src/app/estimate/[id]/index.tsx:182	Edit job details
+src/app/estimate/[id]/materials.tsx:39	Share list for crew or store
+src/app/estimate/[id]/materials.tsx:40	Share with my prices
+src/app/estimate/[id]/materials.tsx:61	Prices come from your price book. Change them in Pricing → Price book.
+src/app/estimate/[id]/quote.tsx:60	Quote: {0}
+src/app/estimate/[id]/quote.tsx:66	Could not make the link
+src/app/estimate/[id]/quote.tsx:66	Check your connection and try again.
+src/app/estimate/[id]/quote.tsx:80	Shared without the signature
+src/app/estimate/[id]/quote.tsx:80	The quote changed after the client signed, so this copy is unsigned. Have them sign again or use a change order.
+src/app/estimate/[id]/quote.tsx:91	Done editing
+src/app/estimate/[id]/quote.tsx:94	Total amount
+src/app/estimate/[id]/quote.tsx:98	Edit
+src/app/estimate/[id]/quote.tsx:99	Signed ✓
+src/app/estimate/[id]/quote.tsx:99	Sign
+src/app/estimate/[id]/quote.tsx:101	Translating…
+src/app/estimate/[id]/quote.tsx:101	Send
+src/app/estimate/[id]/quote.tsx:106	Edit your quote
+src/app/estimate/[id]/quote.tsx:106	Your quote is ready
+src/app/estimate/[id]/quote.tsx:113	Send the quote
+src/app/estimate/[id]/quote.tsx:114	Text a link to sign
+src/app/estimate/[id]/quote.tsx:114	The client reads and signs on their phone. You are told when they sign.
+src/app/estimate/[id]/quote.tsx:115	Email a link to sign
+src/app/estimate/[id]/quote.tsx:116	Share the PDF
+src/app/estimate/[id]/quote.tsx:116	Email, text, AirDrop or save
+src/app/estimate/[id]/quote.tsx:123	Review
+src/app/estimate/[id]/quote.tsx:181	Notes
+src/app/estimate/[id]/quote.tsx:189	Sales tax is added to each invoice.
+src/app/estimate/[id]/quote.tsx:193	Edit changes the wording. Sign lets the client sign on this phone. Send texts or emails a link to sign, or shares the PDF, and marks the job as Sent.
+src/app/estimate/[id]/quote.tsx:247	The client already signed. The signed copy stays as signed; edits change only new copies.
+src/app/estimate/[id]/quote.tsx:248	Changes save as you type, for this client’s language. Prices come from the estimate.
+src/app/estimate/[id]/quote.tsx:250	Scope of work
+src/app/estimate/[id]/quote.tsx:251	Scope summary (shown under the title)
+src/app/estimate/[id]/quote.tsx:260	Section
+src/app/estimate/[id]/quote.tsx:263	Heading
+src/app/estimate/[id]/quote.tsx:264	What's included (one line each)
+src/app/estimate/[id]/quote.tsx:271	Not included
+src/app/estimate/[id]/quote.tsx:272	One line each
+src/app/estimate/[id]/quote.tsx:276	Notes for the client
+src/app/estimate/[id]/quote.tsx:277	Optional: allowances, timing, access, cleanup…
+src/app/estimate/[id]/quote.tsx:281	Prices and dates
+src/app/estimate/[id]/quote.tsx:284	Price per section
+src/app/estimate/[id]/quote.tsx:284	One total only
+src/app/estimate/[id]/quote.tsx:285	Quote valid for
+src/app/estimate/[id]/quote.tsx:285	days
+src/app/estimate/[id]/quote.tsx:286	Change the price (markup or your items)
+src/app/estimate/[id]/quote.tsx:289	Undo all edits
+src/app/estimate/[id]/quote.tsx:290	Undo all edits?
+src/app/estimate/[id]/quote.tsx:290	The quote goes back to the wording Bidwell wrote, in every language.
+src/app/estimate/[id]/quote.tsx:290	Undo
+src/app/estimate/[id]/quote.tsx:305	The AI had nothing to add. Try typing a few words first.
+src/app/estimate/[id]/quote.tsx:307	The AI is not available right now.
+src/app/estimate/[id]/quote.tsx:317	Writing…
+src/app/estimate/[id]/quote.tsx:317	Help me write · improve this
+src/app/estimate/[id]/quote.tsx:317	Help me write
+src/app/estimate/[id]/sign.tsx:24	Accept this quote
+src/app/estimate/[id]/sign.tsx:24	Total with tax
+src/app/estimate/[id]/sign.tsx:25	By signing, I accept the quote from {0} for {1} including sales tax, with its scope, exclusions, payment schedule and terms.
+src/app/estimate/[id]/sign.tsx:26	Your full name
+src/app/estimate/[id]/sign.tsx:26	Accept and sign
+src/app/estimate/[id]/sign.tsx:26	Type your name
+src/app/estimate/[id]/sign.tsx:26	Sign in the white box
+src/app/estimate/[id]/sign.tsx:74	The quote is accepted and the job is marked Won.
+src/app/estimate/[id]/sign.tsx:98	The quote changed after it was signed
+src/app/estimate/[id]/sign.tsx:106	Share signed quote PDF
+src/app/estimate/[id]/sign.tsx:108	Remove signature (client signs again)
+src/app/estimate/[id]/sign.tsx:109	Remove the signature?
+src/app/estimate/[id]/sign.tsx:109	The client will need to sign again.
+src/app/estimate/[id]/sign.tsx:140	Hand the phone to your client. They check the total and sign with a finger. The signature is saved with this job and printed on the signed quote PDF.
+src/app/event.tsx:19	30 min
+src/app/event.tsx:19	1 hr
+src/app/event.tsx:19	2 hr
+src/app/event.tsx:19	Half day
+src/app/event.tsx:19	Full day
+src/app/event.tsx:74	Saved, but reminders are off
+src/app/event.tsx:74	Turn on notifications for Bidwell AI in your iPhone Settings to get reminders.
+src/app/event.tsx:78	Saved without a reminder
+src/app/event.tsx:78	The reminder could not be set. The appointment is on your calendar.
+src/app/event.tsx:88	Could not share the calendar file
+src/app/event.tsx:95	Add to schedule
+src/app/event.tsx:96	New appointment
+src/app/event.tsx:97	What is it?
+src/app/event.tsx:98	Title
+src/app/event.tsx:100	Day
+src/app/event.tsx:108	Today
+src/app/event.tsx:118	Time
+src/app/event.tsx:119	All day
+src/app/event.tsx:123	Minutes
+src/app/event.tsx:129	How long
+src/app/event.tsx:136	None
+src/app/event.tsx:144	Where
+src/app/event.tsx:148	Who is coming
+src/app/event.tsx:157	+ Add your crew and subs
+src/app/event.tsx:162	Remind me
+src/app/event.tsx:164	Reminders ring in the installed iPhone app.
+src/app/event.tsx:165	Gate code, what to bring, who to call.
+src/app/event.tsx:168	Add to iPhone calendar / send to crew
+src/app/event.tsx:171	Mark not done
+src/app/event.tsx:171	Mark done
+src/app/event.tsx:180	Delete appointment
+src/app/event.tsx:181	Delete this appointment?
+src/app/floor-plan.tsx:42	Scan too short
+src/app/floor-plan.tsx:42	The scanner found fewer than 3 walls. Walk the whole room slowly, pointing at every wall, then try again.
+src/app/floor-plan.tsx:49	Scan did not finish
+src/app/floor-plan.tsx:49	Try again, or measure the room by hand below.
+src/app/floor-plan.tsx:64	Plan saved with the estimate
+src/app/floor-plan.tsx:74	Use these measurements
+src/app/floor-plan.tsx:82	Floor
+src/app/floor-plan.tsx:83	Walls (net)
+src/app/floor-plan.tsx:84	Baseboard
+src/app/floor-plan.tsx:85	Doors / windows
+src/app/floor-plan.tsx:94	LiDAR scan
+src/app/floor-plan.tsx:94	Measured
+src/app/floor-plan.tsx:112	Add each room. The app draws the floor plan and works out floor area, wall area and baseboard for the estimate.
+src/app/floor-plan.tsx:116	Add a room
+src/app/floor-plan.tsx:117	Room name
+src/app/floor-plan.tsx:120	Scanning…
+src/app/floor-plan.tsx:120	Scan room with LiDAR
+src/app/floor-plan.tsx:121	Walk slowly around the room and point at every wall, door and window. Tap Done, check the model, then Use this scan.
+src/app/floor-plan.tsx:124	It works on iPhone Pro and iPad Pro models in the App Store / TestFlight version. Here, measure the room below.
+src/app/floor-plan.tsx:124	LiDAR scanning needs the installed iPhone app
+src/app/floor-plan.tsx:131	Or measure by hand
+src/app/floor-plan.tsx:131	Measure by hand
+src/app/floor-plan.tsx:133	Length
+src/app/floor-plan.tsx:134	Width
+src/app/floor-plan.tsx:135	Ceiling
+src/app/floor-plan.tsx:138	Doors
+src/app/floor-plan.tsx:139	Windows
+src/app/floor-plan.tsx:141	Add room
+src/app/floor-plan.tsx:143	Check the numbers: ceiling up to 30 ft, up to 50 doors and 50 windows per room.
+src/app/help.tsx:56	Here is what I found in the how-to guides:
+src/app/help.tsx:57	I could not answer that right now. Tap Report a problem below and a person will get back to you.
+src/app/help.tsx:72	Chat with Bidwell AI
+src/app/help.tsx:73	Ask how to do anything in the app, any time, in your language.
+src/app/help.tsx:79	Popular questions
+src/app/help.tsx:112	Bidwell is typing…
+src/app/help.tsx:116	Get help from a person
+src/app/help.tsx:118	Something broken or wrong? Send it with one tap.
+src/app/help.tsx:119	Email support
+src/app/help.tsx:120	Help Center
+src/app/help.tsx:120	All how-to guides on the web
+src/app/help.tsx:128	Ask how to do something…
+src/app/help.tsx:128	Ask a question
+src/app/job/[id].tsx:47	This job was deleted.
+src/app/job/[id].tsx:92	Copied
+src/app/job/[id].tsx:92	A new draft with the same work and prices. Add the client, then send it.
+src/app/job/[id].tsx:96	Delete this job?
+src/app/job/[id].tsx:96	The estimate, quote, photos, to-dos and costs are deleted from this phone. This cannot be undone.
+src/app/job/[id].tsx:96	The estimate and its quote are deleted. This cannot be undone.
+src/app/job/[id].tsx:119	Edit name, client and address
+src/app/job/[id].tsx:120	Sizes and answers. The price updates.
+src/app/job/[id].tsx:121	Copy for another client
+src/app/job/[id].tsx:121	Same work and prices, new quote
+src/app/job/[id].tsx:123	Mark as sent
+src/app/job/[id].tsx:123	You gave the client the quote another way
+src/app/job/[id].tsx:125	Mark as won
+src/app/job/[id].tsx:125	The client said yes without signing in the app
+src/app/job/[id].tsx:126	Mark as lost
+src/app/job/[id].tsx:128	Not won yet
+src/app/job/[id].tsx:128	Move it back to Sent
+src/app/job/[id].tsx:129	Mark job finished
+src/app/job/[id].tsx:130	Reopen job
+src/app/job/[id].tsx:132	Delete job
+src/app/job/[id].tsx:151	Name
+src/app/job/[id].tsx:161	No address yet
+src/app/job/[id].tsx:162	+ Add the client
+src/app/job/[id].tsx:162	+ Add the address
+src/app/job/[id].tsx:167	Overview
+src/app/job/[id].tsx:167	Job site
+src/app/job/[id].tsx:167	Money
+src/app/job/[id].tsx:190	Add an area first (a room, the siding, a repair spot) so every photo has a place.
+src/app/job/[id].tsx:191	Add “Area 1”
+src/app/job-type.tsx:25	Its prices, questions and past jobs are removed. Estimates you already made stay.
+src/app/job-type.tsx:33	Your own type of work.
+src/app/job-type.tsx:33	Built-in type of work.
+src/app/job-type.tsx:37	Name and pricing
+src/app/job-type.tsx:39	How you price it
+src/app/job-type.tsx:46	Change how you price it?
+src/app/job-type.tsx:46	Your prices and past jobs for this type were in the old unit, so they are cleared. Estimates you already made stay.
+src/app/job-type.tsx:53	Your questions
+src/app/job-type.tsx:58	No questions yet.
+src/app/job-type.tsx:74	Add a question
+src/app/job-type.tsx:80	Delete this type of work
+src/app/past-job.tsx:36	Bidwell could not read this
+src/app/past-job.tsx:38	job type
+src/app/past-job.tsx:43	Couldn't find a size or total. Fill them in below.
+src/app/past-job.tsx:56	Save past job
+src/app/past-job.tsx:59	Paste an old quote or invoice
+src/app/past-job.tsx:60	Copy the text from an email, PDF or text message. The app pulls out the job type, size and total.
+src/app/past-job.tsx:61	Quote text
+src/app/past-job.tsx:61	e.g. Hall bath remodel, 45 sq ft, mid grade… Total $18,500
+src/app/past-job.tsx:62	Reading…
+src/app/past-job.tsx:62	Read it
+src/app/past-job.tsx:67	e.g. Kim hall bathroom
+src/app/past-job.tsx:68	Job type
+src/app/past-job.tsx:72	Show mine only
+src/app/past-job.tsx:72	All types of work…
+src/app/past-job.tsx:76	How many
+src/app/past-job.tsx:76	Size
+src/app/past-job.tsx:79	Price charged
+src/app/past-job.tsx:79	Before tax
+src/app/past-job.tsx:82	Finish level
+src/app/past-job.tsx:85	Date finished
+src/app/past-job.tsx:89	Delete past job
+src/app/price-book.tsx:33	Labor rates
+src/app/price-book.tsx:33	Material prices
+src/app/price-book.tsx:34	Search
+src/app/price-book.tsx:34	e.g. shower, outlet
+src/app/price-book.tsx:34	e.g. drywall, PEX
+src/app/price-book.tsx:37	Your labor cost per unit (what it costs you, before markup). Changes apply to new and rebuilt estimates.
+src/app/price-book.tsx:38	Default prices are typical Seattle-area retail. Put in your pro pricing. Tile, fixtures, cabinets and doors adjust automatically for basic and high-end finishes.
+src/app/price-book.tsx:72	Reset
+src/app/pricing.tsx:32	Your prices drive every estimate. Set them once; the app keeps learning from your past jobs and the jobs you win.
+src/app/pricing.tsx:34	Your prices by type of work
+src/app/pricing.tsx:44	Your own
+src/app/pricing.tsx:57	Add past jobs of this type, or mark estimates Won, to see what you really charge.
+src/app/pricing.tsx:59	+ Add your own questions
+src/app/pricing.tsx:66	Add a type of work
+src/app/pricing.tsx:67	Any work you do that isn’t listed. To turn listed types on or off, go to Me → Work you do.
+src/app/pricing.tsx:76	Add jobs you’ve already done, or paste an old quote, and the app works out what you really charge. Jobs you mark Won are added here for you.
+src/app/pricing.tsx:77	+ Add past job
+src/app/pricing.tsx:96	Labor rates and material prices used in Detailed estimates.
+src/app/pricing.tsx:97	Open price book
+src/app/questions.tsx:33	Details
+src/app/questions.tsx:62	Updating your estimate
+src/app/questions.tsx:62	Building your estimate
+src/app/questions.tsx:64	Measuring quantities
+src/app/questions.tsx:66	Pricing labor and materials
+src/app/questions.tsx:67	Checking code items and permits
+src/app/questions.tsx:68	Comparing with your past jobs
+src/app/questions.tsx:69	Adding markup and tax
+src/app/questions.tsx:84	Update estimate
+src/app/questions.tsx:84	Build estimate
+src/app/questions.tsx:94	Bidwell noticed
+src/app/questions.tsx:99	Tap × on anything that’s wrong. Only what you keep is saved with the estimate.
+src/app/questions.tsx:105	Filled in for you
+src/app/questions.tsx:112	Answer what you know. Anything you skip uses a standard assumption, and it’s flagged on the estimate.
+src/app/questions.tsx:135	For bigger jobs: scan rooms with LiDAR or measure them, and the app draws the plan and fills in the areas.
+src/app/questions.tsx:137	Open floor plan
+src/app/questions.tsx:137	+ Scan or measure rooms
+src/app/questions.tsx:153	Saved for every job of this type. The app compares it with your past jobs.
+src/app/questions.tsx:165	● Filled by Bidwell from a photo: check it
+src/app/questions.tsx:166	● Measured from satellite: check on site
+src/app/questions.tsx:166	● Filled in from your notes
+src/app/questions.tsx:175	Your own question
+src/app/questions.tsx:187	+ Add a question
+src/app/questions.tsx:194	Add work items
+src/app/questions.tsx:194	Add extra items
+src/app/questions.tsx:195	Pick the work from your price book.
+src/app/questions.tsx:195	Anything not covered by the questions above.
+src/app/questions.tsx:196	Search items
+src/app/questions.tsx:196	e.g. outlet, door, tile
+src/app/questions.tsx:202	· materials only
+src/app/questions.tsx:205	Search to add items.
+src/app/questions.tsx:210	Scope summary for the client
+src/app/questions.tsx:211	Optional. Shown on the quote in your words. Your job notes stay private.
+src/app/questions.tsx:212	Scope summary
+src/app/questions.tsx:213	e.g. Convert basement into 4 bedrooms with 2 new bathrooms, laundry and kitchenette.
+src/app/questions.tsx:234	Yes
+src/app/questions.tsx:234	No
+src/app/report.tsx:17	Something is broken
+src/app/report.tsx:18	I have a question
+src/app/report.tsx:19	Billing or my subscription
+src/app/report.tsx:20	Idea or feature request
+src/app/report.tsx:21	Something else
+src/app/report.tsx:62	Could not send it from the app. Tap Email it instead and it goes to support by email.
+src/app/report.tsx:73	Thanks, we got it
+src/app/report.tsx:74	your email
+src/app/report.tsx:81	Send report
+src/app/report.tsx:82	What is it about?
+src/app/report.tsx:83	What happened?
+src/app/report.tsx:84	What were you doing, what did you expect, and what happened instead?
+src/app/report.tsx:84	Tell us in your own words.
+src/app/report.tsx:85	Please tell us what happened
+src/app/report.tsx:87	Screenshot (optional)
+src/app/report.tsx:90	Add a screenshot
+src/app/report.tsx:96	Email it instead
+src/app/scan.tsx:24	3D scanning works in the iPhone app
+src/app/scan.tsx:24	Open Bidwell AI on an iPhone Pro to scan. Here you can measure rooms by hand below.
+src/app/scan.tsx:25	3D scanning needs an iPhone Pro
+src/app/scan.tsx:25	Android phones don’t have Apple’s room scanner. Measure rooms by hand below; the plan and areas work the same.
+src/app/scan.tsx:26	Update the app to scan
+src/app/scan.tsx:26	This version of the app doesn’t include the scanner. Update Bidwell AI from the App Store.
+src/app/scan.tsx:27	This iPhone has no LiDAR sensor
+src/app/scan.tsx:27	3D room scanning needs an iPhone 12 Pro or newer Pro model (or iPad Pro). Measure rooms by hand below instead.
+src/app/scan.tsx:55	Try again, or measure the room by hand.
+src/app/scan.tsx:74	Rooms added to the job site
+src/app/scan.tsx:81	Start an estimate with this plan
+src/app/scan.tsx:82	Add these rooms to a job site
+src/app/scan.tsx:93	Walk the room with your iPhone. Walls, doors and windows are measured for you, the floor plan is drawn, and the areas go straight into the estimate.
+src/app/scan.tsx:102	Scan the next room
+src/app/scan.tsx:102	Start 3D scan
+src/app/scan.tsx:104	Tips: good light, walk slowly along the walls, point at every corner, door and window. Tap Done when the outline is complete.
+src/app/scan.tsx:113	Bidwell suggests · indoor work only
+src/app/scan.tsx:125	Name each room (Bath, Kitchen, Bedroom…) for better suggestions. Roof, siding, decks and yard work are left out.
+src/app/scan.tsx:138	Walls
+src/app/settings.tsx:22	Company info
+src/app/settings.tsx:59	Erase everything?
+src/app/settings.tsx:59	Deletes your profile, prices, past jobs and estimates on this device. Export a backup first if you want to keep them.
+src/app/settings.tsx:59	Erase
+src/app/settings.tsx:65	Claude key removed. The app uses the offline reader.
+src/app/settings.tsx:68	Checking the key with Bidwell…
+src/app/settings.tsx:75	Connected. Bidwell now reads your job notes and photos.
+src/app/settings.tsx:108	Copy your backup
+src/app/settings.tsx:108	The backup text is in the box below. Copy it and save it somewhere safe.
+src/app/settings.tsx:116	Sharing failed (the backup may be too large). The backup text is in the box below: copy it and save it somewhere safe.
+src/app/settings.tsx:131	Could not open files
+src/app/settings.tsx:131	Paste the backup text into the box instead.
+src/app/settings.tsx:136	Restore this backup?
+src/app/settings.tsx:136	Everything on this device is replaced by the backup.
+src/app/settings.tsx:136	Restore
+src/app/settings.tsx:139	Could not restore
+src/app/settings.tsx:153	This is printed at the top of every quote, contract and invoice your clients get.
+src/app/settings.tsx:154	Company name
+src/app/settings.tsx:155	Your name
+src/app/settings.tsx:156	Phone
+src/app/settings.tsx:158	Contractor registration #
+src/app/settings.tsx:163	How clients pay you. Shown on quotes, invoices and after they sign.
+src/app/settings.tsx:164	Online payment link (optional)
+src/app/settings.tsx:166	Your own link from Stripe, Square or PayPal. Clients see a Pay online button on quotes, invoices and after they sign. Money goes straight to you.
+src/app/settings.tsx:167	Other ways to pay (optional)
+src/app/settings.tsx:168	e.g. Zelle 253-555-0100 · Checks payable to Smith Remodeling LLC
+src/app/settings.tsx:172	When the client pays, as a share of the job. It goes on every new quote; jobs already signed keep the schedule they were signed with.
+src/app/settings.tsx:176	Percent
+src/app/settings.tsx:183	Added as extra pages to every client quote. You are responsible for using the official wording for your state.
+src/app/settings.tsx:185	Washington “Notice to Customer” (RCW 18.27.114): residential jobs of $1,000 or more
+src/app/settings.tsx:189	Registration expires
+src/app/settings.tsx:190	Bond or deposit
+src/app/settings.tsx:190	$12,000 surety bond, company name
+src/app/settings.tsx:191	Notice text (paste the official L&I form)
+src/app/settings.tsx:195	Three-day right to cancel (sales made at the client’s home)
+src/app/settings.tsx:198	Cancellation notice (two copies are added)
+src/app/settings.tsx:202	You confirmed these match the official forms.
+src/app/settings.tsx:205	The starting text is a draft. Compare it with the official L&I and FTC forms (or ask your attorney), then confirm.
+src/app/settings.tsx:205	Check the wording
+src/app/settings.tsx:206	I checked the wording
+src/app/settings.tsx:214	Default markup
+src/app/settings.tsx:215	Never below
+src/app/settings.tsx:217	Sales tax rate
+src/app/settings.tsx:218	Added to the client total. Use the rate where the work is done.
+src/app/settings.tsx:223	The work you take on. These come first when you start an estimate.
+src/app/settings.tsx:225	Add your own types of work and questions in Me → My pricing.
+src/app/settings.tsx:229	Bidwell reads this with every job, so its questions, notes and answers fit how you work.
+src/app/settings.tsx:232	e.g. Mid-range remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin.
+src/app/settings.tsx:233	Bidwell reads this with every job, so its questions and notes fit how you work.
+src/app/settings.tsx:238	Off · AI sharing is turned off
+src/app/settings.tsx:240	On · runs on your Claude plan
+src/app/settings.tsx:241	On · included with your Bidwell account
+src/app/settings.tsx:242	Off · log in to turn it on
+src/app/settings.tsx:244	AI sharing is on
+src/app/settings.tsx:244	AI sharing is off
+src/app/settings.tsx:246	Notes, photos and recordings you choose are sent to Anthropic (Claude) to draft estimates. Not used for training.
+src/app/settings.tsx:247	Nothing is sent to the AI. Bidwell uses the offline reader, which understands less. Turn it on to use AI.
+src/app/settings.tsx:249	Terms, privacy and AI sharing
+src/app/settings.tsx:250	Log in to turn on the AI
+src/app/settings.tsx:253	Hide: use my own Claude API key
+src/app/settings.tsx:253	Advanced: use my own Claude API key
+src/app/settings.tsx:255	Optional. Your account already includes the AI. With your own key from console.anthropic.com, Bidwell uses it instead and Anthropic bills you directly. The key stays on this device and is never backed up.
+src/app/settings.tsx:259	Claude API key
+src/app/settings.tsx:260	sk-ant-…
+src/app/settings.tsx:261	Save and test key
+src/app/settings.tsx:261	Remove key
+src/app/settings.tsx:270	Your work is backed up to your account automatically. You can also export a copy as a file.
+src/app/settings.tsx:270	Your data lives only on this device. Export a backup now and then.
+src/app/settings.tsx:272	Export backup
+src/app/settings.tsx:273	Choose backup file…
+src/app/settings.tsx:274	Restore from backup
+src/app/settings.tsx:275	Paste the backup text here
+src/app/settings.tsx:276	Restore backup
+src/app/settings.tsx:279	To take your work off this phone, log out under Me > Account (it stays in your account). To remove it for good, delete your account there.
+src/app/settings.tsx:282	Erase all data on this device
+src/app/site/[id]/buy.tsx:23	This job site was deleted.
+src/app/site/[id]/buy.tsx:40	Bought
+src/app/site/[id]/buy.tsx:41	Planned
+src/app/site/[id]/buy.tsx:42	Paid so far
+src/app/site/[id]/buy.tsx:47	No buy list yet
+src/app/site/[id]/buy.tsx:48	Start from the estimate’s material list, then add or remove anything.
+src/app/site/[id]/buy.tsx:48	A quick price has no material list. Add what you need below.
+src/app/site/[id]/buy.tsx:48	Add the materials you need below.
+src/app/site/[id]/buy.tsx:49	Make it from the estimate
+src/app/site/[id]/buy.tsx:54	To buy
+src/app/site/[id]/buy.tsx:55	Share list
+src/app/site/[id]/buy.tsx:71	Remove from the list?
+src/app/site/[id]/buy.tsx:80	Add an item
+src/app/site/[id]/buy.tsx:81	Item
+src/app/site/[id]/buy.tsx:81	e.g. Thinset, 50 lb bag
+src/app/site/[id]/buy.tsx:83	Qty
+src/app/site/[id]/buy.tsx:84	Unit
+src/app/site/[id]/buy.tsx:85	Planned cost
+src/app/site/[id]/buy.tsx:87	Add to list
+src/app/site/[id]/buy.tsx:89	Snap receipts from Job money: items that match this list are ticked off and the real price is remembered for your next estimate.
+src/app/site/[id]/cost.tsx:49	Allow the camera in your phone settings to snap receipts.
+src/app/site/[id]/cost.tsx:55	Could not save the photo. Try again.
+src/app/site/[id]/cost.tsx:59	Photo saved. Turn on AI sharing under Me → Bidwell AI to have Bidwell read receipts; for now, type the amount.
+src/app/site/[id]/cost.tsx:64	Receipt
+src/app/site/[id]/cost.tsx:75	Bidwell could not read this receipt. Type the amount instead.
+src/app/site/[id]/cost.tsx:105	Save cost
+src/app/site/[id]/cost.tsx:106	Edit cost
+src/app/site/[id]/cost.tsx:111	Retake
+src/app/site/[id]/cost.tsx:111	Snap receipt
+src/app/site/[id]/cost.tsx:112	From photos
+src/app/site/[id]/cost.tsx:114	Bidwell reads the store, date, items and total, and checks them against your buy list.
+src/app/site/[id]/cost.tsx:118	Cost
+src/app/site/[id]/cost.tsx:119	Kind of cost
+src/app/site/[id]/cost.tsx:120	Amount paid (tax included)
+src/app/site/[id]/cost.tsx:121	Who
+src/app/site/[id]/cost.tsx:121	Subcontractor
+src/app/site/[id]/cost.tsx:121	Store or vendor
+src/app/site/[id]/cost.tsx:122	Date (YYYY-MM-DD)
+src/app/site/[id]/cost.tsx:123	Note
+src/app/site/[id]/cost.tsx:123	What it was for
+src/app/site/[id]/cost.tsx:125	I paid this for the owner; they pay me back
+src/app/site/[id]/cost.tsx:127	Owner pays back by (YYYY-MM-DD)
+src/app/site/[id]/cost.tsx:132	Items on the receipt
+src/app/site/[id]/cost.tsx:146	AI can misread receipts. Check the total before saving.
+src/app/site/[id]/log.tsx:29	This project was deleted.
+src/app/site/[id]/log.tsx:40	Bidwell had nothing to write
+src/app/site/[id]/log.tsx:40	Add photos or finished tasks for the day, or type the log yourself.
+src/app/site/[id]/log.tsx:42	Bidwell could not write the log
+src/app/site/[id]/log.tsx:54	Daily log saved
+src/app/site/[id]/log.tsx:61	Yesterday
+src/app/site/[id]/log.tsx:63	Bidwell is writing…
+src/app/site/[id]/log.tsx:63	Write the log with Bidwell
+src/app/site/[id]/log.tsx:64	Log
+src/app/site/[id]/log.tsx:64	Work done, what’s next, anything to watch.
+src/app/site/[id]/log.tsx:65	Update the log
+src/app/site/[id]/log.tsx:65	Save the log
+src/app/site/[id]/log.tsx:68	Earlier
+src/app/site/[id]/log.tsx:74	Delete this log?
+src/app/site/[id]/money.tsx:45	Delete this cost?
+src/app/site/[id]/money.tsx:55	Low · request soon
+src/app/site/[id]/money.tsx:55	Request deposit
+src/app/site/[id]/money.tsx:60	Add receipt
+src/app/site/[id]/money.tsx:61	Add cost
+src/app/site/[id]/money.tsx:66	Private to you. Never shown on client or crew documents.
+src/app/site/[id]/money.tsx:75	Extra work the client asked for? Turn it into a change order before you forget.
+src/app/site/[id]/money.tsx:81	Open Contract and payments to send a reminder.
+src/app/site/[id]/money.tsx:81	Mark items paid back below when the client pays.
+src/app/site/[id]/money.tsx:86	CONTRACT PRICE
+src/app/site/[id]/money.tsx:87	Project estimate (base bid)
+src/app/site/[id]/money.tsx:88	Approved change orders
+src/app/site/[id]/money.tsx:89	Contract price
+src/app/site/[id]/money.tsx:90	No estimate is linked to this job site, so the price is $0.
+src/app/site/[id]/money.tsx:94	ACTUAL COST TO DATE
+src/app/site/[id]/money.tsx:105	PROFIT
+src/app/site/[id]/money.tsx:108	Profit so far
+src/app/site/[id]/money.tsx:108	Contract price minus the costs entered so far
+src/app/site/[id]/money.tsx:109	Margin so far
+src/app/site/[id]/money.tsx:113	CLIENT’S MONEY AND WHAT YOU CAN SPEND
+src/app/site/[id]/money.tsx:114	Paid by the client
+src/app/site/[id]/money.tsx:114	Payments recorded on the contract
+src/app/site/[id]/money.tsx:115	Spent so far (all costs)
+src/app/site/[id]/money.tsx:116	Sales tax inside payments (owed to the state)
+src/app/site/[id]/money.tsx:117	Spendable balance left
+src/app/site/[id]/money.tsx:118	Status
+src/app/site/[id]/money.tsx:122	WHAT THE CLIENT OWES
+src/app/site/[id]/money.tsx:123	Billed to the client so far
+src/app/site/[id]/money.tsx:123	Invoices with tax + costs you paid for the client
+src/app/site/[id]/money.tsx:124	Total received
+src/app/site/[id]/money.tsx:125	Balance still owed
+src/app/site/[id]/money.tsx:126	Overdue items
+src/app/site/[id]/money.tsx:127	Overdue amount
+src/app/site/[id]/money.tsx:131	TAXES & TRUE PROFIT
+src/app/site/[id]/money.tsx:133	Sales tax at this address
+src/app/site/[id]/money.tsx:135	Income tax set aside
+src/app/site/[id]/money.tsx:138	Collected from the client on top of the price
+src/app/site/[id]/money.tsx:140	Total tax reserve
+src/app/site/[id]/money.tsx:141	Net profit after tax
+src/app/site/[id]/money.tsx:142	True net margin
+src/app/site/[id]/money.tsx:143	Washington sales tax depends on the job address. These are planning numbers, not tax advice; check with your CPA.
+src/app/site/[id]/money.tsx:148	Costs
+src/app/site/[id]/money.tsx:151	No costs yet. Snap a receipt, or add labor, subs and rentals by hand. Crew days you mark “Worked” are added for you.
+src/app/site/[id]/money.tsx:159	· paid back
+src/app/site/[id]/money.tsx:164	Paid back
+src/app/site/[id]/photo/[photoId].tsx:16	Arrow
+src/app/site/[id]/photo/[photoId].tsx:17	Circle
+src/app/site/[id]/photo/[photoId].tsx:18	Measure
+src/app/site/[id]/photo/[photoId].tsx:42	This photo was deleted.
+src/app/site/[id]/photo/[photoId].tsx:135	Measurement (optional)
+src/app/site/[id]/photo/[photoId].tsx:135	Label
+src/app/site/[id]/photo/[photoId].tsx:136	e.g. 44 in AFF
+src/app/site/[id]/photo/[photoId].tsx:136	e.g. Move outlet here
+src/app/site/[id]/photo/[photoId].tsx:138	No label
+src/app/site/[id]/photo/[photoId].tsx:139	Add
+src/app/site/[id]/photo/[photoId].tsx:153	Clear all drawings?
+src/app/site/[id]/photo/[photoId].tsx:153	The photo itself stays.
+src/app/site/[id]/photo/[photoId].tsx:156	Tap where the label goes.
+src/app/site/[id]/photo/[photoId].tsx:156	Drag across what you measured, then type the size.
+src/app/site/[id]/photo/[photoId].tsx:156	Drag on the photo to draw an arrow.
+src/app/site/[id]/photo/[photoId].tsx:156	Drag on the photo to draw a circle.
+src/app/site/[id]/photo/[photoId].tsx:156	an arrow
+src/app/site/[id]/photo/[photoId].tsx:156	a circle
+src/app/site/[id]/photo/[photoId].tsx:162	What to do here
+src/app/site/[id]/photo/[photoId].tsx:163	e.g. Cut the drywall back to the stud and move this outlet 12 in left
+src/app/site/[id]/photo/[photoId].tsx:163	Tap the microphone on your keyboard to talk.
+src/app/site/[id]/photo/[photoId].tsx:166	Make this a task
+src/app/site/[id]/photo/[photoId].tsx:170	Already a task
+src/app/site/[id]/photo/[photoId].tsx:172	Task added
+src/app/site/[id]/photo/[photoId].tsx:177	Delete this photo?
+src/app/site/[id]/photo/[photoId].tsx:177	Its drawings are deleted too.
+src/app/site/[id]/photo/[photoId].tsx:185	Delete photo
+src/app/site/[id]/room/[roomId].tsx:31	This area was deleted.
+src/app/site/[id]/room/[roomId].tsx:47	Add instructions first
+src/app/site/[id]/room/[roomId].tsx:47	Write or say what needs doing in this area, or add photos with notes.
+src/app/site/[id]/room/[roomId].tsx:56	No tasks found
+src/app/site/[id]/room/[roomId].tsx:56	Add more detail to the notes and try again.
+src/app/site/[id]/room/[roomId].tsx:62	Bidwell could not make the list
+src/app/site/[id]/room/[roomId].tsx:98	NEEDS A LOOK
+src/app/site/[id]/room/[roomId].tsx:104	After
+src/app/site/[id]/room/[roomId].tsx:109	+ After photo
+src/app/site/[id]/room/[roomId].tsx:118	Delete this task?
+src/app/site/[id]/room/[roomId].tsx:128	Area name
+src/app/site/[id]/room/[roomId].tsx:133	Photos
+src/app/site/[id]/room/[roomId].tsx:134	Tap a photo to draw arrows, circles and measurements, and write what to do there.
+src/app/site/[id]/room/[roomId].tsx:138	Take photo
+src/app/site/[id]/room/[roomId].tsx:139	From library
+src/app/site/[id]/room/[roomId].tsx:153	Instructions for this area
+src/app/site/[id]/room/[roomId].tsx:154	What needs doing
+src/app/site/[id]/room/[roomId].tsx:156	e.g. Demo vanity and tile to studs. Move the outlet 12 in left, box at 44 in AFF. New fan vented outside.
+src/app/site/[id]/room/[roomId].tsx:157	Tap the microphone on your keyboard to talk. Bidwell turns this and your photo notes into tasks.
+src/app/site/[id]/room/[roomId].tsx:158	Bidwell is writing the tasks…
+src/app/site/[id]/room/[roomId].tsx:158	Make task list with Bidwell
+src/app/site/[id]/room/[roomId].tsx:162	Tasks
+src/app/site/[id]/room/[roomId].tsx:163	No tasks yet. Make them with Bidwell above, or add your own.
+src/app/site/[id]/room/[roomId].tsx:167	Add a task
+src/app/site/[id]/room/[roomId].tsx:167	e.g. Install GFCI at vanity
+src/app/site/[id]/room/[roomId].tsx:173	Send this area to the crew
+src/app/site/[id]/room/[roomId].tsx:175	Delete this area?
+src/app/site/[id]/room/[roomId].tsx:175	Its photos and tasks are deleted.
+src/app/site/[id]/room/[roomId].tsx:180	Delete area
+src/app/site/[id]/share.tsx:72	Those show in English. Try again in a moment to translate them.
+src/app/site/[id]/share.tsx:92	Could not make the work order
+src/app/site/[id]/share.tsx:106	No open tasks
+src/app/site/[id]/share.tsx:106	Add tasks to these rooms first.
+src/app/site/[id]/share.tsx:109	Could not make the message
+src/app/site/[id]/share.tsx:120	Bidwell could not write it
+src/app/site/[id]/share.tsx:133	Did you send it to the client?
+src/app/site/[id]/share.tsx:133	Then these photos count as seen, and the home screen reminds you again when there are new ones.
+src/app/site/[id]/share.tsx:133	Yes, sent
+src/app/site/[id]/share.tsx:137	Could not make the PDF
+src/app/site/[id]/share.tsx:148	Work order
+src/app/site/[id]/share.tsx:148	Client update
+src/app/site/[id]/share.tsx:148	Facebook post
+src/app/site/[id]/share.tsx:150	Crew
+src/app/site/[id]/share.tsx:150	Post
+src/app/site/[id]/share.tsx:154	Work order for the crew
+src/app/site/[id]/share.tsx:155	Photos with your drawings and notes, and the open tasks with check boxes. Prices never appear.
+src/app/site/[id]/share.tsx:156	Rooms
+src/app/site/[id]/share.tsx:166	Bidwell translates the tasks; the English stays underneath in small type.
+src/app/site/[id]/share.tsx:167	The PDF will only show the photos and notes.
+src/app/site/[id]/share.tsx:167	No open tasks in these rooms
+src/app/site/[id]/share.tsx:168	Making the PDF…
+src/app/site/[id]/share.tsx:168	Share work order PDF
+src/app/site/[id]/share.tsx:169	Preparing…
+src/app/site/[id]/share.tsx:169	Send tasks as a text message
+src/app/site/[id]/share.tsx:173	Progress update for the client
+src/app/site/[id]/share.tsx:173	Post for your Facebook groups
+src/app/site/[id]/share.tsx:176	What’s finished and what’s next, with before and after photos. No prices or internal notes.
+src/app/site/[id]/share.tsx:177	A short post about the finished work. Never the client’s name, address or prices.
+src/app/site/[id]/share.tsx:179	Client’s language
+src/app/site/[id]/share.tsx:179	Post language
+src/app/site/[id]/share.tsx:180	Bidwell writes the post in it.
+src/app/site/[id]/share.tsx:182	Write it with Bidwell
+src/app/site/[id]/share.tsx:183	Message
+src/app/site/[id]/share.tsx:184	Hi! Here’s where we are…
+src/app/site/[id]/share.tsx:184	Before and after: hall bath…
+src/app/site/[id]/share.tsx:186	Share update PDF
+src/app/site/[id]/share.tsx:188	Share post text
+src/app/site/[id]/share.tsx:198	Taken since your last update. They go in the update without your drawings or crew notes.
+src/app/site/[id]/share.tsx:198	Taken in the last 7 days. They go in the update without your drawings or crew notes.
+src/app/site/[id]/share.tsx:198	since your last update
+src/app/site/[id]/share.tsx:198	in the last 7 days
+src/app/site/[id]/share.tsx:199	No new photos since the last update. Take a few progress photos first: clients love seeing the work move.
+src/app/site/[id]/share.tsx:210	Before and after
+src/app/site/[id]/share.tsx:212	None yet. In a room, add Before photos, and an After photo when a task is done (or After photos for the room).
+src/app/site/[id]/share.tsx:221	Could not share the photo
+src/app/site/[id]/share.tsx:222	Before
+src/app/site/[id]/share.tsx:230	Attach these photos to your post.
+src/app/site/[id]/share.tsx:230	Tap a photo to save it to Photos or share it straight to Facebook or Messages. Drawings are not included.
+src/app/team.tsx:37	Crew check
+src/app/team.tsx:39	No one is booked today, and every crew day this week is marked. Book crew days on the Schedule tab and pick who is coming.
+src/app/team.tsx:49	· not confirmed
+src/app/team.tsx:58	Reschedule…
+src/app/team.tsx:68	“Worked” adds their day to the job’s labor cost (from their rate). “Reschedule” books them on the new day.
+src/app/team.tsx:73	Add someone
+src/app/team.tsx:74	My crew
+src/app/team.tsx:76	Trade
+src/app/team.tsx:76	Tile, plumbing, electrical…
+src/app/team.tsx:77	Mobile
+src/app/team.tsx:79	Cost to you (loaded)
+src/app/team.tsx:84	Messages in
+src/app/team.tsx:98	Add the people you work with. Their rate stays private; it is only used to add labor to your job costs.
+src/app/team.tsx:107	Remove this person?
+src/app/team.tsx:112	On the Schedule tab, add a Crew day and tap who is coming. Bidwell checks in with you that morning.
+src/app/team.tsx:112	Next: book a crew day
+src/app/terms.tsx:39	Agree and continue
+src/app/terms.tsx:40	Tick the required boxes to continue.
+src/app/terms.tsx:45	BIDWELL AI
+src/app/terms.tsx:46	Before you start
+src/app/terms.tsx:47	What you agreed to, and your AI sharing choice.
+src/app/terms.tsx:47	Please read and agree. It takes a minute.
+src/app/terms.tsx:63	Without AI you can still build estimates with Quick price or by filling in the questions, and send quotes, sign and take payments. You can turn it on or off any time under Me > Bidwell AI.
+src/app/terms.tsx:68	Terms of Use
+src/app/terms.tsx:76	Tap to read all 14 short sections: AI is a helper, you run your business, messages need permission, your data, no warranty, limits of liability, Washington law.
+src/app/terms.tsx:80	Privacy in short
+src/cloud/CloudProvider.tsx:65	Signed an older quote
+src/cloud/CloudProvider.tsx:73	Signed online
+src/cloud/CloudProvider.tsx:79	Signed an older change order
+src/cloud/CloudProvider.tsx:86	Change order signed
+src/cloud/CloudProvider.tsx:99	Your client
+src/cloud/CloudProvider.tsx:106	No internet connection. Check your signal and try again.
+src/cloud/CloudProvider.tsx:107	Email or password is wrong.
+src/cloud/CloudProvider.tsx:108	Confirm your email first: open the email from Bidwell and tap the link, then log in. If it is not there, check spam or create the account again to get a new email.
+src/cloud/CloudProvider.tsx:109	That email already has an account. Sign in instead.
+src/cloud/CloudProvider.tsx:110	Too many tries. Wait a minute and try again.
+src/cloud/CloudProvider.tsx:179	Updated from your account
+src/cloud/CloudProvider.tsx:179	The work saved in your account replaced changes made on this phone that had not been backed up.
+src/cloud/CloudProvider.tsx:203	Sync failed
+src/cloud/CloudProvider.tsx:240	Account made. Check your email to confirm it, then sign in.
+src/cloud/CloudProvider.tsx:250	Log in first.
+src/cloud/CloudProvider.tsx:252	Your current password is not right.
+src/cloud/CloudProvider.tsx:254	Choose a password different from your current one.
+src/cloud/CloudProvider.tsx:260	Could not save your latest work to the cloud. Check your connection, or sign out anyway and lose changes made since the last sync.
+src/cloud/CloudProvider.tsx:280	Could not delete the account.
+src/cloud/sign.ts:34	Could not make the link.
+src/cloud/sign.ts:41	id, kind, estimate_id, change_id, html, total, signature
+src/cloud/sign.ts:75	id, estimate_id, kind, client_note, client_note_name, client_note_at
+src/cloud/sync.ts:36	data, updated_at
+src/engine/ai.ts:131	AI sharing is off. Turn it on under Me > Bidwell AI. Estimates, quotes, signing and payments work without it.
+src/engine/ai.ts:132	Bidwell AI is not connected. Log in to your Bidwell account under Me to use it.
+src/engine/ai.ts:287	Bidwell (server)
+src/engine/ai.ts:512	Bidwell AI is not available right now.
+src/engine/ai.ts:550	You help a construction contractor. Follow the reply format exactly.
+src/engine/ai.ts:562	unknown — pick the best jobTypeId
+src/engine/ai.ts:562	(no notes, use the photos)
+src/engine/ai.ts:569	Bidwell request failed
+src/engine/ai.ts:586	Reply with the single word OK.
+src/engine/ai.ts:608	Claude is not allowed on this page. Allow it in the page permissions, then try again.
+src/engine/ai.ts:610	Claude usage limit reached for now. Try again in a little while.
+src/engine/ai.ts:612	Your Claude sign-in expired. Sign in again, then try again.
+src/engine/ai.ts:615	Bidwell could not use these photos. Try fewer photos, or JPG/PNG files.
+src/engine/ai.ts:617	Bidwell would not answer this one. Reword the notes and try again.
+src/engine/ai.ts:619	Bidwell could not answer right now. Try again.
+src/engine/ai.ts:650	Bidwell (built in)
+src/engine/assistant.ts:85	$1 square feet
+src/engine/assistant.ts:86	$1 linear feet
+src/engine/books.ts:15	Labor (loaded)
+src/engine/books.ts:16	Materials (with tax)
+src/engine/books.ts:17	Subcontractors
+src/engine/books.ts:18	Equipment & rentals
+src/engine/catalog.ts:8	2x4x8 stud
+src/engine/catalog.ts:9	2x4x12 (top plate)
+src/engine/catalog.ts:10	2x4x12 pressure-treated (bottom plate)
+src/engine/catalog.ts:11	2x6x8 (door header)
+src/engine/catalog.ts:12	3-1/4" collated framing nails (2,000)
+src/engine/catalog.ts:13	Powder-actuated pins + loads (100)
+src/engine/catalog.ts:16	1/2" drywall 4x8
+src/engine/catalog.ts:17	1/2" moisture-resistant drywall 4x8
+src/engine/catalog.ts:18	R-15 batt insulation (bag, ~60 SF)
+src/engine/catalog.ts:19	1-1/4" drywall screws, 5 lb
+src/engine/catalog.ts:20	All-purpose joint compound, 4.5 gal
+src/engine/catalog.ts:21	Paper tape, 500 ft
+src/engine/catalog.ts:22	Outside corner bead, 8 ft
+src/engine/catalog.ts:25	3" ABS pipe, 10 ft
+src/engine/catalog.ts:26	2" ABS pipe, 10 ft
+src/engine/catalog.ts:27	1-1/2" ABS pipe, 10 ft
+src/engine/catalog.ts:28	ABS fittings kit (per fixture)
+src/engine/catalog.ts:29	ABS cement, 16 oz
+src/engine/catalog.ts:30	2" P-trap
+src/engine/catalog.ts:31	1-1/2" P-trap + trap adapter
+src/engine/catalog.ts:32	3" closet flange
+src/engine/catalog.ts:33	Toilet wax ring + bolts
+src/engine/catalog.ts:34	Air admittance valve
+src/engine/catalog.ts:35	1/2" PEX, 100 ft
+src/engine/catalog.ts:36	3/4" PEX, 50 ft
+src/engine/catalog.ts:37	PEX fittings + rings kit (per fixture)
+src/engine/catalog.ts:38	1/4-turn angle stop
+src/engine/catalog.ts:39	Shower rough-in valve
+src/engine/catalog.ts:40	Washer box with valves
+src/engine/catalog.ts:41	Ice maker box + line
+src/engine/catalog.ts:42	80 lb concrete mix
+src/engine/catalog.ts:43	Pea gravel / sand, 50 lb
+src/engine/catalog.ts:46	6/3 NM-B copper (cut to length)
+src/engine/catalog.ts:47	10/3 NM-B copper (cut to length)
+src/engine/catalog.ts:48	14/2 NM-B, 250 ft
+src/engine/catalog.ts:49	12/2 NM-B, 250 ft
+src/engine/catalog.ts:50	20A breaker
+src/engine/catalog.ts:51	50A 2-pole breaker
+src/engine/catalog.ts:52	30A 2-pole breaker
+src/engine/catalog.ts:53	AFCI / dual-function breaker
+src/engine/catalog.ts:54	NEMA 14-50 range receptacle + box
+src/engine/catalog.ts:55	NEMA 14-30 dryer receptacle + box
+src/engine/catalog.ts:56	New-work box, single gang
+src/engine/catalog.ts:57	Single-pole switch
+src/engine/catalog.ts:58	Duplex receptacle, tamper-resistant
+src/engine/catalog.ts:59	GFCI receptacle
+src/engine/catalog.ts:60	Cover plate
+src/engine/catalog.ts:61	Recessed LED wafer light
+src/engine/catalog.ts:62	Smoke/CO combo detector (hardwired)
+src/engine/catalog.ts:63	Wire nuts, staples, clamps
+src/engine/catalog.ts:66	Bath exhaust fan, 80 CFM
+src/engine/catalog.ts:67	4" duct + wall cap (bath fan)
+src/engine/catalog.ts:68	6" range hood duct, elbows + wall cap
+src/engine/catalog.ts:69	4" rigid dryer duct + wall vent
+src/engine/catalog.ts:72	Porcelain tile
+src/engine/catalog.ts:73	Modified thinset, 50 lb
+src/engine/catalog.ts:74	Grout, 25 lb
+src/engine/catalog.ts:75	Self-leveler, 50 lb
+src/engine/catalog.ts:76	Spacers / leveling clips
+src/engine/catalog.ts:77	Cement board 3x5
+src/engine/catalog.ts:78	Waterproofing membrane
+src/engine/catalog.ts:79	Shower pan kit (sloped pan, curb, drain)
+src/engine/catalog.ts:80	Uncoupling membrane (tile over wood subfloor)
+src/engine/catalog.ts:81	Luxury vinyl plank (LVP)
+src/engine/catalog.ts:82	Transition strip
+src/engine/catalog.ts:85	Kitchen cabinets (per LF)
+src/engine/catalog.ts:86	Countertop, fabricated + installed
+src/engine/catalog.ts:89	30" prehung interior door
+src/engine/catalog.ts:90	Bifold door
+src/engine/catalog.ts:91	Door knob set
+src/engine/catalog.ts:92	Door casing, primed MDF
+src/engine/catalog.ts:93	Baseboard, primed MDF
+src/engine/catalog.ts:94	Door shims
+src/engine/catalog.ts:95	Finish nails
+src/engine/catalog.ts:98	PVA drywall primer
+src/engine/catalog.ts:99	Wall paint, 5 gal
+src/engine/catalog.ts:100	Paintable caulk
+src/engine/catalog.ts:103	Toilet
+src/engine/catalog.ts:104	Vanity with top
+src/engine/catalog.ts:105	Faucet
+src/engine/catalog.ts:106	Shower stall 3x3
+src/engine/catalog.ts:107	Shower trim kit
+src/engine/catalog.ts:108	Bathtub, 60"
+src/engine/catalog.ts:109	Kitchen sink
+src/engine/catalog.ts:112	Dump / haul-off
+src/engine/catalog.ts:113	Floor protection (Ram Board)
+src/engine/catalog.ts:114	Plastic sheeting
+src/engine/catalog.ts:115	Painter's tape
+src/engine/catalog.ts:118	Architectural shingles, bundle (1/3 square)
+src/engine/catalog.ts:119	Synthetic underlayment, roll (10 squares)
+src/engine/catalog.ts:120	Ice & water shield, roll (~65 LF x 3 ft)
+src/engine/catalog.ts:121	Starter strip shingles, bundle (~105 LF)
+src/engine/catalog.ts:122	Hip & ridge cap shingles, bundle (~31 LF)
+src/engine/catalog.ts:123	Drip edge, 10 ft
+src/engine/catalog.ts:124	1-1/4" coil roofing nails (7,200)
+src/engine/catalog.ts:125	Shingle-over ridge vent, 4 ft
+src/engine/catalog.ts:126	Roof box vent
+src/engine/catalog.ts:127	Pipe boot flashing
+src/engine/catalog.ts:128	Step flashing, bundle of 100
+src/engine/catalog.ts:129	Chimney counter-flashing and cricket materials
+src/engine/catalog.ts:130	Skylight flashing kit
+src/engine/catalog.ts:131	Roof sealant, tube
+src/engine/catalog.ts:132	7/16" OSB roof sheathing 4x8
+src/engine/catalog.ts:133	Standing seam metal panels and trim, per square
+src/engine/catalog.ts:134	High-temp underlayment, roll (2 squares)
+src/engine/catalog.ts:135	30-yard dumpster, delivered and hauled
+src/engine/catalog.ts:142	Remove interior wall
+src/engine/catalog.ts:143	Bathroom demolition
+src/engine/catalog.ts:144	Kitchen demolition
+src/engine/catalog.ts:145	Remove existing flooring
+src/engine/catalog.ts:148	Frame new interior wall (8 ft)
+src/engine/catalog.ts:150	Frame, insulate and drywall exterior wall
+src/engine/catalog.ts:152	Frame door opening with header
+src/engine/catalog.ts:156	Hang drywall, new wall (both sides)
+src/engine/catalog.ts:158	Tape, mud and texture, new wall
+src/engine/catalog.ts:160	Moisture-resistant drywall, bathroom
+src/engine/catalog.ts:162	Drywall patch and repair
+src/engine/catalog.ts:166	Shower drain, valve and supply
+src/engine/catalog.ts:168	Tub drain, valve and supply
+src/engine/catalog.ts:170	Toilet drain and supply (new location)
+src/engine/catalog.ts:172	Vanity drain and supply (new location)
+src/engine/catalog.ts:174	Kitchen sink drain and supply
+src/engine/catalog.ts:176	Dishwasher hookup
+src/engine/catalog.ts:177	Washer box, drain and supply
+src/engine/catalog.ts:179	Ice maker line for fridge
+src/engine/catalog.ts:181	Water supply run from source
+src/engine/catalog.ts:183	Cut slab, trench and patch for drains
+src/engine/catalog.ts:185	Set toilet
+src/engine/catalog.ts:186	Install vanity and faucet
+src/engine/catalog.ts:187	Install shower stall
+src/engine/catalog.ts:188	Install kitchen sink and faucet
+src/engine/catalog.ts:191	Toilet (supplied)
+src/engine/catalog.ts:192	Vanity and faucet (supplied)
+src/engine/catalog.ts:193	Shower stall (supplied)
+src/engine/catalog.ts:194	Shower trim kit (supplied)
+src/engine/catalog.ts:195	Bathtub (supplied)
+src/engine/catalog.ts:196	Kitchen sink and faucet (supplied)
+src/engine/catalog.ts:199	50A range circuit
+src/engine/catalog.ts:200	6/3 wire run for range
+src/engine/catalog.ts:201	30A dryer circuit
+src/engine/catalog.ts:202	10/3 wire run for dryer
+src/engine/catalog.ts:203	Add light (recessed LED)
+src/engine/catalog.ts:204	Add or move switch
+src/engine/catalog.ts:206	Add outlet
+src/engine/catalog.ts:208	Add GFCI outlet
+src/engine/catalog.ts:210	New 20A circuit (kitchen, bath or appliance)
+src/engine/catalog.ts:212	New AFCI bedroom circuit
+src/engine/catalog.ts:214	Smoke/CO detector, hardwired
+src/engine/catalog.ts:216	Electrical misc. and modifications
+src/engine/catalog.ts:219	Bath exhaust fan, vented outside
+src/engine/catalog.ts:221	Range hood vent to exterior
+src/engine/catalog.ts:222	Dryer vent to exterior
+src/engine/catalog.ts:225	Tile floor
+src/engine/catalog.ts:227	Tile shower walls, waterproofed
+src/engine/catalog.ts:229	Shower pan, curb and drain, waterproofed
+src/engine/catalog.ts:231	Uncoupling membrane under tile (wood subfloor)
+src/engine/catalog.ts:233	Tile backsplash
+src/engine/catalog.ts:235	LVP floor
+src/engine/catalog.ts:236	Floor transition strip
+src/engine/catalog.ts:239	Install cabinets
+src/engine/catalog.ts:240	Cabinets (supplied)
+src/engine/catalog.ts:241	Countertops, fabricated and installed
+src/engine/catalog.ts:244	Install 30" prehung door with trim
+src/engine/catalog.ts:246	Install bifold door with trim
+src/engine/catalog.ts:252	Prime and paint new wall (both sides)
+src/engine/catalog.ts:254	Paint walls (per SF of floor area)
+src/engine/catalog.ts:256	Paint ceilings
+src/engine/catalog.ts:259	Floor and wall protection, dust control
+src/engine/catalog.ts:261	Final cleanup
+src/engine/catalog.ts:264	Tear off existing roofing, per layer
+src/engine/catalog.ts:265	Dumpster and haul-away
+src/engine/catalog.ts:266	Replace damaged roof sheathing
+src/engine/catalog.ts:267	Architectural shingles over synthetic underlayment
+src/engine/catalog.ts:269	Standing seam metal roof over high-temp underlayment
+src/engine/catalog.ts:271	Ice & water shield at eaves and valleys
+src/engine/catalog.ts:272	Starter course at eaves and rakes
+src/engine/catalog.ts:273	Drip edge at eaves and rakes
+src/engine/catalog.ts:274	Hip and ridge cap
+src/engine/catalog.ts:275	Ridge vent
+src/engine/catalog.ts:278	Step flashing at walls
+src/engine/catalog.ts:279	Chimney flashing
+src/engine/catalog.ts:280	Skylight re-flash
+src/engine/catalog.ts:281	Steep roof charge (8/12 and up)
+src/engine/catalog.ts:282	Very steep roof charge (10/12 and up)
+src/engine/catalog.ts:283	Two-story or higher access
+src/engine/catalog.ts:295	Demolition
+src/engine/catalog.ts:296	Framing
+src/engine/catalog.ts:297	Drywall
+src/engine/catalog.ts:298	Plumbing
+src/engine/catalog.ts:299	Electrical
+src/engine/catalog.ts:300	Ventilation
+src/engine/catalog.ts:301	Tile & flooring
+src/engine/catalog.ts:302	Cabinets & counters
+src/engine/catalog.ts:303	Doors & trim
+src/engine/catalog.ts:304	Painting
+src/engine/catalog.ts:305	Fixtures & install
+src/engine/catalog.ts:306	Roofing
+src/engine/catalog.ts:307	Site protection & cleanup
+src/engine/checks.ts:30	Raise the markup or confirm this job is worth doing at a lower margin.
+src/engine/checks.ts:36	EPA RRP rules apply to pre-1978 homes. Use a certified renovator and add containment and cleanup time.
+src/engine/checks.ts:43	Basement bedroom without egress window
+src/engine/checks.ts:43	Confirm egress for every basement bedroom
+src/engine/checks.ts:44	Each basement bedroom needs an emergency escape opening. An egress window cut-in is not included in this price.
+src/engine/checks.ts:48	Confirm the main drain is deep enough for gravity flow. A sewage ejector pump is not included.
+src/engine/checks.ts:53	No new bath fan in a bathroom with a shower or tub
+src/engine/checks.ts:54	Confirm an existing fan is vented to the outside, or add one. Inspectors check this.
+src/engine/checks.ts:58	Vented to the exterior with ducting and switch.
+src/engine/checks.ts:62	One per bedroom plus the hallway, hardwired.
+src/engine/checks.ts:65	50A range circuit uses 6/3 copper
+src/engine/checks.ts:69	Check panel capacity for new 240V circuits
+src/engine/checks.ts:70	Confirm open breaker spaces and service size. A panel or service upgrade is not included.
+src/engine/checks.ts:73	Range vent may need a core drill
+src/engine/checks.ts:74	If the vent exits through a concrete foundation wall, add core drilling.
+src/engine/checks.ts:79	Permit likely required
+src/engine/checks.ts:80	Permit fees are listed as not included. Confirm with the city before scheduling.
+src/engine/checks.ts:92	Sales tax rate not set
+src/engine/checks.ts:93	Set your sales tax rate under Me → Markup, tax and quote defaults so the client total is correct.
+src/engine/connect.ts:25	Date
+src/engine/connect.ts:25	Estimate
+src/engine/connect.ts:25	Sales tax
+src/engine/connect.ts:25	Total
+src/engine/connect.ts:25	Your cost
+src/engine/connect.ts:25	Markup %
+src/engine/connect.ts:37	InvoiceNo
+src/engine/connect.ts:37	Customer
+src/engine/connect.ts:37	InvoiceDate
+src/engine/connect.ts:37	DueDate
+src/engine/connect.ts:37	Memo
+src/engine/connect.ts:37	ItemDescription
+src/engine/connect.ts:37	ItemQuantity
+src/engine/connect.ts:37	ItemRate
+src/engine/connect.ts:37	ItemAmount
+src/engine/connect.ts:37	Taxable
+src/engine/connect.ts:37	TaxRate
+src/engine/connect.ts:44	Construction
+src/engine/connect.ts:60	Amount
+src/engine/connect.ts:60	Method
+src/engine/connect.ts:72	Original (with tax)
+src/engine/connect.ts:72	Change orders (with tax)
+src/engine/connect.ts:72	Overdue invoices
+src/engine/connect.ts:90	Quote sent
+src/engine/connect.ts:91	Job won
+src/engine/connect.ts:92	Client signed
+src/engine/connect.ts:94	Invoice made
+src/engine/connect.ts:95	Payment received
+src/engine/connect.ts:134	Sample — Hall bath remodel
+src/engine/connect.ts:134	Sample Client
+src/engine/connect.ts:134	123 Example St
+src/engine/connect.ts:134	Bathroom remodel
+src/engine/contract.ts:197	No.
+src/engine/contract.ts:197	Due
+src/engine/contract.ts:197	Bill to
+src/engine/contract.ts:197	Project
+src/engine/contract.ts:197	Description
+src/engine/contract.ts:198	Amount due
+src/engine/contract.ts:198	Contract summary
+src/engine/contract.ts:198	Original contract (with tax)
+src/engine/contract.ts:199	Approved change orders (with tax)
+src/engine/contract.ts:199	Paid to date
+src/engine/contract.ts:199	Balance remaining
+src/engine/contract.ts:199	Credits (work removed)
+src/engine/contract.ts:200	Please make payment to
+src/engine/contract.ts:200	Thank you for your business.
+src/engine/contract.ts:200	Price change
+src/engine/contract.ts:201	New contract total (with tax)
+src/engine/contract.ts:201	Approved by owner
+src/engine/contract.ts:201	Contractor
+src/engine/contract.ts:201	Accepted
+src/engine/contract.ts:202	This change becomes part of the contract when signed by both parties. All other terms stay the same.
+src/engine/estimator.ts:97	Small jobs are priced item by item from your price book.
+src/engine/estimator.ts:104	Add the number of items to compare with how you normally charge.
+src/engine/estimator.ts:104	Add the length to compare with how you normally charge.
+src/engine/estimator.ts:104	Add the size to compare with how you normally charge.
+src/engine/estimator.ts:104	number of items
+src/engine/estimator.ts:115	your preset
+src/engine/estimator.ts:163	Set it on the questions screen or in Pricing. It is saved for every job of this type.
+src/engine/followup.ts:40	The client has to agree to follow-ups first.
+src/engine/followup.ts:41	Pick text, email, or both.
+src/engine/followup.ts:42	Add the client’s mobile number.
+src/engine/followup.ts:43	Add the client’s email.
+src/engine/followup.ts:44	Set when to follow up (required).
+src/engine/followup.ts:45	Enter the date the quote was sent as YYYY-MM-DD.
+src/engine/followup.ts:46	Each follow-up day must be between 1 and 60.
+src/engine/help.ts:13	Price Book
+src/engine/help.ts:14	Scan rooms
+src/engine/job.ts:99	Finished
+src/engine/job.ts:116	This quote was lost
+src/engine/job.ts:116	Reopen the quote
+src/engine/job.ts:119	Job finished
+src/engine/job.ts:119	Photos and logs stay here for your records.
+src/engine/job.ts:119	See job money
+src/engine/job.ts:120	Add photos by area, or price it to send a quote.
+src/engine/job.ts:125	Next: send the quote
+src/engine/job.ts:134	Sent today. They can sign from a link you send, or right here on your phone.
+src/engine/job.ts:135	Sign on this phone
+src/engine/job.ts:143	The job is finished. Send the final invoice.
+src/engine/job.ts:143	Open payments
+src/engine/job.ts:144	Finished and paid
+src/engine/job.ts:144	Nice work. See how the job did.
+src/engine/job.ts:147	You got the job
+src/engine/job.ts:147	Take “before” photos so every area has a record.
+src/engine/job.ts:151	There are new photos since the last update. Bidwell writes the message.
+src/engine/job.ts:151	Send a photo update
+src/engine/job.ts:154	Work in progress
+src/engine/jobTypes.ts:20	Year the home was built
+src/engine/jobTypes.ts:20	Property
+src/engine/jobTypes.ts:21	Homes built before 1978 need lead-safe work practices.
+src/engine/jobTypes.ts:24	What's under the floor?
+src/engine/jobTypes.ts:25	Slab
+src/engine/jobTypes.ts:25	Crawlspace
+src/engine/jobTypes.ts:25	Basement slab
+src/engine/jobTypes.ts:29	I supply
+src/engine/jobTypes.ts:29	Owner supplies
+src/engine/jobTypes.ts:31	Project size
+src/engine/jobTypes.ts:36	Permit fees and plan review (billed at cost if we pull the permit)
+src/engine/jobTypes.ts:37	Repair of hidden damage found after walls or floors are opened (rot, mold, code deficiencies)
+src/engine/jobTypes.ts:38	Hazardous material testing or removal
+src/engine/jobTypes.ts:51	Bathroom floor area
+src/engine/jobTypes.ts:52	Shower / tub
+src/engine/jobTypes.ts:52	Scope
+src/engine/jobTypes.ts:53	Tiled shower
+src/engine/jobTypes.ts:53	Shower stall
+src/engine/jobTypes.ts:53	Tub + tile
+src/engine/jobTypes.ts:54	Shower wall tile area
+src/engine/jobTypes.ts:55	Floor tile area
+src/engine/jobTypes.ts:56	Toilets
+src/engine/jobTypes.ts:57	Vanities
+src/engine/jobTypes.ts:58	Moving any drains or fixtures?
+src/engine/jobTypes.ts:59	Moving drains adds rough plumbing, and on a slab, saw-cutting and trenching.
+src/engine/jobTypes.ts:61	New exhaust fan vented outside?
+src/engine/jobTypes.ts:62	Required for bathrooms with a shower or tub.
+src/engine/jobTypes.ts:63	New lights
+src/engine/jobTypes.ts:64	GFCI outlets
+src/engine/jobTypes.ts:65	Replace door
+src/engine/jobTypes.ts:65	Finish
+src/engine/jobTypes.ts:66	Fixtures (toilet, vanity, shower)
+src/engine/jobTypes.ts:117	Mirrors, accessories and glass shower doors unless listed
+src/engine/jobTypes.ts:123	Kitchen remodel
+src/engine/jobTypes.ts:126	Kitchen floor area
+src/engine/jobTypes.ts:127	Cabinet run (upper + lower)
+src/engine/jobTypes.ts:128	Cabinets
+src/engine/jobTypes.ts:129	Countertop area
+src/engine/jobTypes.ts:130	Backsplash tile area
+src/engine/jobTypes.ts:131	New flooring
+src/engine/jobTypes.ts:132	Tile
+src/engine/jobTypes.ts:132	Keep existing
+src/engine/jobTypes.ts:134	Dishwasher
+src/engine/jobTypes.ts:135	Ice maker line
+src/engine/jobTypes.ts:136	Range
+src/engine/jobTypes.ts:137	Electric (new 50A)
+src/engine/jobTypes.ts:137	Existing hookup
+src/engine/jobTypes.ts:137	Gas (by others)
+src/engine/jobTypes.ts:138	Panel to range
+src/engine/jobTypes.ts:139	Range hood vented outside
+src/engine/jobTypes.ts:141	Counter GFCI outlets
+src/engine/jobTypes.ts:142	Sink and faucet
+src/engine/jobTypes.ts:181	Appliances (owner-supplied; we install hookups listed)
+src/engine/jobTypes.ts:181	Gas line work
+src/engine/jobTypes.ts:187	Basement / ADU conversion
+src/engine/jobTypes.ts:190	Area being converted
+src/engine/jobTypes.ts:191	New wall length
+src/engine/jobTypes.ts:192	Walls to remove
+src/engine/jobTypes.ts:193	Unfinished exterior walls to finish
+src/engine/jobTypes.ts:194	Concrete or bare walls that need framing, insulation and drywall. 0 if already finished.
+src/engine/jobTypes.ts:195	New doors (30")
+src/engine/jobTypes.ts:196	Bifold doors
+src/engine/jobTypes.ts:197	Bedrooms when done
+src/engine/jobTypes.ts:198	New bedrooms being created
+src/engine/jobTypes.ts:199	Do all bedrooms have an egress window?
+src/engine/jobTypes.ts:200	Every basement bedroom needs an emergency escape opening.
+src/engine/jobTypes.ts:201	Not sure
+src/engine/jobTypes.ts:203	New showers
+src/engine/jobTypes.ts:204	New toilets
+src/engine/jobTypes.ts:205	New vanities
+src/engine/jobTypes.ts:207	Washer hookup
+src/engine/jobTypes.ts:209	Distance to main drain
+src/engine/jobTypes.ts:210	New 50A range circuit
+src/engine/jobTypes.ts:211	New 30A dryer circuit
+src/engine/jobTypes.ts:212	Panel to range / dryer
+src/engine/jobTypes.ts:214	New or moved switches
+src/engine/jobTypes.ts:215	New outlets
+src/engine/jobTypes.ts:217	Tile floor (kitchen + baths)
+src/engine/jobTypes.ts:217	Finishes
+src/engine/jobTypes.ts:218	LVP floor (other rooms)
+src/engine/jobTypes.ts:219	Kitchen countertop
+src/engine/jobTypes.ts:220	Kitchen cabinets to install
+src/engine/jobTypes.ts:222	Showers, toilet, vanity
+src/engine/jobTypes.ts:294	Finishing existing exterior walls, ceilings and insulation unless listed
+src/engine/jobTypes.ts:294	Egress window cut-in unless listed
+src/engine/jobTypes.ts:294	Electrical panel or service upgrade
+src/engine/jobTypes.ts:294	Sewage ejector pump if drains cannot flow by gravity
+src/engine/jobTypes.ts:294	Appliances
+src/engine/jobTypes.ts:300	Flooring
+src/engine/jobTypes.ts:303	Floor area
+src/engine/jobTypes.ts:308	New baseboard
+src/engine/jobTypes.ts:309	Transition strips
+src/engine/jobTypes.ts:325	Subfloor repair or replacement
+src/engine/jobTypes.ts:325	Moving furniture and appliances
+src/engine/jobTypes.ts:331	Interior painting
+src/engine/jobTypes.ts:334	Floor area to paint
+src/engine/jobTypes.ts:335	Paint ceilings too
+src/engine/jobTypes.ts:336	Drywall repairs
+src/engine/jobTypes.ts:349	Exterior painting
+src/engine/jobTypes.ts:349	Moving furniture
+src/engine/jobTypes.ts:355	New ADU / DADU
+src/engine/jobTypes.ts:357	Finished area
+src/engine/jobTypes.ts:359	Architectural and engineering design
+src/engine/jobTypes.ts:359	Utility connection and capacity charges
+src/engine/jobTypes.ts:359	Landscaping, fencing and driveway
+src/engine/jobTypes.ts:364	New home build
+src/engine/jobTypes.ts:368	Land, design, engineering and impact fees
+src/engine/jobTypes.ts:374	Small job / repairs
+src/engine/jobTypes.ts:408	Roof replacement
+src/engine/jobTypes.ts:411	Roof area (along the slope)
+src/engine/jobTypes.ts:411	Roof size
+src/engine/jobTypes.ts:411	Not the footprint. Tap “Measure from satellite” to fill this in.
+src/engine/jobTypes.ts:412	Main pitch
+src/engine/jobTypes.ts:412	Rise in inches per 12 inches. 8/12 and up is a steep roof.
+src/engine/jobTypes.ts:413	Roof shape
+src/engine/jobTypes.ts:414	Simple (gable): 10% waste
+src/engine/jobTypes.ts:414	Average (hip): 15% waste
+src/engine/jobTypes.ts:414	Cut-up (many valleys): 20% waste
+src/engine/jobTypes.ts:415	Height
+src/engine/jobTypes.ts:416	One story
+src/engine/jobTypes.ts:416	Two stories
+src/engine/jobTypes.ts:416	Three or more
+src/engine/jobTypes.ts:417	New roof
+src/engine/jobTypes.ts:418	Architectural shingles
+src/engine/jobTypes.ts:418	Standing seam metal
+src/engine/jobTypes.ts:418	Low slope membrane (bid separately)
+src/engine/jobTypes.ts:419	Layers to tear off
+src/engine/jobTypes.ts:419	Look at the edge of the roof. 0 if the deck is bare.
+src/engine/jobTypes.ts:420	Sheathing allowance
+src/engine/jobTypes.ts:420	Damaged decking to replace; extra sheets are billed per sheet.
+src/engine/jobTypes.ts:421	Eaves (bottom edges)
+src/engine/jobTypes.ts:421	Edges
+src/engine/jobTypes.ts:422	Rakes (gable edges)
+src/engine/jobTypes.ts:423	Ridges and hips
+src/engine/jobTypes.ts:424	Valleys
+src/engine/jobTypes.ts:425	Roof meets a wall
+src/engine/jobTypes.ts:425	Step flashing where the roof runs into a wall.
+src/engine/jobTypes.ts:426	Vents & flashing
+src/engine/jobTypes.ts:427	Ridge vent length
+src/engine/jobTypes.ts:428	Box vents
+src/engine/jobTypes.ts:429	Pipes through the roof
+src/engine/jobTypes.ts:430	Chimneys
+src/engine/jobTypes.ts:431	Skylights
+src/engine/jobTypes.ts:474	Sheathing beyond the allowance listed (billed per sheet)
+src/engine/jobTypes.ts:475	Rotted rafters or framing
+src/engine/jobTypes.ts:476	Gutters and downspouts unless listed
+src/engine/jobTypes.ts:477	Satellite measurements are confirmed on site before materials are ordered
+src/engine/jobTypes.ts:488	Replacement of rotted sheathing or framing beyond what is listed
+src/engine/jobTypes.ts:491	Whole-house remodel
+src/engine/jobTypes.ts:491	Remodel
+src/engine/jobTypes.ts:491	Area being remodeled
+src/engine/jobTypes.ts:492	Garage conversion
+src/engine/jobTypes.ts:492	Garage area
+src/engine/jobTypes.ts:493	Drywall hang & finish
+src/engine/jobTypes.ts:493	Board area (walls + ceilings)
+src/engine/jobTypes.ts:494	Interior doors & trim
+src/engine/jobTypes.ts:494	Number of doors
+src/engine/jobTypes.ts:495	Window replacement
+src/engine/jobTypes.ts:495	Number of windows
+src/engine/jobTypes.ts:496	Countertops
+src/engine/jobTypes.ts:497	Interior demolition
+src/engine/jobTypes.ts:497	Area to demo
+src/engine/jobTypes.ts:498	Insulation
+src/engine/jobTypes.ts:498	Area to insulate
+src/engine/jobTypes.ts:500	Siding
+src/engine/jobTypes.ts:500	Exterior
+src/engine/jobTypes.ts:500	Wall area
+src/engine/jobTypes.ts:501	Wall area to paint
+src/engine/jobTypes.ts:502	Deck
+src/engine/jobTypes.ts:502	Deck area
+src/engine/jobTypes.ts:503	Fence
+src/engine/jobTypes.ts:503	Fence length
+src/engine/jobTypes.ts:504	Gutters
+src/engine/jobTypes.ts:504	Gutter length
+src/engine/jobTypes.ts:505	Concrete flatwork
+src/engine/jobTypes.ts:505	Concrete area
+src/engine/jobTypes.ts:506	Landscaping / hardscape
+src/engine/jobTypes.ts:507	Retaining wall
+src/engine/jobTypes.ts:507	Wall length
+src/engine/jobTypes.ts:509	Electrical panel upgrade
+src/engine/jobTypes.ts:509	Systems & trades
+src/engine/jobTypes.ts:510	Whole-house rewire
+src/engine/jobTypes.ts:510	Home size
+src/engine/jobTypes.ts:511	Repipe (PEX)
+src/engine/jobTypes.ts:512	Water heater
+src/engine/jobTypes.ts:512	Number of water heaters
+src/engine/jobTypes.ts:513	Heat pump / HVAC system
+src/engine/jobTypes.ts:513	Number of systems
+src/engine/jobTypes.ts:515	Home addition
+src/engine/jobTypes.ts:515	New construction
+src/engine/jobTypes.ts:515	Added area
+src/engine/jobTypes.ts:516	Commercial tenant improvement
+src/engine/jobTypes.ts:516	Space size
+src/engine/jobTypes.ts:523	Other work
+src/engine/jobTypes.ts:523	Your own work
+src/engine/jobTypes.ts:579	per job
+src/engine/jobTypes.ts:600	Basic
+src/engine/jobTypes.ts:601	Mid-grade
+src/engine/jobTypes.ts:602	High-end
+src/engine/legal.ts:5	YM LLC, Federal Way, Washington (the developer of Bidwell AI)
+src/engine/legal.ts:19	I am 18 or older and I use Bidwell AI for my business.
+src/engine/legal.ts:24	AI can be wrong. I will check every quantity, price, scope, permit and code item myself before anything goes to a client.
+src/engine/legal.ts:29	I am responsible for my contracts, licenses, required notices in my state, taxes, and for having my clients’ permission before sending them automatic messages.
+src/engine/legal.ts:34	I have read and agree to the Terms of Use and the Privacy Policy.
+src/engine/legal.ts:39	Use AI: send what Bidwell needs to answer me to Anthropic (the maker of Claude): the job notes and photos I choose, my questions, and my business details, prices and recent job names. They are not used to train AI models. I can turn this off under Me > Bidwell AI.
+src/engine/legal.ts:49	1. Who we are and this agreement
+src/engine/legal.ts:53	2. Who may use it
+src/engine/legal.ts:54	You must be 18 or older and use the app for your business, such as contracting, remodeling or construction work. You are responsible for your account, your device and anyone you let use them.
+src/engine/legal.ts:57	3. AI is a helper, not a professional
+src/engine/legal.ts:58	Estimates, material lists, schedules, messages, receipt readings, translations and other content made with AI can be wrong or incomplete. They are not engineering, architectural, legal, tax, accounting or financial advice. You must review and correct everything before you rely on it or share it. You, not us, decide the price, scope and terms you offer your clients.
+src/engine/legal.ts:61	4. You run your business
+src/engine/legal.ts:62	You are the seller to your clients. You are responsible for: your contractor license, registration, bond and insurance; permits, codes and inspections; contracts and the notices your state requires (for example, in Washington the contractor disclosure statement under RCW 18.27.114, and the three-day right to cancel for sales made at a client’s home); collecting and paying sales and income taxes; paying your workers and subcontractors; and the safety of your job sites. The app may offer notice templates as a convenience; you must check they fit your situation.
+src/engine/legal.ts:65	5. Messages to your clients, workers and subcontractors
+src/engine/legal.ts:66	Only send messages, including follow-ups, reminders and photo updates, to people who agreed to receive them. Honor every request to stop right away. The app prepares messages and you send them from your own phone or email. If automatic sending is added, you must collect and keep each person’s consent, and the app will record it. Do not use the app for spam, harassment or anything unlawful.
+src/engine/legal.ts:69	6. Electronic signatures
+src/engine/legal.ts:70	The app lets clients sign quotes and change orders electronically. You are responsible for giving clients a copy and any notices the law requires, and for confirming who signed when the identity matters. Keep your own copies of signed documents.
+src/engine/legal.ts:73	7. Your data
+src/engine/legal.ts:74	You own the information you put in the app: estimates, prices, photos, client details, receipts and notes. You give us permission to store and process it only to run the app for you. Your prices and lessons stay in your account and are never used for other users. Do not upload anything you have no right to share. You can export your data (Me > Backup) or delete your account (Me > your account) at any time.
+src/engine/legal.ts:77	8. AI providers and other services
+src/engine/legal.ts:78	When you turn on AI, what Bidwell needs to answer you is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it: the job notes and photos you choose, your questions, and your business details, prices and recent job names. When you translate a document for a client, its text is sent the same way. When you use Measure roof, the job address is sent to Google to find and measure the roof. Voice typing uses your phone’s own speech service. Cloud storage and sign-in use Supabase. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.
+src/engine/legal.ts:81	9. Payments and changes
+src/engine/legal.ts:82	The app is free to use today. If we add paid plans, we will show the price before you pay, and payments on iPhone follow Apple’s rules. We may change or stop features. If we change these Terms in a way that matters, the app will ask you to agree again.
+src/engine/legal.ts:85	10. No warranty
+src/engine/legal.ts:86	The app is provided "as is" and "as available", without warranties of any kind, including fitness for a particular purpose, accuracy and uninterrupted service, to the fullest extent the law allows.
+src/engine/legal.ts:89	11. Limit of liability
+src/engine/legal.ts:90	To the fullest extent the law allows, we are not liable for lost profits, lost jobs, underbids, cost overruns, data loss, or any indirect, incidental, special or consequential damages. Our total liability for any claim is limited to the greater of what you paid us in the 12 months before the claim or US $100.
+src/engine/legal.ts:93	12. You protect us
+src/engine/legal.ts:94	You will defend and pay for any claim against us by your clients, workers, subcontractors or anyone else that comes from your work, your contracts, your messages, your use of AI output, or your breaking these Terms or the law.
+src/engine/legal.ts:97	13. Ending
+src/engine/legal.ts:98	You can stop using the app and delete your account at any time. We may suspend or close accounts that break these Terms or put others at risk. Sections 3, 4, 7 and 10 to 14 continue after the account ends.
+src/engine/legal.ts:101	14. Law and contact
+src/engine/legal.ts:108	We collect what you enter: company profile, estimates, prices, client names and addresses, photos (and the place a photo was taken if you allow location), receipts, notes and voice recordings you choose to have read.
+src/engine/legal.ts:109	We use it only to run the app for you. We do not sell it or show ads.
+src/engine/legal.ts:110	With AI turned on, the job notes and photos you choose, your questions, and your business details, prices and recent job names are sent to Anthropic to process each request; they are not used to train AI models. Measure roof sends the job address to Google.
+src/engine/legal.ts:111	With cloud sign-in, your data and photos are stored privately in your own account (Supabase, USA). Clients only see what you send them.
+src/engine/legal.ts:112	Delete your account under Me > your account and everything in the cloud and on this phone is deleted.
+src/engine/legal.ts:136	NOTICE TO CUSTOMER (RCW 18.27.114)
+This contractor is registered with the State of Washington, registration no. {license}, expiring {expires}, and has posted a bond or deposit of {bond} for claims for breach of contract, including negligent or improper work.
+This bond or deposit might not be enough to cover a claim from the work under your contract, and it is not for your exclusive use: it covers all of the contractor's work and may be shared with other customers, suppliers, subcontractors and taxing authorities.
+You may withhold a contractually defined percentage of your construction contract as retainage for a stated period to protect you and help ensure your project is completed as required.
+If any supplier of materials used in your construction project, or any employee or subcontractor of the contractor, is not paid by the contractor, that supplier, employee or subcontractor may file a lien against your property. You may have to pay them even if you already paid the contractor in full.
+You may ask the contractor for original lien release documents from each supplier or subcontractor on your project.
+DRAFT: replace this text with the official form from Washington L&I before using it.
+src/engine/legal.ts:144	NOTICE OF CANCELLATION
+Date of transaction: {date}
+You may CANCEL this transaction, without any penalty or obligation, within THREE BUSINESS DAYS from the above date.
+If you cancel, any property traded in, any payments made by you under the contract or sale, and any negotiable instrument executed by you will be returned within TEN BUSINESS DAYS following receipt by the seller of your cancellation notice, and any security interest arising out of the transaction will be cancelled.
+To cancel this transaction, mail or deliver a signed and dated copy of this cancellation notice, or any other written notice, to {company}, {contact}, not later than midnight of {deadline}.
+I HEREBY CANCEL THIS TRANSACTION.   Date: ________   Buyer's signature: ______________________
+DRAFT: compare with the FTC Cooling-Off Rule form (16 CFR 429.1) and give the client two copies.
+src/engine/pm.ts:34	Mark
+src/engine/pm.ts:41	Check in
+src/engine/pm.ts:59	Open
+src/engine/pm.ts:60	s are
+src/engine/pm.ts:60	Remind
+src/engine/pm.ts:62	Look
+src/engine/pm.ts:69	The client
+src/engine/pm.ts:71	s need
+src/engine/pm.ts:74	Write
+src/engine/pm.ts:94	Ask
+src/engine/profile.ts:4	Homeowners
+src/engine/profile.ts:5	Investors / landlords
+src/engine/profile.ts:6	Property managers
+src/engine/profile.ts:7	Businesses (commercial)
+src/engine/profile.ts:8	Other contractors (I sub)
+src/engine/profile.ts:12	Under $10k
+src/engine/profile.ts:15	Over $150k
+src/engine/profile.ts:19	Demo
+src/engine/profile.ts:22	Concrete
+src/engine/profile.ts:37	Usual finish level: basic / builder grade.
+src/engine/profile.ts:37	Usual finish level: high-end.
+src/engine/profile.ts:37	Usual finish level: mid-grade.
+src/engine/profile.ts:37	basic / builder grade
+src/engine/quote.ts:11	Prepared for
+src/engine/quote.ts:12	Subtotal
+src/engine/quote.ts:12	WA sales tax
+src/engine/quote.ts:12	Additional items
+src/engine/quote.ts:13	Measured on site. Total floor area
+src/engine/quote.ts:14	Terms
+src/engine/quote.ts:14	Acceptance
+src/engine/quote.ts:14	Owner
+src/engine/quote.ts:14	Valid for
+src/engine/quote.ts:15	WA contractor registration #
+src/engine/quote.ts:15	Quote #
+src/engine/quote.ts:17	Changes to scope are made by written change order before the work is done.
+src/engine/quote.ts:18	Conditions found after walls or floors are opened may require a change order.
+src/engine/quote.ts:19	A Washington contractor disclosure statement (RCW 18.27.114) is provided with the contract.
+src/engine/recommend.ts:39	Kitchen scanned
+src/engine/recommend.ts:53	The contractor scanned rooms inside the home with a 3D scan. This is INTERIOR work only: do not add or suggest roofing, siding, exterior paint, decks, fences, gutters, concrete, landscaping or other outside work.
+src/engine/roof.ts:55	Flat / low slope
+src/engine/roof.ts:55	Under 2/12: shingles are not allowed; use a membrane roof.
+src/engine/roof.ts:56	Shed (one slope)
+src/engine/roof.ts:56	One plane: high side needs wall flashing.
+src/engine/roof.ts:57	Gable
+src/engine/roof.ts:57	Two main planes with a ridge and two gable ends.
+src/engine/roof.ts:58	Hip
+src/engine/roof.ts:58	Slopes on all four sides: more hip cap, no rakes.
+src/engine/roof.ts:59	Complex / cut-up
+src/engine/roof.ts:59	Many planes, valleys and dormers: higher waste and labor.
+src/engine/roof.ts:181	Example: 1-story hip roof, Federal Way WA
+src/engine/schedule.ts:32	Site visit
+src/engine/schedule.ts:33	Crew day
+src/engine/schedule.ts:34	Client call
+src/engine/schedule.ts:35	Inspection
+src/engine/schedule.ts:36	Delivery
+src/engine/schedule.ts:42	At start
+src/engine/schedule.ts:43	15 min before
+src/engine/schedule.ts:44	1 hour before
+src/engine/schedule.ts:45	1 day before
+src/engine/schedule.ts:93	Tomorrow
+src/engine/site.ts:47	Inside
+src/engine/site.ts:47	Kitchen
+src/engine/site.ts:47	Bathroom
+src/engine/site.ts:47	Bedroom
+src/engine/site.ts:47	Living room
+src/engine/site.ts:47	Basement
+src/engine/site.ts:47	Laundry
+src/engine/site.ts:47	Stairs
+src/engine/site.ts:47	Garage
+src/engine/site.ts:48	Outside
+src/engine/site.ts:48	Roof
+src/engine/site.ts:48	Foundation
+src/engine/site.ts:48	Driveway
+src/engine/site.ts:48	Yard
+src/engine/site.ts:49	Repair spot
+src/engine/site.ts:49	Damage found
+src/engine/site.ts:49	Permit & inspection
+src/engine/site.ts:86	Vietnamese
+src/engine/site.ts:87	Spanish
+src/engine/site.ts:294	Xong
+src/engine/site.ts:295	Orden de trabajo
+src/engine/site.ts:295	Tareas
+src/engine/site.ts:295	Notas
+src/engine/site.ts:295	Foto
+src/engine/site.ts:295	Hecho
+src/engine/team.ts:25	Confirmed
+src/engine/team.ts:26	Running late
+src/engine/team.ts:27	Rescheduled
+src/engine/team.ts:28	No-show
+src/engine/team.ts:29	Worked
+src/store/AppContext.tsx:250	Untitled estimate
+src/store/AppContext.tsx:528	That text is not a backup. Paste the whole backup exactly as it was exported.
+src/store/AppContext.tsx:531	That text is not a Bidwell AI backup.
+src/store/AppContext.tsx:535	This backup has no company profile.
+src/store/AppContext.tsx:549	Backup restored.
+src/ui/AiWorking.tsx:56	Bidwell · working
+src/ui/AiWorking.tsx:82	Taking a while. Skip and fill it in myself
+src/ui/ClientLanguage.tsx:37	that language
+src/ui/ClientLanguage.tsx:49	Translating a document sends it to the AI, and AI sharing is off (Me > Bidwell AI).
+src/ui/ClientLanguage.tsx:116	Another language
+src/ui/ClientLanguage.tsx:119	Type its name
+src/ui/ClientLanguage.tsx:121	Bidwell translates what you send into it. You keep the English version.
+src/ui/ClientLanguage.tsx:137	The quote, contract and invoices for this job are written in it.
+src/ui/Composer.tsx:35	Talk with your keyboard
+src/ui/Composer.tsx:35	Tap the box, then the microphone on your keyboard, and speak.
+src/ui/Composer.tsx:43	Voice
+src/ui/Composer.tsx:61	Listening… talk now
+src/ui/Composer.tsx:64	Stop listening
+src/ui/Composer.tsx:64	Talk
+src/ui/Dashboard.tsx:33	Morning
+src/ui/Dashboard.tsx:33	Afternoon
+src/ui/Dashboard.tsx:33	Evening
+src/ui/Dashboard.tsx:87	Needs you today
+src/ui/Dashboard.tsx:105	All caught up. Tap to add a visit or crew day.
+src/ui/Dashboard.tsx:110	Show less
+src/ui/Dashboard.tsx:119	To collect
+src/ui/Dashboard.tsx:120	Quotes out
+src/ui/Dashboard.tsx:121	Active jobs
+src/ui/Dashboard.tsx:127	Recent photos
+src/ui/Dashboard.tsx:127	All jobs
+src/ui/Dashboard.tsx:142	Continue your chat with Bidwell
+src/ui/Dashboard.tsx:146	Ask Bidwell below: prices, materials, permits, what to write to a client.
+src/ui/Dashboard.tsx:178	AI is turned off
+src/ui/Dashboard.tsx:179	You chose not to send job notes and photos to the AI. Turn it on to get estimates drafted for you.
+src/ui/Dashboard.tsx:180	Turn on Bidwell AI
+src/ui/Dashboard.tsx:190	Create your free Bidwell account
+src/ui/Dashboard.tsx:192	One minute, just an email and password. It turns on the AI (no key needed), backs up your jobs and photos, and lets clients sign quotes from a link.
+src/ui/Dashboard.tsx:195	Log in or create account
+src/ui/Dashboard.tsx:196	I have my own Claude API key
+src/ui/IntroVideo.tsx:15	Say the job.
+Get the price.
+src/ui/IntroVideo.tsx:16	Scan rooms in 3D.
+The plan draws itself.
+src/ui/IntroVideo.tsx:17	Photos for your crew.
+Updates for your client.
+src/ui/IntroVideo.tsx:18	Sign, invoice,
+get paid.
+src/ui/IntroVideo.tsx:39	Skip ›
+src/ui/IntroVideo.tsx:55	Get started — free
+src/ui/IntroVideo.tsx:85	"hall bath, tub to tiled shower, new vanity"
+src/ui/IntroVideo.tsx:88	CLIENT PRICE
+src/ui/JobTypes.tsx:10	Per SF
+src/ui/JobTypes.tsx:11	Per LF
+src/ui/JobTypes.tsx:12	Each
+src/ui/JobTypes.tsx:13	Per job
+src/ui/JobTypes.tsx:52	e.g. Mold remediation, Garage doors, Pressure washing
+src/ui/JobTypes.tsx:56	That type is already in the list.
+src/ui/LanguageScreen.tsx:55	Your language
+src/ui/LanguageScreen.tsx:56	The whole app, Bidwell’s answers and the voice use it. You can change it later in the Me tab.
+src/ui/LanguageScreen.tsx:71	Bidwell translates the app into this language after you log in. It takes a few minutes the first time and needs the internet; until then screens show in English.
+src/ui/LoginScreen.tsx:16	At least 8 characters
+src/ui/LoginScreen.tsx:17	1 uppercase letter
+src/ui/LoginScreen.tsx:18	1 lowercase letter
+src/ui/LoginScreen.tsx:19	1 number
+src/ui/LoginScreen.tsx:43	Enter a valid email address
+src/ui/LoginScreen.tsx:43	Email is required
+src/ui/LoginScreen.tsx:44	Password is required
+src/ui/LoginScreen.tsx:44	The password needs everything in the list below
+src/ui/LoginScreen.tsx:45	The two passwords don’t match
+src/ui/LoginScreen.tsx:65	Create your account
+src/ui/LoginScreen.tsx:65	Forgot your password?
+src/ui/LoginScreen.tsx:66	One moment…
+src/ui/LoginScreen.tsx:66	Create account
+src/ui/LoginScreen.tsx:66	Send reset link
+src/ui/LoginScreen.tsx:85	Estimates, job sites and clients, all in one place.
+src/ui/LoginScreen.tsx:91	Enter the email you signed up with. We’ll email you a link to choose a new password.
+src/ui/LoginScreen.tsx:98	Password
+src/ui/LoginScreen.tsx:103	Type the password again
+src/ui/LoginScreen.tsx:108	Password needs:
+src/ui/LoginScreen.tsx:122	Hide password
+src/ui/LoginScreen.tsx:122	Show password
+src/ui/LoginScreen.tsx:130	Forgot password?
+src/ui/LoginScreen.tsx:139	New to Bidwell?
+src/ui/LoginScreen.tsx:142	Create new account
+src/ui/LoginScreen.tsx:145	Back to log in
+src/ui/LogoPicker.tsx:30	Logo too large
+src/ui/LogoPicker.tsx:30	Use a simpler or smaller logo image.
+src/ui/LogoPicker.tsx:33	Could not open photos
+src/ui/LogoPicker.tsx:33	Allow Bidwell AI to use Photos in your iPhone Settings.
+src/ui/LogoPicker.tsx:38	Company logo
+src/ui/LogoPicker.tsx:39	Change logo
+src/ui/LogoPicker.tsx:39	Add logo
+src/ui/LogoPicker.tsx:42	+ Add your logo
+src/ui/LogoPicker.tsx:44	Printed at the top of every quote, contract, invoice and signing page.
+src/ui/LogoPicker.tsx:45	Remove logo
+src/ui/Onboarding.tsx:85	Looks good
+src/ui/Onboarding.tsx:85	Start estimating
+src/ui/Onboarding.tsx:96	WELCOME BACK
+src/ui/Onboarding.tsx:96	WELCOME TO BIDWELL AI
+src/ui/Onboarding.tsx:98	Your setup came back from your account. Walk through the 4 steps to check it; change anything that’s different.
+src/ui/Onboarding.tsx:99	Faster estimates, organized job sites and happy clients. Two minutes to set up.
+src/ui/Onboarding.tsx:101	Your company
+src/ui/Onboarding.tsx:102	Your company name, your name, phone, email and registration number appear at the top of every quote, contract and PDF you send to clients. Use the details you want clients to see. You can change them any time in the Me tab.
+src/ui/Onboarding.tsx:102	This information is printed on your quotes
+src/ui/Onboarding.tsx:105	Company name *
+src/ui/Onboarding.tsx:105	e.g. Smith Remodeling LLC
+src/ui/Onboarding.tsx:105	Company name is required
+src/ui/Onboarding.tsx:110	Washington requires it on bids and contracts.
+src/ui/Onboarding.tsx:111	Optional: send me setup tips and Bidwell news by text or email. I can reply STOP or turn this off any time. Not needed to use the app.
+src/ui/Onboarding.tsx:120	What work do you do?
+src/ui/Onboarding.tsx:121	Pick everything you bid, so it comes first when you start an estimate. You can change this later.
+src/ui/Onboarding.tsx:123	Small jobs and repairs are always available.
+src/ui/Onboarding.tsx:125	Don’t see your work? Add it
+src/ui/Onboarding.tsx:126	Type any work you do. You set your own price and can add your own questions later in Pricing.
+src/ui/Onboarding.tsx:127	Add my type of work
+src/ui/Onboarding.tsx:138	Your typical jobs
+src/ui/Onboarding.tsx:139	A few questions so Bidwell learns how you work. It reads your answers with every job. Skip anything; change it anytime in the Me tab.
+src/ui/Onboarding.tsx:141	Anything else Bidwell should know? (optional)
+src/ui/Onboarding.tsx:142	e.g. Most of my work is basement ADU conversions for investors. I aim for 25% margin. I use LVP, not carpet.
+src/ui/Onboarding.tsx:148	How you charge
+src/ui/Onboarding.tsx:150	Markup and tax
+src/ui/Onboarding.tsx:152	Markup
+src/ui/Onboarding.tsx:156	Your local combined rate, e.g. 10.4. Look it up at dor.wa.gov.
+src/ui/Onboarding.tsx:158	Your prices
+src/ui/Onboarding.tsx:159	What you usually charge, by finish level. Used for Quick estimates and to check Detailed ones. Filled in with starting numbers; change them to yours. Later you can add past jobs and the app learns your real numbers.
+src/ui/Onboarding.tsx:168	Mid
+src/ui/Onboarding.tsx:172	Your own type of work: enter what you charge.
+src/ui/Onboarding.tsx:175	Quotes need it to show the right total.
+src/ui/Onboarding.tsx:175	Add your sales tax rate
+src/ui/QuestionEditor.tsx:12	Number
+src/ui/QuestionEditor.tsx:13	Yes / no
+src/ui/QuestionEditor.tsx:14	Choices
+src/ui/QuestionEditor.tsx:39	Question
+src/ui/QuestionEditor.tsx:40	e.g. Haul-away and dump fees?
+src/ui/QuestionEditor.tsx:40	e.g. Extra outlets
+src/ui/QuestionEditor.tsx:40	e.g. Shingle type
+src/ui/QuestionEditor.tsx:40	e.g. Gate code / access notes
+src/ui/QuestionEditor.tsx:41	Answer type
+src/ui/QuestionEditor.tsx:44	Unit (optional)
+src/ui/QuestionEditor.tsx:44	e.g. EA, SF, LF, hours
+src/ui/QuestionEditor.tsx:47	Choices, separated by commas
+src/ui/QuestionEditor.tsx:48	e.g. 3-tab, Architectural, Metal
+src/ui/QuestionEditor.tsx:48	Add at least 2 choices.
+src/ui/QuestionEditor.tsx:51	You charge if yes (optional)
+src/ui/QuestionEditor.tsx:53	Your client price before tax. Leave 0 if it only informs the estimate; Bidwell and you still see the answer.
+src/ui/QuestionEditor.tsx:55	Bidwell fills this in from your notes when it can, and it’s saved with the estimate.
+src/ui/QuestionEditor.tsx:57	Add question
+src/ui/QuickPrice.tsx:75	How many the same? (e.g. 3 bathrooms)
+src/ui/QuickPrice.tsx:78	Client (optional)
+src/ui/QuickPrice.tsx:80	Address (optional)
+src/ui/QuickPrice.tsx:93	Make the quote
+src/ui/QuickPrice.tsx:94	Next you can edit the wording, have the client sign, or share the PDF. Your price is saved for next time.
+src/ui/QuickTour.tsx:12	Say the job, get the price
+src/ui/QuickTour.tsx:12	Tap the orange +. Describe the job by voice or text, add photos or a 3D scan, and Bidwell drafts the estimate with your prices.
+src/ui/QuickTour.tsx:13	Send the quote and get it signed
+src/ui/QuickTour.tsx:13	Edit the wording, text the client a link, and they sign on their phone or on yours.
+src/ui/QuickTour.tsx:14	Run the job from one page
+src/ui/QuickTour.tsx:14	Each job keeps its photos by area, to-dos for the crew, and the money: what’s paid, what’s owed, what it cost.
+src/ui/QuickTour.tsx:15	Let Bidwell check in each day
+src/ui/QuickTour.tsx:15	Home shows what needs you today: crew, follow-ups, money owed. Ask Bidwell anything at the bottom.
+src/ui/QuickTour.tsx:25	QUICK TOUR
+src/ui/QuickTour.tsx:26	You’re all set
+src/ui/QuickTour.tsx:27	Here’s how Bidwell works, in four steps.
+src/ui/QuickTour.tsx:44	Start my first estimate
+src/ui/QuickTour.tsx:45	Go to Home
+src/ui/RestoreBackup.tsx:24	Could not open files. Paste the backup text instead.
+src/ui/RestoreBackup.tsx:30	Restore a backup
+src/ui/RestoreBackup.tsx:31	Moving from another phone or computer? Restore the backup you exported under Me → Backup.
+src/ui/RestoreBackup.tsx:33	Backup text
+src/ui/RoofSatellite.tsx:30	Enter the full job address.
+src/ui/RoofSatellite.tsx:36	Could not measure this roof.
+src/ui/RoofSatellite.tsx:49	Measure from satellite
+src/ui/RoofSatellite.tsx:50	Area, pitch, shape, height and edges from the address
+src/ui/RoofSatellite.tsx:53	Street, city, ZIP
+src/ui/RoofSatellite.tsx:55	Measuring the roof…
+src/ui/RoofSatellite.tsx:55	Measure roof
+src/ui/RoofSatellite.tsx:55	Log in to measure
+src/ui/RoofSatellite.tsx:57	See an example
+src/ui/RoofSatellite.tsx:62	Numbers added ✓
+src/ui/RoofSatellite.tsx:62	Use these numbers
+src/ui/RoofSatellite.tsx:73	Roof area
+src/ui/RoofSatellite.tsx:74	Squares
+src/ui/RoofSatellite.tsx:76	Planes
+src/ui/RoofSatellite.tsx:77	Waste
+src/ui/RoofSatellite.tsx:78	Order
+src/ui/RoofSatellite.tsx:80	Eaves
+src/ui/RoofSatellite.tsx:80	Rakes
+src/ui/RoofSatellite.tsx:80	Ridges
+src/ui/RoofSatellite.tsx:80	Hips
+src/ui/RoofSatellite.tsx:83	Example roof: enter a real address and tap Measure roof.
+src/ui/RoofSatellite.tsx:91	3+ stories
+src/ui/RoofSatellite.tsx:106	Edges (estimated)
+src/ui/RoofSatellite.tsx:115	Roof planes
+src/ui/RoofSatellite.tsx:129	Check on site before ordering
+src/ui/RoofSatellite.tsx:130	Area and pitch are measured from satellite and 3D data. Edge lengths, height and waste are estimates. Trees, additions or a new roof since then can change the numbers.
+src/ui/SendSignLink.tsx:42	change order
+src/ui/SendSignLink.tsx:55	Making the link…
+src/ui/SendSignLink.tsx:55	Send the link again
+src/ui/SendSignLink.tsx:55	Send a link to sign online
+src/ui/SendSignLink.tsx:55	Log in to send a signing link
+src/ui/SendSignLink.tsx:56	When the client signs, Bidwell records it here and lets you know. The link works for 30 days; a new link replaces the old one.
+src/ui/SignaturePad.tsx:50	✕ Sign here
+src/ui/SignaturePad.tsx:70	Clear signature
+src/ui/SitePhotoView.tsx:34	Progress
+src/ui/SitePhotoView.tsx:60	Try JPG or PNG photos, or take the photo with the camera.
+src/ui/WorkProfileForm.tsx:26	Who are your clients?
+src/ui/WorkProfileForm.tsx:30	How big are your usual jobs?
+src/ui/WorkProfileForm.tsx:34	What finish level do you usually build?
+src/ui/WorkProfileForm.tsx:37	New estimates start at this level.
+src/ui/WorkProfileForm.tsx:40	Which trades do you sub out?
+src/ui/WorkProfileForm.tsx:42	Leave blank if your crew does it all.
+src/ui/WorkProfileForm.tsx:44	Where do you work?
+src/ui/WorkProfileForm.tsx:45	e.g. King and Pierce County
+src/ui/WorkProfileForm.tsx:46	What do you always include?
+src/ui/WorkProfileForm.tsx:47	e.g. Permits, dump fees, final clean
+src/ui/WorkProfileForm.tsx:48	What do you never do, or always leave out?
+src/ui/WorkProfileForm.tsx:49	e.g. No asbestos work, owner buys appliances
+src/ui/job/JobMoney.tsx:37	Client pays
+src/ui/job/JobMoney.tsx:39	Still owed
+src/ui/job/JobMoney.tsx:42	Your cost so far
+src/ui/job/JobMoney.tsx:43	Profit
+src/ui/job/JobMoney.tsx:43	Planned profit
+src/ui/job/JobMoney.tsx:44	Shown for detailed estimates
+src/ui/job/JobMoney.tsx:46	Private to you. Cost and profit never appear on client or crew documents.
+src/ui/job/JobMoney.tsx:48	Money in
+src/ui/job/JobMoney.tsx:51	Signature, deposit and invoices, change orders
+src/ui/job/JobMoney.tsx:54	Price this job
+src/ui/job/JobMoney.tsx:54	Make an estimate to send a quote and invoices
+src/ui/job/JobMoney.tsx:58	Money out
+src/ui/job/JobMoney.tsx:60	Snap a receipt and Bidwell reads it
+src/ui/job/JobMoney.tsx:61	What to pick up, made from the estimate
+src/ui/job/JobOverview.tsx:63	Client total
+src/ui/job/JobOverview.tsx:87	Send again
+src/ui/job/JobOverview.tsx:88	Mark won
+src/ui/job/JobOverview.tsx:98	Quote and contract
+src/ui/job/JobOverview.tsx:101	Not sent yet · edit the wording, then send
+src/ui/job/JobOverview.tsx:101	See, edit or send it again
+src/ui/job/JobOverview.tsx:105	Ask the client first, then Bidwell reminds them
+src/ui/job/JobOverview.tsx:105	Stopped
+src/ui/job/JobOverview.tsx:105	All reminders sent
+src/ui/job/JobOverview.tsx:110	Deposit, invoices, change orders
+src/ui/job/JobOverview.tsx:114	Add a visit, crew day or inspection
+src/ui/job/JobPhotos.tsx:32	No photos yet
+src/ui/job/JobPhotos.tsx:32	Keep before, progress and after photos by area. Your crew gets a work order from them, and the client gets updates.
+src/ui/job/JobPhotos.tsx:33	Take the first photos
+src/ui/job/JobPhotos.tsx:72	Areas
+src/ui/job/JobPhotos.tsx:72	Close
+src/ui/job/JobPhotos.tsx:72	+ Add area
+src/ui/job/JobPhotos.tsx:76	e.g. Primary bath, Siding
+src/ui/job/JobPhotos.tsx:79	Or pick a common one
+src/ui/job/JobPhotos.tsx:79	Kitchen, Siding, Roof…
+src/ui/job/JobPhotos.tsx:99	· add to-dos for the crew
+src/ui/job/JobPhotos.tsx:130	Photo update for the client
+src/ui/job/JobPhotos.tsx:131	Bidwell writes the message for you
+src/ui/job/JobPhotos.tsx:133	In each person’s language · never shows prices
+src/ui/job/JobPhotos.tsx:134	What got done today, in one tap
+src/ui/job/JobPhotos.tsx:135	Before and after post
+src/ui/job/JobPhotos.tsx:135	Needs a before and an after photo
+src/ui/job/JobPhotos.tsx:152	Which area?
+src/ui/job/JobPhotos.tsx:154	What kind?
+src/ui/job/JobPhotos.tsx:157	Open camera
+src/ui/job/JobPhotos.tsx:158	Choose from library
+src/ui/kit.tsx:280	Choose…
+src/ui/reminders.ts:16	Reminders
+src/ui/share.ts:28	PDF saved
+src/ui/shareText.ts:11	Could not open sharing
+src/ui/shareText.ts:11	Select the text and copy it instead.
+src/ui/shareText.ts:25	Paste it into your message or post.
+src/ui/shareText.ts:27	Copy the text
+src/ui/shareText.ts:27	Select the text in the box and copy it.
+src/ui/tick.tsx:16	Optional
+src/ui/voice.ts:56	Microphone access is off. Allow it in Settings, or use the microphone on your keyboard.
+src/ui/voice.ts:60	Microphone is not available here. Use the microphone on your keyboard.
+src/ui/voice.ts:81	Microphone access is blocked here. Use the microphone on your keyboard instead.
+src/ui/voice.ts:82	Could not hear that. Try again, or use the microphone on your keyboard.
+src/ui/voice.ts:94	Could not start listening. Use the microphone on your keyboard.
+src/ui/webhook.ts:8	No link set
+src/ui/webhook.ts:9	Event turned off
+src/ui/webhook.ts:18	Could not reach the link
+src/engine/help.json	Start a new estimate
+src/engine/help.json	Tap the orange + at the bottom. Describe the job by typing or tapping the microphone; tap the + in the message box to add photos or scan the rooms. Tap the arrow, check the details Bidwell filled in (anything you skip uses a standard assumption) and tap Build estimate. The job opens with the price and one button: Review and send quote. For repeat work, choose Quick price: the size, your price per unit and how many.
+src/engine/help.json	Measure a roof from satellite
+src/engine/help.json	Tap the orange +, choose Roof replacement under Type of work and tap the arrow. On Check the details, enter the job address and tap Measure roof. You get the roof area, squares, pitch of every plane, roof shape, height, edge lengths and waste. Tap Use these numbers to fill the estimate. Always confirm on site before ordering materials.
+src/engine/help.json	On an iPhone with LiDAR (Pro models), start a new estimate, tap the + in the message box and choose Scan rooms in 3D, then walk the room slowly. The app draws the floor plan and fills in floor and wall areas. Without LiDAR you can type the room sizes on the Floor plan screen.
+src/engine/help.json	Edit the client quote before sending
+src/engine/help.json	Open the job in the Jobs tab and tap Client quote, then Edit. You can change headings, what is included, the scope summary, Not included, notes and how long the quote is valid, and choose a price per section or one total. Tap Help me write and Bidwell drafts the wording for you. To change the price itself, open Price details on the job and change the markup, or tap ⋯ > Edit job details.
+src/engine/help.json	Get the quote signed
+src/engine/help.json	Open the job in the Jobs tab. Tap Review and send quote, then Send > Text a link to sign: the client signs on their own phone (you must be logged in). Or tap Sign on this phone and hand them your phone. When they sign, the job moves to Signed and you get a notice.
+src/engine/help.json	Add a change order
+src/engine/help.json	Open the job in the Jobs tab, tap Contract and payments, then New change order. Describe the work and price; the client approves it by signing on your phone or from a link. Approved change orders are added to the contract price.
+src/engine/help.json	Invoices and payments
+src/engine/help.json	Open the job in the Jobs tab and tap Contract and payments (also under the job's Money view). Create invoices from the payment schedule, record payments (cash, check, Zelle, card) and see what is still owed. Home shows the total to collect and anything overdue.
+src/engine/help.json	Automatic follow-ups
+src/engine/help.json	Open a sent quote in the Jobs tab and tap Follow-ups. First record that the client agreed to be contacted (required by law), pick text or email, then set the days. Bidwell reminds you on those days between 8am and 8pm and stops when the client says no or the job is won or lost.
+src/engine/help.json	Job site photos, before and after
+src/engine/help.json	Open the job (Jobs tab), tap Job site, then Take photos. Pick the area and Before, Progress or After, then take the photos. Each area has its own to-dos your crew can mark Done or Needs review.
+src/engine/help.json	Send the client a photo update
+src/engine/help.json	Open the job, tap Job site, then Photo update for the client. Bidwell picks the newest photos and writes the message. Prices, costs and receipts are never included.
+src/engine/help.json	Crew, subs and work orders
+src/engine/help.json	Add your people in Me > Crew and subs with their rate and language (English, Tiếng Việt, Español). On a job, Job site > Work order for the crew makes a to-do list in their language with no prices. Each morning Home asks if your crew showed up; Worked adds the labor cost to the job.
+src/engine/help.json	Job money and receipts (private)
+src/engine/help.json	Open the job and tap Money. You see what the client pays, what is paid and owed, and your cost so far. Under Costs and receipts, snap a receipt and Bidwell reads it, adds it to the job's costs, checks it off the buy list and learns your real prices. Costs and profit are private: never on client or crew documents.
+src/engine/help.json	Schedule a visit or crew day
+src/engine/help.json	Tap Schedule at the bottom, pick the day, then Add. Choose the kind (site visit, crew day, inspection…), the job, time and reminder, and pick the crew for crew days. You can also add a visit from a job's Schedule row.
+src/engine/help.json	Change my prices, markup and tax
+src/engine/help.json	Go to Me > My pricing for your price per square foot by finish level, your past jobs and the Price Book (any labor rate or material price). Markup, minimum markup, sales tax and how long quotes are valid are under Me > Markup, tax and quote defaults. Every new estimate uses them.
+src/engine/help.json	Account, backup and a new phone
+src/engine/help.json	Your work is saved to your account automatically. On a new phone, install Bidwell and log in: your estimates, jobs and photos come back. Me > Account shows when it last synced.
+src/engine/help.json	Forgot password
+src/engine/help.json	On the Log in screen tap Forgot password?, enter your email and open the link we send you. Choose a new password there, then log in again in the app. Check your spam folder if it does not arrive in a few minutes.
+src/engine/help.json	Delete my account and data
+src/engine/help.json	Me > your account > Delete my account removes your account, your cloud data and all backed-up photos for good. Me > Backup > Erase all data removes the data on this phone.
+src/engine/help.json	How the AI works (and its limits)
+src/engine/help.json	Bidwell's AI drafts estimates, quote wording and messages from your notes and photos, using your own prices. It can be wrong: always check quantities and prices before sending. Each account has a daily AI limit that resets every day.
+src/engine/help.json	The whole app, Bidwell’s answers and the voice follow one language: change it under Me > Language. What the client receives follows “Client’s language” on that job’s quote screen (English or Tiếng Việt), so you can work in your language and still send an English quote. Crew work orders go out in each person’s language.
+src/engine/help.json	QuickBooks, Google Sheets, Calendar
+src/engine/help.json	Me > Connected apps sends won jobs, invoices and payments to your other tools through Zapier, Make or a webhook, and can export to a spreadsheet.
+src/app/(tabs)/index.tsx:123	Start this estimate: {0}
+src/app/(tabs)/jobs.tsx:28	Paid {0} of {1}
+src/app/(tabs)/jobs.tsx:30	{0}/{1} to-dos done
+src/app/(tabs)/jobs.tsx:32	{0} photo
+src/app/(tabs)/jobs.tsx:32	{0} photos
+src/app/(tabs)/me.tsx:53	Your prices for {0} type of work, and past jobs
+src/app/(tabs)/me.tsx:53	Your prices for {0} types of work, and past jobs
+src/app/(tabs)/me.tsx:54	{0}% markup · {1}% tax · quotes valid {2} days
+src/app/(tabs)/me.tsx:55	{0} type of work
+src/app/(tabs)/me.tsx:55	{0} types of work
+src/app/(tabs)/me.tsx:68	{0} person
+src/app/(tabs)/me.tsx:68	{0} people
+src/app/(tabs)/me.tsx:81	Bidwell AI · version {0}
+src/app/(tabs)/me.tsx:81	· version {0}
+src/app/(tabs)/new.tsx:116	Looking at {0} photos
+src/app/(tabs)/new.tsx:116	Looking at {0} photo
+src/app/(tabs)/new.tsx:117	3D scan: {0} rooms, {1} SF floor
+src/app/(tabs)/new.tsx:117	3D scan: {0} room, {1} SF floor
+src/app/(tabs)/new.tsx:119	Matching {0} questions
+src/app/(tabs)/new.tsx:141	{0} past job, average {1}{2}
+src/app/(tabs)/new.tsx:141	{0} past jobs, average {1}{2}
+src/app/(tabs)/new.tsx:163	{0}
+
+Used the offline reader instead.
+src/app/(tabs)/new.tsx:164	{0} photos were not sent to Bidwell
+src/app/(tabs)/new.tsx:164	{0} photo was not sent to Bidwell
+src/app/(tabs)/new.tsx:236	Describe the {0}…
+src/app/(tabs)/new.tsx:248	Floor plan ready: {0} rooms, {1} SF
+src/app/(tabs)/new.tsx:248	Floor plan ready: {0} room, {1} SF
+src/app/(tabs)/new.tsx:254	Pricing “{0}”
+src/app/(tabs)/schedule.tsx:43	Add to {0}
+src/app/(tabs)/schedule.tsx:73	Invoice #{0} due · {1}
+src/app/(tabs)/schedule.tsx:74	{0} · balance {1}
+src/app/_layout.tsx:44	Bidwell is learning {0}… {1}%
+src/app/_layout.tsx:240	What I was doing:
+
+
+---
+{0}: {1}
+{2}
+src/app/account.tsx:27	Sync: {0} · {1}
+src/app/account.tsx:27	Sync: {0}
+src/app/account.tsx:33	Uploading {0} of {1}…
+src/app/account.tsx:36	{0} photos could not be uploaded. Check your connection and try again.
+src/app/account.tsx:36	{0} photo could not be uploaded. Check your connection and try again.
+src/app/account.tsx:37	{0} photos backed up.
+src/app/account.tsx:37	{0} photo backed up.
+src/app/account.tsx:90	New password needs: {0}.
+src/app/connections.tsx:53	Sent ✓ ({0})
+src/app/connections.tsx:53	Not sent: {0}
+src/app/connections.tsx:53	the link answered {0}
+src/app/estimate/[id]/change.tsx:66	Change order #{0} approved
+src/app/estimate/[id]/change.tsx:66	{0} + tax is added to the contract and can be invoiced.
+src/app/estimate/[id]/change.tsx:74	Change order {0} — {1}
+src/app/estimate/[id]/change.tsx:85	Change order #{0}
+src/app/estimate/[id]/change.tsx:95	+ {0} tax
+src/app/estimate/[id]/change.tsx:111	{0} + {1}% tax {2} = {3}
+src/app/estimate/[id]/change.tsx:122	{0}: change order {1} ({2})
+src/app/estimate/[id]/change.tsx:122	{0}: change order {1}
+src/app/estimate/[id]/change.tsx:131	{0}: here is your change order for {1}. Please review and sign here: {2}
+src/app/estimate/[id]/contract.tsx:59	Invoice {0} — {1}
+src/app/estimate/[id]/contract.tsx:75	{0} is more than the {1} left on this job. Record it anyway?
+src/app/estimate/[id]/contract.tsx:105	Original {0} + change orders {1} (with tax)
+src/app/estimate/[id]/contract.tsx:111	Signed by {0} · {1}
+src/app/estimate/[id]/contract.tsx:112	The quote changed after signing ({0} then, {1} now). Tap to review.
+src/app/estimate/[id]/contract.tsx:147	{0} days after sending
+src/app/estimate/[id]/contract.tsx:155	{0} with tax · taken off the balance
+src/app/estimate/[id]/contract.tsx:155	{0} + tax {1}
+src/app/estimate/[id]/contract.tsx:155	· #{0} · due {1}
+src/app/estimate/[id]/contract.tsx:159	Share invoice {0}
+src/app/estimate/[id]/contract.tsx:159	Create invoice for {0}
+src/app/estimate/[id]/follow.tsx:67	Follow up: {0} (day {1})
+src/app/estimate/[id]/follow.tsx:68	Quote: {0}. Bidwell has the message ready in Follow-ups.
+src/app/estimate/[id]/follow.tsx:110	{0}: quote from {1}
+src/app/estimate/[id]/follow.tsx:126	Reminders from {0}
+src/app/estimate/[id]/follow.tsx:148	Stopped {0}.
+src/app/estimate/[id]/follow.tsx:158	Follow-up {0} is due
+src/app/estimate/[id]/follow.tsx:158	Next follow-up: {0}
+src/app/estimate/[id]/follow.tsx:197	Suggested: {0}
+src/app/estimate/[id]/index.tsx:44	Re-pricing would lose your {0} prices. The quote stays as it was sent. Make a new estimate to change it.
+src/app/estimate/[id]/index.tsx:69	{0} · {1} · Quick
+src/app/estimate/[id]/index.tsx:69	{0} · {1} · Detailed
+src/app/estimate/[id]/index.tsx:88	Markup {0}%
+src/app/estimate/[id]/index.tsx:91	+ {0}% sales tax {1} = {2} total
+src/app/estimate/[id]/index.tsx:97	Your minimum is {0}%. Changing markup keeps your saved costs and tax rate.
+src/app/estimate/[id]/index.tsx:100	Quick estimates use your price{0}. Change it in Pricing, or switch to Detailed for markup and a trade breakdown.
+src/app/estimate/[id]/index.tsx:100	Quick estimates use your price{0}. Change it in Pricing.
+src/app/estimate/[id]/index.tsx:113	Check before sending · {0} to fix
+src/app/estimate/[id]/index.tsx:114	· {0} to fix
+src/app/estimate/[id]/index.tsx:143	Labor {0} · Materials {1}
+src/app/estimate/[id]/index.tsx:147	{0} {1} × {2} labor
+src/app/estimate/[id]/index.tsx:168	Floor plan · {0} SF
+src/app/estimate/[id]/materials.tsx:27	Materials — {0}
+src/app/estimate/[id]/materials.tsx:45	{0} items · {1} before tax. Quantities are rounded up to whole boxes, sheets and rolls.
+src/app/estimate/[id]/quote.tsx:58	{0}: báo giá cho {1} đã sẵn sàng. Mời anh/chị xem và ký tại đây: {2}
+src/app/estimate/[id]/quote.tsx:120	{0} items to review before sending
+src/app/estimate/[id]/quote.tsx:120	{0} item to review before sending
+src/app/estimate/[id]/sign.tsx:83	Signed quote — {0}
+src/app/estimate/[id]/sign.tsx:95	Signed by {0}
+src/app/estimate/[id]/sign.tsx:96	{0} · {1} with tax
+src/app/estimate/[id]/sign.tsx:98	It was {0} when signed and is {1} now. The signed quote and the contract keep the signed amount. Use a change order for the difference, or remove the signature and have the client sign again.
+src/app/floor-plan.tsx:32	Room {0}
+src/app/floor-plan.tsx:64	{0} isn't priced from floor area, so no answers were changed. The plan still goes on the quote.
+src/app/floor-plan.tsx:99	{0} × {1} · {2} SF floor · {3} SF walls · {4} ceiling
+src/app/floor-plan.tsx:103	The scanner was unsure about {0} surfaces. Check those measurements with a tape.
+src/app/floor-plan.tsx:103	The scanner was unsure about {0} surface. Check those measurements with a tape.
+src/app/help.tsx:82	How do I {0}{1}?
+src/app/help.tsx:139	Open {0}
+src/app/job/[id].tsx:85	{0} (copy)
+src/app/job/[id].tsx:161	{0} · no client yet
+src/app/job-type.tsx:25	Delete “{0}”?
+src/app/job-type.tsx:33	Priced{0}. Your own type of work.
+src/app/job-type.tsx:33	Priced{0}. Built-in type of work.
+src/app/job-type.tsx:54	Asked on every {0} job, after the standard questions. Bidwell reads them too and fills them in from your notes. Give a question a price and it’s added to the quote as its own line.
+src/app/past-job.tsx:40	total {0}
+src/app/past-job.tsx:41	{0} finish
+src/app/past-job.tsx:43	Found: {0}. Check and fix below.
+src/app/pricing.tsx:53	Learned from your jobs: {0}
+src/app/pricing.tsx:59	Your questions ({0}) and settings
+src/app/pricing.tsx:74	Past jobs ({0})
+src/app/questions.tsx:65	Using the floor plan ({0} rooms)
+src/app/questions.tsx:65	Using the floor plan ({0} room)
+src/app/questions.tsx:66	Applying your price{0}
+src/app/questions.tsx:89	{0} · Quick (your price{1})
+src/app/questions.tsx:89	{0} · Detailed
+src/app/questions.tsx:89	Quick (your price{0})
+src/app/questions.tsx:108	{0} answers came from photos. They’re marked below: check them.
+src/app/questions.tsx:108	{0} answer came from photos. They’re marked below: check them.
+src/app/questions.tsx:131	{0} rooms · {1} SF floor · {2} SF walls. It goes on the client quote.
+src/app/questions.tsx:131	{0} room · {1} SF floor · {2} SF walls. It goes on the client quote.
+src/app/questions.tsx:150	Your price{0} · {1}
+src/app/questions.tsx:184	Something you always ask on {0} jobs that isn’t here? Add it once and it’s asked every time. Give it a price and it goes on the quote.
+src/app/questions.tsx:202	· labor {0}/{1}
+src/app/questions.tsx:220	You charge ${0} per {1}.
+src/app/questions.tsx:220	Adds ${0} if yes.
+src/app/report.tsx:48	{0}
+
+---
+{1}
+{2}
+Account: {3}
+src/app/report.tsx:48	Account: {0}
+src/app/report.tsx:74	A person reads every report. We reply to {0}, usually within one business day.
+src/app/report.tsx:94	Also sent: {0}. Never your estimates, clients or prices.
+src/app/settings.tsx:175	Step {0}
+src/app/settings.tsx:179	Adds up to {0}%. It needs to total 100%.
+src/app/settings.tsx:239	On · your own Claude key ({0})
+src/app/site/[id]/buy.tsx:35	{0}: materials to buy
+{1}
+src/app/site/[id]/buy.tsx:65	{0} {1} · planned {2} · paid {3}
+src/app/site/[id]/buy.tsx:65	{0} {1} · planned {2}
+src/app/site/[id]/buy.tsx:66	· paid {0}
+src/app/site/[id]/cost.tsx:73	Read {0} line, total {1}; {2} matched your buy list. Check it, then save.
+src/app/site/[id]/cost.tsx:73	Read {0} line, total {1}. Check it, then save.
+src/app/site/[id]/cost.tsx:73	Read {0} lines, total {1}; {2} matched your buy list. Check it, then save.
+src/app/site/[id]/cost.tsx:73	Read {0} lines, total {1}. Check it, then save.
+src/app/site/[id]/cost.tsx:73	; {0} matched your buy list
+src/app/site/[id]/cost.tsx:140	Buy list: {0} (planned {1})
+src/app/site/[id]/log.tsx:61	Today · {0}
+src/app/site/[id]/log.tsx:61	Yesterday · {0}
+src/app/site/[id]/log.tsx:62	{0} photo and {1} finished task that day.
+src/app/site/[id]/log.tsx:62	{0} photo and {1} finished tasks that day.
+src/app/site/[id]/log.tsx:62	{0} photos and {1} finished task that day.
+src/app/site/[id]/log.tsx:62	{0} photos and {1} finished tasks that day.
+src/app/site/[id]/money.tsx:70	The client has paid {0}; the job has cost {1} so far.
+src/app/site/[id]/money.tsx:70	Request a deposit: you are {0} out of pocket
+src/app/site/[id]/money.tsx:75	{0} is {1}% over budget ({2})
+src/app/site/[id]/money.tsx:80	{0} overdue items · {1}
+src/app/site/[id]/money.tsx:80	{0} overdue item · {1}
+src/app/site/[id]/money.tsx:97	Budget {0}
+src/app/site/[id]/money.tsx:138	Sales tax owed ({0}%)
+src/app/site/[id]/money.tsx:139	Income tax on profit ({0}%)
+src/app/site/[id]/money.tsx:157	{0} · {1} · {2} · paid back
+src/app/site/[id]/money.tsx:157	{0} · {1} · {2} · client pays back by {3}
+src/app/site/[id]/money.tsx:157	{0} · {1} · paid back
+src/app/site/[id]/money.tsx:157	{0} · {1} · client pays back by {2}
+src/app/site/[id]/money.tsx:159	· client pays back by {0}
+src/app/site/[id]/photo/[photoId].tsx:110	{0} · Photo {1}
+src/app/site/[id]/photo/[photoId].tsx:168	See photo {0}
+src/app/site/[id]/room/[roomId].tsx:113	Clear review flag on {0}
+src/app/site/[id]/room/[roomId].tsx:113	Flag {0} as needs review
+src/app/site/[id]/room/[roomId].tsx:162	Tasks · {0} of {1} done
+src/app/site/[id]/room/[roomId].tsx:162	· {0} of {1} done
+src/app/site/[id]/share.tsx:72	{0} task not translated
+src/app/site/[id]/share.tsx:72	{0} tasks not translated
+src/app/site/[id]/share.tsx:90	Work order — {0}
+src/app/site/[id]/share.tsx:130	Progress update — {0}
+src/app/site/[id]/share.tsx:195	New photos for the client · {0}
+src/app/site/[id]/share.tsx:204	Last update sent {0}.
+src/app/team.tsx:48	{0} · {1} · not confirmed
+src/app/terms.tsx:89	Version {0} · Questions: {1}
+src/cloud/CloudProvider.tsx:65	{0} signed “{1}” at {2}, but the price is now {3}. Nothing was recorded. Send the current quote for them to sign.
+src/cloud/CloudProvider.tsx:73	{0} signed “{1}”. The job is marked Won.
+src/cloud/CloudProvider.tsx:79	{0} signed a change order on “{1}” at {2}, but it now reads {3}. Nothing was recorded. Send it again for them to sign.
+src/cloud/CloudProvider.tsx:86	{0} approved a change order on “{1}”.
+src/cloud/CloudProvider.tsx:99	{0} asked for changes
+src/cloud/client.ts:56	Request failed ({0})
+src/engine/ai.ts:292	Photo {0}
+src/engine/ai.ts:367	Check: {0} = {1} (adds to the price)
+src/engine/ai.ts:367	Check: {0} (adds to the price)
+src/engine/ai.ts:427	{0} site photo(s) attached, in this order: {1}.
+src/engine/ai.ts:433	How this contractor usually works (from their setup answers): {0}
+src/engine/ai.ts:434	About this contractor, in their own words:
+{0}
+src/engine/ai.ts:435	Their pricing history for this job type: {0}
+src/engine/ai.ts:438	Write "heard" and "notes" in {0}, the contractor's language (keep the "Photo 2:" labels). JSON keys, option values, numbers and units stay exactly as specified.
+src/engine/ai.ts:540	Bidwell ({0})
+src/engine/ai.ts:562	Job type: {0}
+Questions:
+{1}
+
+{2}Contractor notes:
+{3}
+src/engine/ai.ts:678	{0}
+
+Text:
+{1}
+src/engine/ai.ts:700	A contractor described a job. Which one type of work below fits it best?
+Reply with ONLY the id before the colon, or "none" if nothing fits.
+
+Types:
+{0}
+
+Description:
+{1}
+src/engine/books.ts:305	What this contractor actually paid on recent receipts (use these material prices when they apply): {0}.
+src/engine/books.ts:306	{0} ${1}/{2} (estimates used ${3}, +{4}%)
+src/engine/books.ts:306	{0} ${1}/{2} (estimates used ${3}, {4}%)
+src/engine/checks.ts:29	Markup {0}% is below your {1}% minimum
+src/engine/checks.ts:35	Built in {0}: lead-safe work practices required
+src/engine/checks.ts:47	Slab cut and trench included ({0} LF)
+src/engine/checks.ts:57	Bath exhaust fans included ({0})
+src/engine/checks.ts:57	Bath exhaust fan included ({0})
+src/engine/checks.ts:61	Smoke/CO detectors included ({0})
+src/engine/checks.ts:66	{0} ft of 6/3 NM-B included. 10 gauge is only for the 30A dryer.
+src/engine/checks.ts:85	Quick estimate based on your price{0}
+src/engine/checks.ts:87	Uses your price{0} for this job type and finish level. Switch to Detailed for a trade breakdown and material list.
+src/engine/checks.ts:88	Uses your price{0} for this job type and finish level, plus any priced questions you added.
+src/engine/contract.ts:106	Change order #{0}: {1}
+src/engine/estimator.ts:84	{0}% above {1} ({2}). Check scope or quantities.
+src/engine/estimator.ts:85	{0}% below {1} ({2}). Make sure nothing is missing.
+src/engine/estimator.ts:86	In line with {0} ({1}).
+src/engine/estimator.ts:105	No price yet. Set your price{0} for this job type in Pricing.
+src/engine/estimator.ts:111	Set your price{0} in Pricing or add past jobs to compare.
+src/engine/estimator.ts:114	your average from {0} past job
+src/engine/estimator.ts:114	your average from {0} past jobs
+src/engine/estimator.ts:162	Your price{0} for {1} is not set
+src/engine/floorplan.ts:128	{0} SF of walls and ceilings
+src/engine/floorplan.ts:129	{0} SF of wall
+src/engine/floorplan.ts:130	{0} SF floor
+src/engine/floorplan.ts:131	{0} SF floor tile
+src/engine/floorplan.ts:132	{0} LF baseboard
+src/engine/floorplan.ts:133	{0} (floor plan)
+src/engine/followup.ts:88	Hi {0}, may {1} send you a few reminders about this quote by text or email? It's up to you, and you can reply STOP at any time.
+src/engine/followup.ts:94	day {0}
+src/engine/followup.ts:96	{0}: thanks {1}, you agreed to reminders about "{2}" by {3} ({4} after the quote). Reply STOP to end them anytime.
+src/engine/followup.ts:97	Bidwell: {0} agreed ({1}) to {2} reminders for "{3}" on {4}. They stop automatically if the client signs, says no, or replies STOP.
+src/engine/followup.ts:104	Hi {0}, just checking you received the quote for {1}. Happy to answer any questions or walk through options.
+src/engine/followup.ts:106	Hi {0}, any questions on the {1} quote? I can adjust the scope or split it into phases if that helps.
+src/engine/followup.ts:107	Hi {0}, last check-in on the {1} quote. If the timing isn't right, no problem, just let me know.
+src/engine/followup.ts:108	{0} {1} — {2}. Reply STOP to opt out.
+src/engine/followup.ts:108	{0} — {1}. Reply STOP to opt out.
+src/engine/help.ts:68	App {0} ({1})
+src/engine/help.ts:68	screen {0}
+src/engine/job.ts:116	If {0} comes back, reopen it and send it again.
+src/engine/job.ts:126	{0} items to check first. Then text or email it to {1}.
+src/engine/job.ts:126	{0} item to check first. Then text or email it to {1}.
+src/engine/job.ts:126	See what {0} will get, then text or email it.
+src/engine/job.ts:133	Waiting for {0} to sign
+src/engine/job.ts:134	Sent {0} days ago. They can sign from a link you send, or right here on your phone.
+src/engine/job.ts:134	Sent {0} day ago. They can sign from a link you send, or right here on your phone.
+src/engine/job.ts:143	{0} left to collect
+src/engine/job.ts:146	{0} to collect
+src/engine/job.ts:146	An invoice is waiting on {0}.
+src/engine/job.ts:151	Keep {0} in the loop
+src/engine/job.ts:154	{0} of {1} to-dos done · {2} photo
+src/engine/job.ts:154	{0} of {1} to-dos done · {2} photos
+src/engine/job.ts:154	{0} photo so far
+src/engine/job.ts:154	{0} photos so far
+src/engine/jobTypes.ts:588	{0} item
+src/engine/jobTypes.ts:588	{0} items
+src/engine/jobTypes.ts:589	{0} jobs
+src/engine/legal.ts:50	Bidwell AI ("the app") is provided by {0} ("we", "us"). By using the app you agree to these Terms and to the Privacy Policy. If you use the app for a company, you agree for that company. Features change over time, and the app may have bugs.
+src/engine/legal.ts:102	These Terms are governed by the laws of the State of Washington, USA, and disputes go to the state or federal courts in King County, Washington, unless the law where you live requires otherwise. Questions: {0}.
+src/engine/pm.ts:34	Did {0} work on {1}, {2}? Mark it so the labor reaches the job.
+src/engine/pm.ts:40	{0} is running late for {1}. Did they make it?
+src/engine/pm.ts:40	Is {0} coming to {1} today at {2}?
+src/engine/pm.ts:40	Is {0} coming to {1} today?
+src/engine/pm.ts:48	Follow up with {0} about "{1}" today.
+src/engine/pm.ts:59	{0}: you've spent more than the client has paid. Ask for the next payment?
+src/engine/pm.ts:60	{0}: {1} payments are overdue.
+src/engine/pm.ts:60	{0}: {1} payment is overdue.
+src/engine/pm.ts:62	{0}: {1} is {2}% over budget. Extra work for a change order?
+src/engine/pm.ts:69	{0} hasn't had a photo update on {1} in {2} days.
+src/engine/pm.ts:71	{0}: {1} tasks need a second look.
+src/engine/pm.ts:71	{0}: {1} task needs a second look.
+src/engine/pm.ts:74	How did yesterday go at {0}? Bidwell can write the daily log.
+src/engine/pm.ts:83	{0} is finished with {1} left to collect.
+src/engine/pm.ts:88	"{0}" is priced and not sent yet.
+src/engine/pm.ts:94	"{0}" was sent {1} days ago. Ask {2} if they'd like reminders?
+src/engine/profile.ts:34	Clients: {0}.
+src/engine/profile.ts:35	Usual job size: {0}.
+src/engine/profile.ts:38	Subs out: {0}.
+src/engine/profile.ts:39	Works in: {0}.
+src/engine/profile.ts:40	Always includes: {0}.
+src/engine/profile.ts:41	Never does / always excludes: {0}.
+src/engine/recommend.ts:36	{0}: {1} SF floor
+src/engine/recommend.ts:43	{0} rooms, {1} SF in total
+src/engine/recommend.ts:44	{0} SF of floor, {1} LF of baseboard
+src/engine/recommend.ts:45	{0} SF of walls (doors and windows taken out)
+src/engine/recommend.ts:47	{0} doors found
+src/engine/recommend.ts:47	{0} door found
+src/engine/recommend.ts:48	{0} windows found
+src/engine/recommend.ts:48	{0} window found
+src/engine/roof.ts:169	{0} roof, about {1} squares ({2} SF), main pitch {3}/12, {4} planes.
+src/engine/site.ts:346	{0} room · {1} of {2} tasks · {3} photo
+src/engine/site.ts:346	{0} room · {1} of {2} tasks · {3} photos
+src/engine/site.ts:346	{0} rooms · {1} of {2} tasks · {3} photo
+src/engine/site.ts:346	{0} rooms · {1} of {2} tasks · {3} photos
+src/engine/site.ts:350	Contract {0} before tax
+src/engine/team.ts:85	Chào {0}, xác nhận hôm nay{1}{2} ({3}). Anh vẫn đến được chứ? Nếu không, cho biết ngày nào được nhé.
+src/engine/team.ts:86	Hola {0}, confirmando hoy{1}{2} ({3}). ¿Sigues viniendo? Si no, dime qué día te queda bien.
+src/engine/team.ts:87	Hi {0}, confirming today{1}{2} ({3}). Still on? If not, tell me which day works.
+src/store/AppContext.tsx:549	Backup restored. {0} damaged items were left out.
+src/store/AppContext.tsx:549	Backup restored. {0} damaged item was left out.
+src/ui/AiNote.tsx:15	Photo {0}:
+src/ui/ClientLanguage.tsx:37	Could not translate into {0}
+src/ui/ClientLanguage.tsx:37	{0} Try again, or set Client’s language to English.
+src/ui/ClientLanguage.tsx:117	Bidwell translates what you send into {0}. You keep the English version.
+src/ui/Dashboard.tsx:54	{0} job live
+src/ui/Dashboard.tsx:54	{0} jobs live
+src/ui/Dashboard.tsx:54	{0} on today
+src/ui/Dashboard.tsx:54	{0} invoices overdue
+src/ui/Dashboard.tsx:54	{0} invoice overdue
+src/ui/Dashboard.tsx:63	Today · {0} · {1}
+src/ui/Dashboard.tsx:110	See all {0}
+src/ui/Dashboard.tsx:119	{0} overdue
+src/ui/LoginScreen.tsx:55	If {0} has an account, a link to choose a new password is on its way. Check your inbox and spam folder.
+src/ui/LoginScreen.tsx:149	Your account keeps your work backed up, turns on Bidwell’s AI, and lets clients sign online. Next you’ll review the Terms of Use and AI notice.
+{0}
+src/ui/Onboarding.tsx:89	Step {0} of 4
+src/ui/QuestionEditor.tsx:48	{0} choices
+src/ui/QuestionEditor.tsx:51	You charge per {0} (optional)
+src/ui/QuestionEditor.tsx:64	Number ({0})
+src/ui/QuestionEditor.tsx:65	Choices: {0}
+src/ui/QuestionEditor.tsx:66	· ${0} per {1}
+src/ui/QuestionEditor.tsx:66	· ${0} if yes
+src/ui/QuickPrice.tsx:52	{0} × {1}, same scope each.
+src/ui/QuickPrice.tsx:53	{0} × {1}, {2} {3} each ({4} {5} total), same scope and finish.
+src/ui/QuickPrice.tsx:71	Size of each ({0})
+src/ui/QuickPrice.tsx:72	Your price{0}
+src/ui/QuickPrice.tsx:91	Enter your price{0}: it is saved for every {1}.
+src/ui/QuickTour.tsx:26	You’re all set, {0}
+src/ui/RoofSatellite.tsx:91	3+ stories · ~{0} ft
+src/ui/RoofSatellite.tsx:91	{0} stories · ~{1} ft
+src/ui/RoofSatellite.tsx:91	{0} story · ~{1} ft
+src/ui/RoofSatellite.tsx:91	{0} stories
+src/ui/RoofSatellite.tsx:91	{0} story
+src/ui/RoofSatellite.tsx:122	Faces {0}
+src/ui/RoofSatellite.tsx:130	Area and pitch are measured from satellite and 3D data from {0} ({1} quality). Edge lengths, height and waste are estimates. Trees, additions or a new roof since then can change the numbers.
+src/ui/RoofSatellite.tsx:130	Area and pitch are measured from satellite and 3D data from {0}. Edge lengths, height and waste are estimates. Trees, additions or a new roof since then can change the numbers.
+src/ui/RoofSatellite.tsx:130	Area and pitch are measured from satellite and 3D data ({0} quality). Edge lengths, height and waste are estimates. Trees, additions or a new roof since then can change the numbers.
+src/ui/RoofSatellite.tsx:130	from {0}
+src/ui/RoofSatellite.tsx:130	({0} quality)
+src/ui/SendSignLink.tsx:43	{0}: here is your {1} for {2}. Please review and sign here: {3}
+src/ui/SitePhotoView.tsx:60	{0} photos could not be saved
+src/ui/SitePhotoView.tsx:60	{0} photo could not be saved
+src/ui/job/JobMoney.tsx:39	{0} invoiced
+src/ui/job/JobMoney.tsx:42	of {0} planned
+src/ui/job/JobMoney.tsx:44	{0}% margin
+src/ui/job/JobMoney.tsx:51	{0} due
+src/ui/job/JobMoney.tsx:60	{0} saved · snap a receipt and Bidwell reads it
+src/ui/job/JobMoney.tsx:61	{0} of {1} bought
+src/ui/job/JobMoney.tsx:63	{0} items · {1} planned
+src/ui/job/JobOverview.tsx:56	“{0}”
+{1}. Update the quote, then send a new link.
+src/ui/job/JobOverview.tsx:65	{0} + {1}% tax {2} · paid {3}
+src/ui/job/JobOverview.tsx:65	{0} + {1}% tax {2}
+src/ui/job/JobOverview.tsx:67	Price details · {0} to check
+src/ui/job/JobOverview.tsx:67	· {0} to check
+src/ui/job/JobOverview.tsx:101	Signed {0}
+src/ui/job/JobOverview.tsx:101	Sent {0}
+src/ui/job/JobOverview.tsx:105	Next reminder {0}
+src/ui/job/JobOverview.tsx:114	Next: {0}, {1}
+src/ui/job/JobPhotos.tsx:67	{0} of {1} to-dos done
+src/ui/job/JobPhotos.tsx:70	{0} tasks flagged: needs a look
+src/ui/job/JobPhotos.tsx:70	{0} task flagged: needs a look
+src/ui/job/JobPhotos.tsx:99	{0} photo · {1}/{2} to-dos done
+src/ui/job/JobPhotos.tsx:99	{0} photo · add to-dos for the crew
+src/ui/job/JobPhotos.tsx:99	{0} photos · {1}/{2} to-dos done
+src/ui/job/JobPhotos.tsx:99	{0} photos · add to-dos for the crew
+src/ui/job/JobPhotos.tsx:99	· {0}/{1} to-dos done
+src/ui/job/JobPhotos.tsx:112	Photos ({0})
+src/ui/job/JobPhotos.tsx:115	{0} · {1} photos
+src/ui/job/JobPhotos.tsx:115	{0} · {1} photo
+src/ui/job/JobPhotos.tsx:131	Last sent {0}
+src/ui/job/JobPhotos.tsx:134	{0} days written
+src/ui/job/JobPhotos.tsx:134	{0} day written
+src/ui/job/JobPhotos.tsx:135	{0} pairs ready
+src/ui/job/JobPhotos.tsx:135	{0} pair ready

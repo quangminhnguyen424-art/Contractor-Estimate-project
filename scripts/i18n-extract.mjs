@@ -20,18 +20,22 @@ const OUT = path.join(SRC, 'i18n', 'catalog.json');
 /** Files whose strings never reach the screen (instructions for the AI, storage, tests). */
 const SKIP_FILE = /(\.test\.tsx?$|\/i18n\/|\/cloud\/config\.ts$|\/store\/sanitize\.ts$|\.d\.ts$)/;
 /** Inside these functions and constants the text is an instruction for the AI, not something the user reads. */
-const SKIP_SCOPE = /(prompt|system|schema|instruction|^demoAI$|regex|pattern|^RE_|_RE$|css|svg|html$)/i;
+const SKIP_SCOPE = /(prompt|system|schema|instruction|^demoAI$|^pickJobType$|regex|pattern|^RE_|_RE$|css|svg|html$)/i;
 /** JSX attributes and call arguments that are never shown as words. */
 const SKIP_ATTR = new Set(['style', 'name', 'icon', 'kind', 'tone', 'accessibilityRole', 'testID', 'key', 'href', 'behavior', 'keyboardType', 'autoCapitalize', 'autoComplete', 'textContentType', 'returnKeyType', 'resizeMode', 'animationType', 'presentation', 'animation', 'pointerEvents', 'art', 'accessibilityLabel', 'accessibilityHint', 'fontFamily', 'value', 'id', 'type', 'mode', 'source', 'uri', 'keyboardShouldPersistTaps', 'keyboardDismissMode', 'inputMode']);
-const SKIP_CALL = /^(require|console\.\w+|router\.\w+|Linking\.\w+|fetch|encodeURIComponent|RegExp|Date\.parse|JSON\.\w+|\w+\.(includes|startsWith|endsWith|indexOf|split|join|replace|replaceAll|match|test|padStart|padEnd|localeCompare|toLocaleString|toLocaleDateString|toLocaleTimeString|getItem|setItem|removeItem|from|rpc|select|eq|order|storage|addListener|has|get|set|delete|add|querySelector|createElement|setAttribute|log|warn|error)|Error|TypeError|useLocalSearchParams|Symbol|Intl\.\w+)$/;
+const SKIP_CALL = /^(require|console\.\w+|router\.\w+|Linking\.\w+|fetch|encodeURIComponent|RegExp|Date\.parse|JSON\.\w+|\w+\.(includes|startsWith|endsWith|indexOf|split|join|replace|replaceAll|match|test|padStart|padEnd|localeCompare|toLocaleString|toLocaleDateString|toLocaleTimeString|getItem|setItem|removeItem|from|rpc|select|eq|order|storage|addListener|has|get|set|delete|add|querySelector|createElement|setAttribute|log|warn|error)|TypeError|useLocalSearchParams|Symbol|Intl\.\w+)$/;
 const SKIP_PROP = new Set(['scrollSnapType', 'scrollSnapAlign', 'id', 'key', 'route', 'icon', 'unit', 'kind', 'type', 'role', 'status', 'mode', 'value', 'path', 'uri', 'url', 'href', 'color', 'bg', 'fg', 'tone', 'model', 'method', 'fontFamily', 'fontWeight', 'trade', 'category', 'lang', 'locale', 'code', 'jobTypeId', 'finish', 'level', 'field', 'name_', 'keys', 'keywords', 'vi', 'es', 'answerVi', 'event', 'platform', 'stage', 'art', 'contentType', 'accept', 'mime', 'ext']);
 
 const MAX_VARIANTS = 12;
 const exact = new Map(); // text -> first place seen
 const patterns = new Map();
 
+/** Text that looks like words but is never read by a person: plural endings glued on in code, database column lists, AI instructions. */
+const NOT_WORDS = /^(s (are|need|were)|id, [a-z_, ]+|Reply with the single word OK\.|You help a construction contractor\..*|No JSON in reply|.* is web-only|no data|use\w+ (must be used inside|outside) \w+)$/;
+
 const wordy = (s) => {
   const t = s.trim();
+  if (NOT_WORDS.test(t)) return false;
   if (t.length < 2 || t.length > 1400) return false;
   if (!/\p{L}{2}/u.test(t)) return false; // needs a real word
   if (/^(https?:|mailto:|tel:|sms:|data:|file:|#|\/|\.\/|@\/|\.\.\/)/.test(t)) return false;
@@ -136,6 +140,7 @@ function skippedByContext(node, sf) {
   if (ts.isPropertyAssignment(p)) {
     if (p.name === node) return true;
     const key = ts.isIdentifier(p.name) || ts.isStringLiteral(p.name) ? p.name.text : '';
+    if (key === 'category' && /engine\/catalog\.ts$/.test(sf.fileName)) return false; // material group names are section headers
     if (SKIP_PROP.has(key)) return true;
   }
   if (ts.isJsxAttribute(p) && SKIP_ATTR.has(p.name.getText(sf))) return true;
@@ -144,6 +149,7 @@ function skippedByContext(node, sf) {
   if (ts.isNewExpression(p) && SKIP_CALL.test(p.expression.getText(sf))) return true;
   if (ts.isBinaryExpression(p) && [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken, ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsToken].includes(p.operatorToken.kind)) return true;
   if (ts.isCaseClause(p) || ts.isElementAccessExpression(p) || ts.isTypeOfExpression(p)) return true;
+  // `throw new Error('…')` messages are shown in alerts, so they are words for people (kept). A bare `throw 'x'` is not.
   if (ts.isThrowStatement(p)) return true;
   return false;
 }

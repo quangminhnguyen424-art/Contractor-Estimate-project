@@ -16,7 +16,7 @@ import { Text } from '@/ui/text';
 const KINDS: { value: TicketKind; label: string }[] = [
   { value: 'bug', label: 'Something is broken' },
   { value: 'question', label: 'I have a question' },
-  { value: 'billing', label: 'Billing or my subscription' },
+  { value: 'billing', label: 'My account' },
   { value: 'idea', label: 'Idea or feature request' },
   { value: 'other', label: 'Something else' },
 ];

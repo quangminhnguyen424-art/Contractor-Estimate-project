@@ -85,7 +85,7 @@ export default function ChangeOrderScreen() {
       <Stack.Screen options={{ title: `Change order #${number}` }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Text raw style={{ color: C.ink, fontSize: 20, fontWeight: '800', flex: 1 }}>{est.title}</Text>
-        <Badge label={status === 'approved' ? 'Signed' : status === 'declined' ? 'Declined' : 'Waiting for client'} tone={status === 'approved' ? 'ok' : status === 'declined' ? 'bad' : 'warn'} />
+        <Badge label={status === 'approved' ? 'Signed' : status === 'declined' ? 'Declined' : saved ? 'Waiting for client' : 'Draft'} tone={status === 'approved' ? 'ok' : status === 'declined' ? 'bad' : saved ? 'warn' : 'info'} />
       </View>
 
       {shown ? (

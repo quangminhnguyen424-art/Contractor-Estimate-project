@@ -104,7 +104,7 @@ export default function PriceDetails() {
 
       <Banner
         tone={cmp.flag === 'ok' ? 'ok' : cmp.flag === 'none' ? 'info' : 'warn'}
-        title={cmp.pricePerSf > 0 && cmp.unit !== 'JOB' ? `${rate(cmp.pricePerSf)}${perUnit(cmp.unit)} on ${qtyWithUnit(cmp.sizeSf, cmp.unit)}` : 'Your price check'}>
+        title={cmp.pricePerSf > 0 && cmp.unit !== 'JOB' ? `${rate(cmp.pricePerSf)}${perUnit(cmp.unit)} for ${qtyWithUnit(cmp.sizeSf, cmp.unit)}` : 'Your price check'}>
         {cmp.message}
       </Banner>
 

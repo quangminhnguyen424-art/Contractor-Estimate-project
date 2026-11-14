@@ -79,7 +79,6 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
               <Button
                 title="Continue"
                 style={{ flex: 2 }}
-                disabled={step !== 1 && specialties.length === 0}
                 onPress={() => { if (step === 1 && !companyName.trim()) { setTried1(true); return; } setStep(step + 1); }}
               />
             ) : (
@@ -119,7 +118,7 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
         {step === 2 && (
           <>
             <H1>What work do you do?</H1>
-            <Muted>Pick everything you bid. The app only shows these job types and their questions. You can change this later.</Muted>
+            <Muted>Pick everything you bid, so it comes first when you start an estimate. You can change this later.</Muted>
             <JobTypeChips selected={specialties} onToggle={toggle} />
             <Muted style={{ fontSize: 13 }}>Small jobs and repairs are always available.</Muted>
             <Card>
@@ -150,10 +149,10 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
             <Card>
               <H2>Markup and tax</H2>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <NumberField label="Markup" suffix="%" value={markupPct} onChange={setMarkupPct} style={{ flex: 1 }} />
-                <NumberField label="Never below" suffix="%" value={minMarkupPct} onChange={setMinMarkupPct} style={{ flex: 1 }} />
+                <NumberField label="Markup" suffix="%" max={500} value={markupPct} onChange={setMarkupPct} style={{ flex: 1 }} />
+                <NumberField label="Never below" suffix="%" max={500} value={minMarkupPct} onChange={setMinMarkupPct} style={{ flex: 1 }} />
               </View>
-              <NumberField label="Sales tax rate" suffix="%" value={salesTaxPct} onChange={setSalesTaxPct}
+              <NumberField label="Sales tax rate" suffix="%" max={25} value={salesTaxPct} onChange={setSalesTaxPct}
                 help="Your local combined rate, e.g. 10.4. Look it up at dor.wa.gov." />
             </Card>
             <H2>Your prices</H2>

@@ -238,7 +238,9 @@ Write 3 to 6 short lines: work done, what's next, anything to watch. Only use th
 
 export function clientUpdatePrompt(p: SiteProject, lang: 'en' | 'vi', language?: string): string {
   const rooms = p.rooms.map((r) => {
-    const pr = roomProgress(r);
+    // "Ask:" items are questions for the contractor, not work the client is waiting on.
+    const work = r.tasks.filter((t) => !isQuestion(t));
+    const pr = { done: work.filter((t) => t.done).length, total: work.length };
     return `${r.name}: ${pr.done} of ${pr.total} tasks done${r.tasks.some((t) => t.done && !isQuestion(t)) ? ` (${r.tasks.filter((t) => t.done && !isQuestion(t)).map((t) => t.text).join('; ')})` : ''}`;
   }).join('\n');
   return `Write a friendly progress update from a contractor to their client${p.clientName ? `, ${p.clientName}` : ''}, in ${language ?? (lang === 'vi' ? 'Vietnamese' : 'English')}.
@@ -326,7 +328,8 @@ export function clientUpdateHtml(p: SiteProject, message: string, photoSrc: Reco
     : { title: 'Progress update', done: 'Finished', ba: 'Before and after', before: 'Before', after: 'After', latest: 'Latest photos' };
   // Latest photos: room and date only. Photo notes are instructions for the crew, so they stay off the client's copy.
   const recent = p.rooms.flatMap((r) => r.photos.filter((ph) => recentIds.includes(ph.id) && photoSrc[ph.id]).map((ph) => ({ r, ph })));
-  const prog = projectProgress(p);
+  const work = p.rooms.flatMap((r) => r.tasks).filter((t) => !isQuestion(t));
+  const prog = { pct: work.length ? Math.round((work.filter((t) => t.done).length / work.length) * 100) : 0 };
   const pairs = beforeAfterPairs(p).filter((x) => photoSrc[x.before.id] && photoSrc[x.after.id] && !/^ask\s*:/i.test(x.label.trim()));
   const done = p.rooms.map((r) => ({ r, tasks: r.tasks.filter((t) => t.done && !isQuestion(t)) })).filter((x) => x.tasks.length);
   return page(`${L.title} — ${p.title}`, `<h1>${L.title}: ${esc(p.title)}</h1>

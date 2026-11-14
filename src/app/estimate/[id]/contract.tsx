@@ -14,6 +14,7 @@ import { ClientLanguage, translateFailed, useClientDocs } from '@/ui/ClientLangu
 import { Art } from '@/ui/art';
 import { Badge, Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Section, Stat, mono, Select } from '@/ui/kit';
 import { Progress, Reveal } from '@/ui/motion';
+import { stepLabel } from '@/ui/stepLabel';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
 import { celebrate } from '@/ui/celebrate';
@@ -79,7 +80,7 @@ export default function ContractScreen() {
     emit('payment.recorded', { estimate: { id: est.id, title: est.title, client: est.clientName }, payment: p, balance: Math.round((t.balance - p.amount) * 100) / 100 });
     celebrate();
     setPayOpen(false); setPayAmount(0); setPayNote('');
-    notify('Payment recorded', `${money(p.amount)} by ${METHODS.find((m) => m.value === p.method)?.label}.`);
+    notify('Payment recorded', `Paid by ${METHODS.find((m) => m.value === p.method)?.label}: ${money(p.amount)}`);
   };
 
   return (
@@ -150,9 +151,11 @@ export default function ContractScreen() {
           return (
             <View key={it.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderColor: C.lineSoft }}>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: C.ink, fontWeight: '600' }}>{it.label}</Text>
+                <Text raw style={{ color: C.ink, fontWeight: '600' }}>{it.key.startsWith('m') ? stepLabel(it.label) : it.label}</Text>
                 <Text style={{ color: C.muted, fontSize: 12 }}>
-                  {it.credit ? `${money(it.amount + it.tax)} with tax · taken off the balance` : `${money(it.amount)} + tax ${money(it.tax)}`}{it.invoice ? ` · #${it.invoice.number} · due ${dateFmt(`${it.invoice.dueDate}T12:00:00`)}` : ''}
+                  {it.credit ? `${money(it.amount + it.tax)} with tax · taken off the balance` : `${money(it.amount)} + tax ${money(it.tax)}`}
+                  {/* Its own piece of text, so it is translated as one sentence. */}
+                  {it.invoice ? <Text>{` · #${it.invoice.number} · due ${dateFmt(`${it.invoice.dueDate}T12:00:00`)}`}</Text> : null}
                 </Text>
               </View>
               {it.credit ? <Badge label="Credit" tone="ok" /> : st ? <Badge label={STATE[st.state].label} tone={STATE[st.state].tone} /> : null}

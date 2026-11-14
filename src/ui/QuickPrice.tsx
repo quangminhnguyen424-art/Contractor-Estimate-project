@@ -88,7 +88,7 @@ export function QuickPrice({ initialType, project }: { initialType?: JobTypeId |
           <Text style={{ color: C.accent, fontSize: 28, fontWeight: '700' }}>{money(subtotal)}</Text>
         </View>
         {tax > 0 ? <Text style={{ color: C.muted, fontSize: 13 }}>+ {profile?.salesTaxPct}% sales tax {money(tax)} = {money(subtotal + tax)} total</Text> : null}
-        {!(price > 0) ? <Text style={{ color: C.danger, fontSize: 13 }}>Enter your price{perUnit(jt.unit)}: it is saved for every {jt.name.toLowerCase()}.</Text> : null}
+        {!(price > 0) ? <Text style={{ color: C.danger, fontSize: 13 }}>Enter your price{perUnit(jt.unit)}: it is saved for every {jt.name} job.</Text> : null}
       </View>
       <Button title="Make the quote" icon="arrow-forward" disabled={!(price > 0) || !(qty > 0)} onPress={create} />
       <Text style={{ color: C.muted, fontSize: 12, textAlign: 'center' }}>Next you can edit the wording, have the client sign, or share the PDF. Your price is saved for next time.</Text>

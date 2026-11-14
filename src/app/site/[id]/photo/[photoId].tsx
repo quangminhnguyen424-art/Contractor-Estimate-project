@@ -16,7 +16,7 @@ const TOOLS: { value: ShapeKind; label: string }[] = [
   { value: 'arrow', label: 'Arrow' },
   { value: 'circle', label: 'Circle' },
   { value: 'line', label: 'Measure' },
-  { value: 'text', label: 'Text' },
+  { value: 'text', label: 'Label' },
 ];
 
 /** Draw on a job photo (arrows, circles, measurements, labels) and write what the crew should do there. */
@@ -166,6 +166,8 @@ export default function PhotoScreen() {
         <Button kind="secondary" title="Make this a task"
           onPress={() => {
             const text = note.trim() || `See photo ${photoNo}`;
+            // One task per photo and wording: a second tap must not make a twin.
+            if (room.tasks.some((t) => t.photoId === photo.id && t.text === text)) return notify('Already a task', text);
             setRoom((r) => ({ ...r, tasks: [...r.tasks, { id: newId(), text, done: false, photoId: photo.id }] }));
             notify('Task added', text);
           }} />

@@ -115,7 +115,7 @@ export default function Jobs() {
                         </View>
                       )}
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text raw style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{j.title}</Text>
+                        <Text raw style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={2}>{j.title}</Text>
                         <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{who || sub}</Text>
                         {who && sub ? <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={1}>{sub}</Text> : null}
                       </View>

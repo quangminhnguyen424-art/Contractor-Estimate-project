@@ -71,7 +71,7 @@ export default function SignScreen() {
     if (est.status !== 'won') updateEstimate(est.id, { status: 'won' });
     emit('quote.signed', { estimate: { id: est.id, title: est.title, client: est.clientName, total: est.total }, signedBy: sig.name, signedAt: sig.signedAt });
     celebrate();
-    notify(lang === 'vi' ? 'Đã ký' : 'Signed', lang === 'vi' ? 'Báo giá đã được chấp nhận. Công việc chuyển sang "Đã nhận".' : 'The quote is accepted and the job is marked Won.');
+    notify(lang === 'vi' ? 'Đã ký' : 'Signed', lang === 'vi' ? 'Báo giá đã được chấp nhận. Job chuyển sang "Đã chốt".' : 'The quote is accepted and the job is marked Won.');
     // Back to the job, which now shows Signed and the next step.
     router.dismissTo(`/job/${est.id}`);
   };

@@ -1,5 +1,6 @@
+import { useFocusEffect } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, View, type ScrollViewInstance } from 'react-native';
 
 import { useCloud } from '@/cloud/CloudProvider';
@@ -36,6 +37,8 @@ export default function Assistant() {
   const claudeOn = aiAllowed && (inClaudeApp || !!apiKey || !!cloud.user);
 
   useEffect(() => () => { stopSpeaking(); }, []);
+  // Tabs stay mounted: stop reading aloud when another tab or screen comes to the front.
+  useFocusEffect(useCallback(() => () => { stopSpeaking(); }, []));
 
   const send = async (raw: string) => {
     const q = raw.trim();
@@ -55,6 +58,7 @@ export default function Assistant() {
     try {
       const reply = await aiFor(apiKey, aiAllowed).chat(turns, assistantSystem({ profile, presets, pastJobs, estimates }) + aiLanguageLine());
       const { text: answer, action } = parseAssistantReply(reply);
+      if (!answer.trim() && !action) throw new Error('Bidwell could not answer. Try again.');
       add({ id: newId(), role: 'assistant', text: answer, action });
       if (settings.speak) speak(answer);
     } catch (e) {

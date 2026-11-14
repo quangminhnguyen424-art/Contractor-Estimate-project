@@ -27,6 +27,7 @@ export function Composer({ value, onChange, onSend, actions = [], placeholder, s
   const [listening, setListening] = useState(false);
   const stopRef = useRef<{ stop(): void } | null>(null);
   const before = useRef('');
+  const sent = useRef(false); // the message went out: late words from the microphone are dropped
   useEffect(() => () => stopRef.current?.stop(), []);
 
   const mic = async () => {
@@ -35,11 +36,12 @@ export function Composer({ value, onChange, onSend, actions = [], placeholder, s
       notify('Talk with your keyboard', 'Tap the box, then the microphone on your keyboard, and speak.');
       return;
     }
+    sent.current = false;
     before.current = value.trim() ? `${value.trim()} ` : '';
     setListening(true);
     const h = await listen({
-      onPartial: (t) => onChange(before.current + t),
-      onFinal: (t) => onChange(before.current + t),
+      onPartial: (t) => { if (!sent.current) onChange(before.current + t); },
+      onFinal: (t) => { if (!sent.current) onChange(before.current + t); },
       onError: (m) => notify('Voice', m),
       onEnd: () => { setListening(false); stopRef.current = null; },
     });
@@ -66,7 +68,7 @@ export function Composer({ value, onChange, onSend, actions = [], placeholder, s
             {listening ? <Wave color={C.onAccent} /> : <Ionicons name="mic" size={22} color={C.ink2} />}
           </Pressable>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={sendLabel} onPress={onSend} disabled={!canSend}
+        <Pressable accessibilityRole="button" accessibilityLabel={sendLabel} onPress={() => { sent.current = true; stopRef.current?.stop(); onSend(); }} disabled={!canSend}
           style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: canSend ? C.accent : C.cardHi, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="arrow-up" size={24} color={canSend ? '#FFFFFF' : C.muted} />
         </Pressable>

@@ -69,10 +69,12 @@ function FirstSync() {
 }
 
 /** Once per account on each phone: the welcome video, a walk through setup (filled in from the account), then a quick tour. */
-function Welcome({ onDone }: { onDone: (route?: string) => void }) {
+function Welcome({ onDone, onSetupDone }: { onDone: (route?: string) => void; onSetupDone: () => void }) {
   const { profile } = useApp();
   // Right after a brand-new setup, only the tour is left.
   const [step, setStep] = useState<'intro' | 'setup' | 'tour'>(() => (isFreshSetup() ? 'tour' : 'intro'));
+  // Setup is done, so this account is welcomed even if the app is closed on the tour: no video and "welcome back" next time.
+  useEffect(() => { if (isFreshSetup()) onSetupDone(); }, [onSetupDone]);
   if (step === 'intro') return <IntroVideo onDone={() => setStep('setup')} />;
   if (step === 'setup') return <Onboarding skipIntro onDone={() => setStep('tour')} />;
   return <QuickTour name={profile?.contactName?.split(' ')[0]} onDone={onDone} />;
@@ -130,7 +132,7 @@ function RootStack() {
   if (needLogin) return <LoginScreen gate />;
   if (cloud.user && cloud.firstSync !== 'done') return <FirstSync />;
   if (termsOk && profile && welcomed[who] === false) {
-    return <Welcome onDone={(route) => {
+    return <Welcome onSetupDone={() => { markWelcomed(who); }} onDone={(route) => {
       markWelcomed(who); clearFreshSetup();
       setWelcomed((w) => ({ ...w, [who]: true }));
       if (route) setGoTo(route);

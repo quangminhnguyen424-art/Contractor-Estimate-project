@@ -182,7 +182,7 @@ export default function Questions() {
         ) : (
           <>
             <Muted style={{ fontSize: 13 }}>
-              Something you always ask on {jt.name.toLowerCase()} jobs that isn’t here? Add it once and it’s asked every time. Give it a price and it goes on the quote.
+              Something you always ask on {jt.name} jobs that isn’t here? Add it once and it’s asked every time. Give it a price and it goes on the quote.
             </Muted>
             <Button kind="ghost" title="+ Add a question" onPress={() => setAdding(true)} />
           </>
@@ -217,7 +217,7 @@ export default function Questions() {
 }
 
 function QuestionInput({ q, value, onChange }: { q: Question; value: AnswerValue | undefined; onChange: (v: AnswerValue) => void }) {
-  const priceHelp = q.price ? (q.kind === 'number' ? `You charge $${q.price} per ${q.unit || 'unit'}.` : `Adds $${q.price} if yes.`) : undefined;
+  const priceHelp = q.price ? (q.kind === 'number' ? `You charge $${q.price} per ${q.unit || 'each'}.` : `Adds $${q.price} if yes.`) : undefined;
   if (q.kind === 'number') {
     const n = typeof value === 'number' ? value : Number(value ?? q.default);
     return <NumberField label={q.label} suffix={q.unit} help={q.help ?? priceHelp} value={Number.isFinite(n) ? n : Number(q.default)} onChange={onChange} />;

@@ -21,10 +21,10 @@ export default function MaterialsScreen() {
   const groups = new Map<string, MaterialLine[]>();
   for (const m of est.materials) groups.set(m.category, [...(groups.get(m.category) ?? []), m]);
 
-  const share = async () => {
+  const share = async (prices: boolean) => {
     setBusy(true);
     try {
-      await sharePdf(materialsHtml(est, profile), `Materials — ${est.title}`);
+      await sharePdf(materialsHtml(est, profile, prices), `Materials — ${est.title}`);
     } catch {
       notify('Could not create the PDF', 'Please try again.');
     } finally {
@@ -33,7 +33,13 @@ export default function MaterialsScreen() {
   };
 
   return (
-    <Screen footer={<Button title={busy ? 'Creating PDF…' : 'Share material list'} disabled={busy} onPress={share} />}>
+    <Screen footer={(
+      <View style={{ gap: 8 }}>
+        {/* The copy for the crew or the store never shows what the materials cost you. */}
+        <Button title={busy ? 'Creating PDF…' : 'Share list for crew or store'} icon="share-outline" disabled={busy} onPress={() => share(false)} />
+        <Button kind="ghost" title="Share with my prices" disabled={busy} onPress={() => share(true)} />
+      </View>
+    )}>
       <View style={{ gap: 4 }}>
         <H2 raw>{est.title}</H2>
         <Muted>{est.materials.length} items · {money(est.materialTotal)} before tax. Quantities are rounded up to whole boxes, sheets and rolls.</Muted>

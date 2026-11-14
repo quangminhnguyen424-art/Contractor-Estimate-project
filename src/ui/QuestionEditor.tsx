@@ -12,7 +12,7 @@ const KINDS: { value: Kind; label: string }[] = [
   { value: 'number', label: 'Number' },
   { value: 'yesno', label: 'Yes / no' },
   { value: 'choice', label: 'Choices' },
-  { value: 'text', label: 'Text' },
+  { value: 'text', label: 'Words' },
 ];
 
 /** The blank space for the contractor's own question: what to ask, what kind of answer, and (optional) what it adds to the price. */
@@ -48,7 +48,7 @@ export function QuestionEditor({ onAdd }: { onAdd: (q: Question) => void }) {
           placeholder="e.g. 3-tab, Architectural, Metal" help={options.length < 2 ? 'Add at least 2 choices.' : `${options.length} choices`} />
       ) : null}
       {kind === 'number' || kind === 'yesno' ? (
-        <NumberField label={kind === 'number' ? `You charge per ${unit.trim() || 'unit'} (optional)` : 'You charge if yes (optional)'}
+        <NumberField label={kind === 'number' ? `You charge per ${unit.trim() || 'each'} (optional)` : 'You charge if yes (optional)'}
           value={price} onChange={setPrice} suffix="$"
           help="Your client price before tax. Leave 0 if it only informs the estimate; Bidwell and you still see the answer." />
       ) : (
@@ -62,7 +62,7 @@ export function QuestionEditor({ onAdd }: { onAdd: (q: Question) => void }) {
 /** One line describing a saved question: "Number · $185 per EA". */
 export function describeQuestion(q: Question): string {
   const kind = q.kind === 'number' ? `Number${q.unit ? ` (${q.unit})` : ''}` : q.kind === 'yesno' ? 'Yes / no'
-    : q.kind === 'choice' ? `Choices: ${q.options?.map((o) => o.label).join(', ')}` : 'Text';
-  const price = q.price ? (q.kind === 'number' ? ` · $${q.price} per ${q.unit || 'unit'}` : ` · $${q.price} if yes`) : '';
+    : q.kind === 'choice' ? `Choices: ${q.options?.map((o) => o.label).join(', ')}` : 'Words';
+  const price = q.price ? (q.kind === 'number' ? ` · $${q.price} per ${q.unit || 'each'}` : ` · $${q.price} if yes`) : '';
   return kind + price;
 }

@@ -1,3 +1,4 @@
+import { useLanguage } from '@/i18n';
 import { dateLocale } from '@/engine/locale';
 import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -25,6 +26,7 @@ import { useToday } from './useToday';
 const showJobs = (show: 'all' | 'quote' | 'active') => router.push(`/jobs?show=${show}&n=${Date.now()}`);
 
 export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
+  useLanguage(); // dates on this screen are written here, so redraw when the language changes
   const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
   const { width } = useWindowDimensions();
   const today = useToday();

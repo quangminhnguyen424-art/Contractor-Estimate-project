@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
 import { COST_KINDS, emptyMoney, KIND_ORDER, projectBooks, removeReceiptFromBuy, type CostEntry } from '@/engine/books';
-import { money, money2 } from '@/engine/format';
+import { dateFmt, money, money2 } from '@/engine/format';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, H2, Muted, NumberField, Row, Screen } from '@/ui/kit';
 import { confirmAction } from '@/ui/notify';
@@ -57,7 +57,7 @@ export default function MoneyScreen() {
   return (
     <Screen footer={(
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button title="Snap receipt" icon="camera-outline" style={{ flex: 1 }} onPress={() => router.push(`/site/${p.id}/cost?receipt=1`)} />
+        <Button title="Add receipt" icon="camera-outline" style={{ flex: 1 }} onPress={() => router.push(`/site/${p.id}/cost?receipt=1`)} />
         <Button kind="secondary" title="Add cost" icon="add" style={{ flex: 1 }} onPress={() => router.push(`/site/${p.id}/cost`)} />
       </View>
     )}>
@@ -68,7 +68,7 @@ export default function MoneyScreen() {
 
       {b.funds.status === 'request' ? (
         <Banner tone="warn" title={`Request a deposit: you are ${money(-b.funds.spendable)} out of pocket`}>
-          The owner has paid {money(b.funds.deposited)}; the job has cost {money(b.funds.spent)} so far.
+          The client has paid {money(b.funds.deposited)}; the job has cost {money(b.funds.spent)} so far.
         </Banner>
       ) : null}
       {b.over.map((o) => (
@@ -78,7 +78,7 @@ export default function MoneyScreen() {
       ))}
       {b.owner.overdueCount > 0 ? (
         <Banner tone="warn" title={`${b.owner.overdueCount} overdue item${b.owner.overdueCount > 1 ? 's' : ''} · ${money(b.owner.overdueAmount)}`}>
-          {est ? 'Open Contract and payments to send a reminder.' : 'Mark items paid back below when the owner pays.'}
+          {est ? 'Open Contract and payments to send a reminder.' : 'Mark items paid back below when the client pays.'}
         </Banner>
       ) : null}
 
@@ -103,15 +103,15 @@ export default function MoneyScreen() {
 
       <Card>
         <Band title="PROFIT" />
-        <Row left="Contract price" right={money2(b.contract.price)} />
+        <Row left="Contract price" right={money2(b.contract.price)} sub="Before tax" />
         <Row left="Total cost" right={money2(b.cost.total)} />
-        <Row left="Projected profit" right={money2(b.profit.amount)} bold />
-        <Row left="Projected margin" right={`${b.profit.marginPct}%`} bold />
+        <Row left="Profit so far" right={money2(b.profit.amount)} sub="Contract price minus the costs entered so far" bold />
+        <Row left="Margin so far" right={`${b.profit.marginPct}%`} bold />
       </Card>
 
       <Card>
-        <Band title="OWNER FUNDS & SPENDABLE BALANCE" />
-        <Row left="Total owner deposited" right={money2(b.funds.deposited)} sub={est ? 'Payments recorded on the contract' : undefined} />
+        <Band title="CLIENT’S MONEY AND WHAT YOU CAN SPEND" />
+        <Row left="Paid by the client" right={money2(b.funds.deposited)} sub={est ? 'Payments recorded on the contract' : undefined} />
         <Row left="Spent so far (all costs)" right={money2(b.funds.spent)} />
         {b.funds.taxHeld > 0 ? <Row left="Sales tax inside payments (owed to the state)" right={money2(-b.funds.taxHeld)} /> : null}
         <Row left="Spendable balance left" right={money2(b.funds.spendable)} bold />
@@ -119,8 +119,8 @@ export default function MoneyScreen() {
       </Card>
 
       <Card>
-        <Band title="OWNER REIMBURSEMENT" />
-        <Row left="Total owner owes" right={money2(b.owner.owes)} sub="Invoices with tax + costs paid on the owner's behalf" />
+        <Band title="WHAT THE CLIENT OWES" />
+        <Row left="Billed to the client so far" right={money2(b.owner.owes)} sub="Invoices with tax + costs you paid for the client" />
         <Row left="Total received" right={money2(b.owner.received)} />
         <Row left="Balance still owed" right={money2(b.owner.balance)} bold />
         <Row left="Overdue items" right={String(b.owner.overdueCount)} />
@@ -156,7 +156,7 @@ export default function MoneyScreen() {
               <Text style={{ color: C.ink, fontWeight: '600' }}>{c.vendor || COST_KINDS[c.kind].en}</Text>
               <Text style={{ color: C.muted, fontSize: 12 }}>
                 {c.date} · {COST_KINDS[c.kind].en}{c.note ? ` · ${c.note}` : ''}
-                {c.ownerOwes ? (c.ownerOwes.paidOn ? ' · paid back' : ` · owner pays back by ${c.ownerOwes.due}`) : ''}
+                {c.ownerOwes ? (c.ownerOwes.paidOn ? ' · paid back' : ` · client pays back by ${dateFmt(`${c.ownerOwes.due}T12:00:00`)}`) : ''}
               </Text>
             </View>
             <Text style={{ color: C.ink, fontWeight: '700' }}>{money2(c.amount)}</Text>

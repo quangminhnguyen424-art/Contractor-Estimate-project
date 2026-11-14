@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, Share, View } from 'react-native';
@@ -191,7 +192,7 @@ export default function FollowScreen() {
           </View>
           {p.channels.includes('text') ? <Field label="Client mobile" value={p.phone} onChangeText={(v) => set({ phone: v })} keyboardType="phone-pad" maxLength={30} /> : null}
           {p.channels.includes('email') ? <Field label="Client email" value={p.email} onChangeText={(v) => set({ email: v })} keyboardType="email-address" autoCapitalize="none" maxLength={120} /> : null}
-          <Field label="Days after the quote was sent (required)" value={daysText} onChangeText={setDaysText} placeholder="e.g. 2, 5, 10" keyboardType="numbers-and-punctuation"
+          <Field label="Days after the quote was sent (required)" value={daysText} onChangeText={setDaysText} placeholder="2, 5, 10" keyboardType="numbers-and-punctuation"
             help="Required: you must choose the follow-up days for every project. Up to 6, each 1–60." />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Chip label={`Suggested: ${SUGGESTED_DAYS.join(', ')}`} onPress={() => setDaysText(SUGGESTED_DAYS.join(', '))} />
@@ -199,7 +200,7 @@ export default function FollowScreen() {
           <Field label="Quote sent on (YYYY-MM-DD)" value={p.startDate} onChangeText={(v) => set({ startDate: v })} maxLength={10} autoCapitalize="none" />
           {(() => {
             const left = planProblems({ ...p, days: parseDays(daysText) });
-            return left.length ? <Banner tone="warn" title="Before you turn it on">{left.join(' ')}</Banner> : null;
+            return left.length ? <Banner tone="warn" title="Before you turn it on">{left.map((x) => tr(x)).join(' ')}</Banner> : null;
           })()}
           <Muted style={{ fontSize: 12 }}>Messages end with “Reply STOP to opt out”, go out only 8 AM–8 PM, and stop when the quote is signed or marked lost.</Muted>
         </Card>

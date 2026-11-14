@@ -92,6 +92,12 @@ export function baseSections(est: Estimate, lang: Lang): QuoteSection[] {
 }
 
 /** Whole-dollar milestones; the last one takes the remainder so they always add up to the price exactly. */
+/** The payment steps a new account starts with, in Vietnamese, for a Vietnamese quote. A step the contractor renamed prints as typed. */
+const STEP_VI: Record<string, string> = {
+  'Deposit at signing': 'Đặt cọc khi ký', 'Rough-in complete': 'Xong phần thô', 'Finishes complete': 'Xong phần hoàn thiện', 'Final walkthrough': 'Nghiệm thu lần cuối',
+};
+export const stepName = (label: string, lang: Lang): string => (lang === 'vi' ? STEP_VI[label] ?? label : label);
+
 export function scheduleAmounts(est: Estimate, profile: Profile) {
   const price = Math.round(est.price);
   let used = 0;
@@ -143,7 +149,7 @@ ${row(T.total, money(est.total), 'tot')}
 </table>
 ${est.plan?.length ? `<h2>${T.plan}</h2><div class="muted">${T.planNote}: ${planTotals(est.plan).floorSf} SF</div><div style="margin-top:6px">${planSvg(est.plan, 600)}</div>` : ''}
 <h2>${T.notIncluded}</h2><ul>${excl.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
-<h2>${T.schedule}</h2><table>${sched.map((s) => row(`${esc(s.label)} (${s.pct}%)`, money(s.amount))).join('')}</table>
+<h2>${T.schedule}</h2><table>${sched.map((s) => row(`${esc(stepName(s.label, lang))} (${s.pct}%)`, money(s.amount))).join('')}</table>
 <div class="muted">${lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</div>
 ${wd.notes ? `<h2>${lang === 'vi' ? 'Ghi chú' : 'Notes'}</h2><div>${esc(wd.notes).replace(/\n/g, '<br>')}</div>` : ''}
 ${payHtml(profile, lang)}
@@ -174,8 +180,11 @@ function noticesHtml(est: Estimate, profile: Profile, saleDate: Date): string {
   ].join('');
 }
 
-/** Plain material shopping list (for crew or supplier) — no client pricing. */
-export function materialsHtml(est: Estimate, profile: Profile): string {
+/**
+ * Plain material shopping list. Without `prices` it is safe to hand to a crew member or the store (quantities only);
+ * with them it shows the contractor's own estimated costs, for the contractor or a supplier's quote.
+ */
+export function materialsHtml(est: Estimate, profile: Profile, prices = false): string {
   const groups = new Map<string, typeof est.materials>();
   for (const m of est.materials) groups.set(m.category, [...(groups.get(m.category) ?? []), m]);
   return `<!doctype html><html><head><meta charset="utf-8"><title>Materials</title><style>
@@ -183,9 +192,9 @@ body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:32px;font-size:
 h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;margin:18px 0 4px}table{width:100%;border-collapse:collapse}
 td,th{padding:4px 6px;border-bottom:1px solid #E2E0DA;text-align:left}.r{text-align:right}</style></head><body>
 <h1>Material list — ${esc(est.title)}</h1><div>${esc(profile.companyName)} · ${dateFmt(est.updatedAt)}</div>
-${[...groups.entries()].map(([cat, rows]) => `<h2>${esc(cat)}</h2><table><tr><th>Item</th><th class="r">Qty</th><th>Unit</th><th class="r">Est. price</th><th class="r">Total</th></tr>
-${rows.map((m) => `<tr><td>${esc(m.name)}</td><td class="r">${m.qty}</td><td>${esc(m.unit)}</td><td class="r">$${m.unitPrice.toFixed(2)}</td><td class="r">$${m.total.toFixed(2)}</td></tr>`).join('')}</table>`).join('')}
-<h2>Total before tax: ${money(est.materialTotal)}</h2></body></html>`;
+${[...groups.entries()].map(([cat, rows]) => `<h2>${esc(cat)}</h2><table><tr><th>Item</th><th class="r">Qty</th><th>Unit</th>${prices ? '<th class="r">Est. price</th><th class="r">Total</th>' : ''}</tr>
+${rows.map((m) => `<tr><td>${esc(m.name)}</td><td class="r">${m.qty}</td><td>${esc(m.unit)}</td>${prices ? `<td class="r">$${m.unitPrice.toFixed(2)}</td><td class="r">$${m.total.toFixed(2)}</td>` : ''}</tr>`).join('')}</table>`).join('')}
+${prices ? `<h2>Total before tax: ${money(est.materialTotal)}</h2>` : ''}</body></html>`;
 }
 
 /** What the AI may write for the contractor on the client quote. */

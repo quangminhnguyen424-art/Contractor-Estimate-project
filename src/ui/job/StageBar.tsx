@@ -31,7 +31,8 @@ export function StageBar({ job }: { job: Job }) {
               </View>
               <View style={{ flex: 1, height: 3, backgroundColor: i === labels.length - 1 ? 'transparent' : i < done ? C.accent : C.line }} />
             </View>
-            <Text style={{ fontSize: 12, fontWeight: isDone || current ? '700' : '500', color: isDone || current ? C.ink : C.muted }} numberOfLines={1}>{label}</Text>
+            {/* Bold means done. The step in progress is marked by its ring, not shown as if finished. */}
+            <Text style={{ fontSize: 12, fontWeight: isDone ? '700' : '500', color: isDone ? C.ink : current ? C.ink2 : C.muted }} numberOfLines={1}>{label}</Text>
           </View>
         );
       })}

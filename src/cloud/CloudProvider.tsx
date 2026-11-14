@@ -101,6 +101,16 @@ async function applyClientNotes(uid: string, a: App) {
   }
 }
 
+/** Login errors in words a person can act on, instead of the server's or the network's own text. */
+function plainAuthError(message: string): string {
+  if (/failed to fetch|network request failed|network|timeout|load failed/i.test(message)) return 'No internet connection. Check your signal and try again.';
+  if (/invalid login|invalid credentials/i.test(message)) return 'Email or password is wrong.';
+  if (/not confirmed/i.test(message)) return 'Confirm your email first: open the email from Bidwell and tap the link, then log in. If it is not there, check spam or create the account again to get a new email.';
+  if (/registered|already/i.test(message)) return 'That email already has an account. Sign in instead.';
+  if (/rate|seconds|too many/i.test(message)) return 'Too many tries. Wait a minute and try again.';
+  return message;
+}
+
 /** The phone's own copy from just before another device's newer work replaced it. Kept so support can recover it. */
 const REPLACED = 'estimating-app/replaced-copy';
 
@@ -219,20 +229,22 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     configured: cloudConfigured,
     user, state: user ? state : 'off', lastSync, error,
     signIn: async (email, password) => {
-      const { error: e } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      return e ? (/invalid/i.test(e.message) ? 'Email or password is wrong.' : e.message) : null;
+      const { error: e } = await supabase.auth.signInWithPassword({ email: email.trim(), password }).catch((x: unknown) => ({ error: x as Error }));
+      return e ? plainAuthError(e.message) : null;
     },
     signUp: async (email, password) => {
-      const { data, error: e } = await supabase.auth.signUp({ email: email.trim(), password });
-      if (e) return /registered/i.test(e.message) ? 'That email already has an account. Sign in instead.' : e.message;
+      const { data, error: e } = await supabase.auth.signUp({ email: email.trim(), password }).catch((x: unknown) => ({ data: { session: null, user: null }, error: x as Error }));
+      if (e) return plainAuthError(e.message);
+      // With email confirmation on, an address that already has an account comes back with no identities and no email is sent.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) return 'That email already has an account. Sign in instead.';
       return data.session ? null : 'Account made. Check your email to confirm it, then sign in.';
     },
     authReady, firstSync,
     retryFirstSync: () => { if (user) { setFirstSync('waiting'); sync(user.id); } },
     skipFirstSync: () => setFirstSync('done'),
     resetPassword: async (email) => {
-      const { error: e } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: CLOUD.resetPage });
-      return e ? (/rate|seconds/i.test(e.message) ? 'Too many tries. Wait a minute and try again.' : e.message) : null;
+      const { error: e } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: CLOUD.resetPage }).catch((x: unknown) => ({ error: x as Error }));
+      return e ? plainAuthError(e.message) : null;
     },
     changePassword: async (current, next) => {
       if (!user?.email) return 'Log in first.';

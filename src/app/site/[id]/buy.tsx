@@ -45,8 +45,8 @@ export default function BuyScreen() {
       {items.length === 0 ? (
         <Card>
           <H2>No buy list yet</H2>
-          <Muted>{est ? 'Start from the estimate’s material list, then add or remove anything.' : 'Add the materials you need below.'}</Muted>
-          {est ? <Button title="Make it from the estimate" icon="list-outline" onPress={fill} /> : null}
+          <Muted>{est?.materials.length ? 'Start from the estimate’s material list, then add or remove anything.' : est ? 'A quick price has no material list. Add what you need below.' : 'Add the materials you need below.'}</Muted>
+          {est?.materials.length ? <Button title="Make it from the estimate" icon="list-outline" onPress={fill} /> : null}
         </Card>
       ) : (
         <Card>

@@ -116,7 +116,7 @@ export default function NewEstimate() {
         ...(sent ? [`Looking at ${sent} photo${sent > 1 ? 's' : ''}`] : []),
         ...(pendingPlan?.length ? [`3D scan: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${Math.round(planTotals(pendingPlan).floorSf)} SF floor`,
           ...(isIndoorType(type) ? ['Indoor only: skipping roof, siding and yard work'] : [])] : []),
-        `Matching ${jobType(type).name.toLowerCase()} questions`,
+        `Matching ${jobType(type).name} questions`,
         'Filling in sizes and counts',
         'Checking your past jobs',
       ],
@@ -233,7 +233,7 @@ export default function NewEstimate() {
           </ScrollView>
         ) : null}
         <Composer value={description} onChange={setDescription} onSend={send} sending={busy} sendLabel="Continue" inputLabel="Describe the job" allowEmpty
-          placeholder={effectiveType ? `Describe the ${jobType(effectiveType).name.toLowerCase()}…` : 'Describe the job, or talk…'}
+          placeholder={effectiveType ? `Describe the job: ${jobType(effectiveType).name}…` : 'Describe the job…'}
           actions={[
             { icon: 'camera', label: 'Take photos', sub: 'Bidwell looks for sizes, conditions and code issues', onPress: () => addPhotos(true) },
             { icon: 'images', label: 'Choose photos', onPress: () => addPhotos(false) },

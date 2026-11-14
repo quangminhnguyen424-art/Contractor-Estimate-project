@@ -9,7 +9,7 @@ import { planSvg, planTotals } from '@/engine/floorplan';
 import { dateFmt, money } from '@/engine/format';
 import { FINISH_LABELS } from '@/engine/jobTypes';
 import { changedSinceSigned } from '@/engine/contract';
-import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, quoteWritePrompt, scheduleAmounts, type QuoteWriteTarget } from '@/engine/quote';
+import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, quoteWritePrompt, scheduleAmounts, stepName, type QuoteWriteTarget } from '@/engine/quote';
 import { aiFor } from '@/ui/host';
 import { ActionSheet } from '@/ui/Sheet';
 import { useCloud } from '@/cloud/CloudProvider';
@@ -184,7 +184,7 @@ export default function QuoteScreen() {
         ) : null}
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: P.ink }}>{T.schedule}</Text>
-          {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
+          {sched.map((s, k) => <Line key={k} l={`${stepName(s.label, lang)} (${s.pct}%)`} r={money(s.amount)} />)}
           {/* The steps are before tax, like the PDF says, so they do not look short of the total. */}
           <Text style={{ fontSize: 12, color: P.muted }}>{lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</Text>
         </View>

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, View } from 'react-native';
 
@@ -103,6 +103,7 @@ export default function CostScreen() {
 
   return (
     <Screen footer={<Button title={editing ? 'Save changes' : 'Save cost'} icon="checkmark" disabled={!valid || reading} onPress={save} />}>
+      <Stack.Screen options={{ title: editing ? 'Edit cost' : 'Add a cost' }} />
       <Card>
         <H2>Receipt</H2>
         {receiptUri ? <Image source={{ uri: shown }} style={{ width: '100%', height: 220, borderRadius: 14, backgroundColor: C.cardHi }} resizeMode="contain" accessibilityLabel="Receipt photo" /> : null}

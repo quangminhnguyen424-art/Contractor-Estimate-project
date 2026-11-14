@@ -35,8 +35,8 @@ All data is stored on the phone. Nothing is sent anywhere unless the Claude back
 
 1. Host the web version on Netlify (free): sign in with GitHub, **Import an existing project**, pick this repo, **Deploy**. `netlify.toml` already has the build settings, and every push redeploys.
 2. Open the Netlify link in **Safari** → Share → **Add to Home Screen**.
-3. In the app: **Settings → Claude AI**, paste your own key from console.anthropic.com and tap **Save and test key**. The key stays on that device and is never in backups. Set a monthly spending limit in the Anthropic Console.
-4. **Settings → Export backup** regularly; data lives on the device. Restore on another device from Settings or on first launch.
+3. In the app: **Me → Bidwell AI → Advanced**, paste your own key from console.anthropic.com and tap **Save and test key**. The key stays on that device and is never in backups. Set a monthly spending limit in the Anthropic Console.
+4. **Me → Backup → Export backup** regularly when not signed in; data then lives on the device. Restore on another device from Me → Backup or on first launch.
 
 ## Connect Claude for other users (later)
 
@@ -80,7 +80,7 @@ The app follows one line: **say the job → get the price → send the quote →
 
 The app asks for the user's language on first open (`ui/LanguageScreen.tsx`) and the whole interface, Bidwell's answers and the voice follow it. Change it later under Me > Language.
 
-- **Write screens in English.** The app's `Text` component translates what it draws, so screens need no translation keys. Text the user typed (client names, notes) is never translated.
+- **Write screens in English.** The app's `Text` component translates what it draws, so screens need no translation keys. Draw what the user typed (job titles, client names, notes, chat) with `raw` so it is shown as written: a client called "Home" must not be translated.
 - **After changing any wording, run `node scripts/i18n-extract.mjs`.** It rebuilds `src/i18n/catalog.json`, the list of every sentence the app can show. Then add the new sentences to `src/i18n/vi.json`; `npm test` fails when more than a few are missing.
 - **Tiếng Việt is built in** (`vi.json`). Spanish has its first screens built in (`es.json`). Every other language, and the rest of Spanish, is translated by the AI once after login and kept on the phone.
 - **Client documents are separate.** Quotes, contracts and invoices are written in the "Client’s language" chosen on each job (English or Vietnamese), not the app's language.

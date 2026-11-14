@@ -121,8 +121,8 @@ export default function FloorPlanScreen() {
             <Muted style={{ fontSize: 13 }}>Walk slowly around the room and point at every wall, door and window. Tap Done, check the model, then Use this scan.</Muted>
           </>
         ) : (
-          <Banner tone="info" title="LiDAR scanning needs the installed iPhone app">
-            It works on iPhone Pro and iPad Pro models in the App Store / TestFlight version. Here, measure the room below.
+          <Banner tone="info" title="3D scanning needs an iPhone Pro">
+            Room scanning uses the LiDAR sensor on iPhone Pro and iPad Pro models. On this device, measure the room below.
           </Banner>
         )}
       </Card>

@@ -131,7 +131,7 @@ export function nextStep(j: Job, now = Date.now()): NextStep {
     const days = Math.max(0, Math.floor((now - Date.parse(j.est.sentAt ?? j.est.updatedAt)) / DAY));
     return {
       kind: 'sign', title: `Waiting for ${who} to sign`,
-      sub: days ? `Sent ${days} day${days > 1 ? 's' : ''} ago. They can sign from the link, or right here on your phone.` : 'Sent today. They can sign from the link, or right here on your phone.',
+      sub: days ? `Sent ${days} day${days > 1 ? 's' : ''} ago. They can sign from a link you send, or right here on your phone.` : 'Sent today. They can sign from a link you send, or right here on your phone.',
       action: 'Sign on this phone',
     };
   }
@@ -151,5 +151,5 @@ export function nextStep(j: Job, now = Date.now()): NextStep {
     return { kind: 'update', title: `Keep ${who} in the loop`, sub: 'There are new photos since the last update. Bidwell writes the message.', action: 'Send a photo update' };
   }
   const pr = projectProgress(p!);
-  return { kind: 'work', title: 'Work in progress', sub: pr.total ? `${pr.done} of ${pr.total} to-dos done · ${photos} photos` : `${photos} photos so far`, action: 'Take photos' };
+  return { kind: 'work', title: 'Work in progress', sub: pr.total ? `${pr.done} of ${pr.total} to-dos done · ${photos} photo${photos === 1 ? '' : 's'}` : `${photos} photo${photos === 1 ? '' : 's'} so far`, action: 'Take photos' };
 }
