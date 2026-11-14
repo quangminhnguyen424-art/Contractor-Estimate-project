@@ -185,6 +185,8 @@ export default function QuoteScreen() {
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: P.ink }}>{T.schedule}</Text>
           {sched.map((s, k) => <Line key={k} l={`${s.label} (${s.pct}%)`} r={money(s.amount)} />)}
+          {/* The steps are before tax, like the PDF says, so they do not look short of the total. */}
+          <Text style={{ fontSize: 12, color: P.muted }}>{lang === 'vi' ? 'Thuế bán hàng được cộng vào mỗi hóa đơn.' : 'Sales tax is added to each invoice.'}</Text>
         </View>
       </View>
       </Untranslated>

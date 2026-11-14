@@ -634,8 +634,13 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
     if (!sample) throw new Error('Claude is not available on this page.');
     let res: { text: string; truncated: boolean };
     try {
-      res = await sample(prompt, images?.length ? { images: images.map(base64ToBlob) } : undefined);
+      // The page's AI has no timeout of its own: without one a lost request leaves "Reading the job" up forever.
+      res = await Promise.race([
+        sample(prompt, images?.length ? { images: images.map(base64ToBlob) } : undefined),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Bidwell took too long to answer. Try again.')), CLAUDE_TIMEOUT_MS)),
+      ]);
     } catch (e) {
+      if (e instanceof Error && /took too long/.test(e.message)) throw e;
       throw new Error(sampleErrorMessage(e));
     }
     if (res.truncated) throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
@@ -684,4 +689,16 @@ export function getAI(opts: { apiKey?: string; host?: () => Promise<SampleFn | n
   if (opts.host) return hostClaudeAI(opts.host);
   const url = typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_AI_URL : undefined;
   return url ? claudeAI(url) : demoAI;
+}
+
+/**
+ * Asks the AI which type of work a description is, when the keyword reader could not tell (any language, or an
+ * unusual way of saying it). Returns one of the given ids, or null when the AI is off or names none of them.
+ */
+export async function pickJobType(ai: EstimatorAI, text: string, types: { id: JobTypeId; name: string }[]): Promise<JobTypeId | null> {
+  const list = types.slice(0, 80).map((t) => `${t.id}: ${t.name}`).join('\n');
+  const reply = await ai.complete(`A contractor described a job. Which one type of work below fits it best?\nReply with ONLY the id before the colon, or "none" if nothing fits.\n\nTypes:\n${list}\n\nDescription:\n${text.slice(0, 1500)}`, undefined, 40);
+  const said = reply.trim().toLowerCase();
+  // Longest id first, so "bath-remodel" is not mistaken for "bath".
+  return [...types].sort((a, b) => b.id.length - a.id.length).find((t) => said.includes(t.id.toLowerCase()))?.id ?? null;
 }

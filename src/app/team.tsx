@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Linking, Platform, Share, View } from 'react-native';
 
 import { newId } from '@/engine/format';
-import { dayLabel } from '@/engine/schedule';
+import { dayLabel, timeLabel } from '@/engine/schedule';
 import { LANG_NAMES, type CrewLang } from '@/engine/site';
 import { ATTEND, confirmText, morningCheck, newMember, suggestDates, type AttendState, type TeamMember } from '@/engine/team';
 import { useApp } from '@/store/AppContext';
@@ -34,10 +34,10 @@ export default function TeamScreen() {
   return (
     <Screen>
       <Card>
-        <H2>Today’s crew check</H2>
+        <H2>Crew check</H2>
         {checks.length === 0 ? (
-          <Muted>No one is booked today. Book crew days on the Schedule tab and pick who is coming.</Muted>
-        ) : checks.map(({ event, member, attendance }) => {
+          <Muted>No one is booked today, and every crew day this week is marked. Book crew days on the Schedule tab and pick who is coming.</Muted>
+        ) : checks.map(({ event, member, attendance, past }) => {
           const key = `${event.id}-${member.id}`;
           return (
             <View key={key} style={{ gap: 8, paddingVertical: 10, borderTopWidth: 1, borderColor: C.lineSoft }}>
@@ -46,7 +46,7 @@ export default function TeamScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: C.ink, fontWeight: '700' }}>{member.name}{member.trade ? ` · ${member.trade}` : ''}</Text>
                   <Text style={{ color: C.muted, fontSize: 13 }}>
-                    {event.time || 'All day'} · {siteName(event.projectId, event.title)}{attendance ? ` · ${ATTEND[attendance.state].en}` : ' · not confirmed'}
+                    {past ? dayLabel(event.date, today) : timeLabel(event)} · {siteName(event.projectId, event.title)}{attendance ? ` · ${ATTEND[attendance.state].en}` : ' · not confirmed'}
                   </Text>
                 </View>
                 {member.phone ? <Button kind="ghost" title="Text" icon="chatbubble-outline" onPress={() => textTo(member.phone, confirmText(member, event, siteName(event.projectId, event.title)))} /> : null}

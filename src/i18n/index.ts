@@ -159,6 +159,8 @@ export async function initLanguage(): Promise<void> {
   rebuild();
   ready = true;
   emit();
+  // The AI may have been connected before the saved language was read: finish (or resume) the translation now.
+  if (complete && chosen && !progress.total) translateEverything();
 }
 
 /** Show the app in a language without saving the choice (the "Your language" screen, before Continue). */

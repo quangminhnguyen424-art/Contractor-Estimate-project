@@ -113,10 +113,13 @@ export default function SignScreen() {
   }
 
   return (
-    <Screen scrollEnabled={!drawing}>
-      <ClientLanguage est={est} />
-      <Muted style={{ fontSize: 13 }}>Hand the phone to your client. They check the total and sign with a finger.</Muted>
-      {/* From here down is for the client: in their language, not the app's. */}
+    // The client reads the top of this screen and signs; the button they need is always in view at the bottom.
+    <Screen scrollEnabled={!drawing} footer={(
+      <Untranslated>
+        <Button title={L.sign} icon="create-outline" disabled={busy || !name.trim() || !hasInk(strokes)} onPress={sign} />
+      </Untranslated>
+    )}>
+      {/* This part is for the client: in their language, not the app's. */}
       <Untranslated>
       <Reveal>
         <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 18, gap: 10 }}>
@@ -133,9 +136,9 @@ export default function SignScreen() {
       </Reveal>
       <Field label={L.name} value={name} onChangeText={setName} maxLength={80} autoComplete="name" />
       <SignaturePad width={padW} strokes={strokes} onChange={setStrokes} onDrawing={setDrawing} />
-      <Button title={L.sign} icon="create-outline" disabled={busy || !name.trim() || !hasInk(strokes)} onPress={sign} />
       </Untranslated>
-      <Muted style={{ fontSize: 12 }}>The signature is saved with this job and printed on the signed quote PDF.</Muted>
+      <Muted style={{ fontSize: 13 }}>Hand the phone to your client. They check the total and sign with a finger. The signature is saved with this job and printed on the signed quote PDF.</Muted>
+      <ClientLanguage est={est} />
     </Screen>
   );
 }

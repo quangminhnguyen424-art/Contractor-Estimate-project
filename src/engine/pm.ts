@@ -4,7 +4,7 @@
 import { projectBooks, COST_KINDS } from './books';
 import { contractTotals, type Contract } from './contract';
 import { dueToday, type FollowUpPlan } from './followup';
-import { addDays, timeLabel, type CalEvent } from './schedule';
+import { addDays, dayLabel, timeLabel, type CalEvent } from './schedule';
 import { localDay, type SiteProject } from './site';
 import { morningCheck, needsCheck, type TeamMember } from './team';
 import type { Estimate, Profile } from './types';
@@ -30,11 +30,15 @@ export function dailyCheckIn(input: {
   const out: CheckIn[] = [];
 
   for (const c of morningCheck(events, team, today)) {
+    if (c.past) {
+      out.push({ id: `worked-${c.event.id}-${c.member.id}`, priority: 1, icon: 'people-outline', text: `Did ${c.member.name} work on ${c.event.title}, ${dayLabel(c.event.date, today)}? Mark it so the labor reaches the job.`, route: '/team', action: 'Mark' });
+      continue;
+    }
     if (!needsCheck(c.attendance)) continue;
     out.push({
       id: `crew-${c.event.id}-${c.member.id}`, priority: 0, icon: 'people-outline',
       text: c.attendance?.state === 'late' ? `${c.member.name} is running late for ${c.event.title}. Did they make it?` : `Is ${c.member.name} coming to ${c.event.title} today${c.event.time ? ` at ${timeLabel({ time: c.event.time, durationMin: 0 })}` : ''}?`,
-      route: '/team?check=1', action: 'Check in',
+      route: '/team', action: 'Check in',
     });
   }
 

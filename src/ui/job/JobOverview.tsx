@@ -102,7 +102,7 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
               onPress={() => router.push(`/estimate/${est.id}/quote`)} />
             {job.stage === 'sent' ? (
               <ListRow icon="notifications" title="Follow-ups"
-                sub={!plan || plan.consent === 'not-asked' ? 'Ask the client first, then Bidwell reminds them' : plan.stopped ? 'Stopped' : (() => { const n = nextFollowUp(plan, est.status); return n ? `Next reminder ${n.date}` : 'All reminders sent'; })()}
+                sub={!plan || plan.consent === 'not-asked' ? 'Ask the client first, then Bidwell reminds them' : plan.stopped ? 'Stopped' : (() => { const n = nextFollowUp(plan, est.status); return n ? `Next reminder ${dateFmt(`${n.date}T12:00:00`)}` : 'All reminders sent'; })()}
                 onPress={() => router.push(`/estimate/${est.id}/follow`)} />
             ) : null}
             {job.stage === 'won' || job.stage === 'done' || contract ? (

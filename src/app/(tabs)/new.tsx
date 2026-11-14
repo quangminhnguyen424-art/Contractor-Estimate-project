@@ -2,11 +2,11 @@ import { lessonsContext } from '@/engine/books';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, View } from 'react-native';
 
 import { Text } from '@/ui/text';
-import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
+import { demoAI, guessJobType, pickJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { historyPerSf } from '@/engine/estimator';
 import { rate } from '@/engine/format';
 import { answersFromPlan, planTotals } from '@/engine/floorplan';
@@ -28,7 +28,7 @@ import { toAiImages } from '@/ui/photos';
 import { resolvePhotoUri, savePhoto } from '@/ui/photoStore';
 
 export default function NewEstimate() {
-  const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects } = useApp();
+  const { profile, draft, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects } = useApp();
   const cloud = useCloud();
   // The AI is reachable with a Bidwell account, a personal key, or inside the Claude app.
   const claudeOn = aiAllowed && (!!apiKey || inClaudeApp || !!cloud.user);
@@ -58,6 +58,15 @@ export default function NewEstimate() {
     if (p) { setForProject(p.id); setClientName(p.clientName); setAddress(p.address); setTitle(p.title); setKind('describe'); }
   }
   const linked = projects.find((x) => x.id === forProject && !x.estimateId);
+  // Start fresh once the estimate that came from this form is built (the draft is gone). Until then the form keeps
+  // what was typed, so going back from the questions loses nothing.
+  const [handedOff, setHandedOff] = useState(false);
+  const skipRef = useRef<(() => void) | null>(null);
+  const clearForm = () => {
+    setJobTypeId(null); setTitle(''); setClientName(''); setAddress(''); setDescription(''); setPhotos([]);
+    setPendingPlan(null); setForProject(null); router.setParams({ project: undefined });
+  };
+  if (handedOff && !draft) { setHandedOff(false); clearForm(); }
 
   const mine = profile?.specialties ?? [];
   // After an indoor 3D scan, only indoor work is offered.
@@ -95,9 +104,7 @@ export default function NewEstimate() {
     }
   };
 
-  const next = async () => {
-    const type = effectiveType;
-    if (!type) return;
+  const next = async (type: JobTypeId) => {
     setBusy(true);
     // Show Claude at work: 3–8 s depending on how much there is to read.
     const sent = claudeOn ? Math.min(8, photos.length) : 0;
@@ -137,10 +144,20 @@ export default function NewEstimate() {
       language: aiLanguage(),
     };
     if (description.trim() || images.length > 0) {
-      parsed = await ai.parseScope(description, type, images, ctx)
-        .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Bidwell could not read this job.' }));
+      // "Skip" on the waiting screen stops waiting for the AI and reads the notes on the phone instead.
+      let gaveUp = false;
+      const skip = new Promise<ScopeResult>((resolve) => { skipRef.current = () => { gaveUp = true; resolve(demoAI.parseScope(description, type)); }; });
+      parsed = await Promise.race([
+        ai.parseScope(description, type, images, ctx)
+          .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Bidwell could not read this job.' })),
+        skip,
+      ]);
+      skipRef.current = null;
+      if (gaveUp) skipped = 0;
+      else await atLeast(started, ms);
+    } else {
+      await atLeast(started, ms);
     }
-    await atLeast(started, ms);
     setWorking(null);
     setBusy(false);
     if (parsed.error) notify('Bidwell could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
@@ -162,12 +179,9 @@ export default function NewEstimate() {
       aiFilled: parsed.sources ?? Object.fromEntries(Object.keys(parsed.answers).map((k) => [k, 'notes' as const])),
       ...(linked ? { projectId: linked.id } : {}),
     });
+    // The form stays as typed until the estimate is built: Back from the questions returns to it, nothing lost.
+    setHandedOff(true);
     router.push('/questions');
-    // Clear the form so the next estimate starts fresh (the draft keeps everything).
-    setJobTypeId(null); setTitle(''); setClientName(''); setAddress(''); setDescription(''); setPhotos([]);
-    setPendingPlan(null);
-    setForProject(null);
-    router.setParams({ project: undefined });
   };
 
   const pickContact = async () => {
@@ -180,9 +194,18 @@ export default function NewEstimate() {
       notify('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your iPhone Settings, or type the name.');
     }
   };
-  const send = () => {
-    if (!effectiveType) { notify('Pick the type of work', 'Choose it under “Type of work”, or describe the job so Bidwell can pick it.'); return; }
-    next();
+  const send = async () => {
+    let type = effectiveType;
+    // The keyword reader knows English trade words. Anything else (another language, an unusual job) the AI picks.
+    if (!type && claudeOn && description.trim().length > 3) {
+      setBusy(true);
+      const offered = JOB_TYPES.filter((j) => !indoorOnly || isIndoorType(j.id)).map((j) => ({ id: j.id, name: j.name }));
+      type = await pickJobType(aiFor(apiKey, aiAllowed), description, offered).catch(() => null);
+      setBusy(false);
+      if (type) setJobTypeId(type);
+    }
+    if (!type) { notify('Pick the type of work', 'Choose it under “Type of work”, or describe the job so Bidwell can pick it.'); return; }
+    await next(type);
   };
 
   if (kind === 'quick') {
@@ -219,7 +242,7 @@ export default function NewEstimate() {
           ]} />
       </View>
     }>
-      <AiWorking job={working} />
+      <AiWorking job={working} onSkip={() => skipRef.current?.()} />
       <KindSwitch kind={kind} onChange={setKind} />
       {pendingPlan?.length ? (
         <Banner tone="ok" title={`Floor plan ready: ${pendingPlan.length} room${pendingPlan.length > 1 ? 's' : ''}, ${planTotals(pendingPlan).floorSf} SF`}>
@@ -227,7 +250,11 @@ export default function NewEstimate() {
         </Banner>
       ) : null}
 
-      {linked ? <Banner tone="info" title={`Pricing “${linked.title}”`}>The estimate joins this job, with the photos already taken.</Banner> : null}
+      {linked ? (
+        <Banner tone="info" title={`Pricing “${linked.title}”`}>
+          The estimate joins this job, with the photos already taken. <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={clearForm}>Remove</Text>
+        </Banner>
+      ) : null}
       <View style={{ gap: 4 }}>
         <Text style={{ color: C.ink, fontSize: 22, fontWeight: '700', letterSpacing: -0.3 }}>What’s the job?</Text>
         <Muted>Say it like you would to a helper: the rooms, the sizes, what’s changing. Tap + to add photos or scan the rooms.</Muted>

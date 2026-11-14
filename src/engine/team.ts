@@ -42,17 +42,30 @@ export interface Attendance {
 
 export const newMember = (id: string): TeamMember => ({ id, name: '', role: 'crew', trade: '', phone: '', rate: 0, rateUnit: 'day', lang: 'en', active: true });
 
-/** Who is booked today and still needs a check (not yet confirmed, worked, moved or marked no-show). */
+/** A crew day whose outcome was never recorded: nobody said they worked, did not show, or moved. */
+export const unsettled = (a?: Attendance) => !a || a.state === 'coming' || a.state === 'late';
+
+/**
+ * Who is booked today, and (`past`) who was booked in the last week and never marked: "Confirmed" in the morning is
+ * not "Worked", and a day that is never marked Worked never reaches the job's labor cost.
+ */
 export function morningCheck(events: CalEvent[], team: TeamMember[], today: string) {
-  const out: { event: CalEvent; member: TeamMember; attendance?: Attendance }[] = [];
+  const out: { event: CalEvent; member: TeamMember; attendance?: Attendance; past: boolean }[] = [];
+  const from = addDays(today, -7);
   for (const e of events) {
-    if (e.date !== today || e.done || !e.crew?.length) continue;
+    if (e.date > today || e.date < from || !e.crew?.length) continue;
+    const past = e.date < today;
+    if (!past && e.done) continue;
     for (const id of e.crew) {
       const m = team.find((x) => x.id === id);
-      if (m) out.push({ event: e, member: m, attendance: e.attend?.[id] });
+      if (!m) continue;
+      const attendance = e.attend?.[id];
+      if (past && !unsettled(attendance)) continue;
+      out.push({ event: e, member: m, attendance, past });
     }
   }
-  return out;
+  // Today first, then the most recent unmarked days.
+  return out.sort((a, b) => Number(a.past) - Number(b.past) || b.event.date.localeCompare(a.event.date));
 }
 
 export const needsCheck = (a?: Attendance) => !a || a.state === 'late';

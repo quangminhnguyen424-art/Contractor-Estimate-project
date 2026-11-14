@@ -13,7 +13,7 @@ import { JobMoney } from '@/ui/job/JobMoney';
 import { JobOverview } from '@/ui/job/JobOverview';
 import { JobPhotos, TakePhotos } from '@/ui/job/JobPhotos';
 import { StageBar } from '@/ui/job/StageBar';
-import { Button, C, Muted, Screen, Segmented } from '@/ui/kit';
+import { Button, C, Card, Field, Muted, Screen, Segmented } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { ActionSheet, type SheetAction } from '@/ui/Sheet';
 import { addSitePhotos } from '@/ui/SitePhotoView';
@@ -26,13 +26,19 @@ type View3 = 'overview' | 'photos' | 'money';
  * step the job is on and the next thing to do at the top.
  */
 export default function JobScreen() {
-  const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
+  const params = useLocalSearchParams<{ id: string; tab?: string; edit?: string }>();
+  const { id, tab } = params;
   const app = useApp();
   const insets = useSafeAreaInsets();
   const job = findJob(id, app.estimates, app.projects, app.contracts, app.profile);
   const [picked, setPicked] = useState<View3 | null>(tab === 'photos' || tab === 'money' ? tab : null);
   const [menu, setMenu] = useState(false);
   const [shooting, setShooting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [askedEdit, setAskedEdit] = useState(false);
+  const [dTitle, setDTitle] = useState('');
+  const [dClient, setDClient] = useState('');
+  const [dAddress, setDAddress] = useState('');
 
   if (!job) {
     return (
@@ -81,8 +87,9 @@ export default function JobScreen() {
       answers: est.answers, customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan,
     });
     if (est.quoteEdits) app.updateEstimate(newEst, { quoteEdits: est.quoteEdits });
-    router.replace(`/job/${newEst}`);
-    notify('Copied', 'A new draft with the same work and prices. Tap ⋯ → Edit job details to add the client, then send it.');
+    // The copy opens with its name, client and address ready to fill in.
+    router.replace(`/job/${newEst}?edit=1`);
+    notify('Copied', 'A new draft with the same work and prices. Add the client, then send it.');
   };
 
   const remove = () =>
@@ -95,13 +102,24 @@ export default function JobScreen() {
       router.dismissTo('/jobs');
     });
 
+  // Name, client and address are corrected right here on the job (a typo, or a copy that has no client yet).
+  const startEdit = () => { setDTitle(job.title); setDClient(job.client ?? ''); setDAddress(job.address ?? ''); setEditing(true); };
+  if (params.edit === '1' && !askedEdit) { setAskedEdit(true); startEdit(); }
+  const saveDetails = () => {
+    const details = { title: dTitle.trim(), clientName: dClient.trim(), address: dAddress.trim() };
+    if (est) app.updateEstimate(est.id, { details });
+    else if (project) app.updateProject(project.id, (x) => ({ ...x, ...details }));
+    setEditing(false);
+  };
+
   const setStatus = (status: 'draft' | 'sent' | 'won' | 'lost') => { if (est) app.updateEstimate(est.id, { status }); };
   const signed = !!job.contract?.accepted;
   const actions: SheetAction[] = [
     ...(est ? [
-      { icon: 'create-outline' as const, label: 'Edit job details', sub: 'Client, sizes and answers. The price updates.', onPress: editAnswers },
+      { icon: 'person-outline' as const, label: 'Edit name, client and address', onPress: startEdit },
+      { icon: 'create-outline' as const, label: 'Edit job details', sub: 'Sizes and answers. The price updates.', onPress: editAnswers },
       { icon: 'copy-outline' as const, label: 'Copy for another client', sub: 'Same work and prices, new quote', onPress: copy },
-    ] : []),
+    ] : [{ icon: 'person-outline' as const, label: 'Edit name, client and address', onPress: startEdit }]),
     ...(job.stage === 'draft' ? [{ icon: 'paper-plane-outline' as const, label: 'Mark as sent', sub: 'You gave the client the quote another way', onPress: () => setStatus('sent') }] : []),
     ...(job.stage === 'draft' || job.stage === 'sent' ? [
       { icon: 'trophy-outline' as const, label: 'Mark as won', sub: 'The client said yes without signing in the app', onPress: () => setStatus('won') },
@@ -127,10 +145,23 @@ export default function JobScreen() {
         ),
       }} />
       <Screen footer={view === 'photos' && project ? <Button title="Take photos" icon="camera" onPress={openCamera} /> : undefined}>
-        <View style={{ gap: 4 }}>
-          <Text raw style={{ fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.3 }}>{job.title}</Text>
-          <Muted>{[job.client, job.address].filter(Boolean).join(' · ') || (est ? `${estimateJob(est).name} · no client yet` : 'No address yet')}</Muted>
-        </View>
+        {editing ? (
+          <Card>
+            <Field label="Job name" value={dTitle} onChangeText={setDTitle} maxLength={80} />
+            <Field label="Client" value={dClient} onChangeText={setDClient} placeholder="Name" maxLength={80} autoCapitalize="words" />
+            <Field label="Job address" value={dAddress} onChangeText={setDAddress} placeholder="Street, city" maxLength={160} autoCapitalize="words" />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={() => setEditing(false)} />
+              <Button title="Save" style={{ flex: 1 }} disabled={!dTitle.trim()} onPress={saveDetails} />
+            </View>
+          </Card>
+        ) : (
+          <Pressable accessibilityRole="button" accessibilityLabel="Edit name, client and address" onPress={startEdit} style={{ gap: 4 }}>
+            <Text raw style={{ fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.3 }}>{job.title}</Text>
+            <Muted>{[job.client, job.address].filter(Boolean).join(' · ') || (est ? `${estimateJob(est).name} · no client yet` : 'No address yet')}</Muted>
+            {!job.client || !job.address ? <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{!job.client ? '+ Add the client' : '+ Add the address'}</Text> : null}
+          </Pressable>
+        )}
         {est ? <StageBar job={job} /> : null}
         <Segmented<View3> value={view} onChange={setPicked}
           options={[{ value: 'overview', label: 'Overview' }, { value: 'photos', label: 'Job site' }, { value: 'money', label: 'Money' }]} />

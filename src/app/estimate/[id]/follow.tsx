@@ -2,7 +2,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, Share, View } from 'react-native';
 
-import { newId } from '@/engine/format';
+import { dateFmt, newId } from '@/engine/format';
+import { localDay } from '@/engine/site';
 import {
   confirmations, consentQuestion, followUpText, newPlan, nextFollowUp, okToSendNow, parseDays, planProblems, stopPlan, SUGGESTED_DAYS,
   type ConsentHow, type FollowChannel, type FollowUpPlan,
@@ -17,6 +18,7 @@ import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
 
 const HOWS: ConsentHow[] = ['in person', 'phone call', 'text', 'email'];
+const STATUS: Record<string, string> = { draft: 'Draft', sent: 'Sent', won: 'Won', lost: 'Lost' };
 const isFollowEvent = (e: CalEvent, estimateId: string) => e.estimateId === estimateId && e.title.startsWith('Follow up:');
 
 /** Opens the phone's own Messages or Mail with the text filled in. The contractor presses send. */
@@ -38,7 +40,7 @@ export default function FollowScreen() {
   const today = useToday();
   const est = estimates.find((e) => e.id === id);
   const saved = followups?.find((f) => f.estimateId === id);
-  const [p, setP] = useState<FollowUpPlan>(() => saved ?? newPlan(id ?? '', today));
+  const [p, setP] = useState<FollowUpPlan>(() => saved ?? newPlan(id ?? '', est?.sentAt ? localDay(est.sentAt) : today));
   const [daysText, setDaysText] = useState((saved?.days ?? []).join(', '));
   const [confirm, setConfirm] = useState<{ client: string; contractor: string } | null>(null);
   const docs = useClientDocs(est);
@@ -91,6 +93,16 @@ export default function FollowScreen() {
     notify('Follow-ups stopped', reason === 'manual' ? 'No more reminders for this quote.' : 'The client said no. Bidwell will never remind them about this quote again.');
   };
 
+  const restart = async () => {
+    const { stopped: _was, ...rest } = p;
+    // Count the days from today: the old dates may all be in the past.
+    const plan: FollowUpPlan = { ...rest, startDate: today, sent: [] };
+    saveFollowUp(plan);
+    setP(plan);
+    await syncCalendar(plan);
+    notify('Follow-ups are on again', 'The reminder days count from today.');
+  };
+
   const sendNext = async (channel: FollowChannel) => {
     if (!next || !saved) return;
     if (!okToSendNow(new Date())) { notify('Quiet hours', 'Send between 8 AM and 8 PM so you don’t wake the client.'); return; }
@@ -128,18 +140,22 @@ export default function FollowScreen() {
     <Screen footer={!stopped && p.consent === 'agreed' ? <Button title={saved?.confirmedBoth ? 'Save changes' : 'Turn on follow-ups'} icon="checkmark" onPress={save} /> : undefined}>
       <View style={{ gap: 2 }}>
         <Text raw style={{ color: C.ink, fontSize: 22, fontWeight: '800' }}>{est.title}</Text>
-        <Muted>{est.clientName || 'Client'} · status {est.status}</Muted>
+        <Muted>{est.clientName || 'Client'} · {STATUS[est.status]}</Muted>
       </View>
 
       {stopped ? (
         <Banner tone="info" title={p.stopped?.reason === 'signed' ? 'Signed: follow-ups ended' : p.stopped?.reason === 'lost' ? 'Marked lost: follow-ups ended' : 'Follow-ups are stopped'}>
-          {p.consent === 'declined' ? 'The client said no or replied STOP. Bidwell won’t remind them about this quote again.' : `Stopped ${p.stopped?.at.slice(0, 10)}.`}
+          {p.consent === 'declined' ? 'The client said no or replied STOP. Bidwell won’t remind them about this quote again.' : `Stopped ${dateFmt(p.stopped?.at ?? '')}.`}
         </Banner>
+      ) : null}
+      {/* The quote is out again (reopened, or follow-ups were only paused): the client never said no, so they can restart. */}
+      {stopped && p.consent !== 'declined' && est.status === 'sent' ? (
+        <Button kind="secondary" title="Start follow-ups again" icon="refresh" onPress={restart} />
       ) : null}
 
       {next && saved ? (
         <Card>
-          <H2>{next.date <= today ? `Follow-up ${saved.sent.length + 1} is due` : `Next follow-up: ${next.date}`}</H2>
+          <H2>{next.date <= today ? `Follow-up ${saved.sent.length + 1} is due` : `Next follow-up: ${dateFmt(`${next.date}T12:00:00`)}`}</H2>
           <Text style={{ color: C.ink2, lineHeight: 21 }}>{followUpText(saved.sent.length + 1, company, est.clientName, est.title)}</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {saved.channels.map((c) => (

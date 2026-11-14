@@ -128,7 +128,7 @@ ul{margin:2px 0 6px 16px;padding:0;color:#3F444A}.tot td{font-size:15px;font-wei
 .sig{display:flex;gap:40px;margin-top:28px}.sig>div{flex:1;border-top:1px solid #1B1E22;padding-top:4px}
 </style></head><body>
 <div class="top"><div>${logoHtml(profile)}<h1>${esc(profile.companyName)}</h1>
-<div class="muted">${esc(profile.contactName)} · ${esc(profile.phone)} · ${esc(profile.email)}</div>
+<div class="muted">${[profile.contactName, profile.phone, profile.email].filter((x) => x && x.trim()).map(esc).join(' · ')}</div>
 ${profile.license ? `<div class="muted">${T.registration} ${esc(profile.license)}</div>` : ''}</div>
 <div class="r"><div style="font-size:18px;font-weight:700">${T.quote}</div><div>${T.quoteNo} ${quoteNo}</div>
 <div>${dateFmt(est.updatedAt, lang)}</div><div class="muted">${T.validFor} ${wd.validDays} ${T.days}</div></div></div>

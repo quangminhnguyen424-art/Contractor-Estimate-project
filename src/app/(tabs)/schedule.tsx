@@ -20,10 +20,13 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 export default function ScheduleScreen() {
   const { events, estimates, contracts, projects, profile } = useApp();
   const today = useToday();
-  const [day, setDay] = useState(today);
-  const days = Array.from({ length: 45 }, (_, i) => addDays(today, i - 3));
+  // Until a day is tapped the strip follows today, also when the app stays open past midnight.
+  const [picked, setDay] = useState<string | null>(null);
+  const day = picked ?? today;
+  // A week back and as far ahead as the appointment form allows (60 days), so nothing saved is out of reach.
+  const days = Array.from({ length: 70 }, (_, i) => addDays(today, i - 7));
   const onDay = eventsOn(events, day);
-  const next = upcoming(events, today, 14).filter((e) => e.date !== day).slice(0, 8);
+  const next = upcoming(events, today, 90).filter((e) => e.date !== day).slice(0, 8);
 
   // Invoices due on the chosen day that aren't fully paid.
   const dueInvoices = contracts.flatMap((c) => {

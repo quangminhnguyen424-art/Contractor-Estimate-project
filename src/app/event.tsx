@@ -17,7 +17,7 @@ import { useToday } from '@/ui/useToday';
 const HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 const MINUTES = ['00', '15', '30', '45'];
 const DURATIONS = [{ v: 30, l: '30 min' }, { v: 60, l: '1 hr' }, { v: 120, l: '2 hr' }, { v: 240, l: 'Half day' }, { v: 480, l: 'Full day' }];
-const h12 = (h: number) => `${((h + 11) % 12) + 1}${h < 12 ? 'a' : 'p'}`;
+const h12 = (h: number) => `${((h + 11) % 12) + 1} ${h < 12 ? 'AM' : 'PM'}`;
 
 /** Add or change an appointment: what, when, which job, and when to remind. */
 export default function EventScreen() {
@@ -43,7 +43,8 @@ export default function EventScreen() {
   const days = Array.from({ length: 60 }, (_, i) => addDays(today, i));
   const jobs = [
     ...projects.filter((p) => p.status === 'active').map((p) => ({ key: `p:${p.id}`, label: p.title, projectId: p.id, estimateId: p.estimateId, address: p.address })),
-    ...estimates.filter((e) => (e.status === 'sent' || e.status === 'draft') && !projects.some((p) => p.estimateId === e.id)).slice(0, 8)
+    // Any job that is not lost, won ones too (a won job may have no job site yet), newest first.
+    ...estimates.filter((e) => e.status !== 'lost' && !projects.some((p) => p.estimateId === e.id)).slice(0, 40)
       .map((e) => ({ key: `e:${e.id}`, label: e.title, projectId: undefined, estimateId: e.id, address: e.address })),
   ];
   const selectedJob = jobs.find((j) => (projectId ? j.projectId === projectId : !!estimateId && j.estimateId === estimateId && !j.projectId));

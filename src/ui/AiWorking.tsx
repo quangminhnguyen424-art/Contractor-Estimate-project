@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
-import { Modal, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Brackets, Radar, Readout } from './hud';
@@ -23,16 +23,22 @@ export const atLeast = (startedAt: number, ms: number) =>
   new Promise<void>((r) => setTimeout(r, Math.max(0, startedAt + ms - Date.now())));
 
 /** Full-screen "Claude is working" view: a radar, the steps ticking off, and a progress readout. */
-export function AiWorking({ job }: { job: WorkJob | null }) {
+/** `onSkip`: offered once the wait runs long, so a slow or lost request never traps the user on this screen. */
+export function AiWorking({ job, onSkip }: { job: WorkJob | null; onSkip?: () => void }) {
   return (
     <Modal visible={!!job} transparent animationType="fade" statusBarTranslucent>
-      {job ? <Working job={job} /> : null}
+      {job ? <Working job={job} onSkip={onSkip} /> : null}
     </Modal>
   );
 }
 
-function Working({ job }: { job: WorkJob }) {
+function Working({ job, onSkip }: { job: WorkJob; onSkip?: () => void }) {
   const [done, setDone] = useState(0);
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), Math.max(12000, job.ms + 6000));
+    return () => clearTimeout(t);
+  }, [job]);
   const p = useSharedValue(0);
   useEffect(() => {
     p.set(withTiming(0.94, { duration: job.ms, easing: Easing.out(Easing.quad) }));
@@ -71,6 +77,11 @@ function Working({ job }: { job: WorkJob }) {
             );
           })}
         </View>
+        {slow && onSkip ? (
+          <Pressable accessibilityRole="button" onPress={onSkip} style={{ alignSelf: 'center', padding: 10 }}>
+            <Text style={{ color: C.accent, fontWeight: '600' }}>Taking a while. Skip and fill it in myself</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );

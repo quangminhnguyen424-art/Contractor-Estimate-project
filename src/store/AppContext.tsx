@@ -118,7 +118,7 @@ interface Ctx extends Persisted {
   deletePhotosLater: (uris: string[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
-  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; addClientNote?: { at: string; name: string; text: string } }) => void;
+  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; details?: { title: string; clientName: string; address: string }; addClientNote?: { at: string; name: string; text: string } }) => void;
   deleteEstimate: (id: string) => void;
   /** Erases everything on this device. keepPhotos leaves photo files (used on sign-out: they are matched again on the next sign-in). */
   resetAll: (keepPhotos?: boolean) => void;
@@ -366,15 +366,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const member = (cur.team ?? []).find((m) => m.id === memberId);
         if (!ev || !member) return;
         const prev = ev.attend?.[memberId];
-        let att: Attendance = { state: a.state, at: a.at, ...(a.movedTo ? { movedTo: a.movedTo } : {}), ...(a.note ? { note: a.note } : {}), ...(prev?.costId ? { costId: prev.costId } : {}) };
+        // A labor cost deleted by hand on the Costs screen no longer counts: the day can be marked Worked again.
+        const paidId = prev?.costId && cur.projects.some((p) => p.money?.costs.some((c) => c.id === prev.costId)) ? prev.costId : undefined;
+        let att: Attendance = { state: a.state, at: a.at, ...(a.movedTo ? { movedTo: a.movedTo } : {}), ...(a.note ? { note: a.note } : {}), ...(paidId ? { costId: paidId } : {}) };
         let projects = cur.projects;
         let events = cur.events;
-        const projectId = ev.projectId ?? cur.projects.find((p) => p.estimateId && p.estimateId === ev.estimateId)?.id;
+        let projectId = ev.projectId ?? cur.projects.find((p) => p.estimateId && p.estimateId === ev.estimateId)?.id;
+        // A won job with no photos or costs yet has no job site: make it now, so the day's labor has somewhere to go.
+        if (!projectId && a.state === 'worked' && ev.estimateId) {
+          const est = cur.estimates.find((e) => e.id === ev.estimateId);
+          if (est) {
+            const made = projectFromEstimate(est, est.job?.name ?? jobType(est.jobTypeId).name, newId(), newId);
+            projects = [made, ...projects];
+            projectId = made.id;
+          }
+        }
         const amount = laborCost(member, ev);
         // A "per job" rate is charged once per job site, however many days they work.
         const jobRateAlreadyCharged = member.rateUnit === 'job' && !!projectId
           && !!cur.projects.find((p) => p.id === projectId)?.money?.costs.some((c) => c.memberId === memberId);
-        if (a.state === 'worked' && !prev?.costId && projectId && amount > 0 && !jobRateAlreadyCharged) {
+        if (a.state === 'worked' && !paidId && projectId && amount > 0 && !jobRateAlreadyCharged) {
           const costId = newId();
           att = { ...att, costId };
           projects = projects.map((p) => (p.id !== projectId ? p : {
@@ -383,9 +394,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               amount, memberId, eventId, createdAt: new Date().toISOString(),
             }] },
           }));
-        } else if (a.state !== 'worked' && prev?.costId) {
+        } else if (a.state !== 'worked' && paidId) {
           // Changed their mind: take the labor added for this day back out.
-          const gone = prev.costId;
+          const gone = paidId;
           projects = projects.map((p) => (p.money?.costs.some((c) => c.id === gone) ? { ...p, money: { ...p.money, costs: p.money.costs.filter((c) => c.id !== gone) } } : p));
           const { costId: _c, ...rest } = att;
           att = rest;
@@ -435,6 +446,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               const n = patch.addClientNote;
               if (!(next.clientNotes ?? []).some((x) => x.at === n.at)) next = { ...next, clientNotes: [...(next.clientNotes ?? []), n].slice(-20) };
             }
+            // The job's name, client and address can be corrected at any time; the job site carries the same three.
+            if (patch.details) next = { ...next, title: patch.details.title.trim() || next.title, clientName: patch.details.clientName.trim(), address: patch.details.address.trim(), updatedAt: new Date().toISOString() };
             if (patch.clientLang) next = { ...next, clientLang: patch.clientLang, clientLangName: patch.clientLang.startsWith('x-') ? patch.clientLangName : undefined };
             if (patch.quoteEdits !== undefined) {
               const { quoteEdits: _old, ...rest } = next;
@@ -454,7 +467,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           const ended = status === 'won' || status === 'lost';
           const events = ended ? dropFollowEvents(d.events, id) : d.events;
           // Status or markup changes on a won job keep its past job (what the app learned) in step.
-          return { ...d, estimates, followups, events, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
+          const named = estimates.find((e) => e.id === id);
+          const projects = patch.details && named ? d.projects.map((p) => (p.estimateId === id ? { ...p, title: named.title, clientName: named.clientName, address: named.address } : p)) : d.projects;
+          return { ...d, estimates, projects, followups, events, pastJobs: wonToPastJobs({ ...d, estimates }, id, status) };
         });
         // Let the contractor's other apps know when a quote goes out or a job is won.
         const after = dataRef.current.estimates.find((e) => e.id === id);
