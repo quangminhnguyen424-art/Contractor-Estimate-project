@@ -128,7 +128,7 @@ export function nextStep(j: Job, now = Date.now()): NextStep {
     };
   }
   if (j.stage === 'sent') {
-    const days = Math.max(0, Math.floor((now - Date.parse(j.est.updatedAt)) / DAY));
+    const days = Math.max(0, Math.floor((now - Date.parse(j.est.sentAt ?? j.est.updatedAt)) / DAY));
     return {
       kind: 'sign', title: `Waiting for ${who} to sign`,
       sub: days ? `Sent ${days} day${days > 1 ? 's' : ''} ago. They can sign from the link, or right here on your phone.` : 'Sent today. They can sign from the link, or right here on your phone.',
@@ -139,7 +139,7 @@ export function nextStep(j: Job, now = Date.now()): NextStep {
   const photos = p ? p.rooms.reduce((t, r) => t + r.photos.length, 0) : 0;
   if (j.stage === 'done') {
     const left = (j.total ?? 0) - j.paid;
-    return left > 0.5 && j.contract
+    return left > 0.5
       ? { kind: 'collect', title: `${usd(left)} left to collect`, sub: 'The job is finished. Send the final invoice.', action: 'Open payments' }
       : { kind: 'wrap', title: 'Finished and paid', sub: 'Nice work. See how the job did.', action: 'See job money' };
   }

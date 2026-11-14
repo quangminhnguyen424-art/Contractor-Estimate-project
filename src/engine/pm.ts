@@ -67,7 +67,7 @@ export function dailyCheckIn(input: {
 
   for (const e of estimates) {
     if (e.status !== 'sent') continue;
-    const sentDays = daysBetween(e.updatedAt.slice(0, 10), today);
+    const sentDays = daysBetween((e.sentAt ?? e.updatedAt).slice(0, 10), today);
     const plan = followups.find((f) => f.estimateId === e.id);
     if (!plan && sentDays >= 2) out.push({ id: `ask-${e.id}`, priority: 6, icon: 'chatbubble-ellipses-outline', text: `"${e.title}" was sent ${sentDays} days ago. Ask ${e.clientName || 'the client'} if they'd like reminders?`, route: `/estimate/${e.id}/follow`, action: 'Ask' });
   }

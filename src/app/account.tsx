@@ -30,9 +30,11 @@ export default function AccountScreen() {
           <Button kind="secondary" title={progress ?? 'Back up all photos now'} icon="cloud-upload-outline" disabled={!!progress}
             onPress={async () => {
               setProgress('Starting…');
-              const n = await cloud.backupNow((d, t) => setProgress(`Uploading ${d + 1} of ${t}…`));
+              const { sent, failed } = await cloud.backupNow((d, t) => setProgress(`Uploading ${d + 1} of ${t}…`));
               setProgress(null);
-              setMsg({ tone: 'ok', text: n ? `${n} photo${n > 1 ? 's' : ''} backed up.` : 'All photos are already backed up.' });
+              setMsg(failed
+                ? { tone: 'warn', text: `${failed} photo${failed > 1 ? 's' : ''} could not be uploaded. Check your connection and try again.` }
+                : { tone: 'ok', text: sent ? `${sent} photo${sent > 1 ? 's' : ''} backed up.` : 'All photos are already backed up.' });
             }} />
           {msg ? <Banner tone={msg.tone} title={msg.text} /> : null}
         </Card>
@@ -51,10 +53,12 @@ export default function AccountScreen() {
             setProgress(null);
             if (err) confirmAction('Not saved to the cloud', err, 'Log out anyway', () => { cloud.signOut(true); });
           })} />
-        <Button kind="danger" title="Delete my account"
-          onPress={() => confirmAction('Delete your Bidwell account?', 'Your account, the cloud copy of your data and all backed-up photos are deleted for good. Data on this phone stays until you erase it under Me → Backup.', 'Delete', async () => {
+        <Button kind="danger" title={progress === 'delete' ? 'Deleting…' : 'Delete my account'} disabled={!!progress}
+          onPress={() => confirmAction('Delete your Bidwell account?', 'Your account, your jobs, clients, prices and all backed-up photos are deleted for good, here and on this phone. This cannot be undone.', 'Delete', async () => {
+            setProgress('delete');
             const err = await cloud.deleteAccount();
-            setMsg(err ? { tone: 'warn', text: err } : { tone: 'ok', text: 'Your account was deleted.' });
+            setProgress(null);
+            if (err) setMsg({ tone: 'warn', text: err });
           })} />
       </Screen>
     );

@@ -586,7 +586,7 @@ export function qtyWithUnit(qty: number, unit: PriceUnit | undefined): string {
   switch (unit ?? 'SF') {
     case 'LF': return `${qty} LF`;
     case 'EA': return `${qty} item${qty === 1 ? '' : 's'}`;
-    case 'JOB': return 'per job';
+    case 'JOB': return qty > 1 ? `${qty} jobs` : 'per job';
     default: return `${qty} SF`;
   }
 }

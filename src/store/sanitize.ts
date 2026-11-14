@@ -236,11 +236,11 @@ function sanitizeTask(v: unknown, photoIds: Set<string>): SiteTask | null {
 
 function sanitizeRoom(v: unknown): SiteRoom | null {
   if (!isObj(v) || typeof v.id !== 'string') return null;
-  const photos = Array.isArray(v.photos) ? v.photos.map(sanitizePhoto).filter((x): x is SitePhoto => !!x).slice(0, 300) : [];
+  const photos = Array.isArray(v.photos) ? v.photos.map(sanitizePhoto).filter((x): x is SitePhoto => !!x).slice(0, 5000) : [];
   const ids = new Set(photos.map((p) => p.id));
   return {
     id: v.id, name: str(v.name, 'Room').trim().slice(0, 40) || 'Room', notes: str(v.notes).slice(0, 3000), photos,
-    tasks: Array.isArray(v.tasks) ? v.tasks.map((t) => sanitizeTask(t, ids)).filter((x): x is SiteTask => !!x).slice(0, 200) : [],
+    tasks: Array.isArray(v.tasks) ? v.tasks.map((t) => sanitizeTask(t, ids)).filter((x): x is SiteTask => !!x).slice(0, 2000) : [],
   };
 }
 
@@ -258,12 +258,12 @@ export function sanitizeProjects(v: unknown): SiteProject[] {
       id: p.id, ...(typeof p.estimateId === 'string' ? { estimateId: p.estimateId } : {}),
       title: str(p.title, 'Job').trim().slice(0, 80) || 'Job', clientName: str(p.clientName).slice(0, 80), address: str(p.address).slice(0, 160),
       status: p.status === 'done' ? 'done' : 'active', createdAt: str(p.createdAt, new Date().toISOString()),
-      rooms: Array.isArray(p.rooms) ? p.rooms.map(sanitizeRoom).filter((x): x is SiteRoom => !!x).slice(0, 60) : [],
+      rooms: Array.isArray(p.rooms) ? p.rooms.map(sanitizeRoom).filter((x): x is SiteRoom => !!x).slice(0, 500) : [],
       logs,
       ...(typeof p.lastClientUpdateAt === 'string' ? { lastClientUpdateAt: p.lastClientUpdateAt } : {}),
       ...(isObj(p.money) ? { money: sanitizeMoney(p.money) } : {}),
     }];
-  }).slice(0, 200);
+  }).slice(0, 5000);
 }
 
 function sanitizePastJob(v: unknown): PastJob | null {
@@ -309,6 +309,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
           exclusionsVi: Array.isArray(e.job.exclusionsVi) ? e.job.exclusionsVi.filter((x) => typeof x === 'string') : [] }
       : undefined,
     createdAt: str(e.createdAt, new Date().toISOString()), updatedAt: str(e.updatedAt, new Date().toISOString()),
+    ...(typeof e.sentAt === 'string' && !Number.isNaN(Date.parse(e.sentAt)) ? { sentAt: e.sentAt } : {}),
   };
 }
 

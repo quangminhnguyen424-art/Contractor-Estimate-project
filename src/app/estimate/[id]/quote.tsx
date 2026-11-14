@@ -37,7 +37,8 @@ export default function QuoteScreen() {
 
   const T = QUOTE_TEXT[lang];
   const sections = quoteSections(est, lang);
-  const sched = scheduleAmounts(est, profile);
+  // A signed job keeps the schedule it was signed with, whatever Settings says today.
+  const sched = (contracts.find((x) => x.estimateId === est.id)?.terms?.schedule ?? scheduleAmounts(est, profile)).filter((s) => s.pct > 0);
   const wd = quoteWording(est, profile, lang);
   const excl = wd.exclusions;
   const isSigned = contracts.some((c) => c.estimateId === est.id && c.accepted);
@@ -74,7 +75,7 @@ export default function QuoteScreen() {
       const signed = c?.accepted;
       // A signed quote is shared exactly as signed. If the estimate changed since, share it unsigned.
       const asSigned = signed && !changedSinceSigned(est, c);
-      const html = asSigned ? await signedQuoteHtml(est, profile, signed, docs) : await docs.doc(quoteHtml(est, profile, lang));
+      const html = asSigned ? await signedQuoteHtml(est, profile, signed, docs, c?.terms?.schedule) : await docs.doc(quoteHtml(est, profile, lang));
       if (signed && changedSinceSigned(est, c)) notify('Shared without the signature', 'The quote changed after the client signed, so this copy is unsigned. Have them sign again or use a change order.');
       const shared = await sharePdf(html, `${T.quote} — ${est.title}`);
       if (shared && est.status === 'draft') updateEstimate(est.id, { status: 'sent' });

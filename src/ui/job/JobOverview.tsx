@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { nextFollowUp } from '@/engine/followup';
+import { contractTotals } from '@/engine/contract';
 import { dateFmt, money } from '@/engine/format';
 import { nextStep, type Job, type NextKind } from '@/engine/job';
 import { dayLabel, upcoming } from '@/engine/schedule';
@@ -25,15 +26,18 @@ const NEXT_ICON: Record<NextKind, React.ComponentProps<typeof Ionicons>['name']>
 export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
   job: Job; onPhotos: () => void; onMoney: () => void; onReopen: () => void;
 }) {
-  const { events, followups, updateEstimate } = useApp();
+  const { events, followups, updateEstimate, profile } = useApp();
   const today = useToday();
   const { est, project, contract } = job;
   const step = nextStep(job);
   const lastNote = est?.clientNotes?.[est.clientNotes.length - 1];
   const warns = est?.checks.filter((c) => c.level === 'warn').length ?? 0;
-  const nextVisit = upcoming(events.filter((e) => (project && e.projectId === project.id) || (est && e.estimateId === est.id)), today, 60)[0];
+  const nextVisit = upcoming(events.filter((e) => !e.title.startsWith('Follow up:') && ((project && e.projectId === project.id) || (est && e.estimateId === est.id))), today, 60)[0];
   const plan = est ? followups?.find((f) => f.estimateId === est.id) : undefined;
   const signedAt = contract?.accepted?.signedAt;
+  // The line under the total must add up to it: with a contract that is the contract's price (change orders included).
+  const ct = est && contract && profile ? contractTotals(est, profile, contract) : null;
+  const shown = est ? (ct ? { price: ct.price, tax: Math.round((ct.total - ct.price) * 100) / 100 } : { price: est.price, tax: est.tax }) : null;
 
   const act = () => {
     if (step.kind === 'send' && est) router.push(`/estimate/${est.id}/quote`);
@@ -58,7 +62,7 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
           style={({ pressed }) => ({ backgroundColor: C.dark, borderRadius: 22, padding: 18, gap: 6, borderWidth: 1, borderColor: '#D6E0FF', opacity: pressed ? 0.85 : 1 })}>
           <Text style={{ color: C.ink2, fontSize: 14 }}>Client total</Text>
           <Text style={{ color: C.accent, fontSize: 36, fontWeight: '800', letterSpacing: -0.5 }}>{money(job.total ?? est.total)}</Text>
-          <Text style={{ color: C.ink2, fontSize: 13 }}>{money(est.price)} + {est.salesTaxPct}% tax {money(est.tax)}{job.paid > 0 ? ` · paid ${money(job.paid)}` : ''}</Text>
+          <Text style={{ color: C.ink2, fontSize: 13 }}>{money(shown?.price ?? est.price)} + {est.salesTaxPct}% tax {money(shown?.tax ?? est.tax)}{job.paid > 0 ? ` · paid ${money(job.paid)}` : ''}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
             <Text style={{ color: C.accentDark, fontWeight: '600', fontSize: 14 }}>Price details{warns ? ` · ${warns} to check` : ''}</Text>
             <Ionicons name="chevron-forward" size={14} color={C.accentDark} />
@@ -94,7 +98,7 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
           <Section title="Quote and contract" />
           <List>
             <ListRow icon="document-text" title="Client quote"
-              sub={signedAt ? `Signed ${dateFmt(signedAt)}` : job.stage === 'draft' ? 'Not sent yet · edit the wording, then send' : job.stage === 'sent' ? `Sent ${dateFmt(est.updatedAt)}` : 'See, edit or send it again'}
+              sub={signedAt ? `Signed ${dateFmt(signedAt)}` : job.stage === 'draft' ? 'Not sent yet · edit the wording, then send' : job.stage === 'sent' ? `Sent ${dateFmt(est.sentAt ?? est.updatedAt)}` : 'See, edit or send it again'}
               onPress={() => router.push(`/estimate/${est.id}/quote`)} />
             {job.stage === 'sent' ? (
               <ListRow icon="notifications" title="Follow-ups"
@@ -108,7 +112,7 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
                 onPress={() => router.push(`/estimate/${est.id}/contract`)} />
             ) : null}
             <ListRow icon="calendar" title="Schedule" sub={nextVisit ? `Next: ${nextVisit.title}, ${dayLabel(nextVisit.date, today)}` : 'Add a visit, crew day or inspection'}
-              onPress={() => router.push(project ? `/event?project=${project.id}` : `/event?estimate=${est.id}`)} />
+              onPress={() => router.push(nextVisit ? `/event?id=${nextVisit.id}` : project ? `/event?project=${project.id}` : `/event?estimate=${est.id}`)} />
           </List>
         </>
       ) : null}

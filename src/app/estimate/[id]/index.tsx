@@ -6,11 +6,12 @@ import { SvgXml } from 'react-native-svg';
 import { Text } from '@/ui/text';
 import { TRADE_NAMES } from '@/engine/catalog';
 import { planSvg, planTotals } from '@/engine/floorplan';
-import { money, qtyFmt } from '@/engine/format';
+import { money, qtyFmt, rate } from '@/engine/format';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
+import { resolvePhotoUri } from '@/ui/photoStore';
 import { AiNote } from '@/ui/AiNote';
 import { confirmAction, notify } from '@/ui/notify';
 
@@ -77,7 +78,7 @@ export default function PriceDetails() {
         {est.mode === 'quick' ? (
           <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: C.line, paddingTop: 12, gap: 8 }}>
             <DarkStat label={cmp.unit === 'JOB' ? 'Priced' : 'Quantity'} value={qtyWithUnit(cmp.sizeSf, cmp.unit)} />
-            <DarkStat label="Your price" value={`${money(cmp.pricePerSf)}${perUnit(cmp.unit)}`} accent />
+            <DarkStat label="Your price" value={`${rate(cmp.pricePerSf)}${perUnit(cmp.unit)}`} accent />
           </View>
         ) : (
           <View style={{ flexDirection: 'row', borderTopWidth: 1, borderColor: C.line, paddingTop: 12, gap: 8 }}>
@@ -103,7 +104,7 @@ export default function PriceDetails() {
 
       <Banner
         tone={cmp.flag === 'ok' ? 'ok' : cmp.flag === 'none' ? 'info' : 'warn'}
-        title={cmp.pricePerSf > 0 && cmp.unit !== 'JOB' ? `${money(cmp.pricePerSf)}${perUnit(cmp.unit)} on ${qtyWithUnit(cmp.sizeSf, cmp.unit)}` : 'Your price check'}>
+        title={cmp.pricePerSf > 0 && cmp.unit !== 'JOB' ? `${rate(cmp.pricePerSf)}${perUnit(cmp.unit)} on ${qtyWithUnit(cmp.sizeSf, cmp.unit)}` : 'Your price check'}>
         {cmp.message}
       </Banner>
 
@@ -174,7 +175,7 @@ export default function PriceDetails() {
 
       {est.photos.length > 0 ? (
         <ScrollView horizontal contentContainerStyle={{ gap: 6 }}>
-          {est.photos.map((uri) => <Image key={uri} source={{ uri }} style={{ width: 90, height: 90, borderRadius: 8 }} />)}
+          {est.photos.map((uri) => <Image key={uri} source={{ uri: resolvePhotoUri(uri) }} style={{ width: 90, height: 90, borderRadius: 8 }} />)}
         </ScrollView>
       ) : null}
 

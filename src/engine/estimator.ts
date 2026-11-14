@@ -1,3 +1,4 @@
+import { rate } from './format';
 import { ASSEMBLY_BY_ID, MATERIAL_BY_ID, TRADE_ORDER } from './catalog';
 import { runChecks } from './checks';
 import { FINISH_FACTOR, FINISH_LABOR_FACTOR, FINISH_LABOR_TRADES, jobType, mainQuantity, num, perUnit, yes } from './jobTypes';
@@ -79,7 +80,7 @@ export function historyPerSf(jobTypeId: JobTypeId, finish: FinishLevel, pastJobs
 /** The comparison message for a price that is `diff` (fraction) away from the reference. */
 export function compareMessage(diff: number, ref: number, refLabel: string, unit: PriceUnit | undefined) {
   const pct = Math.round(Math.abs(diff) * 100);
-  const per = `$${ref.toFixed(0)}${perUnit(unit)}`;
+  const per = `${rate(ref)}${perUnit(unit)}`;
   if (diff > 0.2) return { flag: 'high' as const, message: `${pct}% above ${refLabel} (${per}). Check scope or quantities.` };
   if (diff < -0.2) return { flag: 'low' as const, message: `${pct}% below ${refLabel} (${per}). Make sure nothing is missing.` };
   return { flag: 'ok' as const, message: `In line with ${refLabel} (${per}).` };
@@ -145,12 +146,14 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
   if ((input.mode === 'quick' && input.jobTypeId !== 'small') || !jt.detailed) {
     // Quick mode: the preset IS the client price. Markup doesn't change it (cost is shown as an estimate only).
     const perSf = presetFor(input.jobTypeId, input.finish, input.presets);
-    const mainPrice = Math.round(sizeSf * perSf);
+    // A per-job price can be for several of the same (3 panels): Quick price saves how many in `jobCount`.
+    const qty = jt.unit === 'JOB' ? Math.min(999, Math.max(1, Math.round(Number(input.answers.jobCount) || 1))) : sizeSf;
+    const mainPrice = Math.round(qty * perSf);
     const price = mainPrice + extrasTotal;
     const cost = round2(price / (1 + markupRate));
     const markup = round2(price - cost);
     const tax = round2(price * input.salesTaxPct / 100);
-    const comparison = comparePrice(input.jobTypeId, input.finish, sizeSf, mainPrice, input.presets, input.pastJobs);
+    const comparison = comparePrice(input.jobTypeId, input.finish, qty, mainPrice, input.presets, input.pastJobs);
     return {
       extras, lines: [], materials: [],
       trades: [{ trade: 'general', labor: 0, materials: 0, cost, price }],

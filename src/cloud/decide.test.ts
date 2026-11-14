@@ -14,9 +14,14 @@ describe('cloud sync decisions', () => {
     expect(decide({ uid: 'u', meta: null, remote: { updatedAt: '2026-01-01T00:00:00Z' }, localChange: t('2026-11-01T00:00:00Z'), localEmpty: true })).toBe('pull');
     expect(decide({ uid: 'u', meta: { ...meta, uid: 'other' }, remote: { updatedAt: '2026-01-01T00:00:00Z' }, localChange: t('2026-11-05T00:00:00Z'), localEmpty: false })).toBe('pull');
   });
-  it('first sync on a phone with data: the newer side wins', () => {
-    expect(decide({ uid: 'u', meta: null, remote: { updatedAt: '2026-11-01T00:00:00Z' }, localChange: t('2026-11-03T00:00:00Z'), localEmpty: false })).toBe('push');
+  it('a phone that never synced takes the account’s saved work, never replaces it', () => {
+    expect(decide({ uid: 'u', meta: null, remote: { updatedAt: '2026-11-01T00:00:00Z' }, localChange: t('2026-11-03T00:00:00Z'), localEmpty: false })).toBe('pull');
     expect(decide({ uid: 'u', meta: null, remote: { updatedAt: '2026-11-05T00:00:00Z' }, localChange: t('2026-11-03T00:00:00Z'), localEmpty: false })).toBe('pull');
+    expect(decide({ uid: 'u', meta: null, remote: null, localChange: t('2026-11-03T00:00:00Z'), localEmpty: false })).toBe('push');
+  });
+  it('another account’s work on the phone is never sent: it is cleared when this account has nothing yet', () => {
+    expect(decide({ uid: 'u', meta: { ...meta, uid: 'other' }, remote: null, localChange: t('2026-11-03T00:00:00Z'), localEmpty: false })).toBe('wipe');
+    expect(decide({ uid: 'u', meta: { ...meta, uid: 'other' }, remote: null, localChange: 0, localEmpty: true })).toBe('none');
   });
   it('one side changed: that side wins; neither: nothing', () => {
     expect(decide({ uid: 'u', meta, remote: { updatedAt: '2026-11-04T12:00:00.000Z' }, localChange: meta.syncedChange, localEmpty: false })).toBe('pull');

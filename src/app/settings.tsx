@@ -48,7 +48,7 @@ export default function Settings() {
   const set = <K extends keyof Profile>(k: K, v: Profile[K]) => { setP({ ...p, [k]: v }); setDirty(true); };
   const toggle = (id: JobTypeId) => set('specialties', p.specialties.includes(id) ? p.specialties.filter((x) => x !== id) : [...p.specialties, id]);
   const setMilestone = (i: number, patch: Partial<PaymentMilestone>) => set('schedule', p.schedule.map((m, j) => (j === i ? { ...m, ...patch } : m)));
-  const schedTotal = p.schedule.reduce((t, m) => t + m.pct, 0);
+  const schedTotal = Math.round(p.schedule.reduce((t, m) => t + m.pct, 0) * 100) / 100;
 
   const save = () => {
     saveProfile({ ...p, specialties: Array.from(new Set([...p.specialties, 'small' as JobTypeId])) });
@@ -274,9 +274,14 @@ export default function Settings() {
           <Field label="Restore from backup" multiline value={backupText} onChangeText={setBackupText}
             placeholder="Paste the backup text here" autoCapitalize="none" autoCorrect={false} />
           <Button kind="secondary" title="Restore backup" disabled={backupText.trim().length < 10} onPress={restore} />
-          <Pressable accessibilityRole="button" onPress={reset} style={{ alignSelf: 'center', padding: 12 }}>
-            <Text style={{ color: C.danger, fontWeight: '600' }}>Erase all data on this device</Text>
-          </Pressable>
+          {cloud.user ? (
+            // Signed in, an erased phone simply fills again from the account; the real choices are below.
+            <Muted style={{ fontSize: 13 }}>{'To take your work off this phone, log out under Me > Account (it stays in your account). To remove it for good, delete your account there.'}</Muted>
+          ) : (
+            <Pressable accessibilityRole="button" onPress={reset} style={{ alignSelf: 'center', padding: 12 }}>
+              <Text style={{ color: C.danger, fontWeight: '600' }}>Erase all data on this device</Text>
+            </Pressable>
+          )}
         </>
       )}
     </Screen>

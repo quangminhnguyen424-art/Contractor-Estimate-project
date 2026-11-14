@@ -139,6 +139,15 @@ interface Ctx extends Persisted {
 const AppContext = createContext<Ctx | null>(null);
 
 /** Removes upcoming "Follow up:" reminders for a quote (and their phone notifications). */
+/** A deleted job takes its visits, crew days and their reminders off the calendar. */
+function dropJobEvents(events: CalEvent[], match: (e: CalEvent) => boolean): CalEvent[] {
+  return events.filter((e) => {
+    if (!match(e)) return true;
+    cancelReminder(e.notificationId);
+    return false;
+  });
+}
+
 function dropFollowEvents(events: CalEvent[], estimateId: string): CalEvent[] {
   return events.filter((e) => {
     const drop = e.estimateId === estimateId && !e.done && e.title.startsWith('Follow up:');
@@ -242,6 +251,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         description: d.description.trim(), scopeNote: d.scopeNote.trim(), aiNotes: d.aiNotes ?? existing?.aiNotes ?? [], photos: d.photos, finish: d.finish, answers: d.answers,
         customItems: d.customItems, markupPct, salesTaxPct: profile.salesTaxPct, ...r,
         plan: d.plan?.length ? d.plan : undefined,
+        // Editing the job details re-prices it; the quote's own wording, the client's language and their notes stay.
+        ...(existing?.quoteEdits ? { quoteEdits: existing.quoteEdits } : {}),
+        ...(existing?.clientLang ? { clientLang: existing.clientLang, clientLangName: existing.clientLangName } : {}),
+        ...(existing?.clientNotes ? { clientNotes: existing.clientNotes } : {}),
+        ...(existing?.sentAt ? { sentAt: existing.sentAt } : {}),
       };
     },
     [],
@@ -297,7 +311,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateProject: (id, fn) =>
         update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? fn(p) : p)) })),
       addProject: (p) => update((d) => ({ ...d, projects: [p, ...d.projects.filter((x) => x.id !== p.id)] })),
-      deleteProject: (id) => update((d) => ({ ...d, projects: d.projects.filter((p) => p.id !== id) })),
+      deleteProject: (id) => update((d) => ({ ...d, projects: d.projects.filter((p) => p.id !== id), events: dropJobEvents(d.events, (e) => e.projectId === id && !e.estimateId) })),
       projectForEstimate: (estimateId) => {
         const cur = dataRef.current;
         const existing = cur.projects.find((p) => p.estimateId === estimateId);
@@ -415,7 +429,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         update((d) => {
           const estimates = d.estimates.map((e) => {
             if (e.id !== id) return e;
-            let next = { ...e, status: patch.status ?? e.status };
+            let next: Estimate = { ...e, status: patch.status ?? e.status };
+            if (patch.status === 'sent' && e.status !== 'sent') next = { ...next, sentAt: new Date().toISOString() };
             if (patch.addClientNote) {
               const n = patch.addClientNote;
               if (!(next.clientNotes ?? []).some((x) => x.at === n.at)) next = { ...next, clientNotes: [...(next.clientNotes ?? []), n].slice(-20) };
@@ -451,13 +466,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
       deleteEstimate: (id) => update((d) => ({
         ...d, estimates: d.estimates.filter((e) => e.id !== id), contracts: d.contracts.filter((c) => c.estimateId !== id),
-        followups: (d.followups ?? []).filter((f) => f.estimateId !== id), events: dropFollowEvents(d.events, id),
+        followups: (d.followups ?? []).filter((f) => f.estimateId !== id), events: dropJobEvents(d.events, (e) => e.estimateId === id),
       })),
       resetAll: (keepPhotos) => {
         setDraft(null);
         cancelAllReminders();
         if (!keepPhotos) toDelete.current.push(...dataRef.current.projects.flatMap((x) => x.rooms.flatMap((r) => r.photos.map((ph) => ph.uri))));
         update(() => EMPTY);
+        // The assistant conversation and a personal AI key belong to the account that is leaving.
+        setApiKey('');
+        AsyncStorage.multiRemove([AI_KEY, 'estimating-app/chat']).catch(() => {});
       },
       deletePhotosLater: (uris) => { toDelete.current.push(...uris); },
       apiKey,

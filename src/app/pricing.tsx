@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native';
 import { tr } from '@/i18n';
 import { Text } from '@/ui/text';
 import { historyPerSf, presetFor } from '@/engine/estimator';
-import { dateFmt, money, newId } from '@/engine/format';
+import { dateFmt, money, newId, rate } from '@/engine/format';
 import { FINISH_LABELS, jobType, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -51,7 +51,7 @@ export default function Pricing() {
             </View>
             {learned.length > 0 ? (
               <Text style={{ color: C.okInk, fontSize: 13 }}>
-                Learned from your jobs: {learned.map((x) => `${tr(FINISH_LABELS[x.f].en)} ${money(x.h.perSf!)}${per} (${x.h.count})`).join(' · ')}
+                Learned from your jobs: {learned.map((x) => `${tr(FINISH_LABELS[x.f].en)} ${rate(x.h.perSf!)}${per} (${x.h.count})`).join(' · ')}
               </Text>
             ) : (
               <Muted style={{ fontSize: 13 }}>Add past jobs of this type, or mark estimates Won, to see what you really charge.</Muted>

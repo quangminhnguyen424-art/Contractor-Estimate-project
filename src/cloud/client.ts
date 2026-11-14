@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient, type Session } from '@supabase/supabase-js';
+import { createClient, type Session, type User } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
 import { CLOUD } from './config';
@@ -15,6 +15,21 @@ if (Platform.OS !== 'web') {
     if (s === 'active') supabase.auth.startAutoRefresh();
     else supabase.auth.stopAutoRefresh();
   });
+}
+
+/**
+ * The user of the login kept on this phone, read without the network. Used when the app starts with no signal and
+ * the login cannot be refreshed: the session is still stored, so the user stays in their own data.
+ */
+export async function storedUser(): Promise<User | null> {
+  try {
+    const ref = new URL(CLOUD.url).hostname.split('.')[0];
+    const raw = await AsyncStorage.getItem(`sb-${ref}-auth-token`);
+    const user = raw ? (JSON.parse(raw) as { user?: User }).user : null;
+    return user && typeof user.id === 'string' ? user : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function currentSession(): Promise<Session | null> {

@@ -134,7 +134,8 @@ export function NumberField({ label, value, onChange, suffix, help, style, decim
   // When the value changes from outside (not from typing here), show the new value.
   if (value !== lastValue && !(Number.isNaN(value) && Number.isNaN(lastValue))) {
     setLastValue(value);
-    if (parseFloat(text) !== value) setText(Number.isFinite(value) ? String(value) : '');
+    // An emptied box means 0: leave it empty so the next digit typed is not "05".
+    if ((text === '' ? 0 : parseFloat(text)) !== value) setText(Number.isFinite(value) ? String(value) : '');
   }
   return (
     <Field
@@ -146,7 +147,10 @@ export function NumberField({ label, value, onChange, suffix, help, style, decim
       keyboardType={decimals ? 'decimal-pad' : 'number-pad'}
       inputMode={decimals ? 'decimal' : 'numeric'}
       onChangeText={(t) => {
-        const clean = t.replace(/[^0-9.]/g, '');
+        // Phones set to a comma decimal (Vietnam, Spain, Latin America) type "12,5": that is 12.5, not 125.
+        const dotted = decimals && !t.includes('.') && (t.match(/,/g) ?? []).length === 1 ? t.replace(',', '.') : t;
+        const [whole, ...rest] = dotted.replace(/[^0-9.]/g, '').split('.');
+        const clean = rest.length ? `${whole}.${rest.join('')}` : whole;
         setText(clean);
         const n = parseFloat(clean);
         onChange(Number.isFinite(n) ? n : 0);

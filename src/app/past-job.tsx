@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Text } from '@/ui/text';
-import { money, newId } from '@/engine/format';
+import { money, newId, rate } from '@/engine/format';
 import { FINISH_LABELS, jobType, perUnit } from '@/engine/jobTypes';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
@@ -74,7 +74,7 @@ export default function PastJobScreen() {
         )}
         <NumberField label="Price charged" suffix="$" value={price} onChange={setPrice} style={{ flex: 1 }} help="Before tax" />
       </View>
-      {qty > 0 && price > 0 && unit !== 'JOB' ? <Text style={{ color: C.okInk, fontWeight: '600' }}>{money(price / qty)}{perUnit(unit)}</Text> : null}
+      {qty > 0 && price > 0 && unit !== 'JOB' ? <Text style={{ color: C.okInk, fontWeight: '600' }}>{rate(Math.round((price / qty) * 100) / 100)}{perUnit(unit)}</Text> : null}
       <Label>Finish level</Label>
       <Segmented<FinishLevel> value={finish} onChange={setFinish}
         options={(['basic', 'mid', 'high'] as FinishLevel[]).map((f) => ({ value: f, label: FINISH_LABELS[f].en }))} />

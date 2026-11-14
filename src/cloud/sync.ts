@@ -25,6 +25,13 @@ export async function loadMeta(): Promise<SyncMeta | null> {
 export const clearMeta = () => AsyncStorage.removeItem(META).catch(() => {});
 export const saveMeta = (m: SyncMeta) => AsyncStorage.setItem(META, JSON.stringify(m)).catch(() => {});
 
+/** When the cloud copy last changed, without downloading it. Null: this account has nothing in the cloud yet. */
+export async function workspaceStamp(uid: string): Promise<{ updatedAt: string } | null> {
+  const { data, error } = await supabase.from('workspaces').select('updated_at').eq('user_id', uid).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? { updatedAt: data.updated_at as string } : null;
+}
+
 export async function pullWorkspace(uid: string): Promise<{ data: unknown; updatedAt: string } | null> {
   const { data, error } = await supabase.from('workspaces').select('data, updated_at').eq('user_id', uid).maybeSingle();
   if (error) throw new Error(error.message);
@@ -49,8 +56,28 @@ export function photoUris(d: Persisted): string[] {
   return [...out];
 }
 
-/** Uploads photos the cloud doesn't have yet. Returns how many were sent. */
-export async function backupPhotos(uid: string, d: Persisted, onProgress?: (done: number, total: number) => void): Promise<number> {
+let backingUp = false;
+let restoring = false;
+
+/** A photo that came down from storage, as bytes. React Native's Blob has no arrayBuffer(), so read it the way it can. */
+function blobBytes(blob: Blob): Promise<Uint8Array> {
+  if (typeof (blob as { arrayBuffer?: unknown }).arrayBuffer === 'function') return blob.arrayBuffer().then((b) => new Uint8Array(b));
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read the photo.'));
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+/** Uploads photos the cloud doesn't have yet, one run at a time. Says how many were sent and how many could not be. */
+export async function backupPhotos(uid: string, d: Persisted, onProgress?: (done: number, total: number) => void): Promise<{ sent: number; failed: number }> {
+  if (backingUp) return { sent: 0, failed: 0 };
+  backingUp = true;
+  try { return await backupPhotosNow(uid, d, onProgress); } finally { backingUp = false; }
+}
+
+async function backupPhotosNow(uid: string, d: Persisted, onProgress?: (done: number, total: number) => void): Promise<{ sent: number; failed: number }> {
   let done: Set<string>;
   try {
     done = new Set(JSON.parse((await AsyncStorage.getItem(UPLOADED)) ?? '[]') as string[]);
@@ -59,30 +86,39 @@ export async function backupPhotos(uid: string, d: Persisted, onProgress?: (done
   }
   const todo = photoUris(d).map((u) => ({ u, name: photoCloudName(u) })).filter((x): x is { u: string; name: string } => !!x.name && !done.has(`${uid}/${x.name}`));
   let sent = 0;
+  let failed = 0;
   for (const [i, x] of todo.entries()) {
     onProgress?.(i, todo.length);
     const bytes = await photoBytes(x.u);
-    if (!bytes) continue;
-    const { error } = await supabase.storage.from('photos').upload(`${uid}/${x.name}`, bytes, { contentType: 'image/jpeg', upsert: true });
-    if (error) continue;
+    if (!bytes) continue; // the file is not on this phone (it lives on another one)
+    const { error } = await supabase.storage.from('photos').upload(`${uid}/${x.name}`, bytes, { contentType: 'image/jpeg', upsert: true }).catch((e: unknown) => ({ error: e }));
+    if (error) { failed++; continue; }
     done.add(`${uid}/${x.name}`);
     sent++;
     if (sent % 5 === 0) await AsyncStorage.setItem(UPLOADED, JSON.stringify([...done])).catch(() => {});
   }
   await AsyncStorage.setItem(UPLOADED, JSON.stringify([...done])).catch(() => {});
-  return sent;
+  return { sent, failed };
 }
 
 /** Downloads photos the data needs but this phone doesn't have (a new phone, or after a reinstall). */
 export async function restorePhotos(uid: string, d: Persisted): Promise<number> {
+  if (restoring) return 0;
+  restoring = true;
   let got = 0;
-  for (const u of photoUris(d)) {
-    const name = photoCloudName(u);
-    if (!name || (await hasPhoto(u))) continue;
-    const { data, error } = await supabase.storage.from('photos').download(`${uid}/${name}`);
-    if (error || !data) continue;
-    await restorePhoto(u, new Uint8Array(await data.arrayBuffer()));
-    got++;
+  try {
+    for (const u of photoUris(d)) {
+      const name = photoCloudName(u);
+      if (!name || (await hasPhoto(u))) continue;
+      try {
+        const { data, error } = await supabase.storage.from('photos').download(`${uid}/${name}`);
+        if (error || !data) continue;
+        await restorePhoto(u, await blobBytes(data));
+        got++;
+      } catch { /* this one next time: restore runs again after every sync */ }
+    }
+  } finally {
+    restoring = false;
   }
   return got;
 }

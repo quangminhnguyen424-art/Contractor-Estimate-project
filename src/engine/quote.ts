@@ -107,10 +107,11 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 /** HTML used for the PDF the client receives. */
 /** `accepted` is the client's signature block when they signed in the app (see contract.ts). */
-export function quoteHtml(est: Estimate, profile: Profile, lang: Lang, accepted?: string, saleDate: Date = new Date()): string {
+/** `schedule`: the payment schedule frozen at signing, for a signed job; otherwise today's from Settings. A 0% step is not printed. */
+export function quoteHtml(est: Estimate, profile: Profile, lang: Lang, accepted?: string, saleDate: Date = new Date(), schedule?: { label: string; pct: number; amount: number }[]): string {
   const T = QUOTE_TEXT[lang];
   const sections = quoteSections(est, lang);
-  const sched = scheduleAmounts(est, profile);
+  const sched = (schedule ?? scheduleAmounts(est, profile)).filter((s) => s.pct > 0);
   const wd = quoteWording(est, profile, lang);
   const excl = wd.exclusions;
   const quoteNo = est.id.slice(-6).toUpperCase();

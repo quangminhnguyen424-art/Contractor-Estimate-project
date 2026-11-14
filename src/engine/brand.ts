@@ -17,3 +17,12 @@ export function payHtml(profile: Profile, lang: 'en' | 'vi' = 'en'): string {
   const T = lang === 'vi' ? { h: 'Cách thanh toán', pay: 'Thanh toán online' } : { h: 'How to pay', pay: 'Pay online' };
   return `<h2>${T.h}</h2><div class="box">${link ? `<div><a href="${esc(link)}" style="display:inline-block;background:#2457F5;color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-weight:600">${T.pay}</a> <span class="muted">${esc(link)}</span></div>` : ''}${profile.payNote ? `<div style="margin-top:6px">${esc(profile.payNote)}</div>` : ''}</div>`;
 }
+
+// A signed quote is kept with the job, in up to three languages. The logo inside each copy is large (it is the
+// same image every time), so while stored it is swapped for a short mark and put back when the copy is shown.
+const LOGO_MARK = 'data:image/x-bidwell-logo,';
+const NO_LOGO = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+export const packSigned = (html: string, profile: Profile): string =>
+  (profile.logo && html.includes(profile.logo) ? html.split(profile.logo).join(LOGO_MARK) : html);
+export const unpackSigned = (html: string, profile: Profile): string =>
+  (html.includes(LOGO_MARK) ? html.split(LOGO_MARK).join(profile.logo || NO_LOGO) : html);

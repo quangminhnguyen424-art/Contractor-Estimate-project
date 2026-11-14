@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { buildEstimate, presetFor } from '@/engine/estimator';
-import { money } from '@/engine/format';
+import { money, rate } from '@/engine/format';
 import { defaultAnswers, FINISH_LABELS, JOB_TYPES, jobType, perUnit } from '@/engine/jobTypes';
 import type { SiteProject } from '@/engine/site';
 import type { FinishLevel, JobTypeId } from '@/engine/types';
@@ -37,13 +37,12 @@ export function QuickPrice({ initialType, project }: { initialType?: JobTypeId |
   const pickType = (id: JobTypeId) => { setType(id); setSize(Number(defaultAnswers(id).sizeSf) || 0); };
   const setPrice = (v: number) => savePresets({ ...presets, [type]: { ...jt.defaultPreset, ...presets[type], [finish]: v } });
 
-  const answers = { ...defaultAnswers(type), sizeSf: qty };
+  const answers = perJob ? { ...defaultAnswers(type), sizeSf: 1, jobCount: count } : { ...defaultAnswers(type), sizeSf: qty };
   const preview = profile ? buildEstimate({
     jobTypeId: type, mode: 'quick', finish, answers, customItems: [], markupPct: profile.markupPct, minMarkupPct: profile.minMarkupPct,
     salesTaxPct: profile.salesTaxPct, priceBook, presets, pastJobs,
   }) : null;
-  // A per-job price (e.g. a panel) times how many of them.
-  const subtotal = perJob ? Math.round(price * count) : preview?.price ?? 0;
+  const subtotal = preview?.price ?? 0;
   const tax = Math.round(subtotal * (profile?.salesTaxPct ?? 0)) / 100;
 
   const create = () => {
@@ -54,7 +53,7 @@ export function QuickPrice({ initialType, project }: { initialType?: JobTypeId |
       : count > 1 ? `${count} × ${name}, ${size.toLocaleString('en-US')} ${unit} each (${qty.toLocaleString('en-US')} ${unit} total), same scope and finish.` : '';
     const id = commitDraft({
       jobTypeId: type, mode: 'quick', title: `${client.trim() ? `${client.trim()} — ` : ''}${many}`, clientName: client.trim(), address: address.trim(),
-      description: '', scopeNote: scope, photos: [], finish, answers: perJob ? { ...answers, sizeSf: 1 } : answers, customItems: [], heard: [],
+      description: '', scopeNote: scope, photos: [], finish, answers, customItems: [], heard: [],
       ...(project ? { projectId: project.id } : {}),
     });
     // Start clean next time, and open the job on top of the tabs so Back works.
@@ -82,7 +81,7 @@ export function QuickPrice({ initialType, project }: { initialType?: JobTypeId |
 
       <View style={{ backgroundColor: C.infoBg, borderRadius: 20, padding: 16, gap: 6 }}>
         <Text style={{ color: C.ink2, fontSize: 14 }}>
-          {perJob ? `${count} × ${money(price)}` : `${count > 1 ? `${count} × ` : ''}${size.toLocaleString('en-US')} ${unit} × ${money(price)}${perUnit(jt.unit)}`}
+          {perJob ? `${count} × ${rate(price)}` : `${count > 1 ? `${count} × ` : ''}${size.toLocaleString('en-US')} ${unit} × ${rate(price)}${perUnit(jt.unit)}`}
         </Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Text style={{ color: C.ink, fontSize: 15 }}>Client price</Text>

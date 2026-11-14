@@ -3,12 +3,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, View } from 'react-native';
 
 import { Text } from '@/ui/text';
 import { guessJobType, type ImageInput, type ScopeResult } from '@/engine/ai';
 import { historyPerSf } from '@/engine/estimator';
-import { money } from '@/engine/format';
+import { rate } from '@/engine/format';
 import { answersFromPlan, planTotals } from '@/engine/floorplan';
 import { defaultAnswers, isJobTypeId, JOB_TYPES, jobType, perUnit } from '@/engine/jobTypes';
 import { INDOOR_NOTE, isIndoorType, suggestFromScan } from '@/engine/recommend';
@@ -23,11 +23,15 @@ import { Composer } from '@/ui/Composer';
 import { QuickPrice } from '@/ui/QuickPrice';
 import { notify } from '@/ui/notify';
 import { aiFor, inClaudeApp } from '@/ui/host';
+import { useCloud } from '@/cloud/CloudProvider';
 import { toAiImages } from '@/ui/photos';
+import { resolvePhotoUri, savePhoto } from '@/ui/photoStore';
 
 export default function NewEstimate() {
   const { profile, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects } = useApp();
-  const claudeOn = aiAllowed && (!!apiKey || inClaudeApp);
+  const cloud = useCloud();
+  // The AI is reachable with a Bidwell account, a personal key, or inside the Claude app.
+  const claudeOn = aiAllowed && (!!apiKey || inClaudeApp || !!cloud.user);
   const params = useLocalSearchParams<{ type?: string; project?: string }>();
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(params.type && isJobTypeId(params.type) ? params.type : null);
   // Coming from a Bidwell suggestion on the scan screen picks that type (also when this tab was already open).
@@ -82,7 +86,10 @@ export default function NewEstimate() {
       const res = camera
         ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.6 });
-      if (!res.canceled) setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, 20));
+      if (res.canceled) return;
+      // Keep the photos in the app's own folder: the picker's copies are temporary and are never backed up.
+      const kept = await Promise.all(res.assets.map((a) => (Platform.OS === 'web' ? a.uri : savePhoto(a.uri, a.width).then((x) => x.uri).catch(() => a.uri))));
+      setPhotos((p) => [...p, ...kept].slice(0, 20));
     } catch {
       notify('Photos unavailable', 'Could not open photos on this device.');
     }
@@ -114,7 +121,7 @@ export default function NewEstimate() {
     let images: ImageInput[] = [];
     let skipped = 0;
     if (claudeOn && photos.length > 0) {
-      const r = await toAiImages(photos, 8).catch(() => ({ images: [], failed: photos.length }));
+      const r = await toAiImages(photos.map(resolvePhotoUri), 8).catch(() => ({ images: [], failed: photos.length }));
       images = r.images;
       skipped = r.failed + Math.max(0, photos.length - 8);
     }
@@ -124,7 +131,7 @@ export default function NewEstimate() {
     const ctx = {
       about: profile?.about,
       work: workSummary(profile?.work),
-      history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${money(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
+      history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${rate(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
       scope: pendingPlan?.length && isIndoorType(type) ? INDOOR_NOTE : undefined,
       prices: lessonsContext(lessons ?? []),
       language: aiLanguage(),
@@ -194,7 +201,7 @@ export default function NewEstimate() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
             {photos.map((uri) => (
               <Pressable key={uri} accessibilityLabel="Remove photo" onPress={() => setPhotos((p) => p.filter((x) => x !== uri))}>
-                <Image source={{ uri }} style={{ width: 52, height: 52, borderRadius: 10 }} />
+                <Image source={{ uri: resolvePhotoUri(uri) }} style={{ width: 52, height: 52, borderRadius: 10 }} />
                 <View style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(11,19,36,0.7)', alignItems: 'center', justifyContent: 'center' }}>
                   <Ionicons name="close" size={12} color="#FFFFFF" />
                 </View>

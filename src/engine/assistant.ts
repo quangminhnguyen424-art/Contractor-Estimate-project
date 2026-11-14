@@ -1,6 +1,6 @@
 // The home-screen assistant: what Claude knows about this contractor, and the "start an estimate" action.
 import { historyPerSf, presetFor } from './estimator';
-import { money } from './format';
+import { money, rate } from './format';
 import { estimateJob, isJobTypeId, JOB_TYPES, jobType, perUnit } from './jobTypes';
 import { workSummary } from './profile';
 import type { Estimate, JobTypeId, PastJob, Presets, Profile } from './types';
@@ -20,8 +20,8 @@ export function assistantSystem(d: AssistantData, today = new Date()): string {
     const jt = jobType(id);
     const per = perUnit(jt.unit);
     const h = historyPerSf(id, 'mid', d.pastJobs);
-    const set = (['basic', 'mid', 'high'] as const).map((f) => `${f} ${money(presetFor(id, f, d.presets))}${per}`).join(', ');
-    return `- ${jt.name} (id ${id}): ${set}${h.perSf ? `; past jobs average ${money(h.perSf)}${per} (${h.count})` : ''}`;
+    const set = (['basic', 'mid', 'high'] as const).map((f) => `${f} ${rate(presetFor(id, f, d.presets))}${per}`).join(', ');
+    return `- ${jt.name} (id ${id}): ${set}${h.perSf ? `; past jobs average ${rate(h.perSf)}${per} (${h.count})` : ''}`;
   });
   const recent = d.estimates.slice(0, 12).map((e) =>
     `- ${e.title} · ${estimateJob(e).name} · ${e.status} · ${money(e.price)} before tax · ${e.updatedAt.slice(0, 10)}`);

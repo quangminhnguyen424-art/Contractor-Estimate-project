@@ -6,6 +6,9 @@ export const money = (n: number) =>
 export const money2 = (n: number) =>
   `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+/** A price per unit ($2.75/SF): whole dollars when it is whole, cents when it is not, never rounded to a different price. */
+export const rate = (n: number) => (Math.abs(n * 100 - Math.round(n) * 100) < 0.5 ? money(n) : money2(n));
+
 export const qtyFmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, ''));
 
 /** A date like "Nov 13, 2026". With a language it is for a client document; without, for the contractor's own screen. */

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
+import { packSigned } from '@/engine/brand';
 import { acceptedBlock, changedSinceSigned, hasInk, signatureSvg, termsFrom } from '@/engine/contract';
 import { dateFmt, money } from '@/engine/format';
 import { quoteHtml } from '@/engine/quote';
@@ -64,7 +65,9 @@ export default function SignScreen() {
       setBusy(true);
       try { html.client = await docs.doc(html.en); } catch { /* the English copy is the record */ } finally { setBusy(false); }
     }
-    updateContract(est.id, (c) => ({ ...c, accepted: { ...sig, html }, terms: termsFrom(est, profile) }));
+    const kept = Object.fromEntries(Object.entries(html).map(([k, v]) => [k, packSigned(v, profile)]));
+    // Once an invoice has gone out, the amounts it was cut from stay: a new price after that is a change order.
+    updateContract(est.id, (c) => ({ ...c, accepted: { ...sig, html: kept }, terms: c.invoices.length && c.terms ? c.terms : termsFrom(est, profile) }));
     if (est.status !== 'won') updateEstimate(est.id, { status: 'won' });
     emit('quote.signed', { estimate: { id: est.id, title: est.title, client: est.clientName, total: est.total }, signedBy: sig.name, signedAt: sig.signedAt });
     celebrate();
@@ -77,7 +80,7 @@ export default function SignScreen() {
     if (!signed) return;
     setBusy(true);
     try {
-      await sharePdf(await signedQuoteHtml(est, profile, signed, docs), `Signed quote — ${est.title}`);
+      await sharePdf(await signedQuoteHtml(est, profile, signed, docs, contract?.terms?.schedule), `Signed quote — ${est.title}`);
     } catch (e) {
       if (!translateFailed(e, docs.target)) notify('Could not create the PDF', 'Please try again.');
     } finally {

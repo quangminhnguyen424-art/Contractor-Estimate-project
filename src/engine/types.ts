@@ -328,6 +328,8 @@ export interface Estimate {
    * the contractor typed in. Unset: the contractor's own. Documents are written in English or Vietnamese and
    * translated into any other language when they are sent. (`en` / `vi` were saved by earlier versions.)
    */
+  /** When the status last became "sent" (for "sent N days ago"). Older estimates have none: `updatedAt` stands in. */
+  sentAt?: string;
   clientLang?: string;
   clientLangName?: string;
   /** "Request changes" messages the client sent from a signing link, newest last. */

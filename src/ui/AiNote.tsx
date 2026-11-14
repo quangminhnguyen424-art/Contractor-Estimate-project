@@ -2,6 +2,7 @@ import { Image, Pressable, View } from 'react-native';
 
 import { Text } from '@/ui/text';
 import { C } from './kit';
+import { resolvePhotoUri } from './photoStore';
 
 /** One thing Claude noticed. Findings from a photo ("Photo 2: …") show that photo, so you can see it for yourself. */
 export function AiNote({ note, photos, onDismiss }: { note: string; photos: string[]; onDismiss?: () => void }) {
@@ -9,7 +10,7 @@ export function AiNote({ note, photos, onDismiss }: { note: string; photos: stri
   const uri = m ? photos[Number(m[1]) - 1] : undefined;
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-      {uri ? <Image source={{ uri }} accessibilityLabel={`Photo ${m![1]}`} style={{ width: 44, height: 44, borderRadius: 14 }} /> : null}
+      {uri ? <Image source={{ uri: resolvePhotoUri(uri) }} accessibilityLabel={`Photo ${m![1]}`} style={{ width: 44, height: 44, borderRadius: 14 }} /> : null}
       <Text style={{ flex: 1, color: C.infoInk, fontSize: 13, lineHeight: 19 }}>
         {m ? <Text style={{ fontWeight: '700' }}>{`Photo ${m[1]}: `}</Text> : '• '}
         {m ? note.slice(m[0].length) : note}

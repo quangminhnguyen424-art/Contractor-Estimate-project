@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { unpackSigned } from '@/engine/brand';
 import { acceptedBlock, type Contract } from '@/engine/contract';
 import { quoteHtml } from '@/engine/quote';
 import type { Estimate, Lang, Profile } from '@/engine/types';
@@ -69,9 +70,11 @@ export const useClientDocs = (est: Estimate | undefined) => useClientWriter(clie
  * The signed quote to share again. English and Vietnamese copies were kept at signing. In a third language: the copy
  * kept at signing (a quote signed online is kept exactly as the client saw it), otherwise it is translated now.
  */
-export async function signedQuoteHtml(est: Estimate, profile: Profile, signed: NonNullable<Contract['accepted']>, docs: { lang: Lang; target: Language | null; doc: (html: string) => Promise<string> }): Promise<string> {
-  if (!docs.target) return signed.html?.[docs.lang] ?? quoteHtml(est, profile, docs.lang, acceptedBlock(signed, profile, docs.lang));
-  return signed.html?.client ?? (signed.audit ? signed.html?.en : undefined) ?? docs.doc(signed.html?.en ?? quoteHtml(est, profile, 'en', acceptedBlock(signed, profile, 'en')));
+export async function signedQuoteHtml(est: Estimate, profile: Profile, signed: NonNullable<Contract['accepted']>, docs: { lang: Lang; target: Language | null; doc: (html: string) => Promise<string> }, schedule?: NonNullable<Contract['terms']>['schedule']): Promise<string> {
+  const kept = (k: Lang | 'client') => { const h = signed.html?.[k]; return h ? unpackSigned(h, profile) : undefined; };
+  const remade = (l: Lang) => quoteHtml(est, profile, l, acceptedBlock(signed, profile, l), undefined, schedule);
+  if (!docs.target) return kept(docs.lang) ?? remade(docs.lang);
+  return kept('client') ?? (signed.audit ? kept('en') : undefined) ?? docs.doc(kept('en') ?? remade('en'));
 }
 
 /**

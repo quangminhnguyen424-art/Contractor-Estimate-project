@@ -7,7 +7,7 @@ import {
   billItems, changedSinceSigned, contractTotals, emptyContract, invoiceHtml, invoiceStates, termsFrom, termsOf, type BillItem, type Contract,
   type InvoiceState, type PayMethod,
 } from '@/engine/contract';
-import { dateFmt, money, newId } from '@/engine/format';
+import { dateFmt, money, money2, newId } from '@/engine/format';
 import { addDays } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
 import { ClientLanguage, translateFailed, useClientDocs } from '@/ui/ClientLanguage';
@@ -67,8 +67,13 @@ export default function ContractScreen() {
   // The change order is only saved once something is typed in it (backing out leaves nothing behind).
   const newChange = () => router.push(`/estimate/${est.id}/change?co=new`);
 
-  const recordPayment = () => {
+  const recordPayment = (sure?: boolean) => {
     if (!(payAmount > 0)) return;
+    if (!(payAmount < 1e8)) return notify('Check the amount', 'That is more than any job. Type the amount received.');
+    // More than what is left is usually a slipped digit: ask once.
+    if (!sure && payAmount > t.balance + 0.5) {
+      return confirmAction('More than the balance', `${money2(payAmount)} is more than the ${money2(Math.max(0, t.balance))} left on this job. Record it anyway?`, 'Record it', () => recordPayment(true));
+    }
     const p = { id: newId(), date: today, amount: Math.round(payAmount * 100) / 100, method: payMethod, note: payNote.trim() };
     updateContract(est.id, (x) => ({ ...x, payments: [...x.payments, p] }));
     emit('payment.recorded', { estimate: { id: est.id, title: est.title, client: est.clientName }, payment: p, balance: Math.round((t.balance - p.amount) * 100) / 100 });
@@ -140,7 +145,7 @@ export default function ContractScreen() {
       <Section title="Invoices" />
       <Card style={{ gap: 8 }}>
         <Select<number> label="New invoices due" value={dueDays} onChange={setDueDays} options={[0, 7, 15, 30].map((d) => ({ value: d, label: d === 0 ? 'On receipt' : `${d} days after sending` }))} />
-        {items.map((it) => {
+        {items.filter((it) => it.amount !== 0 || it.invoice).map((it) => {
           const st = it.invoice ? states[it.invoice.id] : undefined;
           return (
             <View key={it.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderColor: C.lineSoft }}>
@@ -186,7 +191,7 @@ export default function ContractScreen() {
             <Field label="Note (optional)" value={payNote} onChangeText={setPayNote} placeholder="e.g. Check #1042" maxLength={300} />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={() => setPayOpen(false)} />
-              <Button title="Save payment" style={{ flex: 1 }} disabled={!(payAmount > 0)} onPress={recordPayment} />
+              <Button title="Save payment" style={{ flex: 1 }} disabled={!(payAmount > 0)} onPress={() => recordPayment()} />
             </View>
           </View>
         ) : (

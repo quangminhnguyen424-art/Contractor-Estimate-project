@@ -1,17 +1,19 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User } from '@supabase/supabase-js';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { packSigned } from '@/engine/brand';
 import { termsFrom } from '@/engine/contract';
 import { useApp } from '@/store/AppContext';
 import { celebrate } from '@/ui/celebrate';
 import { notify } from '@/ui/notify';
 
-import { callFunction, supabase } from './client';
+import { callFunction, storedUser, supabase } from './client';
 import { CLOUD, cloudConfigured } from './config';
 import { fetchClientNotes, fetchNewSignatures, markApplied, markNoteSeen, signedHtml, toSignature } from './sign';
 import { decide } from './decide';
-import { backupPhotos, clearMeta, loadMeta, pullWorkspace, pushWorkspace, restorePhotos, saveMeta } from './sync';
+import { backupPhotos, clearMeta, loadMeta, pullWorkspace, pushWorkspace, restorePhotos, saveMeta, workspaceStamp } from './sync';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'error';
 
@@ -36,28 +38,50 @@ interface CloudCtx {
   signOut: (force?: boolean) => Promise<string | null>;
   deleteAccount: () => Promise<string | null>;
   syncNow: () => Promise<void>;
-  backupNow: (onProgress?: (done: number, total: number) => void) => Promise<number>;
+  backupNow: (onProgress?: (done: number, total: number) => void) => Promise<{ sent: number; failed: number }>;
 }
 
 const Ctx = createContext<CloudCtx | null>(null);
 
-/** Quotes and change orders signed from a link: recorded like a signature on this phone, once. */
-async function applySignatures(uid: string, a: ReturnType<typeof useApp>) {
+type App = ReturnType<typeof useApp>;
+const usd = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+
+/**
+ * Quotes and change orders signed from a link: recorded like a signature on this phone, once.
+ * Jobs are read fresh (`a.snapshot()`): this runs right after a sync that may have just brought them to this phone.
+ * A signature whose job is not on this phone is left for the phone that has it, never thrown away.
+ */
+async function applySignatures(uid: string, a: App) {
   const signed = await fetchNewSignatures(uid);
   for (const r of signed) {
-    const est = a.estimates.find((e) => e.id === r.estimate_id);
-    if (!est || !a.profile) { await markApplied(r.id); continue; }
+    const now = a.snapshot();
+    const est = now.estimates.find((e) => e.id === r.estimate_id);
+    const prof = now.profile;
+    if (!est || !prof) continue;
     const sig = toSignature(r);
     if (r.kind === 'quote') {
-      const html = signedHtml(r, sig, a.profile);
-      const prof = a.profile;
+      // The link shows the quote as it was when sent. If the price has changed since, what they signed is not this job's price.
+      if (Math.abs(Number(r.total) - est.total) > 0.5) {
+        notify('Signed an older quote', `${sig.name} signed “${est.title}” at ${usd(Number(r.total))}, but the price is now ${usd(est.total)}. Nothing was recorded. Send the current quote for them to sign.`);
+        await markApplied(r.id);
+        continue;
+      }
+      const html = packSigned(signedHtml(r, sig, prof), prof);
       a.updateContract(est.id, (c) => (c.accepted ? c : { ...c, accepted: { ...sig, total: Number(r.total), html: { en: html } }, terms: c.terms ?? termsFrom(est, prof) }));
       if (est.status !== 'won') a.updateEstimate(est.id, { status: 'won' });
       a.emit('quote.signed', { estimate: { id: est.id, title: est.title, client: est.clientName, total: est.total }, signedBy: sig.name, signedAt: sig.signedAt });
       notify('Signed online', `${sig.name} signed “${est.title}”. The job is marked Won.`);
     } else if (r.change_id) {
+      const co = now.contracts.find((c) => c.estimateId === est.id)?.changeOrders.find((x) => x.id === r.change_id);
+      const pct = now.contracts.find((c) => c.estimateId === est.id)?.terms?.salesTaxPct ?? est.salesTaxPct;
+      const current = co ? Math.round(co.amount * (1 + pct / 100) * 100) / 100 : null;
+      if (co && current !== null && Math.abs(Number(r.total) - current) > 0.5) {
+        notify('Signed an older change order', `${sig.name} signed a change order on “${est.title}” at ${usd(Number(r.total))}, but it now reads ${usd(current)}. Nothing was recorded. Send it again for them to sign.`);
+        await markApplied(r.id);
+        continue;
+      }
       a.updateContract(est.id, (c) => ({
-        ...c, changeOrders: c.changeOrders.map((co) => (co.id === r.change_id && co.status === 'pending' ? { ...co, status: 'approved', decidedAt: sig.signedAt, signature: sig } : co)),
+        ...c, changeOrders: c.changeOrders.map((x) => (x.id === r.change_id && x.status === 'pending' ? { ...x, status: 'approved', decidedAt: sig.signedAt, signature: sig } : x)),
       }));
       notify('Change order signed', `${sig.name} approved a change order on “${est.title}”.`);
     }
@@ -67,23 +91,25 @@ async function applySignatures(uid: string, a: ReturnType<typeof useApp>) {
 }
 
 /** "Request changes" from clients: kept on the estimate and shown as a notice, once. */
-async function applyClientNotes(uid: string, a: ReturnType<typeof useApp>) {
+async function applyClientNotes(uid: string, a: App) {
   for (const n of await fetchClientNotes(uid)) {
-    const est = a.estimates.find((e) => e.id === n.estimate_id);
-    if (est) {
-      a.updateEstimate(est.id, { addClientNote: { at: n.client_note_at, name: n.client_note_name, text: n.client_note } });
-      notify(`${n.client_note_name || 'Your client'} asked for changes`, `“${est.title}”: ${n.client_note}`);
-    }
+    const est = a.snapshot().estimates.find((e) => e.id === n.estimate_id);
+    if (!est) continue; // the phone that has this job shows it
+    a.updateEstimate(est.id, { addClientNote: { at: n.client_note_at, name: n.client_note_name, text: n.client_note } });
+    notify(`${n.client_note_name || 'Your client'} asked for changes`, `“${est.title}”: ${n.client_note}`);
     await markNoteSeen(n.id);
   }
 }
+
+/** The phone's own copy from just before another device's newer work replaced it. Kept so support can recover it. */
+const REPLACED = 'estimating-app/replaced-copy';
 
 const device = `${Platform.OS} ${String(Platform.Version ?? '')}`.trim();
 
 /** Signs in to Bidwell cloud, keeps data and photos in step, and records quotes clients signed online. */
 export function CloudProvider({ children }: { children: React.ReactNode }) {
   const app = useApp();
-  const { ready, changedAt, snapshot, replaceFromCloud } = app;
+  const { ready, changedAt } = app;
   const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<SyncState>('off');
   const [lastSync, setLastSync] = useState<string | null>(null);
@@ -101,8 +127,19 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
       if (next?.id !== uidRef.current) { uidRef.current = next?.id; setFirstSync('waiting'); }
       setUser(next);
     };
-    supabase.auth.getSession().then(({ data }) => take(data.session?.user ?? null)).catch(() => {}).finally(() => setAuthReady(true));
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => take(session?.user ?? null));
+    let decided = false;
+    supabase.auth.getSession().then(async ({ data, error: e }) => {
+      decided = true;
+      if (data.session) return take(data.session.user);
+      // No signal at a cold start: the login cannot be refreshed, but it is still on the phone. Keep the user in
+      // their own data instead of showing a login screen they cannot get past on a job site.
+      take(e ? await storedUser() : null);
+    }).catch(() => {}).finally(() => setAuthReady(true));
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION' && !session && !decided) return; // getSession above answers this one
+      if (event === 'INITIAL_SESSION' && !session) return;
+      take(session?.user ?? null);
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -111,26 +148,42 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     if (busy.current) return false;
     busy.current = true;
     setState('syncing');
+    // Read the app through the ref: this function must not change with every edit, or each keystroke starts a sync.
+    const a = () => appRef.current;
     try {
       const meta = await loadMeta();
-      const remote = await pullWorkspace(uid);
-      const local = snapshot();
-      const localChange = appRef.current.changedAt;
-      const action = decide({ uid, meta, remote, localChange, localEmpty: !local.profile });
-      if (action === 'pull' && remote) {
-        if (replaceFromCloud(remote.data)) {
-          await saveMeta({ uid, remoteAt: remote.updatedAt, syncedChange: Date.now() });
-          restorePhotos(uid, snapshot()).catch(() => {});
+      // This phone already holds this account's work: open it now; the sync carries on behind.
+      if (meta?.uid === uid && a().snapshot().profile) setFirstSync('done');
+      const stamp = await workspaceStamp(uid);
+      const local = a().snapshot();
+      const localChange = a().changedAt;
+      const action = decide({ uid, meta, remote: stamp, localChange, localEmpty: !local.profile });
+      if (action === 'pull') {
+        const remote = await pullWorkspace(uid);
+        if (remote) {
+          // Work done here while offline is about to be replaced by newer work from another device: keep a copy.
+          const unsent = !!local.profile && (!meta || (meta.uid === uid && localChange > meta.syncedChange));
+          if (unsent) await AsyncStorage.setItem(REPLACED, JSON.stringify({ at: new Date().toISOString(), data: local })).catch(() => {});
+          if (a().replaceFromCloud(remote.data)) {
+            await saveMeta({ uid, remoteAt: remote.updatedAt, syncedChange: Date.now() });
+            if (unsent) notify('Updated from your account', 'The work saved in your account replaced changes made on this phone that had not been backed up.');
+          }
         }
       } else if (action === 'push') {
         const at = await pushWorkspace(uid, local, device);
         await saveMeta({ uid, remoteAt: at, syncedChange: localChange });
         backupPhotos(uid, local).catch(() => {});
-      } else if (remote) {
-        await saveMeta({ uid, remoteAt: remote.updatedAt, syncedChange: localChange });
+      } else if (action === 'wipe') {
+        // Another account's work is on this phone and this account has none yet: start clean, send nothing.
+        await clearMeta();
+        a().resetAll();
+      } else if (stamp) {
+        await saveMeta({ uid, remoteAt: stamp.updatedAt, syncedChange: localChange });
       }
-      await applySignatures(uid, appRef.current);
-      await applyClientNotes(uid, appRef.current);
+      // Photos this phone is missing (a new phone, or a restore that was cut short) come down after every sync.
+      restorePhotos(uid, a().snapshot()).catch(() => {});
+      await applySignatures(uid, a());
+      await applyClientNotes(uid, a());
       setLastSync(new Date().toISOString());
       setError(null);
       setState('ok');
@@ -144,8 +197,7 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     } finally {
       busy.current = false;
     }
-  }, [snapshot, replaceFromCloud]);
-
+  }, []);
 
   // Sync when signed in and the app's data is loaded, when the app comes back to the front, and every few minutes.
   useEffect(() => {
@@ -194,9 +246,10 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         for (let i = 0; i < 40 && busy.current; i++) await new Promise((r) => setTimeout(r, 250));
         const ok = await sync(user.id);
         if (!ok) return 'Could not save your latest work to the cloud. Check your connection, or sign out anyway and lose changes made since the last sync.';
-        await backupPhotos(user.id, snapshot()).catch(() => 0);
+        await backupPhotos(user.id, appRef.current.snapshot()).catch(() => null);
       }
-      await supabase.auth.signOut().catch(() => {});
+      // This phone only: other devices stay logged in, and it works with no signal.
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
       await clearMeta();
       appRef.current.resetAll(true);
       setLastSync(null);
@@ -205,15 +258,19 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     deleteAccount: async () => {
       try {
         await callFunction<{ ok: boolean }>('account', {});
-        await supabase.auth.signOut().catch(() => {});
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        // The account is gone, so its work leaves this phone too (the next person to log in must not find it).
+        await clearMeta();
+        appRef.current.resetAll();
+        setLastSync(null);
         return null;
       } catch (e) {
         return e instanceof Error ? e.message : 'Could not delete the account.';
       }
     },
     syncNow: async () => { if (user) await sync(user.id); },
-    backupNow: async (onProgress) => (user ? backupPhotos(user.id, snapshot(), onProgress) : 0),
-  }), [user, state, lastSync, error, sync, snapshot, authReady, firstSync]);
+    backupNow: async (onProgress) => (user ? backupPhotos(user.id, appRef.current.snapshot(), onProgress) : { sent: 0, failed: 0 }),
+  }), [user, state, lastSync, error, sync, authReady, firstSync]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
