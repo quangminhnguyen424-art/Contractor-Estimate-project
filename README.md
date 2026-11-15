@@ -78,11 +78,11 @@ The app follows one line: **say the job → get the price → send the quote →
 
 ### Languages
 
-The app asks for the user's language on first open (`ui/LanguageScreen.tsx`) and the whole interface, Bidwell's answers and the voice follow it. Change it later under Me > Language.
+The app asks for the user's language on first open (`ui/LanguageScreen.tsx`, a scroll wheel of the ten languages in `i18n/languages.ts`) and the whole interface, Bidwell's answers and the voice follow it. Change it later under Me > Language.
 
 - **Write screens in English.** The app's `Text` component translates what it draws, so screens need no translation keys. Draw what the user typed (job titles, client names, notes, chat) with `raw` so it is shown as written: a client called "Home" must not be translated.
 - **After changing any wording, run `node scripts/i18n-extract.mjs`.** It rebuilds `src/i18n/catalog.json`, the list of every sentence the app can show. Then add the new sentences to `src/i18n/vi.json`; `npm test` fails when more than a few are missing.
-- **Tiếng Việt is built in** (`vi.json`). Spanish has its first screens built in (`es.json`). Every other language, and the rest of Spanish, is translated by the AI once after login and kept on the phone.
+- **Tiếng Việt is built in** (`vi.json`). Spanish has its first screens built in (`es.json`). The other languages on the list, and the rest of Spanish, are translated by the AI once after login and kept on the phone.
 - **Client documents are separate.** Quotes, contracts and invoices are written in the "Client’s language" chosen on each job (English or Vietnamese), not the app's language.
 
 ## Publishing to the App Store / Google Play

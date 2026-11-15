@@ -42,7 +42,7 @@ describe('choosing a language', () => {
   it('finds the phone’s language in the list', () => {
     expect(matchDevice('vi-VN')?.name).toBe('Tiếng Việt');
     expect(matchDevice('es-MX')?.code).toBe('es-US');
-    expect(matchDevice('zh-Hant-TW')?.code).toBe('zh-TW');
+    expect(matchDevice('zh-Hant-TW')?.code).toBe('zh-CN');
     expect(matchDevice('zh_CN')?.code).toBe('zh-CN');
     expect(matchDevice('xx-XX')).toBeNull();
   });
@@ -54,6 +54,8 @@ describe('choosing a language', () => {
     expect(findLanguage(l.code, l.name)?.english).toBe('Tiếng Mường');
     expect(findLanguage('ko-KR')?.english).toBe('Korean');
     expect(new Set(LANGUAGES.map((x) => x.code)).size).toBe(LANGUAGES.length);
-    expect(isRtl(findLanguage('ar-SA')!)).toBe(true);
+    expect(isRtl(customLanguage('Arabic'))).toBe(false); // a typed-in language has no known script
+    expect(isRtl({ code: 'ar-SA', name: 'العربية', english: 'Arabic' })).toBe(true);
+    expect(LANGUAGES).toHaveLength(10);
   });
 });
