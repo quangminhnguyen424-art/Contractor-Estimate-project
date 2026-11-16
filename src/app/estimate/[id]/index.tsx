@@ -95,6 +95,9 @@ export default function PriceDetails() {
         <Card>
           <Stepper label={`Markup ${est.markupPct}%`} value={est.markupPct} onChange={changeMarkup} />
           <Muted style={{ fontSize: 13 }}>Your minimum is {profile.minMarkupPct}%. Changing markup keeps your saved costs and tax rate.</Muted>
+          {est.priceEdits ? (
+            <Muted style={{ fontSize: 13 }}>{`You set the price of ${Object.keys(est.priceEdits).length === 1 ? 'one section' : `${Object.keys(est.priceEdits).length} sections`} on the quote. Those stay as you set them; markup changes the rest.`}</Muted>
+          ) : null}
         </Card>
       ) : (
         <Muted style={{ fontSize: 13 }}>
@@ -140,7 +143,7 @@ export default function PriceDetails() {
           </View>
           {est.trades.map((t) => (
             <View key={t.trade}>
-              <Row left={TRADE_NAMES[t.trade].en} right={money(t.cost)} sub={`Labor ${money(t.labor)} · Materials ${money(t.materials)}`}
+              <Row left={TRADE_NAMES[t.trade].en} right={money(t.cost)} sub={`Labor ${money(t.labor)} · Materials ${money(t.materials)}${est.priceEdits?.[t.trade] ? ` · client price set by you: ${money(t.price)}` : ''}`}
                 onPress={() => setOpen(open === t.trade ? null : t.trade)} />
               {open === t.trade
                 ? est.lines.filter((l) => l.trade === t.trade).map((l) => (

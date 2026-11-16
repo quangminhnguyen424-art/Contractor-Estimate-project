@@ -1,3 +1,4 @@
+import { reapplySectionPrices, setSectionPrices } from '@/engine/sectionPrice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState } from 'react-native';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -118,7 +119,7 @@ interface Ctx extends Persisted {
   deletePhotosLater: (uris: string[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
-  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; details?: { title: string; clientName: string; address: string }; addClientNote?: { at: string; name: string; text: string } }) => void;
+  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; sectionPrices?: Record<string, number | null>; details?: { title: string; clientName: string; address: string }; addClientNote?: { at: string; name: string; text: string } }) => void;
   deleteEstimate: (id: string) => void;
   /** Erases everything on this device. keepPhotos leaves photo files (used on sign-out: they are matched again on the next sign-in). */
   resetAll: (keepPhotos?: boolean) => void;
@@ -243,7 +244,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
       const now = new Date().toISOString();
       const jt = jobType(d.jobTypeId);
-      return {
+      // Section prices set by hand on the quote are laid back on the re-priced job (sections that still exist).
+      return reapplySectionPrices({
         job: { name: jt.name, vi: jt.vi, unit: jt.unit, exclusions: jt.exclusions, exclusionsVi: jt.exclusionsVi },
         id: existing?.id ?? newId(), createdAt: existing?.createdAt ?? now, updatedAt: now,
         status: existing?.status ?? 'draft', mode: d.mode, jobTypeId: d.jobTypeId,
@@ -256,7 +258,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...(existing?.clientLang ? { clientLang: existing.clientLang, clientLangName: existing.clientLangName } : {}),
         ...(existing?.clientNotes ? { clientNotes: existing.clientNotes } : {}),
         ...(existing?.sentAt ? { sentAt: existing.sentAt } : {}),
-      };
+      } as Estimate, existing?.priceEdits);
     },
     [],
   );
@@ -453,6 +455,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               const { quoteEdits: _old, ...rest } = next;
               next = patch.quoteEdits ? { ...rest, quoteEdits: patch.quoteEdits, updatedAt: new Date().toISOString() } : { ...rest, updatedAt: new Date().toISOString() };
             }
+            // A section's client price set by hand on the quote (null: back to Bidwell's price).
+            if (patch.sectionPrices) next = { ...setSectionPrices(next, patch.sectionPrices), updatedAt: new Date().toISOString() };
             if (patch.markupPct != null && patch.markupPct !== e.markupPct && d.profile) {
               // Re-price markup only; saved costs and tax rate stay as quoted.
               next = { ...applyMarkup(next, patch.markupPct, d.profile.minMarkupPct), updatedAt: new Date().toISOString() };

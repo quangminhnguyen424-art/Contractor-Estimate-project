@@ -1,8 +1,10 @@
+import { reapplySectionPrices } from './sectionPrice';
 import { rate } from './format';
 import { ASSEMBLY_BY_ID, MATERIAL_BY_ID, TRADE_ORDER } from './catalog';
 import { runChecks } from './checks';
 import { FINISH_FACTOR, FINISH_LABOR_FACTOR, FINISH_LABOR_TRADES, jobType, mainQuantity, num, perUnit, yes } from './jobTypes';
 import type {
+  Estimate,
   Answers, EstimateLine, ExtraLine, FinishLevel, JobType, JobTypeId, MaterialLine, PastJob, PriceUnit, Presets, PriceBook,
   PriceComparison, ScopeItem, Trade, TradeTotal,
 } from './types';
@@ -234,7 +236,7 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
  * Change only the markup on an existing estimate, keeping its saved costs, tax rate and quantities.
  * (Rebuilding would silently pull in today's price book and tax rate.)
  */
-export function applyMarkup<T extends EstimateResult & { mode: 'quick' | 'detailed'; salesTaxPct: number; markupPct: number }>(
+export function applyMarkup<T extends EstimateResult & { mode: 'quick' | 'detailed'; salesTaxPct: number; markupPct: number; priceEdits?: Estimate['priceEdits'] }>(
   est: T, markupPct: number, minMarkupPct: number,
 ): T {
   if (est.mode === 'quick') return est; // Quick price comes from $/SF, not markup.
@@ -257,5 +259,6 @@ export function applyMarkup<T extends EstimateResult & { mode: 'quick' | 'detail
     const refLabel = est.comparison.historyPerSf ? `your average from ${est.comparison.historyCount} past job${est.comparison.historyCount === 1 ? '' : 's'}` : 'your preset';
     comparison = { ...comparison, ...compareMessage((pricePerSf - ref) / ref, ref, refLabel, est.comparison.unit) };
   }
-  return { ...est, markupPct, trades, price, markup: round2(price - est.cost), tax, total: round2(price + tax), checks, comparison };
+  // Section prices the contractor set by hand on the quote stay set; the rest follow the new markup.
+  return reapplySectionPrices({ ...est, markupPct, trades, price, markup: round2(price - est.cost), tax, total: round2(price + tax), checks, comparison }, est.priceEdits);
 }

@@ -297,6 +297,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
+    priceEdits: sanitizePriceEdits(e.priceEdits),
     ...(typeof e.clientLang === 'string' && /^[\p{L}\p{N}-]{2,60}$/u.test(e.clientLang) ? { clientLang: e.clientLang, ...(typeof e.clientLangName === 'string' && e.clientLangName.trim() ? { clientLangName: e.clientLangName.trim().slice(0, 40) } : {}) } : {}),
     clientNotes: Array.isArray(e.clientNotes)
       ? e.clientNotes.filter((n): n is { at: string; name: string; text: string } => isObj(n) && typeof n.at === 'string' && typeof n.text === 'string')
@@ -594,6 +595,17 @@ function sanitizeWording(v: unknown): QuoteWording | undefined {
   };
 }
 /** The contractor's quote wording: kept only in a safe shape. */
+/** Hand-set section prices: finite, not negative, under ten million. Anything else is dropped. */
+export function sanitizePriceEdits(v: unknown): Estimate['priceEdits'] {
+  if (!isObj(v)) return undefined;
+  const ok = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n < 1e7;
+  const out: NonNullable<Estimate['priceEdits']> = {};
+  for (const [k, x] of Object.entries(v).slice(0, 60)) {
+    if (/^[\w-]{1,40}$/.test(k) && isObj(x) && ok(x.price) && ok(x.base)) out[k] = { price: x.price, base: x.base };
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export function sanitizeQuoteEdits(v: unknown): QuoteEdits | undefined {
   if (!isObj(v)) return undefined;
   const days = typeof v.validDays === 'number' && Number.isFinite(v.validDays) ? Math.min(365, Math.max(1, Math.round(v.validDays))) : undefined;

@@ -11,7 +11,7 @@ import { FINISH_LABELS } from '@/engine/jobTypes';
 import { changedSinceSigned } from '@/engine/contract';
 import { baseSections, QUOTE_TEXT, quoteHtml, quoteSections, quoteWording, quoteWritePrompt, scheduleAmounts, stepName, type QuoteWriteTarget } from '@/engine/quote';
 import { aiFor } from '@/ui/host';
-import { ActionSheet } from '@/ui/Sheet';
+import { ActionSheet, Sheet } from '@/ui/Sheet';
 import { useCloud } from '@/cloud/CloudProvider';
 import { createSignLink } from '@/cloud/sign';
 import type { Estimate, Lang, Profile, QuoteEdits, QuoteWording } from '@/engine/types';
@@ -30,6 +30,8 @@ export default function QuoteScreen() {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState(false);
+  // Tap a part of the draft to change it right there: a section, the scope summary, Not included or the notes.
+  const [part, setPart] = useState<Part | null>(null);
   const cloud = useCloud();
   const { width } = useWindowDimensions();
   const planWidth = Math.min(width, 760) - 80;
@@ -106,9 +108,11 @@ export default function QuoteScreen() {
         <Text style={{ flex: 1, color: C.ink, fontSize: 20, fontWeight: '700' }}>{editing ? 'Edit your quote' : 'Your quote is ready'}</Text>
       </View>
       <ClientLanguage est={est} />
+      <PartSheet est={est} profile={profile} lang={lang} signed={isSigned} part={part} onClose={() => setPart(null)} />
       {editing ? (
         <QuoteEditor key={lang} est={est} lang={lang} profile={profile} signed={isSigned}
-          onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.dismissTo(`/estimate/${est.id}`)} />
+          onSave={(q) => { updateEstimate(est.id, { quoteEdits: q }); if (!q) setEditing(false); }} onPrice={() => router.dismissTo(`/estimate/${est.id}`)}
+          onSectionPrice={(trade) => setPart({ kind: 'section', trade })} />
       ) : null}
       <ActionSheet visible={menu} onClose={() => setMenu(false)} title="Send the quote" actions={[
         { icon: 'chatbubble-ellipses', label: 'Text a link to sign', sub: 'The client reads and signs on their phone. You are told when they sign.', onPress: () => sendLink('sms') },
@@ -123,6 +127,11 @@ export default function QuoteScreen() {
           <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }} onPress={() => router.dismissTo(`/estimate/${est.id}`)}>Review</Text>
         </Banner>
       ) : null}
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.accentTint, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+        <Ionicons name="hand-left-outline" size={18} color={C.accent} />
+        <Text style={{ flex: 1, color: C.accentDark, fontSize: 14 }}>Tap any part of the quote to change its wording or price.</Text>
+      </View>
 
       <Untranslated>
       <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 20, gap: 14, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 }}>
@@ -146,18 +155,24 @@ export default function QuoteScreen() {
         <View style={{ gap: 2 }}>
           <Text style={{ fontSize: 15, fontWeight: '700', color: P.ink }}>{est.title}</Text>
           <Text style={{ fontSize: 13, color: P.ink2 }}>{T.finish}: {FINISH_LABELS[est.finish][lang]}</Text>
-          {wd.scopeNote.trim() ? <Text style={{ fontSize: 13, color: P.ink2, lineHeight: 19 }}>{wd.scopeNote}</Text> : null}
+          <Tappable label="Edit the scope summary" onPress={() => setPart({ kind: 'scope' })}>
+            {wd.scopeNote.trim() ? <Text style={{ fontSize: 13, color: P.ink2, lineHeight: 19 }}>{wd.scopeNote} <Ionicons name="pencil" size={11} color={C.accent} /></Text> : <AddLine text={lang === 'vi' ? '+ Tóm tắt phạm vi công việc' : '+ Add a scope summary'} />}
+          </Tappable>
         </View>
 
         <View>
           {sections.map((s) => (
-            <View key={s.trade} style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: P.line, gap: 2 }}>
+            <Tappable key={s.trade} label={`Edit ${s.title}`} onPress={() => setPart({ kind: 'section', trade: s.trade })}
+              style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: P.line, gap: 2 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-                <Text style={{ fontWeight: '600', color: P.ink, flex: 1 }}>{s.title}</Text>
-                {wd.byTotal ? null : <Text style={{ fontFamily: mono, color: P.ink }}>{money(s.price)}</Text>}
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontWeight: '600', color: P.ink, flexShrink: 1 }}>{s.title}</Text>
+                  <Pen />
+                </View>
+                {wd.byTotal ? null : <Text style={{ fontFamily: mono, color: est.priceEdits?.[s.trade] ? P.accent : P.ink }}>{money(s.price)}</Text>}
               </View>
               {s.items.map((i, k) => <Text key={k} style={{ fontSize: 12, color: P.muted }}>• {i}</Text>)}
-            </View>
+            </Tappable>
           ))}
           <Line l={T.subtotal} r={money(est.price)} />
           <Line l={`${T.tax} (${est.salesTaxPct}%)`} r={money(est.tax)} />
@@ -172,16 +187,24 @@ export default function QuoteScreen() {
           </View>
         ) : null}
 
-        <View style={{ gap: 2 }}>
-          <Text style={{ fontWeight: '700', color: P.ink }}>{T.notIncluded}</Text>
-          {excl.map((e, k) => <Text key={k} style={{ fontSize: 12, color: P.ink2 }}>• {e}</Text>)}
-        </View>
-        {wd.notes ? (
-          <View style={{ gap: 2 }}>
-            <Text style={{ fontWeight: '700', color: P.ink }}>{lang === 'vi' ? 'Ghi chú' : 'Notes'}</Text>
-            <Text style={{ fontSize: 12, color: P.ink2, lineHeight: 18 }}>{wd.notes}</Text>
+        <Tappable label="Edit what is not included" onPress={() => setPart({ kind: 'exclusions' })} style={{ gap: 2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontWeight: '700', color: P.ink }}>{T.notIncluded}</Text>
+            <Pen />
           </View>
-        ) : null}
+          {excl.map((e, k) => <Text key={k} style={{ fontSize: 12, color: P.ink2 }}>• {e}</Text>)}
+        </Tappable>
+        <Tappable label="Edit the notes for the client" onPress={() => setPart({ kind: 'notes' })} style={{ gap: 2 }}>
+          {wd.notes ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontWeight: '700', color: P.ink }}>{lang === 'vi' ? 'Ghi chú' : 'Notes'}</Text>
+                <Pen />
+              </View>
+              <Text style={{ fontSize: 12, color: P.ink2, lineHeight: 18 }}>{wd.notes}</Text>
+            </>
+          ) : <AddLine text={lang === 'vi' ? '+ Thêm ghi chú cho khách' : '+ Add notes for the client'} />}
+        </Tappable>
         <View style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: P.ink }}>{T.schedule}</Text>
           {sched.map((s, k) => <Line key={k} l={`${stepName(s.label, lang)} (${s.pct}%)`} r={money(s.amount)} />)}
@@ -190,7 +213,7 @@ export default function QuoteScreen() {
         </View>
       </View>
       </Untranslated>
-      <Muted style={{ fontSize: 13 }}>Edit changes the wording. Sign lets the client sign on this phone. Send texts or emails a link to sign, or shares the PDF, and marks the job as Sent.</Muted>
+      <Muted style={{ fontSize: 13 }}>Tap a part to change it, or Edit to see everything at once. Sign lets the client sign on this phone. Send texts or emails a link to sign, or shares the PDF, and marks the job as Sent.</Muted>
       </>}
     </Screen>
   );
@@ -209,9 +232,9 @@ const lines = (t: string) => t.split('\n').map((x) => x.replace(/^\s*[•\-*]\s*
 
 /** The contractor's editor: wording per section, scope note, what's not included, notes, valid days and how prices show.
  *  Prices themselves come from the estimate (markup and your items), so the total always matches the job's numbers. */
-function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
+function QuoteEditor({ est, lang, profile, signed, onSave, onPrice, onSectionPrice }: {
   est: Estimate; lang: Lang; profile: Profile; signed: boolean;
-  onSave: (q: QuoteEdits | null) => void; onPrice: () => void;
+  onSave: (q: QuoteEdits | null) => void; onPrice: () => void; onSectionPrice: (trade: string) => void;
 }) {
   const base = baseSections(est, lang);
   const shown = quoteSections(est, lang);
@@ -245,7 +268,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
   return (
     <View style={{ gap: 12 }}>
       {signed ? <Banner tone="info" title="The client already signed. The signed copy stays as signed; edits change only new copies." /> : null}
-      <Muted style={{ fontSize: 13 }}>Changes save as you type, for this client’s language. Prices come from the estimate.</Muted>
+      <Muted style={{ fontSize: 13 }}>Changes save as you type, for this client’s language. Tap a section’s price to change it.</Muted>
       <Card>
         <H2>Scope of work</H2>
         <Field label="Scope summary (shown under the title)" value={w.scopeNote ?? est.scopeNote ?? ''} multiline
@@ -256,9 +279,13 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice }: {
           const upd = (patch: Partial<typeof t>) => { const n = { ...secText, [s.trade]: { ...t, ...patch } }; setSecText(n); save({ sec: n }); };
           return (
             <View key={s.trade} style={{ gap: 8, borderTopWidth: 1, borderColor: C.lineSoft, paddingTop: 10 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Muted style={{ fontSize: 12 }}>Section</Muted>
-                <Text style={{ color: C.ink2, fontFamily: mono, fontSize: 13 }}>{money(s.price)}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Change the price of ${s.title}`} onPress={() => onSectionPrice(s.trade)} hitSlop={8}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={{ color: est.priceEdits?.[s.trade] ? C.accent : C.ink2, fontFamily: mono, fontSize: 13 }}>{money(s.price)}</Text>
+                  {signed ? null : <Ionicons name="pencil" size={12} color={C.accent} />}
+                </Pressable>
               </View>
               <Field label="Heading" value={t.title} onChangeText={(v) => upd({ title: v })} maxLength={120} />
               <Field label="What's included (one line each)" value={t.items} onChangeText={(v) => upd({ items: v })} multiline />
@@ -320,3 +347,128 @@ function HelpWrite({ est, lang, target, draft, onText }: { est: Estimate; lang: 
     </View>
   );
 }
+
+type Part = { kind: 'section'; trade: string } | { kind: 'scope' } | { kind: 'exclusions' } | { kind: 'notes' };
+
+/** A part of the draft quote that opens its editor when tapped (the pencil beside its heading says so). */
+function Tappable({ children, onPress, label, style }: { children: React.ReactNode; onPress: () => void; label: string; style?: object }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
+      style={({ pressed }) => [{ borderRadius: 8, marginHorizontal: -6, paddingHorizontal: 6, backgroundColor: pressed ? '#EEF2FF' : 'transparent' }, style]}>
+      {children}
+    </Pressable>
+  );
+}
+
+const AddLine = ({ text }: { text: string }) => <Text style={{ fontSize: 13, color: P.accent, fontWeight: '600', paddingVertical: 2 }}>{text}</Text>;
+
+/** The wording saved for one section: only what differs from Bidwell's own (so a fix to the estimate still flows in). */
+function withSection(est: Estimate, lang: Lang, trade: string, title: string, itemsText: string): QuoteEdits {
+  const base = baseSections(est, lang).find((b) => b.trade === trade);
+  const items = lines(itemsText);
+  const w = est.quoteEdits?.[lang] ?? {};
+  const sections = { ...w.sections };
+  const sameTitle = !base || title.trim() === base.title || !title.trim();
+  const sameItems = !base || items.join('\n') === base.items.join('\n');
+  if (sameTitle && sameItems) delete sections[trade];
+  else sections[trade] = { title: sameTitle ? undefined : title.trim(), items: sameItems ? undefined : items };
+  return { ...est.quoteEdits, [lang]: { ...w, sections } };
+}
+
+/**
+ * The editor for the part of the quote that was tapped. Changes are kept only when Save is tapped. For a section,
+ * the price can be set too: it becomes the job's real price (tax, total, contract and invoices follow).
+ */
+function PartSheet({ est, profile, lang, signed, part, onClose }: {
+  est: Estimate; profile: Profile; lang: Lang; signed: boolean; part: Part | null; onClose: () => void;
+}) {
+  const { updateEstimate } = useApp();
+  const open = !!part;
+  const shown = quoteSections(est, lang);
+  const wd = quoteWording(est, profile, lang);
+  const sec = part?.kind === 'section' ? shown.find((x) => x.trade === part.trade) : undefined;
+  const edit = part?.kind === 'section' ? est.priceEdits?.[part.trade] : undefined;
+  const key = part ? (part.kind === 'section' ? part.trade : part.kind) : '';
+
+  // The form starts from what the quote says now, each time a part is opened.
+  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
+  const [price, setPrice] = useState(0);
+  const [opened, setOpened] = useState('');
+  if (open && opened !== key) {
+    setOpened(key);
+    if (part.kind === 'section' && sec) { setTitle(sec.title); setText(sec.items.join('\n')); setPrice(sec.price); }
+    if (part.kind === 'scope') setText(wd.scopeNote);
+    if (part.kind === 'exclusions') setText(wd.exclusions.join('\n'));
+    if (part.kind === 'notes') setText(wd.notes);
+  }
+  if (!open && opened) setOpened('');
+
+  const close = () => { setOpened(''); onClose(); };
+  const save = () => {
+    if (!part) return;
+    const w = est.quoteEdits?.[lang] ?? {};
+    if (part.kind === 'section' && sec) {
+      const q = withSection(est, lang, part.trade, title, text);
+      const priceChanged = !signed && Math.abs(price - sec.price) >= 0.005;
+      updateEstimate(est.id, { quoteEdits: q, ...(priceChanged ? { sectionPrices: { [part.trade]: price } } : {}) });
+    } else if (part.kind === 'scope') {
+      updateEstimate(est.id, { quoteEdits: { ...est.quoteEdits, [lang]: { ...w, scopeNote: text.trim() } } });
+    } else if (part.kind === 'exclusions') {
+      updateEstimate(est.id, { quoteEdits: { ...est.quoteEdits, [lang]: { ...w, exclusions: lines(text) } } });
+    } else {
+      updateEstimate(est.id, { quoteEdits: { ...est.quoteEdits, [lang]: { ...w, notes: text.trim() } } });
+    }
+    close();
+  };
+  const backToBidwell = () => {
+    if (part?.kind !== 'section') return;
+    const base = baseSections({ ...est, quoteEdits: undefined }, lang).find((b) => b.trade === part.trade);
+    if (base) { setTitle(base.title); setText(base.items.join('\n')); }
+    if (edit && !signed) setPrice(edit.base);
+  };
+
+  const heading = part?.kind === 'section' ? (sec?.title ?? 'Section') : part?.kind === 'scope' ? 'Scope summary' : part?.kind === 'exclusions' ? 'Not included' : 'Notes for the client';
+  const target: QuoteWriteTarget | null = part?.kind === 'section' ? { kind: 'section', trade: part.trade } : part?.kind === 'scope' ? { kind: 'scope' } : part?.kind === 'notes' ? { kind: 'notes' } : null;
+  const diff = sec ? Math.round((price - sec.price) * 100) / 100 : 0;
+  return (
+    <Sheet visible={open} onClose={close} title={heading} scroll>
+      <View style={{ gap: 12, paddingHorizontal: 8, paddingBottom: 8 }}>
+        {part?.kind === 'section' ? (
+          <>
+            <Field label="Heading" value={title} onChangeText={setTitle} maxLength={120} />
+            <Field label="What's included (one line each)" value={text} onChangeText={setText} multiline />
+            {signed ? (
+              <Muted style={{ fontSize: 13 }}>The client already signed this price. To charge more or less now, use a change order on the contract.</Muted>
+            ) : (
+              <>
+                <NumberField label="Price for this section" suffix="$" value={price} onChange={setPrice} max={9999999} />
+                {diff ? (
+                  <Muted style={{ fontSize: 13 }}>{`${diff > 0 ? '+' : '−'}${money(Math.abs(diff))} on this section. New total with tax: ${money(Math.round((est.price + diff) * (1 + est.salesTaxPct / 100) * 100) / 100)}`}</Muted>
+                ) : edit ? (
+                  <Muted style={{ fontSize: 13 }}>{`You set this price. Bidwell priced it at ${money(edit.base)}.`}</Muted>
+                ) : (
+                  <Muted style={{ fontSize: 13 }}>From your markup and costs. Change it here if it doesn’t feel right for this client.</Muted>
+                )}
+              </>
+            )}
+            {(est.quoteEdits?.[lang]?.sections?.[part.trade] || edit) ? (
+              <Button kind="ghost" icon="refresh-outline" title="Back to Bidwell’s wording and price" onPress={backToBidwell} />
+            ) : null}
+          </>
+        ) : (
+          <Field label={part?.kind === 'exclusions' ? 'One line each' : part?.kind === 'scope' ? 'Shown under the job title' : 'Allowances, timing, access, cleanup…'}
+            value={text} onChangeText={setText} multiline />
+        )}
+        {target && part ? <HelpWrite est={est} lang={lang} target={target} draft={text} onText={setText} /> : null}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+          <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={close} />
+          <Button title="Save" icon="checkmark" style={{ flex: 1.4 }} onPress={save} />
+        </View>
+      </View>
+    </Sheet>
+  );
+}
+
+/** The small pencil beside a heading that can be tapped to edit. Only on this preview, never on the PDF. */
+const Pen = () => <Ionicons name="pencil" size={12} color={C.accent} style={{ marginLeft: 6 }} />;

@@ -324,6 +324,12 @@ export interface Estimate {
   comparison: PriceComparison;
   quoteEdits?: QuoteEdits;
   /**
+   * Client prices the contractor set by hand on the quote, by section key (trade id, 'general' or 'extras').
+   * `base` is what Bidwell priced that section at, kept so the edit can be undone. The estimate's price, tax and
+   * total already include these (see engine/sectionPrice.ts).
+   */
+  priceEdits?: Record<string, { price: number; base: number }>;
+  /**
    * The language the client reads: a code from the language list (`ko-KR`), or `x-…` with `clientLangName` for one
    * the contractor typed in. Unset: the contractor's own. Documents are written in English or Vietnamese and
    * translated into any other language when they are sent. (`en` / `vi` were saved by earlier versions.)

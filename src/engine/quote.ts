@@ -1,3 +1,4 @@
+import { sectionPrices } from './sectionPrice';
 import { logoHtml, payHtml } from './brand';
 import { fillNotice } from './legal';
 import { TRADE_NAMES } from './catalog';
@@ -68,7 +69,9 @@ export function quoteWording(est: Estimate, profile: Profile, lang: Lang) {
 /** The sections exactly as the estimate made them (before the contractor's wording). */
 export function baseSections(est: Estimate, lang: Lang): QuoteSection[] {
   const extras = est.extras ?? [];
-  const extrasTotal = extras.reduce((t, x) => t + x.price, 0);
+  // Section prices include any the contractor set by hand on the quote.
+  const priced = sectionPrices(est);
+  const extrasTotal = priced.extras ?? 0;
   const extraSection: QuoteSection[] = extras.length
     ? [{ trade: 'extras', title: QUOTE_TEXT[lang].extras, price: extrasTotal,
         items: extras.map((x) => (x.unit || x.qty !== 1 ? `${x.label} (${qtyFmt(x.qty)}${x.unit ? ` ${x.unit}` : ''})` : x.label)) }]
@@ -77,7 +80,7 @@ export function baseSections(est: Estimate, lang: Lang): QuoteSection[] {
     const jt = estimateJob(est);
     const name = lang === 'vi' ? jt.vi : jt.name;
     const size = jt.unit === 'JOB' || !(est.comparison.sizeSf > 0) ? '' : ` (${qtyWithUnit(est.comparison.sizeSf, jt.unit)})`;
-    return [{ trade: 'general', title: name, items: [est.scopeNote?.trim() || `${name}${size}`], price: est.price - extrasTotal }, ...extraSection];
+    return [{ trade: 'general', title: name, items: [est.scopeNote?.trim() || `${name}${size}`], price: priced.general ?? est.price - extrasTotal }, ...extraSection];
   }
   const tradeSections: QuoteSection[] = est.trades.map((t) => ({
     trade: t.trade,
