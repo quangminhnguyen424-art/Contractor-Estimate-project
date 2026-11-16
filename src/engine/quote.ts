@@ -1,3 +1,4 @@
+import { DIVISIONS, hasDivisions } from './divisions';
 import { sectionPrices } from './sectionPrice';
 import { logoHtml, payHtml } from './brand';
 import { fillNotice } from './legal';
@@ -5,7 +6,7 @@ import { TRADE_NAMES } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
 import { planSvg, planTotals } from './floorplan';
 import { estimateJob, FINISH_LABELS, qtyWithUnit } from './jobTypes';
-import type { Estimate, Lang, Profile, Trade } from './types';
+import type { Estimate, Lang, Profile } from './types';
 
 export const QUOTE_TEXT = {
   en: {
@@ -35,7 +36,8 @@ export const QUOTE_TEXT = {
 } as const;
 
 export interface QuoteSection {
-  trade: Trade | 'extras';
+  /** Section key: a trade, 'general' (quick price), 'extras', or a new-construction division ('d-framing'). */
+  trade: string;
   title: string;
   items: string[];
   price: number;
@@ -52,13 +54,21 @@ export function quoteSections(est: Estimate, lang: Lang): QuoteSection[] {
   });
 }
 
+/** New construction with no summary yet: what is being built and how big, so the quote never opens bare. */
+function divisionSummary(est: Estimate, lang: Lang): string {
+  if (!hasDivisions(est.jobTypeId) || !(est.comparison.sizeSf > 0)) return '';
+  const jt = estimateJob(est);
+  const size = qtyWithUnit(est.comparison.sizeSf, jt.unit);
+  return lang === 'vi' ? `${jt.vi}: khoảng ${size} diện tích hoàn thiện.` : `${jt.name}: about ${size} of finished area.`;
+}
+
 /** What the contractor wrote, else the estimate's own wording. */
 export function quoteWording(est: Estimate, profile: Profile, lang: Lang) {
   const w = est.quoteEdits?.[lang];
   const jt = estimateJob(est);
   const excl = lang === 'vi' ? jt.exclusionsVi : jt.exclusions;
   return {
-    scopeNote: w?.scopeNote ?? est.scopeNote ?? '',
+    scopeNote: w?.scopeNote ?? (est.scopeNote || divisionSummary(est, lang)),
     exclusions: w?.exclusions ? w.exclusions.map((x) => x.trim()).filter(Boolean) : excl,
     notes: w?.notes?.trim() ?? '',
     validDays: est.quoteEdits?.validDays ?? profile.quoteValidDays,
@@ -76,6 +86,10 @@ export function baseSections(est: Estimate, lang: Lang): QuoteSection[] {
     ? [{ trade: 'extras', title: QUOTE_TEXT[lang].extras, price: extrasTotal,
         items: extras.map((x) => (x.unit || x.qty !== 1 ? `${x.label} (${qtyFmt(x.qty)}${x.unit ? ` ${x.unit}` : ''})` : x.label)) }]
     : [];
+  if ((est.mode === 'quick' || est.lines.length === 0) && hasDivisions(est.jobTypeId)) {
+    // New construction: part by part, like a builder's quote.
+    return [...DIVISIONS.map((d) => ({ trade: d.key, title: d[lang], items: lang === 'vi' ? d.itemsVi : d.items, price: priced[d.key] ?? 0 })), ...extraSection];
+  }
   if (est.mode === 'quick' || est.lines.length === 0) {
     const jt = estimateJob(est);
     const name = lang === 'vi' ? jt.vi : jt.name;

@@ -81,3 +81,36 @@ describe('a section price set by hand on the quote', () => {
     expect(again.total).toBe(set.total);
   });
 });
+
+describe('new construction, part by part', () => {
+  const dadu = () => {
+    const i = input({ jobTypeId: 'adu', mode: 'quick', answers: { ...defaultAnswers('adu'), sizeSf: 850 }, presets: { adu: { basic: 300, mid: 325, high: 425 } } as never });
+    return { ...buildEstimate(i), jobTypeId: 'adu', mode: 'quick', salesTaxPct: 10, markupPct: 20 } as unknown as Estimate;
+  };
+
+  it('shows sixteen parts that add up to the per-SF price, like the 1206 N 157th St quote', () => {
+    const est = dadu();
+    expect(est.price).toBe(850 * 325);
+    const parts = baseSections(est, 'en');
+    expect(parts).toHaveLength(16);
+    expect(parts.map((p) => p.title)).toContain('Foundation');
+    expect(parts.reduce((t, p) => t + p.price, 0)).toBeCloseTo(est.price, 2);
+    // Framing is the biggest part, about 14% of the price.
+    const framing = parts.find((p) => p.trade === 'd-framing')!;
+    expect(framing.price / est.price).toBeGreaterThan(0.13);
+    expect(framing.price / est.price).toBeLessThan(0.15);
+    expect(baseSections(est, 'vi').find((p) => p.trade === 'd-foundation')?.title).toBe('Móng');
+  });
+
+  it('lets one part be priced by hand; the rest keep their amounts and the total follows', () => {
+    const est = dadu();
+    const before = sectionPrices(est);
+    const out = setSectionPrices(est, { 'd-site': before['d-site'] + 4000 });
+    const after = sectionPrices(out);
+    expect(out.price).toBe(est.price + 4000);
+    expect(after['d-site']).toBe(before['d-site'] + 4000);
+    expect(after['d-framing']).toBe(before['d-framing']);
+    expect(Object.values(after).reduce((t, x) => t + x, 0)).toBeCloseTo(out.price, 2);
+    expect(setSectionPrices(out, { 'd-site': null }).price).toBe(est.price);
+  });
+});

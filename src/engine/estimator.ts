@@ -236,7 +236,7 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
  * Change only the markup on an existing estimate, keeping its saved costs, tax rate and quantities.
  * (Rebuilding would silently pull in today's price book and tax rate.)
  */
-export function applyMarkup<T extends EstimateResult & { mode: 'quick' | 'detailed'; salesTaxPct: number; markupPct: number; priceEdits?: Estimate['priceEdits'] }>(
+export function applyMarkup<T extends EstimateResult & { mode: 'quick' | 'detailed'; salesTaxPct: number; markupPct: number; priceEdits?: Estimate['priceEdits']; jobTypeId: Estimate['jobTypeId'] }>(
   est: T, markupPct: number, minMarkupPct: number,
 ): T {
   if (est.mode === 'quick') return est; // Quick price comes from $/SF, not markup.

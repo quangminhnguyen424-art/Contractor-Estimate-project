@@ -1,4 +1,5 @@
 import { TRADE_NAMES } from './catalog';
+import { hasDivisions, splitDivisions } from './divisions';
 import type { Check, Estimate } from './types';
 
 /**
@@ -10,7 +11,7 @@ import type { Check, Estimate } from './types';
  * recomputed from it, so the quote, the contract, the invoices and the payment schedule all agree.
  */
 
-type Priced = Pick<Estimate, 'mode' | 'lines' | 'trades' | 'extras' | 'price' | 'cost' | 'markup' | 'tax' | 'total' | 'salesTaxPct' | 'checks' | 'priceEdits'>;
+type Priced = Pick<Estimate, 'jobTypeId' | 'mode' | 'lines' | 'trades' | 'extras' | 'price' | 'cost' | 'markup' | 'tax' | 'total' | 'salesTaxPct' | 'checks' | 'priceEdits'>;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const isQuick = (e: Priced) => e.mode === 'quick' || e.lines.length === 0;
@@ -20,7 +21,16 @@ export function sectionPrices(e: Priced): Record<string, number> {
   const extrasOwn = (e.extras ?? []).reduce((t, x) => t + x.price, 0);
   const extras = e.priceEdits?.extras?.price ?? extrasOwn;
   const out: Record<string, number> = {};
-  if (isQuick(e)) out.general = round2(e.price - (e.extras?.length ? extras : 0));
+  if (isQuick(e)) {
+    const general = round2(e.price - (e.extras?.length ? extras : 0));
+    if (hasDivisions(e.jobTypeId)) {
+      // New construction: the per-SF price split part by part. Bidwell's split is of the price before any part was
+      // set by hand; the parts set by hand then replace their share.
+      const handSet = Object.entries(e.priceEdits ?? {}).filter(([k]) => k.startsWith('d-'));
+      const base = splitDivisions(round2(general - handSet.reduce((t, [, v]) => t + v.price - v.base, 0)));
+      for (const [k, v] of Object.entries(base)) out[k] = e.priceEdits?.[k]?.price ?? v;
+    } else out.general = general;
+  }
   else for (const t of e.trades) out[t.trade] = t.price;
   if (e.extras?.length) out.extras = extras;
   return out;

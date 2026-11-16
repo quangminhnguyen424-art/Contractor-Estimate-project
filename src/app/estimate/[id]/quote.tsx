@@ -20,10 +20,13 @@ import { ClientLanguage, signedQuoteHtml, translateFailed, useClientDocs } from 
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, P, Screen, Segmented, mono } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
 import { sharePdf } from '@/ui/share';
+import { useWritingScope, writeScope } from '@/ui/writeScope';
 
 export default function QuoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { estimates, profile, updateEstimate, contracts } = useApp();
+  const app = useApp();
+  const { estimates, profile, updateEstimate, contracts } = app;
+  const scopeBusy = useWritingScope(id);
   const est = estimates.find((e) => e.id === id);
   const docs = useClientDocs(est);
   const lang = docs.lang;
@@ -132,6 +135,16 @@ export default function QuoteScreen() {
         <Ionicons name="hand-left-outline" size={18} color={C.accent} />
         <Text style={{ flex: 1, color: C.accentDark, fontSize: 14 }}>Tap any part of the quote to change its wording or price.</Text>
       </View>
+      {scopeBusy ? (
+        <Banner tone="info" title="Bidwell is writing the scope of work…">It fills in every section from your notes and photos. You can keep reading; the quote updates when it is done.</Banner>
+      ) : isSigned ? null : (
+        <Button kind="secondary" icon="sparkles" title={est.quoteEdits?.[lang] ? 'Rewrite the whole scope with Bidwell' : 'Write the whole scope with Bidwell'}
+          onPress={() => {
+            const go = () => writeScope(est.id, lang, app).catch((e: unknown) => notify('Bidwell could not write the scope', e instanceof Error ? e.message : 'Try again.'));
+            if (est.quoteEdits?.[lang]) confirmAction('Rewrite the whole scope?', 'Bidwell writes the summary, every section and Not included again from your notes. Your notes for the client and your prices stay.', 'Rewrite', go);
+            else void go();
+          }} />
+      )}
 
       <Untranslated>
       <View style={{ backgroundColor: P.paper, borderRadius: 14, padding: 20, gap: 14, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 }}>

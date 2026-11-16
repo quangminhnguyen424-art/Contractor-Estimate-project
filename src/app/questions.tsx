@@ -1,3 +1,5 @@
+import { clientLang } from '@/ui/ClientLanguage';
+import { writeScope } from '@/ui/writeScope';
 import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
@@ -17,7 +19,8 @@ import { QuestionEditor } from '@/ui/QuestionEditor';
 import { RoofSatellite } from '@/ui/RoofSatellite';
 
 export default function Questions() {
-  const { draft, setDraft, commitDraft, priceBook, customQuestions, saveQuestions, presets, savePresets } = useApp();
+  const app = useApp();
+  const { draft, setDraft, commitDraft, priceBook, customQuestions, saveQuestions, presets, savePresets } = app;
   const [search, setSearch] = useState('');
   const [working, setWorking] = useState<WorkJob | null>(null);
   const [adding, setAdding] = useState(false);
@@ -72,6 +75,11 @@ export default function Questions() {
     });
     const started = Date.now();
     const id = commitDraft(draft);
+    // Bidwell writes the full scope of work for the quote in the background (only if the wording is still its own).
+    setTimeout(() => {
+      const est = app.snapshot().estimates.find((e) => e.id === id);
+      if (est) void writeScope(id, clientLang(est), app, true);
+    }, 50);
     await atLeast(started, ms);
     setWorking(null);
     setDraft(null);
