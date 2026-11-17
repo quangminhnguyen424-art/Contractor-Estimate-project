@@ -1,0 +1,2 @@
+// Public settings for the client signing page (the anon key is public; data is protected by row-level security).
+window.BIDWELL_CLOUD = { url: 'https://eiknmhqiemtdgslwctxn.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpa25taHFpZW10ZGdzbHdjdHhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4NDA0OTgsImV4cCI6MjEwOTQxNjQ5OH0._cY2yizzjpxe2HnzG04b2zVzfyj-_Y-rOAedGChjUY0' };

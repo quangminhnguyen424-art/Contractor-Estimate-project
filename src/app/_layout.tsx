@@ -217,8 +217,10 @@ function useHomeScreenTags() {
     add('meta', { name: 'apple-mobile-web-app-title', content: 'Studwise AI' });
     add('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'default' });
     add('meta', { name: 'theme-color', content: C.bg });
-    add('link', { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' });
-    add('link', { rel: 'manifest', href: '/manifest.json' });
+    // The web app can be served from a sub-folder (WEB_BASE), so icons are found next to it.
+    const base = process.env.EXPO_BASE_URL ?? '';
+    add('link', { rel: 'apple-touch-icon', href: `${base}/apple-touch-icon.png` });
+    add('link', { rel: 'manifest', href: `${base}/manifest.json` });
   }, []);
 }
 
