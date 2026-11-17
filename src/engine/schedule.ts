@@ -102,7 +102,7 @@ export function eventIcs(e: CalEvent, company: string): string {
   const timing = e.time
     ? `DTSTART:${stamp(s)}\r\nDTEND:${stamp(new Date(s.getTime() + (e.durationMin || 60) * 60000))}`
     : `DTSTART;VALUE=DATE:${e.date.replace(/-/g, '')}\r\nDTEND;VALUE=DATE:${addDays(e.date, 1).replace(/-/g, '')}`;
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${txt(company || 'Bidwell AI')}//EN`, 'BEGIN:VEVENT', `UID:${e.id}@bidwell`,
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${txt(company || 'Studwise AI')}//EN`, 'BEGIN:VEVENT', `UID:${e.id}@bidwell`,
     `DTSTAMP:${stamp(new Date())}`, timing, `SUMMARY:${txt(e.title)}`, e.address ? `LOCATION:${txt(e.address)}` : '', e.notes ? `DESCRIPTION:${txt(e.notes)}` : '',
     'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
 }

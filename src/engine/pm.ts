@@ -1,4 +1,4 @@
-// Bidwell as a project manager: each morning it looks over every job and asks about what needs the contractor.
+// Studwise as a project manager: each morning it looks over every job and asks about what needs the contractor.
 // No AI call needed; it reads the app's own records, so it is free and works offline.
 
 import { projectBooks, COST_KINDS } from './books';
@@ -71,7 +71,7 @@ export function dailyCheckIn(input: {
     if (flagged) out.push({ id: `review-${p.id}`, priority: 3, icon: 'flag-outline', text: `${p.title}: ${flagged} task${flagged > 1 ? 's need' : ' needs'} a second look.`, route: `/job/${est?.id ?? p.id}?tab=photos`, action: 'Open' });
     const yesterday = addDays(today, -1);
     const workedYesterday = events.some((e) => e.date === yesterday && (e.projectId === p.id || (!!p.estimateId && e.estimateId === p.estimateId)) && e.kind === 'crew');
-    if (workedYesterday && !p.logs.some((l) => l.date === yesterday)) out.push({ id: `log-${p.id}`, priority: 5, icon: 'book-outline', text: `How did yesterday go at ${p.title}? Bidwell can write the daily log.`, route: `/site/${p.id}/log?date=${yesterday}`, action: 'Write' });
+    if (workedYesterday && !p.logs.some((l) => l.date === yesterday)) out.push({ id: `log-${p.id}`, priority: 5, icon: 'book-outline', text: `How did yesterday go at ${p.title}? Studwise can write the daily log.`, route: `/site/${p.id}/log?date=${yesterday}`, action: 'Write' });
   }
 
   // A finished job that still has money to collect.

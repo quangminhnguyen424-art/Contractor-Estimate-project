@@ -46,7 +46,7 @@ export default function ReportScreen() {
 
   const emailInstead = () => {
     const body = `${message.trim()}\n\n---\n${KINDS.find((k) => k.value === kind)?.label}\n${device()}${cloud.user?.email ? `\nAccount: ${cloud.user.email}` : ''}`;
-    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bidwell AI: problem report')}&body=${encodeURIComponent(body)}`);
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Studwise AI: problem report')}&body=${encodeURIComponent(body)}`);
   };
 
   const send = async () => {

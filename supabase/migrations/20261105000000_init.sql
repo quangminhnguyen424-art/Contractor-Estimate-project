@@ -1,4 +1,4 @@
--- Bidwell AI cloud: each contractor's data, private job photos, online signatures and AI usage limits.
+-- Studwise AI cloud: each contractor's data, private job photos, online signatures and AI usage limits.
 
 create extension if not exists pgcrypto with schema extensions;
 

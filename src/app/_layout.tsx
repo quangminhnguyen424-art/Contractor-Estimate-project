@@ -34,14 +34,14 @@ function SaveWarning() {
   );
 }
 
-/** While Bidwell translates the app into a language that is not built in: a small note, so mixed screens make sense. */
+/** While Studwise translates the app into a language that is not built in: a small note, so mixed screens make sense. */
 function TranslationProgress() {
   const { language, progress } = useLanguage();
   const insets = useSafeAreaInsets();
   if (!language || !progress.total || progress.done >= progress.total) return null;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 6, alignSelf: 'center', backgroundColor: C.ink, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7, opacity: 0.92 }}>
-      <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '600' }}>{`Bidwell is learning ${language.name}… ${Math.round((progress.done / progress.total) * 100)}%`}</Text>
+      <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '600' }}>{`Studwise is learning ${language.name}… ${Math.round((progress.done / progress.total) * 100)}%`}</Text>
     </View>
   );
 }
@@ -58,7 +58,7 @@ function FirstSync() {
         </>
       ) : (
         <>
-          <Text style={{ color: C.ink, fontSize: 18, fontWeight: '700', textAlign: 'center' }}>Can’t reach Bidwell cloud</Text>
+          <Text style={{ color: C.ink, fontSize: 18, fontWeight: '700', textAlign: 'center' }}>Can’t reach Studwise cloud</Text>
           <Text style={{ color: C.ink2, fontSize: 14, textAlign: 'center' }}>Check your internet connection. Your saved work comes back once it connects.</Text>
           <Button title="Try again" icon="refresh" onPress={cloud.retryFirstSync} style={{ alignSelf: 'stretch' }} />
           <Button kind="ghost" title="Continue offline" onPress={cloud.skipFirstSync} />
@@ -214,7 +214,7 @@ function useHomeScreenTags() {
     };
     add('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
     add('meta', { name: 'mobile-web-app-capable', content: 'yes' });
-    add('meta', { name: 'apple-mobile-web-app-title', content: 'Bidwell AI' });
+    add('meta', { name: 'apple-mobile-web-app-title', content: 'Studwise AI' });
     add('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'default' });
     add('meta', { name: 'theme-color', content: C.bg });
     add('link', { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' });
@@ -249,7 +249,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
       <Text style={{ color: C.ink2, fontSize: 15, textAlign: 'center' }}>Your work is saved. Try again, and if it keeps happening, send us a report so we can fix it.</Text>
       <Button title="Try again" icon="refresh" onPress={() => { retry(); }} style={{ alignSelf: 'stretch' }} />
       <Button kind="secondary" title="Send a report" icon="mail-outline" style={{ alignSelf: 'stretch' }}
-        onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bidwell AI crashed')}&body=${encodeURIComponent(body)}`)} />
+        onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Studwise AI crashed')}&body=${encodeURIComponent(body)}`)} />
     </View>
   );
 }

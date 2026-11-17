@@ -17,7 +17,7 @@ const dadu = (): Estimate => {
     createdAt: '2026-11-16T00:00:00Z', updatedAt: '2026-11-16T00:00:00Z' } as unknown as Estimate;
 };
 
-describe('Bidwell writes the scope of work', () => {
+describe('Studwise writes the scope of work', () => {
   it('asks with the job’s facts, every section, and never the price, client or address', () => {
     const p = scopePrompt(dadu(), profile, 'en');
     expect(p).toContain('Standing seam metal roof');

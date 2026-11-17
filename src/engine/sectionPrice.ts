@@ -24,7 +24,7 @@ export function sectionPrices(e: Priced): Record<string, number> {
   if (isQuick(e)) {
     const general = round2(e.price - (e.extras?.length ? extras : 0));
     if (hasDivisions(e.jobTypeId)) {
-      // New construction: the per-SF price split part by part. Bidwell's split is of the price before any part was
+      // New construction: the per-SF price split part by part. Studwise's split is of the price before any part was
       // set by hand; the parts set by hand then replace their share.
       const handSet = Object.entries(e.priceEdits ?? {}).filter(([k]) => k.startsWith('d-'));
       const base = splitDivisions(round2(general - handSet.reduce((t, [, v]) => t + v.price - v.base, 0)));
@@ -37,11 +37,11 @@ export function sectionPrices(e: Priced): Record<string, number> {
 }
 
 /**
- * The estimate with these sections priced by hand (`null` puts a section back to Bidwell's price). Sections not
+ * The estimate with these sections priced by hand (`null` puts a section back to Studwise's price). Sections not
  * named keep their current price. Unknown keys are ignored: a section can disappear when the job is re-priced.
  */
 export function setSectionPrices<T extends Priced>(e: T, wanted: Record<string, number | null>): T {
-  // Start from Bidwell's own prices, then lay the contractor's on top.
+  // Start from Studwise's own prices, then lay the contractor's on top.
   const now = sectionPrices(e);
   const base: Record<string, number> = { ...now };
   for (const [k, v] of Object.entries(e.priceEdits ?? {})) if (k in base) base[k] = v.base;

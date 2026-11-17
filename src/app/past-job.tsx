@@ -33,7 +33,7 @@ export default function PastJobScreen() {
     if (reading) return;
     setReading(true);
     const r = await aiFor(apiKey, aiAllowed).extractPastJob(paste).finally(() => setReading(false));
-    if (r.error) notify('Bidwell could not read this', `${r.error}\n\nUsed the offline reader instead.`);
+    if (r.error) notify('Studwise could not read this', `${r.error}\n\nUsed the offline reader instead.`);
     const got: string[] = [];
     if (r.jobTypeId) { setJobTypeId(r.jobTypeId); got.push('job type'); }
     if (r.sizeSf) { setSizeSf(r.sizeSf); got.push(`${r.sizeSf} SF`); }

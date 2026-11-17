@@ -1,4 +1,4 @@
-// Bidwell's suggestions after a 3D room scan: the scan is of rooms INSIDE a home, so only indoor work is
+// Studwise's suggestions after a 3D room scan: the scan is of rooms INSIDE a home, so only indoor work is
 // suggested (no roofing, siding, decks, fences, concrete or yard work). Suggestions come from the room names
 // and sizes the contractor scanned.
 import { planTotals, roomMeasures } from './floorplan';
@@ -49,5 +49,5 @@ export function suggestFromScan(rooms: PlanRoom[]): Suggestion[] {
   return out.slice(0, 6);
 }
 
-/** Told to Bidwell AI with the job, so it stays inside: no exterior items in an indoor-scan estimate. */
+/** Told to Studwise AI with the job, so it stays inside: no exterior items in an indoor-scan estimate. */
 export const INDOOR_NOTE = 'The contractor scanned rooms inside the home with a 3D scan. This is INTERIOR work only: do not add or suggest roofing, siding, exterior paint, decks, fences, gutters, concrete, landscaping or other outside work.';

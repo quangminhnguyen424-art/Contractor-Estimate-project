@@ -130,7 +130,7 @@ export default function PriceDetails() {
 
       {est.aiNotes && est.aiNotes.length > 0 ? (
         <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
-          <Text style={{ fontWeight: '700', fontSize: 15, color: C.infoInk }}>Bidwell noticed (from notes and photos)</Text>
+          <Text style={{ fontWeight: '700', fontSize: 15, color: C.infoInk }}>Studwise noticed (from notes and photos)</Text>
           {est.aiNotes.map((n, i) => <AiNote key={i} note={n} photos={est.photos} />)}
         </Card>
       ) : null}

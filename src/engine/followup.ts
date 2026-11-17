@@ -94,7 +94,7 @@ export function confirmations(p: FollowUpPlan, company: string, client: string, 
   const when = p.days.map((d) => `day ${d}`).join(', ');
   return {
     client: `${company}: thanks ${first(client)}, you agreed to reminders about "${title}" by ${how} (${when} after the quote). Reply STOP to end them anytime.`,
-    contractor: `Bidwell: ${client} agreed (${p.consentHow ?? 'in person'}) to ${how} reminders for "${title}" on ${when}. They stop automatically if the client signs, says no, or replies STOP.`,
+    contractor: `Studwise: ${client} agreed (${p.consentHow ?? 'in person'}) to ${how} reminders for "${title}" on ${when}. They stop automatically if the client signs, says no, or replies STOP.`,
   };
 }
 

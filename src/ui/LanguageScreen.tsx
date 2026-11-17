@@ -12,7 +12,7 @@ import { Wheel } from './Wheel';
 
 /**
  * "Your language": the first screen of the app, and Me → Language later. One choice sets the wording of every
- * screen, the language Bidwell answers in, and the voice. It is a scroll wheel: roll it and the language in the
+ * screen, the language Studwise answers in, and the voice. It is a scroll wheel: roll it and the language in the
  * middle is the choice. Ten languages, each named in itself so anyone can find theirs; the phone's own language comes
  * first. On first run, stopping on a built-in language shows the screen in it at once.
  */
@@ -48,13 +48,13 @@ export function LanguageScreen({ onDone, first }: { onDone: () => void; first?: 
           </View>
         ) : null}
         <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.4 }}>Your language</Text>
-        <Text style={{ color: C.ink2, fontSize: 15, lineHeight: 21, marginBottom: 12 }}>The whole app, Bidwell’s answers and the voice use it. You can change it later in the Me tab.</Text>
+        <Text style={{ color: C.ink2, fontSize: 15, lineHeight: 21, marginBottom: 12 }}>The whole app, Studwise’s answers and the voice use it. You can change it later in the Me tab.</Text>
 
         <Wheel label="Your language" value={picked} onChange={pick}
           options={ordered.map((l) => ({ key: l.code, label: l.name, sub: l.name !== l.english ? l.english : undefined, raw: true }))} />
 
         {choice && !COMPLETE.includes(choice.code) ? (
-          <Text style={{ color: C.muted, fontSize: 13, lineHeight: 18, marginTop: 8 }}>Bidwell translates the app into this language after you log in. It takes a few minutes the first time and needs the internet; until then screens show in English.</Text>
+          <Text style={{ color: C.muted, fontSize: 13, lineHeight: 18, marginTop: 8 }}>Studwise translates the app into this language after you log in. It takes a few minutes the first time and needs the internet; until then screens show in English.</Text>
         ) : null}
       </ScrollView>
 

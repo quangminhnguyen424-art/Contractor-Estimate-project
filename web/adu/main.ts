@@ -160,7 +160,7 @@ function words() {
   $('printText').textContent = t.print;
   $('again').textContent = t.again;
   $('fine').textContent = t.fine;
-  const p = $('powered'); p.textContent = `${t.powered} `; p.appendChild(el('b', undefined, page?.company?.trim() || 'Bidwell AI'));
+  const p = $('powered'); p.textContent = `${t.powered} `; p.appendChild(el('b', undefined, page?.company?.trim() || 'Studwise AI'));
   document.title = `${t.title}${page?.company ? ` · ${page.company}` : ''}`;
   if (result) show();
 }
@@ -169,11 +169,11 @@ $('langBtn').onclick = () => { lang = lang === 'en' ? 'vi' : 'en'; words(); };
 // ── The contractor's page ────────────────────────────────────────────────────────────────────────────────────
 function brand() {
   if (!page) return;
-  $('barCo').textContent = page.company || 'Bidwell AI';
+  $('barCo').textContent = page.company || 'Studwise AI';
   const logo = $('logo');
   if (page.logo && /^data:image\/(png|jpe?g|webp|gif);base64,/.test(page.logo)) {
     const img = document.createElement('img'); img.src = page.logo; img.alt = ''; logo.innerHTML = ''; logo.appendChild(img);
-  } else logo.textContent = (page.company || 'B').trim().charAt(0).toUpperCase() || 'B';
+  } else if (page.company?.trim()) logo.textContent = page.company.trim().charAt(0).toUpperCase();
 }
 
 // ── Looking up the lot ─────────────────────────────────────────────────────────────────────────────────────────

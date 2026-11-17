@@ -31,11 +31,11 @@ import { resolvePhotoUri, savePhoto } from '@/ui/photoStore';
 export default function NewEstimate() {
   const { profile, draft, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects, estimates } = useApp();
   const cloud = useCloud();
-  // The AI is reachable with a Bidwell account, a personal key, or inside the Claude app.
+  // The AI is reachable with a Studwise account, a personal key, or inside the Claude app.
   const claudeOn = aiAllowed && (!!apiKey || inClaudeApp || !!cloud.user);
   const params = useLocalSearchParams<{ type?: string; project?: string; lead?: string; client?: string; address?: string; note?: string }>();
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(params.type && isJobTypeId(params.type) ? params.type : null);
-  // Coming from a Bidwell suggestion on the scan screen picks that type (also when this tab was already open).
+  // Coming from a Studwise suggestion on the scan screen picks that type (also when this tab was already open).
   const [lastParam, setLastParam] = useState(params.type);
   if (params.type !== lastParam) {
     setLastParam(params.type);
@@ -160,7 +160,7 @@ export default function NewEstimate() {
       const skip = new Promise<ScopeResult>((resolve) => { skipRef.current = () => { gaveUp = true; resolve(demoAI.parseScope(description, type)); }; });
       parsed = await Promise.race([
         ai.parseScope(description, type, images, ctx)
-          .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Bidwell could not read this job.' })),
+          .catch((e: unknown) => ({ answers: {}, heard: [], error: e instanceof Error ? e.message : 'Studwise could not read this job.' })),
         skip,
       ]);
       skipRef.current = null;
@@ -171,8 +171,8 @@ export default function NewEstimate() {
     }
     setWorking(null);
     setBusy(false);
-    if (parsed.error) notify('Bidwell could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
-    else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Bidwell`, photos.length > 8 ? 'Bidwell looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
+    if (parsed.error) notify('Studwise could not read this job', `${parsed.error}\n\nUsed the offline reader instead.`);
+    else if (skipped > 0) notify(`${skipped} photo${skipped > 1 ? 's were' : ' was'} not sent to Studwise`, photos.length > 8 ? 'Studwise looks at up to 8 photos per estimate, and some photos could not be read.' : 'Some photos could not be read (for example HEIC files on a computer). Try JPG or PNG.');
     const jt = jobType(type);
     // Rooms from the 3D scan screen fill in the areas (floor, walls, baseboard) for this type of work.
     const fromPlan = pendingPlan?.length ? answersFromPlan(jt, pendingPlan) : null;
@@ -202,7 +202,7 @@ export default function NewEstimate() {
       if (c.name) setClientName(c.name);
       if (c.address && !address.trim()) setAddress(c.address);
     } catch {
-      notifySettings('Contacts unavailable', 'Allow Bidwell AI to use Contacts in your phone’s Settings, or type the name.');
+      notifySettings('Contacts unavailable', 'Allow Studwise AI to use Contacts in your phone’s Settings, or type the name.');
     }
   };
   const send = async () => {
@@ -215,7 +215,7 @@ export default function NewEstimate() {
       setBusy(false);
       if (type) setJobTypeId(type);
     }
-    if (!type) { notify('Pick the type of work', 'Choose it under “Type of work”, or describe the job so Bidwell can pick it.'); return; }
+    if (!type) { notify('Pick the type of work', 'Choose it under “Type of work”, or describe the job so Studwise can pick it.'); return; }
     await next(type);
   };
 
@@ -246,7 +246,7 @@ export default function NewEstimate() {
         <Composer value={description} onChange={setDescription} onSend={send} sending={busy} sendLabel="Continue" inputLabel="Describe the job" allowEmpty
           placeholder={effectiveType ? `Describe the job: ${jobType(effectiveType).name}…` : 'Describe the job…'}
           actions={[
-            { icon: 'camera', label: 'Take photos', sub: 'Bidwell looks for sizes, conditions and code issues', onPress: () => addPhotos(true) },
+            { icon: 'camera', label: 'Take photos', sub: 'Studwise looks for sizes, conditions and code issues', onPress: () => addPhotos(true) },
             { icon: 'images', label: 'Choose photos', onPress: () => addPhotos(false) },
             { icon: 'scan', label: 'Scan rooms in 3D', sub: 'Measures walls, doors and windows', onPress: () => router.push('/scan') },
             ...(contactsAvailable ? [{ icon: 'person-add' as const, label: 'Client from Contacts', onPress: pickContact }] : []),
@@ -271,7 +271,7 @@ export default function NewEstimate() {
         <Muted>Say it like you would to a helper: the rooms, the sizes, what’s changing. Tap + to add photos or scan the rooms.</Muted>
       </View>
 
-      <Select<JobTypeId> label="Type of work" value={effectiveType} onChange={setJobTypeId} placeholder="Bidwell picks it from what you say"
+      <Select<JobTypeId> label="Type of work" value={effectiveType} onChange={setJobTypeId} placeholder="Studwise picks it from what you say"
         options={typeOptions}
         help={guessed && !jobTypeId ? `Picked from your description. Tap to change.` : undefined} />
       <Field label="Client" value={clientName} onChangeText={setClientName} placeholder="Name (optional)" />
@@ -285,7 +285,7 @@ export default function NewEstimate() {
 function KindSwitch({ kind, onChange }: { kind: 'describe' | 'quick'; onChange: (k: 'describe' | 'quick') => void }) {
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
-      <KindItem k="describe" kind={kind} onChange={onChange} icon="sparkles" title="Describe the job" sub="Talk, photos or scan. Bidwell builds it." />
+      <KindItem k="describe" kind={kind} onChange={onChange} icon="sparkles" title="Describe the job" sub="Talk, photos or scan. Studwise builds it." />
       <KindItem k="quick" kind={kind} onChange={onChange} icon="flash" title="Quick price" sub="Size × your price. Repeat jobs in 30 s." />
     </View>
   );

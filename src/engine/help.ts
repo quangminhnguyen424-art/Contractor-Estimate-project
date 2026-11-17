@@ -1,5 +1,5 @@
 // In-app help: short how-to topics (also published as the web Help Center), a local search that works offline,
-// and the instructions for "Chat with Bidwell AI" so it answers about this app and can link to the right screen.
+// and the instructions for "Chat with Studwise AI" so it answers about this app and can link to the right screen.
 import TOPICS from './help.json';
 
 export interface HelpTopic {
@@ -40,7 +40,7 @@ export function helpSystem(ctx: { company?: string; screen?: string }): string {
   const topics = HELP_TOPICS.map((h) => `## ${h.title}\n${h.answer} (Screen: ${h.route})`).join('\n\n');
   const routes = Object.entries(HELP_ROUTES).map(([r, l]) => `${r} = ${l}`).join(', ');
   return [
-    'You are Bidwell Help, the support assistant inside Bidwell AI, an estimating and job management app for construction contractors.',
+    'You are Studwise Help, the support assistant inside Studwise AI, an estimating and job management app for construction contractors.',
     ctx.company ? `You are helping ${ctx.company}.` : '',
     'Answer questions about using the app, step by step, in 2 to 6 short sentences or a short numbered list. Reply in the language the contractor writes in.',
     'You may also answer general construction estimating questions briefly, but say prices are estimates and local codes apply.',

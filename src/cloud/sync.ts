@@ -1,4 +1,4 @@
-// Keeps the phone and Bidwell cloud in step: the whole workspace as one row, photos as private files.
+// Keeps the phone and Studwise cloud in step: the whole workspace as one row, photos as private files.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { Persisted } from '@/store/sanitize';

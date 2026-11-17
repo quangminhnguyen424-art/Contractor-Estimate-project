@@ -25,7 +25,7 @@ const POPULAR = ['new-estimate', 'edit-quote', 'sign', 'photos', 'roof-satellite
 /** `own`: a line the app wrote (translated on screen); anything else is shown as written. `why`: why the AI did not answer. */
 interface Msg { role: 'user' | 'assistant'; text: string; links?: { route: string; label: string }[]; topics?: HelpTopic[]; own?: boolean; why?: string }
 
-/** Help and support: chat with Bidwell AI about the app, popular how-tos, report a problem, or reach a person. */
+/** Help and support: chat with Studwise AI about the app, popular how-tos, report a problem, or reach a person. */
 export default function HelpScreen() {
   const { apiKey, aiAllowed, profile } = useApp();
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -70,7 +70,7 @@ export default function HelpScreen() {
             <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>Chat with Bidwell AI</Text>
+            <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>Chat with Studwise AI</Text>
             <Text style={{ color: C.muted, fontSize: 13 }}>Ask how to do anything in the app, any time, in your language.</Text>
           </View>
         </View>
@@ -110,14 +110,14 @@ export default function HelpScreen() {
             ) : null}
           </View>
         ))}
-        {busy ? <Text style={{ color: C.muted }}>Bidwell is typing…</Text> : null}
+        {busy ? <Text style={{ color: C.muted }}>Studwise is typing…</Text> : null}
 
         {msgs.length === 0 ? (
           <>
             <Section title="Get help from a person" />
             <List>
               <ListRow icon="bug" title="Report a problem" sub="Something broken or wrong? Send it with one tap." onPress={() => router.push('/report')} />
-              <ListRow icon="mail" title="Email support" sub={SUPPORT_EMAIL} onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bidwell AI help')}`)} />
+              <ListRow icon="mail" title="Email support" sub={SUPPORT_EMAIL} onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Studwise AI help')}`)} />
               {COMPANY.phone ? <ListRow icon="call" title="Call support" sub={COMPANY.phone} onPress={() => Linking.openURL(`tel:${COMPANY.phone.replace(/[^\d+]/g, '')}`)} /> : null}
               <ListRow icon="book" title="Help Center" sub="All how-to guides on the web" onPress={() => Linking.openURL(HELP_CENTER)} />
               <ListRow icon="shield-checkmark" title="Privacy Policy" onPress={() => Linking.openURL(COMPANY.pages.privacy)} />

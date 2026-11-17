@@ -87,7 +87,7 @@ export default function TabsLayout() {
           </View>
         ),
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Bidwell AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
+      <Tabs.Screen name="index" options={{ title: 'Studwise AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
       <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarLabel: 'Jobs', tabBarIcon: icon('briefcase-outline', 'briefcase') }} />
       <Tabs.Screen name="new" options={{ title: 'New estimate', tabBarLabel: '', tabBarButton: () => <PlusButton /> }} />
       <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: icon('calendar-outline', 'calendar') }} />

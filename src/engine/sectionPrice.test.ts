@@ -31,7 +31,7 @@ describe('a section price set by hand on the quote', () => {
     expect(baseSections(out, 'en').find((s) => s.trade === first.trade)?.price).toBe(first.price + 500);
   });
 
-  it('can be undone, and setting it back to Bidwell’s price leaves nothing behind', () => {
+  it('can be undone, and setting it back to Studwise’s price leaves nothing behind', () => {
     const est = make();
     const k = est.trades[0].trade;
     const set = setSectionPrices(est, { [k]: 1 });

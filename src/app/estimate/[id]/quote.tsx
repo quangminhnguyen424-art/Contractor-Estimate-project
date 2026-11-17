@@ -136,12 +136,12 @@ export default function QuoteScreen() {
         <Text style={{ flex: 1, color: C.accentDark, fontSize: 14 }}>Tap any part of the quote to change its wording or price.</Text>
       </View>
       {scopeBusy ? (
-        <Banner tone="info" title="Bidwell is writing the scope of work…">It fills in every section from your notes and photos. You can keep reading; the quote updates when it is done.</Banner>
+        <Banner tone="info" title="Studwise is writing the scope of work…">It fills in every section from your notes and photos. You can keep reading; the quote updates when it is done.</Banner>
       ) : isSigned ? null : (
-        <Button kind="secondary" icon="sparkles" title={est.quoteEdits?.[lang] ? 'Rewrite the whole scope with Bidwell' : 'Write the whole scope with Bidwell'}
+        <Button kind="secondary" icon="sparkles" title={est.quoteEdits?.[lang] ? 'Rewrite the whole scope with Studwise' : 'Write the whole scope with Studwise'}
           onPress={() => {
-            const go = () => writeScope(est.id, lang, app).catch((e: unknown) => notify('Bidwell could not write the scope', e instanceof Error ? e.message : 'Try again.'));
-            if (est.quoteEdits?.[lang]) confirmAction('Rewrite the whole scope?', 'Bidwell writes the summary, every section and Not included again from your notes. Your notes for the client and your prices stay.', 'Rewrite', go);
+            const go = () => writeScope(est.id, lang, app).catch((e: unknown) => notify('Studwise could not write the scope', e instanceof Error ? e.message : 'Try again.'));
+            if (est.quoteEdits?.[lang]) confirmAction('Rewrite the whole scope?', 'Studwise writes the summary, every section and Not included again from your notes. Your notes for the client and your prices stay.', 'Rewrite', go);
             else void go();
           }} />
       )}
@@ -327,7 +327,7 @@ function QuoteEditor({ est, lang, profile, signed, onSave, onPrice, onSectionPri
       </Card>
       {est.quoteEdits ? (
         <Button kind="secondary" icon="refresh-outline" title="Undo all edits"
-          onPress={() => confirmAction('Undo all edits?', 'The quote goes back to the wording Bidwell wrote, in every language.', 'Undo', () => onSave(null))} />
+          onPress={() => confirmAction('Undo all edits?', 'The quote goes back to the wording Studwise wrote, in every language.', 'Undo', () => onSave(null))} />
       ) : null}
     </View>
   );
@@ -375,7 +375,7 @@ function Tappable({ children, onPress, label, style }: { children: React.ReactNo
 
 const AddLine = ({ text }: { text: string }) => <Text style={{ fontSize: 13, color: P.accent, fontWeight: '600', paddingVertical: 2 }}>{text}</Text>;
 
-/** The wording saved for one section: only what differs from Bidwell's own (so a fix to the estimate still flows in). */
+/** The wording saved for one section: only what differs from Studwise's own (so a fix to the estimate still flows in). */
 function withSection(est: Estimate, lang: Lang, trade: string, title: string, itemsText: string): QuoteEdits {
   const base = baseSections(est, lang).find((b) => b.trade === trade);
   const items = lines(itemsText);
@@ -434,7 +434,7 @@ function PartSheet({ est, profile, lang, signed, part, onClose }: {
     }
     close();
   };
-  const backToBidwell = () => {
+  const backToStudwise = () => {
     if (part?.kind !== 'section') return;
     const base = baseSections({ ...est, quoteEdits: undefined }, lang).find((b) => b.trade === part.trade);
     if (base) { setTitle(base.title); setText(base.items.join('\n')); }
@@ -459,14 +459,14 @@ function PartSheet({ est, profile, lang, signed, part, onClose }: {
                 {diff ? (
                   <Muted style={{ fontSize: 13 }}>{`${diff > 0 ? '+' : '−'}${money(Math.abs(diff))} on this section. New total with tax: ${money(Math.round((est.price + diff) * (1 + est.salesTaxPct / 100) * 100) / 100)}`}</Muted>
                 ) : edit ? (
-                  <Muted style={{ fontSize: 13 }}>{`You set this price. Bidwell priced it at ${money(edit.base)}.`}</Muted>
+                  <Muted style={{ fontSize: 13 }}>{`You set this price. Studwise priced it at ${money(edit.base)}.`}</Muted>
                 ) : (
                   <Muted style={{ fontSize: 13 }}>From your markup and costs. Change it here if it doesn’t feel right for this client.</Muted>
                 )}
               </>
             )}
             {(est.quoteEdits?.[lang]?.sections?.[part.trade] || edit) ? (
-              <Button kind="ghost" icon="refresh-outline" title="Back to Bidwell’s wording and price" onPress={backToBidwell} />
+              <Button kind="ghost" icon="refresh-outline" title="Back to Studwise’s wording and price" onPress={backToStudwise} />
             ) : null}
           </>
         ) : (

@@ -57,7 +57,7 @@ export const PRIVACY_POLICY: PolicySection[] = [
     body: [
       'We use these companies to run the app. They may use your information only to provide their service to us.',
       'Supabase (United States): sign-in, database, file storage and server functions.',
-      'Anthropic, PBC (United States): the AI behind Bidwell. When AI is on, the job notes, photos, questions and business details needed for each request are sent to Anthropic under its commercial terms, which do not allow training AI models on them.',
+      'Anthropic, PBC (United States): the AI behind Studwise. When AI is on, the job notes, photos, questions and business details needed for each request are sent to Anthropic under its commercial terms, which do not allow training AI models on them.',
       'Google: when you use Measure roof, the job address is sent to Google to find and measure the roof.',
       'King County (Washington): public property records, looked up directly by your device on the ADU check and permit screens.',
       'Website hosting and email delivery providers: to serve the public pages and to send account emails such as password resets.',
@@ -82,7 +82,7 @@ export const PRIVACY_POLICY: PolicySection[] = [
   {
     title: '9. Your choices and rights',
     body: [
-      'You can see, correct and export your information in the app (Me > Backup), turn AI off (Me > Bidwell AI), and delete your account at any time.',
+      'You can see, correct and export your information in the app (Me > Backup), turn AI off (Me > Studwise AI), and delete your account at any time.',
       `Depending on where you live, you may have the right to know what we hold about you, to get a copy, to correct it, to delete it, and to opt out of sale or targeted advertising (we do neither). Write to ${COMPANY.privacy}; we answer within 45 days and will not treat you differently for asking. We may need to confirm your identity first. An authorized agent may ask for you with your written permission.`,
       'If you are a contractor’s client or a homeowner, you can also ask the contractor directly.',
     ],

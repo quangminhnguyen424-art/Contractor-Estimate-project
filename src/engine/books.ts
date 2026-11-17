@@ -190,7 +190,7 @@ export function parseReceipt(reply: string): ReceiptRead {
   try {
     raw = JSON.parse(reply.slice(start, end + 1)) as Record<string, unknown>;
   } catch {
-    throw new Error('Bidwell could not read this receipt. Try a sharper photo, or type the amount.');
+    throw new Error('Studwise could not read this receipt. Try a sharper photo, or type the amount.');
   }
   const kinds: CostKind[] = ['labor', 'materials', 'subs', 'equipment'];
   const lines = (Array.isArray(raw.lines) ? raw.lines : []).slice(0, 100).flatMap((l): ReceiptLine[] => {
@@ -205,7 +205,7 @@ export function parseReceipt(reply: string): ReceiptRead {
   const tax = r2(Math.max(0, numOr(raw.tax)));
   let total = r2(numOr(raw.total, NaN));
   if (!Number.isFinite(total) || total <= 0) total = r2(sum(lines.map((l) => l.total)) + tax);
-  if (!(total > 0) || total > 1e6) throw new Error('Bidwell could not find the total on this receipt. Type the amount instead.');
+  if (!(total > 0) || total > 1e6) throw new Error('Studwise could not find the total on this receipt. Type the amount instead.');
   return {
     vendor: typeof raw.vendor === 'string' ? raw.vendor.trim().slice(0, 60) : '',
     date: isYmd(raw.date) ? raw.date : '',

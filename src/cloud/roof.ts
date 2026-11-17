@@ -6,7 +6,7 @@ interface RoofReply {
   address: string; lat: number; lng: number; groundElevationM?: number; image?: string | null; insights: SolarInsights;
 }
 
-/** Measures the roof at an address from satellite data (through Bidwell cloud). */
+/** Measures the roof at an address from satellite data (through Studwise cloud). */
 export async function measureAddress(address: string): Promise<{ roof: RoofMeasure; image?: string | null }> {
   const r = await callFunction<RoofReply>('roof', { address });
   const roof = measureRoof(r.insights, { address: r.address, lat: r.lat, lng: r.lng, groundElevationM: r.groundElevationM });

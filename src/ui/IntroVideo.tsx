@@ -35,7 +35,7 @@ export function IntroVideo({ onDone }: { onDone: () => void }) {
         {SCENES.map((_, k) => <Bar key={k} state={k < i ? 'done' : k === i ? 'now' : 'next'} />)}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Readout color={C.accent}>Bidwell AI</Readout>
+        <Readout color={C.accent}>Studwise AI</Readout>
         <Pressable accessibilityRole="button" onPress={onDone} hitSlop={10}><Readout>Skip ›</Readout></Pressable>
       </View>
 

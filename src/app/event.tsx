@@ -71,7 +71,7 @@ export default function EventScreen() {
       const r = await scheduleReminder(e);
       const { notificationId: _old, ...rest } = e;
       saveEvent(r.id ? { ...rest, notificationId: r.id } : rest);
-      if (r.blocked) notifySettings('Saved, but reminders are off', 'Turn on notifications for Bidwell AI in your phone’s Settings to get reminders.');
+      if (r.blocked) notifySettings('Saved, but reminders are off', 'Turn on notifications for Studwise AI in your phone’s Settings to get reminders.');
       router.back();
     } catch {
       saveEvent(e);

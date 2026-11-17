@@ -32,7 +32,7 @@ export const LANGUAGES: Language[] = [
 
 const OTHER = 'x-';
 
-/** A language that is not in the list: the user types its name and Bidwell translates into it. */
+/** A language that is not in the list: the user types its name and Studwise translates into it. */
 export function customLanguage(typed: string): Language {
   const name = typed.trim().replace(/\s+/g, ' ').slice(0, 40);
   return { code: `${OTHER}${name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-')}`, name, english: name };

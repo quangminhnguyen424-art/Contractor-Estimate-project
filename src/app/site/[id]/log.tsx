@@ -37,9 +37,9 @@ export default function LogScreen() {
     try {
       const written = await writeDailyLog(aiFor(apiKey, aiAllowed), p, today, text.trim(), aiLanguage());
       if (written.trim()) setText(written);
-      else notify('Bidwell had nothing to write', 'Add photos or finished tasks for the day, or type the log yourself.');
+      else notify('Studwise had nothing to write', 'Add photos or finished tasks for the day, or type the log yourself.');
     } catch (e) {
-      notify('Bidwell could not write the log', e instanceof Error ? e.message : 'Try again.');
+      notify('Studwise could not write the log', e instanceof Error ? e.message : 'Try again.');
     } finally {
       setBusy(false);
     }
@@ -60,7 +60,7 @@ export default function LogScreen() {
       <Card>
         <H2>{isToday ? 'Today' : 'Yesterday'} · {dateFmt(`${today}T12:00:00`)}</H2>
         <Muted style={{ fontSize: 13 }}>{photosToday} photo{photosToday === 1 ? '' : 's'} and {doneToday} finished task{doneToday === 1 ? '' : 's'} that day.</Muted>
-        <Button kind="secondary" title={busy ? 'Bidwell is writing…' : 'Write the log with Bidwell'} disabled={busy} onPress={draft} />
+        <Button kind="secondary" title={busy ? 'Studwise is writing…' : 'Write the log with Studwise'} disabled={busy} onPress={draft} />
         <Field label="Log" multiline value={text} onChangeText={setText} placeholder="Work done, what’s next, anything to watch." />
         <Button title={existing ? 'Update the log' : 'Save the log'} disabled={!text.trim()} onPress={save} />
       </Card>

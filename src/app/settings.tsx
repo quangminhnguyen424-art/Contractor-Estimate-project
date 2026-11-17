@@ -22,7 +22,7 @@ import { confirmAction, notify } from '@/ui/notify';
 /** The pages behind the rows on the Me tab. Each one edits one thing and has its own Save. */
 export const SETTINGS = {
   company: 'Company info', pay: 'Getting paid', schedule: 'Payment schedule', notices: 'Notices on quotes',
-  rules: 'Markup, tax and quote defaults', work: 'Work you do', about: 'How you work', ai: 'Bidwell AI', backup: 'Backup',
+  rules: 'Markup, tax and quote defaults', work: 'Work you do', about: 'How you work', ai: 'Studwise AI', backup: 'Backup',
 } as const;
 export type SettingsPage = keyof typeof SETTINGS;
 const NO_SAVE: SettingsPage[] = ['ai', 'backup'];
@@ -67,14 +67,14 @@ export default function Settings() {
       setKeyStatus({ tone: 'info', text: 'Claude key removed. The app uses the offline reader.' });
       return;
     }
-    setKeyStatus({ tone: 'info', text: 'Checking the key with Bidwell…' });
+    setKeyStatus({ tone: 'info', text: 'Checking the key with Studwise…' });
     const err = await testClaudeKey(k);
     if (err) {
       setKeyStatus({ tone: 'warn', text: err });
       return;
     }
     saveApiKey(k);
-    setKeyStatus({ tone: 'ok', text: 'Connected. Bidwell now reads your job notes and photos.' });
+    setKeyStatus({ tone: 'ok', text: 'Connected. Studwise now reads your job notes and photos.' });
   };
 
   const exportBackup = async () => {
@@ -229,11 +229,11 @@ export default function Settings() {
         </>
       ) : page === 'about' ? (
         <>
-          <Muted>Bidwell reads this with every job, so its questions, notes and answers fit how you work.</Muted>
+          <Muted>Studwise reads this with every job, so its questions, notes and answers fit how you work.</Muted>
           <WorkProfileForm value={p.work ?? EMPTY_WORK} onChange={(w) => set('work', w)} />
           <Field label="How you work" multiline value={p.about} onChangeText={(v) => set('about', v)} maxLength={2000}
             placeholder="e.g. Mid-range remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin."
-            help="Bidwell reads this with every job, so its questions and notes fit how you work." />
+            help="Studwise reads this with every job, so its questions and notes fit how you work." />
           <LearnedCard estimates={estimates} lang={p.quoteLanguage} />
         </>
       ) : page === 'ai' ? (
@@ -242,13 +242,13 @@ export default function Settings() {
             {!aiAllowed ? 'Off · AI sharing is turned off'
               : apiKey ? `On · your own Claude key (${CLAUDE_MODEL})`
               : inClaudeApp ? 'On · runs on your Claude plan'
-              : cloud.user ? 'On · included with your Bidwell account'
+              : cloud.user ? 'On · included with your Studwise account'
               : 'Off · log in to turn it on'}
           </Text>
           <Banner tone={aiAllowed ? 'ok' : 'warn'} title={aiAllowed ? 'AI sharing is on' : 'AI sharing is off'}>
             {aiAllowed
               ? 'Notes, photos and recordings you choose are sent to Anthropic (Claude) to draft estimates. Not used for training.'
-              : 'Nothing is sent to the AI. Bidwell uses the offline reader, which understands less. Turn it on to use AI.'}
+              : 'Nothing is sent to the AI. Studwise uses the offline reader, which understands less. Turn it on to use AI.'}
           </Banner>
           <Button kind="secondary" title="Terms, privacy and AI sharing" icon="document-text-outline" onPress={() => router.push('/terms')} />
           {!inClaudeApp && !cloud.user ? <Button title="Log in to turn on the AI" icon="log-in-outline" onPress={() => router.push('/login')} /> : null}
@@ -257,7 +257,7 @@ export default function Settings() {
               <Button kind="ghost" title={showKey ? 'Hide: use my own Claude API key' : 'Advanced: use my own Claude API key'} onPress={() => setShowKey((v) => !v)} />
               {showKey || apiKey ? (<>
                 <Muted style={{ fontSize: 13 }}>
-                  Optional. Your account already includes the AI. With your own key from console.anthropic.com, Bidwell uses it instead and Anthropic bills you directly.
+                  Optional. Your account already includes the AI. With your own key from console.anthropic.com, Studwise uses it instead and Anthropic bills you directly.
                   The key stays on this device and is never backed up.
                 </Muted>
                 <Field label="Claude API key" value={keyText} onChangeText={(v) => { setKeyText(v); setKeyStatus(null); }}

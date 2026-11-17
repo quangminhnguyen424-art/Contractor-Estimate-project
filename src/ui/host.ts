@@ -43,7 +43,7 @@ export const aiFor = (apiKey: string | undefined, allowed: boolean) => {
   if (!allowed) return sharingOffAI();
   if (inClaudeApp) return getAI({ host: hostSample });
   if (apiKey?.trim()) return getAI({ apiKey });
-  // No key of your own: Bidwell cloud's AI, with the signed-in account (the key stays on the server).
+  // No key of your own: Studwise cloud's AI, with the signed-in account (the key stays on the server).
   return cloudConfigured ? getAI({ cloud: { proxyUrl: `${CLOUD.url}/functions/v1/ai`, anonKey: CLOUD.anonKey, getToken: accessToken } }) : getAI({});
 };
 

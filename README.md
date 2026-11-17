@@ -35,7 +35,7 @@ All data is stored on the phone. Nothing is sent anywhere unless the Claude back
 
 1. Host the web version on Netlify (free): sign in with GitHub, **Import an existing project**, pick this repo, **Deploy**. `netlify.toml` already has the build settings, and every push redeploys.
 2. Open the Netlify link in **Safari** → Share → **Add to Home Screen**.
-3. In the app: **Me → Bidwell AI → Advanced**, paste your own key from console.anthropic.com and tap **Save and test key**. The key stays on that device and is never in backups. Set a monthly spending limit in the Anthropic Console.
+3. In the app: **Me → Studwise AI → Advanced**, paste your own key from console.anthropic.com and tap **Save and test key**. The key stays on that device and is never in backups. Set a monthly spending limit in the Anthropic Console.
 4. **Me → Backup → Export backup** regularly when not signed in; data then lives on the device. Restore on another device from Me → Backup or on first launch.
 
 ## Connect Claude for other users (later)
@@ -71,14 +71,14 @@ npx eslint src
 
 The app follows one line: **say the job → get the price → send the quote → client signs → run the job → get paid.**
 
-- **Tabs:** Home (what needs you today + ask Bidwell), Jobs (every job, one list), **+** (new estimate), Schedule, Me (settings, one page per topic at `/settings?s=…`).
+- **Tabs:** Home (what needs you today + ask Studwise), Jobs (every job, one list), **+** (new estimate), Schedule, Me (settings, one page per topic at `/settings?s=…`).
 - **One job, one page:** `/job/[id]` shows the stage (Estimate → Sent → Signed → Finished), the one next step, and three views: Overview, Job site, Money. The id is the estimate's id, or the job site's id for a photo-only job; `engine/job.ts` joins the two records.
 - **Screens under a job** do one thing each: `estimate/[id]` (private price details), `estimate/[id]/quote`, `sign`, `contract`, `change`, `follow`, `materials`, and `site/[id]/room`, `photo`, `log`, `share`, `money`, `buy`, `cost`.
 - **Going back:** screens opened from a tab are pushed on top of the tabs (`router.push`). To return to a tab from deeper in, use `router.dismissTo('/jobs')`, never `router.replace` (that would stack a second copy of the tabs).
 
 ### Languages
 
-The app asks for the user's language on first open (`ui/LanguageScreen.tsx`, a scroll wheel of the ten languages in `i18n/languages.ts`) and the whole interface, Bidwell's answers and the voice follow it. Change it later under Me > Language.
+The app asks for the user's language on first open (`ui/LanguageScreen.tsx`, a scroll wheel of the ten languages in `i18n/languages.ts`) and the whole interface, Studwise's answers and the voice follow it. Change it later under Me > Language.
 
 - **Write screens in English.** The app's `Text` component translates what it draws, so screens need no translation keys. Draw what the user typed (job titles, client names, notes, chat) with `raw` so it is shown as written: a client called "Home" must not be translated.
 - **After changing any wording, run `node scripts/i18n-extract.mjs`.** It rebuilds `src/i18n/catalog.json`, the list of every sentence the app can show. Then add the new sentences to `src/i18n/vi.json`; `npm test` fails when more than a few are missing.

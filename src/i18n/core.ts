@@ -109,7 +109,7 @@ export function translationPrompt(language: string, sources: string[]): string {
     'Rules:',
     '- Reply with ONLY a JSON array of strings, the same length and order as the input array.',
     '- Keep placeholders like {0} and {1} exactly; you may move them to where they belong in the sentence.',
-    '- Keep "Bidwell" and "Bidwell AI", product names (QuickBooks, Zelle, Zapier, TestFlight), units (SF, LF, EA) and symbols as they are.',
+    '- Keep "Studwise" and "Studwise AI", product names (QuickBooks, Zelle, Zapier, TestFlight), units (SF, LF, EA) and symbols as they are.',
     '- Use the plain, short wording a contractor in that language uses on a job site. Buttons and labels stay short.',
     '- Keep line breaks, punctuation style and capital letters at the start as in the source.',
     '',

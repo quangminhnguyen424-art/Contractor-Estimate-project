@@ -109,7 +109,7 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
             <Field label="Contractor registration #" value={license} onChangeText={setLicense} autoCapitalize="characters"
               help="Washington requires it on bids and contracts." />
             <Tick on={tips} onPress={() => setTips((v) => !v)}>
-              Optional: send me setup tips and Bidwell news by text or email. I can reply STOP or turn this off any time. Not needed to use the app.
+              Optional: send me setup tips and Studwise news by text or email. I can reply STOP or turn this off any time. Not needed to use the app.
             </Tick>
             {review ? null : <RestoreBackup />}
           </>
@@ -136,9 +136,9 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
         {step === 3 && (
           <>
             <H1>Your typical jobs</H1>
-            <Muted>A few questions so Bidwell learns how you work. It reads your answers with every job. Skip anything; change it anytime in the Me tab.</Muted>
+            <Muted>A few questions so Studwise learns how you work. It reads your answers with every job. Skip anything; change it anytime in the Me tab.</Muted>
             <WorkProfileForm value={work} onChange={setWork} />
-            <Field label="Anything else Bidwell should know? (optional)" multiline value={about} onChangeText={setAbout} maxLength={2000}
+            <Field label="Anything else Studwise should know? (optional)" multiline value={about} onChangeText={setAbout} maxLength={2000}
               placeholder="e.g. Most of my work is basement ADU conversions for investors. I aim for 25% margin. I use LVP, not carpet." />
           </>
         )}

@@ -234,7 +234,7 @@ export interface PermitState {
   done?: string[];
   /** From the county parcel record. */
   parcel?: { pin: string; city: string; zoning: string; lotSqft: number };
-  /** The "description of work" for the application (Bidwell writes it; the contractor can edit). */
+  /** The "description of work" for the application (Studwise writes it; the contractor can edit). */
   description?: string;
 }
 

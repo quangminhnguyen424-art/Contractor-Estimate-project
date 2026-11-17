@@ -128,7 +128,7 @@ export function JobPhotos({ project, onStart }: {
       <Section title="Share" />
       <List>
         <ListRow icon="images" title="Photo update for the client"
-          sub={p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })}` : 'Bidwell writes the message for you'}
+          sub={p.lastClientUpdateAt ? `Last sent ${new Date(p.lastClientUpdateAt).toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })}` : 'Studwise writes the message for you'}
           onPress={() => go('share?mode=client')} />
         <ListRow icon="people" title="Work order for the crew" sub="In each person’s language · never shows prices" onPress={() => go('share?mode=crew')} />
         <ListRow icon="book" title="Daily log" sub={p.logs.length ? `${p.logs.length} day${p.logs.length > 1 ? 's' : ''} written` : 'What got done today, in one tap'} onPress={() => go('log')} />

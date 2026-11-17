@@ -57,7 +57,7 @@ export function JobMoney({ job, needSite }: {
 
       <Section title="Money out" />
       <List>
-        <ListRow icon="receipt" title="Costs and receipts" sub={m.costs.length ? `${m.costs.length} saved · snap a receipt and Bidwell reads it` : 'Snap a receipt and Bidwell reads it'} onPress={() => site('money')} />
+        <ListRow icon="receipt" title="Costs and receipts" sub={m.costs.length ? `${m.costs.length} saved · snap a receipt and Studwise reads it` : 'Snap a receipt and Studwise reads it'} onPress={() => site('money')} />
         <ListRow icon="cart" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'What to pick up, made from the estimate'} onPress={() => site('buy')} />
         {est?.mode === 'detailed' ? (
           <ListRow icon="list" title="Material list" sub={`${est.materials.length} items · ${money(est.materialTotal)} planned`} onPress={() => router.push(`/estimate/${est.id}/materials`)} />

@@ -36,7 +36,7 @@ function page({ file, title, description, vi, body }) {
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 header{background:rgba(245,247,251,.94);border-bottom:1px solid var(--line);position:sticky;top:0;backdrop-filter:blur(10px)}
 .bar{max-width:760px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.logo{width:32px;height:32px;border-radius:10px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.logo{width:32px;height:32px;border-radius:9px;overflow:hidden;display:flex}
 .brand{font-weight:700;margin-right:auto}nav{display:flex;gap:4px;flex-wrap:wrap}
 nav a{color:var(--muted);text-decoration:none;font-size:14px;padding:6px 10px;border-radius:999px}nav a[aria-current]{background:var(--tint);color:var(--accent);font-weight:600}
 main{max-width:760px;margin:0 auto;padding:28px 16px 56px}h1{font-size:30px;line-height:1.2;margin:0 0 4px;letter-spacing:-.4px}
@@ -47,7 +47,7 @@ p{color:var(--ink2);margin:0 0 10px}p:last-child{margin-bottom:0}a{color:var(--a
 .big a.alt{background:var(--card);color:var(--accent);border:1px solid var(--line)}
 footer{color:var(--muted);font-size:13px;text-align:center;padding:0 16px 32px}
 </style></head><body>
-<header><div class="bar"><div class="logo" aria-hidden="true">B</div><div class="brand">${esc(COMPANY.brand)}</div><nav>${nav}</nav></div></header>
+<header><div class="bar"><div class="logo" aria-hidden="true"><svg viewBox="0 0 1024 1024" width="100%" height="100%" aria-hidden="true"><rect width="1024" height="1024" fill="#2457F5"/><g fill="#fff"><rect x="212" y="236" width="600" height="72" rx="22"/><rect x="212" y="716" width="600" height="72" rx="22"/><rect x="236" y="296" width="72" height="432" rx="14"/><rect x="716" y="296" width="72" height="432" rx="14"/></g><polyline points="372,524 472,620 650,384" fill="none" stroke="#FF8A3D" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="brand">${esc(COMPANY.brand)}</div><nav>${nav}</nav></div></header>
 <main>
 <h1>${esc(title)}</h1>
 ${body.meta ? `<p class="meta">${body.meta}</p>` : ''}

@@ -9,10 +9,10 @@ import { Text } from './text';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'add-circle', title: 'Say the job, get the price', text: 'Tap the orange +. Describe the job by voice or text, add photos or a 3D scan, and Bidwell drafts the estimate with your prices.' },
+  { icon: 'add-circle', title: 'Say the job, get the price', text: 'Tap the orange +. Describe the job by voice or text, add photos or a 3D scan, and Studwise drafts the estimate with your prices.' },
   { icon: 'paper-plane', title: 'Send the quote and get it signed', text: 'Edit the wording, text the client a link, and they sign on their phone or on yours.' },
   { icon: 'camera', title: 'Run the job from one page', text: 'Each job keeps its photos by area, to-dos for the crew, and the money: what’s paid, what’s owed, what it cost.' },
-  { icon: 'sparkles', title: 'Let Bidwell check in each day', text: 'Home shows what needs you today: crew, follow-ups, money owed. Ask Bidwell anything at the bottom.' },
+  { icon: 'sparkles', title: 'Let Studwise check in each day', text: 'Home shows what needs you today: crew, follow-ups, money owed. Ask Studwise anything at the bottom.' },
 ];
 
 /** The last step of the welcome: four things to do first, then straight into the app. */
@@ -24,7 +24,7 @@ export function QuickTour({ name, onDone }: { name?: string; onDone: (route?: st
         <Reveal style={{ gap: 6 }}>
           <Text style={{ color: C.accent, fontWeight: '700', fontSize: 14 }}>QUICK TOUR</Text>
           <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }}>You’re all set{name ? `, ${name}` : ''}</Text>
-          <Text style={{ color: C.ink2, fontSize: 15 }}>Here’s how Bidwell works, in four steps.</Text>
+          <Text style={{ color: C.ink2, fontSize: 15 }}>Here’s how Studwise works, in four steps.</Text>
         </Reveal>
         {STEPS.map((s, i) => (
           <Reveal key={s.title} index={i + 1}>

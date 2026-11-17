@@ -458,7 +458,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               const { quoteEdits: _old, ...rest } = next;
               next = patch.quoteEdits ? { ...rest, quoteEdits: patch.quoteEdits, updatedAt: new Date().toISOString() } : { ...rest, updatedAt: new Date().toISOString() };
             }
-            // A section's client price set by hand on the quote (null: back to Bidwell's price).
+            // A section's client price set by hand on the quote (null: back to Studwise's price).
             if (patch.sectionPrices) next = { ...setSectionPrices(next, patch.sectionPrices), updatedAt: new Date().toISOString() };
             if (patch.markupPct != null && patch.markupPct !== e.markupPct && d.profile) {
               // Re-price markup only; saved costs and tax rate stay as quoted.
@@ -535,7 +535,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return { ok: false, message: 'That text is not a backup. Paste the whole backup exactly as it was exported.' };
         }
         const d = (parsed ?? {}) as { app?: string; data?: unknown };
-        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return { ok: false, message: 'That text is not a Bidwell AI backup.' };
+        if (d.app !== 'estimator' || !d.data || typeof d.data !== 'object') return { ok: false, message: 'That text is not a Studwise AI backup.' };
         const { data: next, dropped } = sanitizePersisted(d.data);
         if (!next.profile) {
           setCustomJobs(dataRef.current.customTypes, dataRef.current.customQuestions); // keep the current job types

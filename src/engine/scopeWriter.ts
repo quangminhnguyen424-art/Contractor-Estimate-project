@@ -4,7 +4,7 @@ import { quoteSections, quoteWording } from './quote';
 import type { Estimate, Lang, Profile, QuoteWording } from './types';
 
 /**
- * Bidwell writes the whole scope of work for a quote: a short summary, what each section includes, and what is not
+ * Studwise writes the whole scope of work for a quote: a short summary, what each section includes, and what is not
  * included, from the job's own facts (the contractor's notes, the answers, what was noticed in the photos). It never
  * sees or writes prices, and never names the client or the address.
  */
@@ -78,6 +78,6 @@ export function readScope(reply: string, keys: string[]): QuoteWording {
   }
   const summary = clean(raw.summary, 700) ?? undefined;
   const exclusions = list(raw.notIncluded, 12);
-  if (!Object.keys(sections).length && !summary) throw new Error('Bidwell’s scope came back empty. Try again.');
+  if (!Object.keys(sections).length && !summary) throw new Error('Studwise’s scope came back empty. Try again.');
   return { ...(summary ? { scopeNote: summary } : {}), sections, ...(exclusions.length ? { exclusions } : {}) };
 }

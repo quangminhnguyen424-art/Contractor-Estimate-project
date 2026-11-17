@@ -30,7 +30,7 @@ export function LogoPicker({ value, onChange }: { value?: string; onChange: (v: 
       if (data.length > 240_000) { notify('Logo too large', 'Use a simpler or smaller logo image.'); return; }
       onChange(data);
     } catch {
-      notifySettings('Could not open photos', 'Allow Bidwell AI to use Photos in your phone’s Settings.');
+      notifySettings('Could not open photos', 'Allow Studwise AI to use Photos in your phone’s Settings.');
     }
   };
   return (

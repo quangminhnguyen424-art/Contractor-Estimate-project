@@ -9,13 +9,13 @@ import { PASSWORD_RULES } from '@/ui/LoginScreen';
 import { confirmAction, notify } from '@/ui/notify';
 import { Text } from '@/ui/text';
 
-/** Bidwell cloud: sign in so data and photos are backed up, the AI works without a key, and clients can sign online. */
+/** Studwise cloud: sign in so data and photos are backed up, the AI works without a key, and clients can sign online. */
 export default function AccountScreen() {
   const cloud = useCloud();
   const [msg, setMsg] = useState<{ tone: 'warn' | 'ok' | 'info'; text: string } | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
 
-  if (!cloud.configured) return <Screen><Banner tone="info" title="Bidwell cloud is not set up in this version." /></Screen>;
+  if (!cloud.configured) return <Screen><Banner tone="info" title="Studwise cloud is not set up in this version." /></Screen>;
 
   if (cloud.user) {
     const status = { off: 'Off', syncing: 'Syncing…', ok: 'Up to date', error: 'Could not sync' }[cloud.state];
@@ -43,7 +43,7 @@ export default function AccountScreen() {
           <H2>What your account does</H2>
           <Muted>• Your estimates, jobs, money and calendar are saved to your private account and come back on a new phone.</Muted>
           <Muted>• Job photos and receipts are backed up privately. Only you can open them.</Muted>
-          <Muted>• Bidwell’s AI works without your own API key.</Muted>
+          <Muted>• Studwise’s AI works without your own API key.</Muted>
           <Muted>• Clients can sign quotes and change orders from a link on their own phone.</Muted>
         </Card>
         <Button kind="secondary" title={progress === 'out' ? 'Saving and logging out…' : 'Log out'} icon="log-out-outline" disabled={!!progress}
@@ -54,7 +54,7 @@ export default function AccountScreen() {
             if (err) confirmAction('Not saved to the cloud', err, 'Log out anyway', () => { cloud.signOut(true); });
           })} />
         <Button kind="danger" title={progress === 'delete' ? 'Deleting…' : 'Delete my account'} disabled={!!progress}
-          onPress={() => confirmAction('Delete your Bidwell account?', 'Your account, your jobs, clients, prices and all backed-up photos are deleted for good, here and on this phone. This cannot be undone.', 'Delete', async () => {
+          onPress={() => confirmAction('Delete your Studwise account?', 'Your account, your jobs, clients, prices and all backed-up photos are deleted for good, here and on this phone. This cannot be undone.', 'Delete', async () => {
             setProgress('delete');
             const err = await cloud.deleteAccount();
             setProgress(null);
@@ -68,7 +68,7 @@ export default function AccountScreen() {
     <Screen>
       <Card>
         <H2>You’re not logged in</H2>
-        <Muted>Log in to back up your work, use Bidwell’s AI and let clients sign online.</Muted>
+        <Muted>Log in to back up your work, use Studwise’s AI and let clients sign online.</Muted>
         <Button title="Log in" icon="log-in-outline" onPress={() => router.push('/login')} />
       </Card>
     </Screen>

@@ -66,7 +66,7 @@ export default function FollowScreen() {
       if (date < today) continue;
       const e: CalEvent = {
         id: newId(), title: `Follow up: ${est.clientName || est.title} (day ${day})`, kind: 'call', date, time: '10:00', durationMin: 15,
-        estimateId: est.id, address: '', notes: `Quote: ${est.title}. Bidwell has the message ready in Follow-ups.`, remindMin: 0, done: false,
+        estimateId: est.id, address: '', notes: `Quote: ${est.title}. Studwise has the message ready in Follow-ups.`, remindMin: 0, done: false,
         createdAt: new Date().toISOString(),
       };
       const r = await scheduleReminder(e).catch(() => ({ id: undefined }));
@@ -91,7 +91,7 @@ export default function FollowScreen() {
     saveFollowUp(plan);
     setP(plan);
     await syncCalendar(plan);
-    notify('Follow-ups stopped', reason === 'manual' ? 'No more reminders for this quote.' : 'The client said no. Bidwell will never remind them about this quote again.');
+    notify('Follow-ups stopped', reason === 'manual' ? 'No more reminders for this quote.' : 'The client said no. Studwise will never remind them about this quote again.');
   };
 
   const restart = async () => {
@@ -146,7 +146,7 @@ export default function FollowScreen() {
 
       {stopped ? (
         <Banner tone="info" title={p.stopped?.reason === 'signed' ? 'Signed: follow-ups ended' : p.stopped?.reason === 'lost' ? 'Marked lost: follow-ups ended' : 'Follow-ups are stopped'}>
-          {p.consent === 'declined' ? 'The client said no or replied STOP. Bidwell won’t remind them about this quote again.' : `Stopped ${dateFmt(p.stopped?.at ?? '')}.`}
+          {p.consent === 'declined' ? 'The client said no or replied STOP. Studwise won’t remind them about this quote again.' : `Stopped ${dateFmt(p.stopped?.at ?? '')}.`}
         </Banner>
       ) : null}
       {/* The quote is out again (reopened, or follow-ups were only paused): the client never said no, so they can restart. */}

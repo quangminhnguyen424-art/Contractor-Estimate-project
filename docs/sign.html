@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#F5F7FB">
 <title>Review and sign</title>
 <style>
-  /* The same colors and shapes as the Bidwell app (src/ui/theme.ts), so the client's page looks like the app. */
+  /* The same colors and shapes as the Studwise app (src/ui/theme.ts), so the client's page looks like the app. */
   :root {
     --bg: #F5F7FB; --card: #FFFFFF; --cardHi: #EEF2F8; --ink: #0B1324; --ink2: #3B4659; --muted: #4F5A6B; --line: #DCE3EC;
     --accent: #2457F5; --accentDark: #1A3FC0; --tint: rgba(36,87,245,0.10); --okBg: #E6F6EF; --okInk: #08734F;
@@ -114,8 +114,8 @@
 </head>
 <body>
 <header class="bar"><div class="in">
-  <div class="logo" id="logo" aria-hidden="true">B</div>
-  <div class="who"><b id="barCo">Bidwell AI</b><span id="barSub"></span></div>
+  <div class="logo" id="logo" aria-hidden="true" style="overflow:hidden"><svg viewBox="0 0 1024 1024" width="100%" height="100%" aria-hidden="true"><rect width="1024" height="1024" fill="#2457F5"/><g fill="#fff"><rect x="212" y="236" width="600" height="72" rx="22"/><rect x="212" y="716" width="600" height="72" rx="22"/><rect x="236" y="296" width="72" height="432" rx="14"/><rect x="716" y="296" width="72" height="432" rx="14"/></g><polyline points="372,524 472,620 650,384" fill="none" stroke="#FF8A3D" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="who"><b id="barCo">Studwise AI</b><span id="barSub"></span></div>
   <button class="lang" id="langBtn" type="button" hidden></button>
 </div></header>
 
@@ -372,7 +372,7 @@
     set('doneTitle', 'doneTitle');
     $('doneText').textContent = r && r.status === 'signed' && r.signed_at && !justSigned ? t('signedOn') + ' · ' + t('doneText') : t('doneText');
     set('payText', 'pay');
-    $('powered').innerHTML = ''; $('powered').append(t('powered') + ' '); var b = document.createElement('b'); b.textContent = 'Bidwell AI'; $('powered').append(b);
+    $('powered').innerHTML = ''; $('powered').append(t('powered') + ' '); var b = document.createElement('b'); b.textContent = 'Studwise AI'; $('powered').append(b);
     contact();
     // One tap between the document's language and English.
     var other = lang === 'en' ? docLang : 'en';
@@ -503,8 +503,8 @@
     // The page speaks the document's language: the contractor chose it for this client.
     var m = /<html[^>]*\blang="([^"]+)"/i.exec(r.html || '');
     docLang = pick(m && m[1]) || pick(navigator.language) || 'en'; lang = docLang;
-    $('barCo').textContent = r.company || 'Bidwell AI';
-    $('logo').textContent = (r.company || 'B').trim().charAt(0).toUpperCase() || 'B';
+    $('barCo').textContent = r.company || 'Studwise AI';
+    if (r.company && r.company.trim()) { $('logo').textContent = r.company.trim().charAt(0).toUpperCase(); $('logo').style.overflow = ''; }
     document.title = (r.company ? r.company + ' · ' : '') + (r.title || 'Review and sign');
     $('company').textContent = r.company || ''; $('title').textContent = r.title || ''; $('total').textContent = money(r.total);
     $('name').value = r.client_name || '';

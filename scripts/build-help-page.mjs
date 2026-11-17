@@ -16,7 +16,7 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, 
 const items = topics.map((t) => `<details id="${t.id}"><summary>${esc(t.title)} <span class="vi">${esc(t.vi)}</span></summary><p>${esc(t.answer)}</p></details>`).join('\n');
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Help Center · Bidwell AI</title>
+<title>Help Center · Studwise AI</title>
 <style>
 :root{--bg:#F5F7FB;--card:#fff;--ink:#0B1324;--ink2:#3B4659;--muted:#4F5A6B;--line:#DCE3EC;--accent:#2457F5}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
@@ -26,7 +26,7 @@ details{background:var(--card);border:1px solid var(--line);border-radius:16px;m
 summary{font-weight:600;cursor:pointer}.vi{color:var(--muted);font-weight:400;font-size:14px;margin-left:6px}p{color:var(--ink2);margin:10px 0 2px}
 .contact{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:24px}a{color:var(--accent)}
 </style></head><body><div class="wrap">
-<h1>Bidwell AI Help Center</h1><p class="sub">How-to guides for contractors. In the app, tap the <b>?</b> on Home to chat with Bidwell AI.</p>
+<h1>Studwise AI Help Center</h1><p class="sub">How-to guides for contractors. In the app, tap the <b>?</b> on Home to chat with Studwise AI.</p>
 <input id="q" placeholder="Search: password, roof, sign, photos…" aria-label="Search help">
 ${items}
 <div class="contact"><b>Still need help?</b><p>Email <a href="mailto:${COMPANY.support}">${COMPANY.support}</a>${COMPANY.phone ? ` or call <a href="tel:${COMPANY.phone.replace(/[^\d+]/g, '')}">${COMPANY.phone}</a>` : ''}, or use <b>Report a problem</b> in the app (Me → Help and support). We reply within one business day.</p>

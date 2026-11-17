@@ -44,7 +44,7 @@ export default function Me() {
       </Pressable>
 
       <List>
-        <ListRow icon="person-circle" title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Bidwell'}
+        <ListRow icon="person-circle" title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Studwise'}
           sub={cloud.user ? 'Account, password, sync' : 'Turns on the AI, backup and online signing'} onPress={() => router.push(cloud.user ? '/account' : '/login')} />
       </List>
 
@@ -53,7 +53,7 @@ export default function Me() {
         <ListRow icon="pricetags" title="My pricing" sub={priced ? `Your prices for ${types} type${types === 1 ? '' : 's'} of work, and past jobs` : 'Set what you charge for each type of work'} onPress={() => router.push('/pricing')} />
         <ListRow icon="calculator" title="Markup, tax and quote defaults" sub={`${profile.markupPct}% markup · ${profile.salesTaxPct}% tax · quotes valid ${profile.quoteValidDays} days`} onPress={() => open('rules')} />
         <ListRow icon="hammer" title="Work you do" sub={`${types} type${types === 1 ? '' : 's'} of work`} onPress={() => open('work')} />
-        <ListRow icon="bulb" title="How you work" sub="What Bidwell should know about your jobs" onPress={() => open('about')} />
+        <ListRow icon="bulb" title="How you work" sub="What Studwise should know about your jobs" onPress={() => open('about')} />
       </List>
 
       <Section title="Quotes and getting paid" />
@@ -77,13 +77,13 @@ export default function Me() {
       <Section title="App" />
       <List>
         <ListRow icon="language" title="Language" right={language?.name ?? 'English'} onPress={() => router.push('/language')} />
-        <ListRow icon="sparkles" title="Bidwell AI" sub={aiOn ? 'On' : 'Off'} onPress={() => open('ai')} />
+        <ListRow icon="sparkles" title="Studwise AI" sub={aiOn ? 'On' : 'Off'} onPress={() => open('ai')} />
         <ListRow icon="cloud-done" title="Backup" sub={cloud.user ? 'Backed up to your account' : 'Only on this phone · export a copy'} onPress={() => open('backup')} />
-        <ListRow icon="chatbubbles" title="Help and support" sub="Chat with Bidwell, report a problem" onPress={() => router.push('/help')} />
+        <ListRow icon="chatbubbles" title="Help and support" sub="Chat with Studwise, report a problem" onPress={() => router.push('/help')} />
         <ListRow icon="shield-checkmark" title="Terms, privacy and AI" onPress={() => router.push('/terms')} />
       </List>
 
-      <Muted style={{ textAlign: 'center', fontSize: 12 }}>Bidwell AI{version ? ` · version ${version}` : ''}</Muted>
+      <Muted style={{ textAlign: 'center', fontSize: 12 }}>Studwise AI{version ? ` · version ${version}` : ''}</Muted>
     </Screen>
   );
 }

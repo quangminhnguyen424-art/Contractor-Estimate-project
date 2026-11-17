@@ -117,7 +117,7 @@ export default function ShareScreen() {
     try {
       setText(mode === 'client' ? await writeClientUpdate(ai, p, clientLang, writer.target?.english) : await writePost(ai, p, pairs.length, clientLang, writer.target?.english));
     } catch (e) {
-      notify('Bidwell could not write it', e instanceof Error ? e.message : 'Try again.');
+      notify('Studwise could not write it', e instanceof Error ? e.message : 'Try again.');
     } finally {
       setBusy(null);
     }
@@ -163,7 +163,7 @@ export default function ShareScreen() {
           <Label>Language</Label>
           <Segmented<CrewLang> value={lang} onChange={setLang}
             options={(['en', 'vi', 'es'] as CrewLang[]).map((l) => ({ value: l, label: LANG_NAMES[l].native }))} />
-          {lang !== 'en' ? <Muted style={{ fontSize: 13 }}>Bidwell translates the tasks; the English stays underneath in small type.</Muted> : null}
+          {lang !== 'en' ? <Muted style={{ fontSize: 13 }}>Studwise translates the tasks; the English stays underneath in small type.</Muted> : null}
           {openTasks === 0 ? <Banner tone="info" title="No open tasks in these rooms">The PDF will only show the photos and notes.</Banner> : null}
           <Button title={busy === 'pdf' ? 'Making the PDF…' : 'Share work order PDF'} disabled={!!busy || !rooms.length} onPress={crewPdf} />
           <Button kind="secondary" title={busy === 'text' ? 'Preparing…' : 'Send tasks as a text message'} disabled={!!busy || !rooms.length} onPress={crewText} />
@@ -177,9 +177,9 @@ export default function ShareScreen() {
               : 'A short post about the finished work. Never the client’s name, address or prices.'}
           </Muted>
           <LanguageSelect key={mode} label={mode === 'client' ? 'Client’s language' : 'Post language'} value={language}
-            help={mode === 'post' ? 'Bidwell writes the post in it.' : undefined}
+            help={mode === 'post' ? 'Studwise writes the post in it.' : undefined}
             onChange={(l) => { setPicked(l); if (est && mode === 'client') updateEstimate(est.id, { clientLang: l.code, clientLangName: l.name }); }} />
-          <Button kind="secondary" title={busy === 'write' ? 'Bidwell is writing…' : 'Write it with Bidwell'} disabled={!!busy} onPress={write} />
+          <Button kind="secondary" title={busy === 'write' ? 'Studwise is writing…' : 'Write it with Studwise'} disabled={!!busy} onPress={write} />
           <Field label={mode === 'client' ? 'Message' : 'Post'} multiline value={text} onChangeText={setText}
             placeholder={mode === 'client' ? 'Hi! Here’s where we are…' : 'Before and after: hall bath…'} />
           {mode === 'client' ? (

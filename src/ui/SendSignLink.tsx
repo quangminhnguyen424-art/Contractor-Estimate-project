@@ -9,7 +9,7 @@ import { useApp } from '@/store/AppContext';
 import { Button, Muted } from './kit';
 import { notify } from './notify';
 
-/** Sends the client a link to read and sign on their own phone (Bidwell cloud). The signature comes back by itself. */
+/** Sends the client a link to read and sign on their own phone (Studwise cloud). The signature comes back by itself. */
 export function SendSignLink(props: {
   kind: 'quote' | 'change'; estimateId: string; changeId?: string; title: string; clientName: string; total: number;
   /** The document exactly as the client will see it. Called when the link is made. */
@@ -53,7 +53,7 @@ export function SendSignLink(props: {
     <>
       <Button kind="secondary" icon="link-outline" disabled={busy || props.disabled}
         title={busy ? 'Making the link…' : cloud.user ? (sent ? 'Send the link again' : 'Send a link to sign online') : 'Log in to send a signing link'} onPress={send} />
-      {sent ? <Muted style={{ fontSize: 12 }}>When the client signs, Bidwell records it here and lets you know. The link works for 30 days; a new link replaces the old one.</Muted> : null}
+      {sent ? <Muted style={{ fontSize: 12 }}>When the client signs, Studwise records it here and lets you know. The link works for 30 days; a new link replaces the old one.</Muted> : null}
     </>
   );
 }

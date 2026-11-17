@@ -56,7 +56,7 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   const summary = [`${activeJobs} job${activeJobs === 1 ? '' : 's'} live`, todays.length ? `${todays.length} on today` : '', overdue ? `${overdue} invoice${overdue > 1 ? 's' : ''} overdue` : '']
     .filter(Boolean).join(' · ');
 
-  // One list of what needs you today: Bidwell's check-ins first, then today's (or the next) appointments.
+  // One list of what needs you today: Studwise's check-ins first, then today's (or the next) appointments.
   const [allItems, setAllItems] = useState(false);
   const rows: Row[] = [
     ...checkIns.map((c) => ({ id: c.id, icon: c.icon as IconName, color: C.accent, title: c.text, action: c.action, route: c.route })),
@@ -141,11 +141,11 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
         <Pressable accessibilityRole="button" onPress={onOpenChat}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 14 }}>
           <Ionicons name="chatbubbles" size={20} color={C.accent} />
-          <Text style={{ color: C.ink, flex: 1, fontSize: 15, fontWeight: '500' }}>Continue your chat with Bidwell</Text>
+          <Text style={{ color: C.ink, flex: 1, fontSize: 15, fontWeight: '500' }}>Continue your chat with Studwise</Text>
           <Ionicons name="chevron-forward" size={16} color={C.muted} />
         </Pressable>
       ) : (
-        <Text style={{ color: C.muted, fontSize: 13, textAlign: 'center' }}>Ask Bidwell below: prices, materials, permits, what to write to a client.</Text>
+        <Text style={{ color: C.muted, fontSize: 13, textAlign: 'center' }}>Ask Studwise below: prices, materials, permits, what to write to a client.</Text>
       )}
     </View>
   );
@@ -169,7 +169,7 @@ function Glance({ label, value, sub, bad, divider, onPress }: { label: string; v
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 
-/** Shown until the AI is on: create a free Bidwell account (no key needed), or use your own Claude key. */
+/** Shown until the AI is on: create a free Studwise account (no key needed), or use your own Claude key. */
 function ConnectClaude() {
   const { aiAllowed } = useApp();
   const cloud = useCloud();
@@ -179,7 +179,7 @@ function ConnectClaude() {
         <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
           <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>AI is turned off</Text>
           <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>You chose not to send job notes and photos to the AI. Turn it on to get estimates drafted for you.</Text>
-          <Button kind="secondary" title="Turn on Bidwell AI" icon="sparkles" onPress={() => router.push('/settings?s=ai')} />
+          <Button kind="secondary" title="Turn on Studwise AI" icon="sparkles" onPress={() => router.push('/settings?s=ai')} />
         </Card>
       </Reveal>
     );
@@ -189,7 +189,7 @@ function ConnectClaude() {
       <Card style={{ borderColor: C.accent, backgroundColor: C.accentTint }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Ionicons name="person-circle" size={26} color={C.accent} />
-          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700', flex: 1 }}>Create your free Bidwell account</Text>
+          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700', flex: 1 }}>Create your free Studwise account</Text>
         </View>
         <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>
           One minute, just an email and password. It turns on the AI (no key needed), backs up your jobs and photos, and lets clients sign quotes from a link.

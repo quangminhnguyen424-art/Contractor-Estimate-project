@@ -21,7 +21,7 @@ import { Text } from '@/ui/text';
 import { speak, stopSpeaking } from '@/ui/voice';
 
 /**
- * Home: what needs you today, and Bidwell at the bottom. Asking something opens the chat; "Home" brings the
+ * Home: what needs you today, and Studwise at the bottom. Asking something opens the chat; "Home" brings the
  * day back, and the chat is still there to continue.
  */
 export default function Assistant() {
@@ -58,11 +58,11 @@ export default function Assistant() {
     try {
       const reply = await aiFor(apiKey, aiAllowed).chat(turns, assistantSystem({ profile, presets, pastJobs, estimates }) + aiLanguageLine());
       const { text: answer, action } = parseAssistantReply(reply);
-      if (!answer.trim() && !action) throw new Error('Bidwell could not answer. Try again.');
+      if (!answer.trim() && !action) throw new Error('Studwise could not answer. Try again.');
       add({ id: newId(), role: 'assistant', text: answer, action });
       if (settings.speak) speak(answer);
     } catch (e) {
-      add({ id: newId(), role: 'assistant', text: e instanceof Error ? e.message : 'Bidwell could not answer. Try again.', error: true });
+      add({ id: newId(), role: 'assistant', text: e instanceof Error ? e.message : 'Studwise could not answer. Try again.', error: true });
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -148,8 +148,8 @@ export default function Assistant() {
 
       <View style={{ borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg, padding: 10 }}>
         <View style={{ width: '100%', maxWidth: 740, alignSelf: 'center' }}>
-          <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} inputLabel="Ask Bidwell"
-            placeholder="Ask Bidwell anything…" />
+          <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} inputLabel="Ask Studwise"
+            placeholder="Ask Studwise anything…" />
         </View>
       </View>
     </KeyboardSafe>

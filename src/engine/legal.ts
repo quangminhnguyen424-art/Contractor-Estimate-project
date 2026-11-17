@@ -18,8 +18,8 @@ export interface ConsentItem {
 export const CONSENT_ITEMS: ConsentItem[] = [
   {
     id: 'adult', required: true,
-    en: 'I am 18 or older and I use Bidwell AI for my business.',
-    vi: 'Tôi đủ 18 tuổi và dùng Bidwell AI cho công việc kinh doanh.',
+    en: 'I am 18 or older and I use Studwise AI for my business.',
+    vi: 'Tôi đủ 18 tuổi và dùng Studwise AI cho công việc kinh doanh.',
   },
   {
     id: 'ai-wrong', required: true,
@@ -38,8 +38,8 @@ export const CONSENT_ITEMS: ConsentItem[] = [
   },
   {
     id: 'ai-share', required: false,
-    en: 'Use AI: send what Bidwell needs to answer me to Anthropic (the maker of Claude): the job notes and photos I choose, my questions, and my business details, prices and recent job names. They are not used to train AI models. I can turn this off under Me > Bidwell AI.',
-    vi: 'Dùng AI: gửi những gì Bidwell cần để trả lời tôi cho Anthropic (công ty làm ra Claude): ghi chú và ảnh job tôi chọn, câu hỏi của tôi, thông tin công ty, bảng giá và tên các job gần đây. Dữ liệu không dùng để huấn luyện AI. Tôi có thể tắt ở Tôi > Bidwell AI.',
+    en: 'Use AI: send what Studwise needs to answer me to Anthropic (the maker of Claude): the job notes and photos I choose, my questions, and my business details, prices and recent job names. They are not used to train AI models. I can turn this off under Me > Studwise AI.',
+    vi: 'Dùng AI: gửi những gì Studwise cần để trả lời tôi cho Anthropic (công ty làm ra Claude): ghi chú và ảnh job tôi chọn, câu hỏi của tôi, thông tin công ty, bảng giá và tên các job gần đây. Dữ liệu không dùng để huấn luyện AI. Tôi có thể tắt ở Tôi > Studwise AI.',
   },
 ];
 
@@ -49,7 +49,7 @@ export interface TermsSection { title: string; body: string }
 export const TERMS: TermsSection[] = [
   {
     title: '1. Who we are and this agreement',
-    body: `Bidwell AI ("the app") is provided by ${PUBLISHER} ("we", "us"). By using the app you agree to these Terms and to the Privacy Policy. If you use the app for a company, you agree for that company. Features change over time, and the app may have bugs.`,
+    body: `Studwise AI ("the app") is provided by ${PUBLISHER} ("we", "us"). By using the app you agree to these Terms and to the Privacy Policy. If you use the app for a company, you agree for that company. Features change over time, and the app may have bugs.`,
   },
   {
     title: '2. Who may use it',
@@ -77,7 +77,7 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '8. AI providers and other services',
-    body: 'When you turn on AI, what Bidwell needs to answer you is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it: the job notes and photos you choose, your questions, and your business details, prices and recent job names. When you translate a document for a client, its text is sent the same way. When you use Measure roof, the job address is sent to Google to find and measure the roof. Voice typing uses your phone’s own speech service. Cloud storage and sign-in use Supabase. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.',
+    body: 'When you turn on AI, what Studwise needs to answer you is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it: the job notes and photos you choose, your questions, and your business details, prices and recent job names. When you translate a document for a client, its text is sent the same way. When you use Measure roof, the job address is sent to Google to find and measure the roof. Voice typing uses your phone’s own speech service. Cloud storage and sign-in use Supabase. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.',
   },
   {
     title: '9. Payments and changes',

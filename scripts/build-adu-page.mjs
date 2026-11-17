@@ -10,6 +10,6 @@ await build({
   target: ['es2020', 'chrome90', 'safari15', 'firefox90'],
   outfile: 'docs/adu.js',
   legalComments: 'none',
-  banner: { js: '/* Bidwell AI ADU check. Built from web/adu/main.ts; do not edit. */' },
+  banner: { js: '/* Studwise AI ADU check. Built from web/adu/main.ts; do not edit. */' },
 });
 console.log('docs/adu.js built');

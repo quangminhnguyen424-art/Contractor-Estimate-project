@@ -1,7 +1,7 @@
 import type { Estimate, Lang } from './types';
 
 /**
- * What Bidwell learns about the contractor from every quote they send: the words they use, what they always leave
+ * What Studwise learns about the contractor from every quote they send: the words they use, what they always leave
  * out, the section prices they change by hand, the markup they choose, and how they describe permit work. Worked out
  * from their own estimates each time (nothing extra is stored or shared), and handed to the AI so the next quote
  * sounds and prices like them.
@@ -14,7 +14,7 @@ export interface Learned {
   wording: string[];
   /** "Not included" lines they put on two or more quotes. */
   exclusions: string[];
-  /** Sections they price differently from Bidwell, on two or more quotes: +12 means 12% above. */
+  /** Sections they price differently from Studwise, on two or more quotes: +12 means 12% above. */
   priceShifts: { section: string; pct: number; times: number }[];
   /** Their usual markup on recent quotes. */
   markup: number | null;

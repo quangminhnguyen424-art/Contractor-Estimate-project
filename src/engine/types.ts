@@ -201,7 +201,7 @@ export interface Profile {
   payLink?: string;
   /** Other ways to pay, printed on documents (e.g. "Zelle: 253-555-0100, checks to Smith Remodeling LLC"). */
   payNote?: string;
-  /** The contractor agreed to get setup tips and product news from Bidwell by text or email (optional), and when. */
+  /** The contractor agreed to get setup tips and product news from Studwise by text or email (optional), and when. */
   tipsOk?: boolean;
   tipsAt?: string;
 }
@@ -325,7 +325,7 @@ export interface Estimate {
   quoteEdits?: QuoteEdits;
   /**
    * Client prices the contractor set by hand on the quote, by section key (trade id, 'general' or 'extras').
-   * `base` is what Bidwell priced that section at, kept so the edit can be undone. The estimate's price, tax and
+   * `base` is what Studwise priced that section at, kept so the edit can be undone. The estimate's price, tax and
    * total already include these (see engine/sectionPrice.ts).
    */
   priceEdits?: Record<string, { price: number; base: number }>;

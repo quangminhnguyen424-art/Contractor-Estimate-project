@@ -1,4 +1,4 @@
-// Bidwell AI: passes the app's requests to Claude with the owner's key, which never leaves the server.
+// Studwise AI: passes the app's requests to Claude with the owner's key, which never leaves the server.
 // Only signed-in accounts can use it, each with a daily limit, a fixed model and a cap on answer length.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 

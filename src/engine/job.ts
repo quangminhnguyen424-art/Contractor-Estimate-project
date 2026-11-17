@@ -148,7 +148,7 @@ export function nextStep(j: Job, now = Date.now()): NextStep {
   const last = p!.lastClientUpdateAt ? Date.parse(p!.lastClientUpdateAt) : 0;
   const fresh = p!.rooms.some((r) => r.photos.some((ph) => Date.parse(ph.takenAt) > last));
   if (fresh && now - (last || Date.parse(p!.createdAt)) >= 3 * DAY) {
-    return { kind: 'update', title: `Keep ${who} in the loop`, sub: 'There are new photos since the last update. Bidwell writes the message.', action: 'Send a photo update' };
+    return { kind: 'update', title: `Keep ${who} in the loop`, sub: 'There are new photos since the last update. Studwise writes the message.', action: 'Send a photo update' };
   }
   const pr = projectProgress(p!);
   return { kind: 'work', title: 'Work in progress', sub: pr.total ? `${pr.done} of ${pr.total} to-dos done · ${photos} photo${photos === 1 ? '' : 's'}` : `${photos} photo${photos === 1 ? '' : 's'} so far`, action: 'Take photos' };

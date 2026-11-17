@@ -22,7 +22,7 @@ const NEED: Record<Need, { text: string; bg: string; ink: string }> = {
 /**
  * Permits for a job: which permits the work needs, who issues them where the job is (from the county's parcel
  * record), what to prepare, the steps, a checklist, and the application's fields filled in, with the description of
- * work written by Bidwell in the contractor's own style.
+ * work written by Studwise in the contractor's own style.
  */
 export default function PermitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -74,14 +74,14 @@ export default function PermitScreen() {
   const write = async () => {
     setWriting(true);
     try {
-      // What Bidwell learned from the descriptions this contractor kept on other jobs.
+      // What Studwise learned from the descriptions this contractor kept on other jobs.
       const learned = learnFromQuotes(estimates.filter((e) => e.id !== est.id), 'en');
       const text = (await aiFor(apiKey, aiAllowed).complete(permitDescriptionPrompt(est, plan.items, learned.permitWording.map((d) => `- ${d}`).join('\n')), undefined, 600))
         .replace(/^["“]|["”]$/g, '').trim().slice(0, 2000);
       setDesc(text);
       updateEstimate(est.id, { permit: { description: text } });
     } catch (e) {
-      notify('Bidwell could not write it', e instanceof Error ? e.message : 'Try again in a moment.');
+      notify('Studwise could not write it', e instanceof Error ? e.message : 'Try again in a moment.');
     } finally {
       setWriting(false);
     }
@@ -152,9 +152,9 @@ export default function PermitScreen() {
             ))}
             <Field label="Description of work" value={desc} onChangeText={setDesc} onBlur={saveDesc} multiline maxLength={2000}
               placeholder="What is built or changed, where, sizes, structural or not, trades under separate permits" />
-            <Button kind="secondary" title={writing ? 'Bidwell is writing…' : desc.trim() ? 'Rewrite with Bidwell' : 'Write it with Bidwell'} icon="sparkles"
+            <Button kind="secondary" title={writing ? 'Studwise is writing…' : desc.trim() ? 'Rewrite with Studwise' : 'Write it with Studwise'} icon="sparkles"
               disabled={writing || !aiOn} onPress={write} />
-            {!aiOn ? <Muted style={{ fontSize: 13 }}>Turn on Bidwell AI (log in) to have it written for you.</Muted> : null}
+            {!aiOn ? <Muted style={{ fontSize: 13 }}>Turn on Studwise AI (log in) to have it written for you.</Muted> : null}
             {!profile.license.trim() ? <Muted style={{ fontSize: 13 }}>Add your contractor registration number in Me → Company info.</Muted> : null}
             <Button title="Copy all to paste" icon="copy-outline" onPress={copyAll} />
           </Card>

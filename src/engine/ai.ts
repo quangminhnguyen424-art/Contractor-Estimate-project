@@ -42,7 +42,7 @@ export interface AiContext {
   history?: string; // e.g. "8 past jobs of this type, average $310/SF"
   scope?: string; // limits on the job, e.g. "interior only" after a 3D room scan
   prices?: string; // what this contractor really paid on recent receipts
-  learned?: string; // what Bidwell learned from the quotes they sent (engine/learned.ts)
+  learned?: string; // what Studwise learned from the quotes they sent (engine/learned.ts)
   language?: string; // the contractor's language, in English ("Vietnamese"): notes for them are written in it
 }
 
@@ -129,8 +129,8 @@ function guessBuiltIn(t: string): JobTypeId | undefined {
 
 /** Why the AI did not answer when it is simply not on, in words that say what to do about it. */
 export const AI_OFF = {
-  sharing: 'AI sharing is off. Turn it on under Me > Bidwell AI. Estimates, quotes, signing and payments work without it.',
-  connect: 'Bidwell AI is not connected. Log in to your Bidwell account under Me to use it.',
+  sharing: 'AI sharing is off. Turn it on under Me > Studwise AI. Estimates, quotes, signing and payments work without it.',
+  connect: 'Studwise AI is not connected. Log in to your Studwise account under Me to use it.',
 };
 /** The AI is off (not a failure): callers can fall back quietly or show the message. */
 export class AiOffError extends Error {}
@@ -285,7 +285,7 @@ export function claudeAI(baseUrl: string): EstimatorAI {
     return (await res.json()) as T;
   };
   return {
-    name: 'Bidwell (server)',
+    name: 'Studwise (server)',
     async chat(turns, system) {
       return post<{ text: string }>('/chat', { turns, system }).then((r) => r.text).catch(() => demoAI.chat(turns, system));
     },
@@ -458,7 +458,7 @@ function questionsFor(jobTypeId?: JobTypeId) {
 const CLAUDE_TIMEOUT_MS = 60_000;
 
 /**
- * How to reach Claude: the contractor's own API key, or (signed in to Bidwell cloud) the Bidwell server, which
+ * How to reach Claude: the contractor's own API key, or (signed in to Studwise cloud) the Studwise server, which
  * holds the key and checks the daily limit.
  */
 export type ClaudeAuth = string | { proxyUrl: string; anonKey: string; getToken: () => Promise<string | null> };
@@ -477,7 +477,7 @@ async function callClaudeTurns(
   try {
     if (viaCloud) {
       const token = await apiKey.getToken();
-      if (!token) { clearTimeout(timer); throw Object.assign(new Error('Sign in to Bidwell cloud to use the AI.'), { signedOut: true }); }
+      if (!token) { clearTimeout(timer); throw Object.assign(new Error('Sign in to Studwise cloud to use the AI.'), { signedOut: true }); }
       res = await fetch(apiKey.proxyUrl, {
         method: 'POST',
         signal: controller.signal,
@@ -501,8 +501,8 @@ async function callClaudeTurns(
   } catch (e) {
     clearTimeout(timer);
     if (e instanceof Error && 'signedOut' in e) throw e;
-    if (controller.signal.aborted) throw new Error('Bidwell took too long to answer (weak signal?). Try again with fewer photos.');
-    throw new Error('Could not reach Bidwell. Check your internet connection.');
+    if (controller.signal.aborted) throw new Error('Studwise took too long to answer (weak signal?). Try again with fewer photos.');
+    throw new Error('Could not reach Studwise. Check your internet connection.');
   }
   clearTimeout(timer);
   if (!res.ok) {
@@ -511,20 +511,20 @@ async function callClaudeTurns(
       const err = (await res.json()) as { error?: { message?: string } | string };
       detail = typeof err.error === 'string' ? err.error : err.error?.message ?? '';
     } catch { /* ignore */ }
-    if (viaCloud && (res.status === 401 || res.status === 429 || res.status === 413 || res.status === 503)) throw new Error(detail || 'Bidwell AI is not available right now.');
-    if (res.status === 401) throw new Error('Claude API key is not valid. Check it under Me → Bidwell AI.');
-    if (res.status === 429) throw new Error('Bidwell is busy or your rate limit was reached. Try again in a minute.');
+    if (viaCloud && (res.status === 401 || res.status === 429 || res.status === 413 || res.status === 503)) throw new Error(detail || 'Studwise AI is not available right now.');
+    if (res.status === 401) throw new Error('Claude API key is not valid. Check it under Me → Studwise AI.');
+    if (res.status === 429) throw new Error('Studwise is busy or your rate limit was reached. Try again in a minute.');
     if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
-    throw new Error(`Bidwell error (${res.status})${detail ? `: ${detail}` : ''}`);
+    throw new Error(`Studwise error (${res.status})${detail ? `: ${detail}` : ''}`);
   }
   const data = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
   const text = (data.content ?? []).map((c) => c.text ?? '').join('');
   if (data.stop_reason === 'max_tokens') {
     // A chat answer that ran long is still worth reading; a cut-off JSON answer cannot be used.
     if (keepPartial && text.trim()) return `${text.trim()} …`;
-    throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
+    throw new Error("Studwise's answer was cut off. Try a shorter description or fewer photos.");
   }
-  if (data.stop_reason === 'refusal' && !text.trim()) throw new Error('Bidwell could not help with that request.');
+  if (data.stop_reason === 'refusal' && !text.trim()) throw new Error('Studwise could not help with that request.');
   return text;
 }
 
@@ -533,13 +533,13 @@ function parseReply(reply: string): unknown {
   try {
     return extractJson(reply);
   } catch {
-    throw new Error("Bidwell's answer couldn't be read. Try again, or fill in the questions yourself.");
+    throw new Error("Studwise's answer couldn't be read. Try again, or fill in the questions yourself.");
   }
 }
 
 export function directClaudeAI(apiKey: ClaudeAuth): EstimatorAI {
   return {
-    name: `Bidwell (${CLAUDE_MODEL})`,
+    name: `Studwise (${CLAUDE_MODEL})`,
     async chat(turns, system) {
       return callClaudeTurns(apiKey, system, turns.map((t) => ({ role: t.role, content: t.content })), 2000, true);
     },
@@ -568,7 +568,7 @@ export function directClaudeAI(apiKey: ClaudeAuth): EstimatorAI {
         return cleanScopeResult(parseReply(reply), jt);
       } catch (e) {
         const fallback = await demoAI.parseScope(text, jt);
-        return { ...fallback, error: e instanceof Error ? e.message : 'Bidwell request failed' };
+        return { ...fallback, error: e instanceof Error ? e.message : 'Studwise request failed' };
       }
     },
     async extractPastJob(text) {
@@ -576,7 +576,7 @@ export function directClaudeAI(apiKey: ClaudeAuth): EstimatorAI {
         const reply = await callClaude(apiKey, pastJobSystem(), [{ type: 'text', text }], 300);
         return cleanPastJob(parseReply(reply));
       } catch (e) {
-        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Bidwell request failed' };
+        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Studwise request failed' };
       }
     },
   };
@@ -588,7 +588,7 @@ export async function testClaudeKey(apiKey: string): Promise<string | null> {
     await callClaude(apiKey, 'Reply with the single word OK.', [{ type: 'text', text: 'ping' }], 5);
     return null;
   } catch (e) {
-    return e instanceof Error ? e.message : 'Bidwell request failed';
+    return e instanceof Error ? e.message : 'Studwise request failed';
   }
 }
 
@@ -614,11 +614,11 @@ export function sampleErrorMessage(e: unknown): string {
       return 'Your Claude sign-in expired. Sign in again, then try again.';
     case 'image_rejected':
     case 'images_unavailable':
-      return 'Bidwell could not use these photos. Try fewer photos, or JPG/PNG files.';
+      return 'Studwise could not use these photos. Try fewer photos, or JPG/PNG files.';
     case 'refused':
-      return 'Bidwell would not answer this one. Reword the notes and try again.';
+      return 'Studwise would not answer this one. Reword the notes and try again.';
     default:
-      return 'Bidwell could not answer right now. Try again.';
+      return 'Studwise could not answer right now. Try again.';
   }
 }
 
@@ -639,17 +639,17 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
       // The page's AI has no timeout of its own: without one a lost request leaves "Reading the job" up forever.
       res = await Promise.race([
         sample(prompt, images?.length ? { images: images.map(base64ToBlob) } : undefined),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Bidwell took too long to answer. Try again.')), CLAUDE_TIMEOUT_MS)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Studwise took too long to answer. Try again.')), CLAUDE_TIMEOUT_MS)),
       ]);
     } catch (e) {
       if (e instanceof Error && /took too long/.test(e.message)) throw e;
       throw new Error(sampleErrorMessage(e));
     }
-    if (res.truncated) throw new Error("Bidwell's answer was cut off. Try a shorter description or fewer photos.");
+    if (res.truncated) throw new Error("Studwise's answer was cut off. Try a shorter description or fewer photos.");
     return res.text;
   };
   return {
-    name: 'Bidwell (built in)',
+    name: 'Studwise (built in)',
     async complete(prompt, images) {
       return ask(prompt, images?.slice(0, 8));
     },
@@ -672,14 +672,14 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
         return cleanScopeResult(parseReply(await ask(prompt, imgs)), jt);
       } catch (e) {
         const fallback = await demoAI.parseScope(text, jt);
-        return { ...fallback, error: e instanceof Error ? e.message : 'Bidwell request failed' };
+        return { ...fallback, error: e instanceof Error ? e.message : 'Studwise request failed' };
       }
     },
     async extractPastJob(text) {
       try {
         return cleanPastJob(parseReply(await ask(`${pastJobSystem()}\n\nText:\n${text}`)));
       } catch (e) {
-        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Bidwell request failed' };
+        return { ...(await demoAI.extractPastJob(text)), error: e instanceof Error ? e.message : 'Studwise request failed' };
       }
     },
   };

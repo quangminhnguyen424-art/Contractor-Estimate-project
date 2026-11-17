@@ -53,7 +53,7 @@ function Working({ job, onSkip }: { job: WorkJob; onSkip?: () => void }) {
       <View style={{ width: '100%', maxWidth: 420, gap: 18, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, shadowColor: C.accent, shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 4 }}>
         <Brackets />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Readout color={C.accentDark}>Bidwell · working</Readout>
+          <Readout color={C.accentDark}>Studwise · working</Readout>
           <Text style={{ fontFamily: MONO, color: C.accent, fontSize: 13 }}>{String(pct).padStart(2, '0')}%</Text>
         </View>
         <View style={{ alignItems: 'center' }}><Radar size={150} /></View>

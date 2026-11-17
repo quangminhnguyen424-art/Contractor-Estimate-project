@@ -126,7 +126,7 @@ export function estimatePayload(e: Estimate, includeCosts: boolean) {
 }
 
 export function hookBody(event: HookEvent, data: Record<string, unknown>, company: string) {
-  return { app: 'Bidwell AI', event, sentAt: new Date().toISOString(), company, data };
+  return { app: 'Studwise AI', event, sentAt: new Date().toISOString(), company, data };
 }
 
 /** Sample data for the "Send a test" button, so the contractor can set up their Zap or scenario. */

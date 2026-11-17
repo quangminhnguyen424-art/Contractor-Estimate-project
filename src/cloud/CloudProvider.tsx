@@ -105,7 +105,7 @@ async function applyClientNotes(uid: string, a: App) {
 function plainAuthError(message: string): string {
   if (/failed to fetch|network request failed|network|timeout|load failed/i.test(message)) return 'No internet connection. Check your signal and try again.';
   if (/invalid login|invalid credentials/i.test(message)) return 'Email or password is wrong.';
-  if (/not confirmed/i.test(message)) return 'Confirm your email first: open the email from Bidwell and tap the link, then log in. If it is not there, check spam or create the account again to get a new email.';
+  if (/not confirmed/i.test(message)) return 'Confirm your email first: open the email from Studwise and tap the link, then log in. If it is not there, check spam or create the account again to get a new email.';
   if (/registered|already/i.test(message)) return 'That email already has an account. Sign in instead.';
   if (/rate|seconds|too many/i.test(message)) return 'Too many tries. Wait a minute and try again.';
   return message;
@@ -116,7 +116,7 @@ const REPLACED = 'estimating-app/replaced-copy';
 
 const device = `${Platform.OS} ${String(Platform.Version ?? '')}`.trim();
 
-/** Signs in to Bidwell cloud, keeps data and photos in step, and records quotes clients signed online. */
+/** Signs in to Studwise cloud, keeps data and photos in step, and records quotes clients signed online. */
 export function CloudProvider({ children }: { children: React.ReactNode }) {
   const app = useApp();
   const { ready, changedAt } = app;

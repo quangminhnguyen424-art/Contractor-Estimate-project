@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCloud } from '@/cloud/CloudProvider';
+import { BrandMark } from './BrandMark';
 import { PUBLISHER } from '@/engine/legal';
 import { Banner, Button, C, Field } from './kit';
 import { Text } from './text';
@@ -77,11 +78,10 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
         ) : null}
 
         <View style={{ alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center',
-            shadowColor: C.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
-            <Ionicons name="home" size={36} color="#FFFFFF" />
+          <View style={{ borderRadius: 22, shadowColor: C.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
+            <BrandMark size={72} />
           </View>
-          <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }}>Bidwell AI</Text>
+          <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }}>Studwise AI</Text>
           <Text style={{ color: C.muted, fontSize: 14, textAlign: 'center' }}>Estimates, job sites and clients, all in one place.</Text>
         </View>
 
@@ -136,7 +136,7 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ flex: 1, height: 1, backgroundColor: C.line }} />
-              <Text style={{ color: C.muted, fontSize: 13 }}>New to Bidwell?</Text>
+              <Text style={{ color: C.muted, fontSize: 13 }}>New to Studwise?</Text>
               <View style={{ flex: 1, height: 1, backgroundColor: C.line }} />
             </View>
             <Button kind="secondary" title="Create new account" icon="person-add-outline" onPress={() => go('up')} />
@@ -147,7 +147,7 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
 
         <View style={{ flex: 1 }} />
         <Text style={{ color: C.muted, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
-          Your account keeps your work backed up, turns on Bidwell’s AI, and lets clients sign online. Next you’ll review the Terms of Use and AI notice.{'\n'}{PUBLISHER.split(',')[0]}
+          Your account keeps your work backed up, turns on Studwise’s AI, and lets clients sign online. Next you’ll review the Terms of Use and AI notice.{'\n'}{PUBLISHER.split(',')[0]}
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

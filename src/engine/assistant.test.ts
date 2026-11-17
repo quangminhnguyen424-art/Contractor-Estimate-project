@@ -56,8 +56,8 @@ describe('chat backends', () => {
     expect(opts.cache).toBe(false);
   });
   it('explains what to do when Claude is not connected', async () => {
-    await expect(demoAI.chat([], '')).rejects.toThrow(/Log in to your Bidwell account/);
-    await expect(sharingOffAI().chat([], '')).rejects.toThrow(/Turn it on under Me > Bidwell AI/);
+    await expect(demoAI.chat([], '')).rejects.toThrow(/Log in to your Studwise account/);
+    await expect(sharingOffAI().chat([], '')).rejects.toThrow(/Turn it on under Me > Studwise AI/);
     await expect(hostClaudeAI(async () => null).chat([{ role: 'user', content: 'hi' }], 's')).rejects.toThrow(/not available/);
   });
 });

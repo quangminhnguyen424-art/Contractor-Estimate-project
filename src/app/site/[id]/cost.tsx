@@ -19,7 +19,7 @@ import { Text } from '@/ui/text';
 import { Tick } from '@/ui/tick';
 import { useToday } from '@/ui/useToday';
 
-/** Add or edit one cost. With ?receipt=1 it starts by photographing a receipt that Bidwell reads. */
+/** Add or edit one cost. With ?receipt=1 it starts by photographing a receipt that Studwise reads. */
 export default function CostScreen() {
   const { id, cost: costId, receipt } = useLocalSearchParams<{ id: string; cost?: string; receipt?: string }>();
   const { projects, updateMoney, addLessons, apiKey, aiAllowed, deletePhotosLater } = useApp();
@@ -56,7 +56,7 @@ export default function CostScreen() {
     // A second retake before saving: the in-between photo is never kept.
     if (receiptUri && receiptUri !== editing?.receiptUri) deletePhotosLater([receiptUri]);
     setReceiptUri(saved.uri);
-    if (!aiAllowed) { setMsg({ tone: 'info', text: 'Photo saved. Turn on AI sharing under Me → Bidwell AI to have Bidwell read receipts; for now, type the amount.' }); return; }
+    if (!aiAllowed) { setMsg({ tone: 'info', text: 'Photo saved. Turn on AI sharing under Me → Studwise AI to have Studwise read receipts; for now, type the amount.' }); return; }
     setReading(true);
     try {
       const img = await toAiImage(r.assets[0].uri);
@@ -72,7 +72,7 @@ export default function CostScreen() {
       const n = matched.filter((l) => l.buyId).length;
       setMsg({ tone: 'ok', text: `Read ${read.lines.length} line${read.lines.length === 1 ? '' : 's'}, total ${money2(read.total)}${n ? `; ${n} matched your buy list` : ''}. Check it, then save.` });
     } catch (e) {
-      setMsg({ tone: 'warn', text: e instanceof Error ? e.message : 'Bidwell could not read this receipt. Type the amount instead.' });
+      setMsg({ tone: 'warn', text: e instanceof Error ? e.message : 'Studwise could not read this receipt. Type the amount instead.' });
     } finally {
       setReading(false);
     }
@@ -111,7 +111,7 @@ export default function CostScreen() {
           <Button title={reading ? 'Reading…' : receiptUri ? 'Retake' : 'Snap receipt'} icon="camera-outline" disabled={reading} style={{ flex: 1 }} onPress={() => snap(true)} />
           <Button kind="secondary" title="From photos" icon="image-outline" disabled={reading} style={{ flex: 1 }} onPress={() => snap(false)} />
         </View>
-        {msg ? <Banner tone={msg.tone} title={msg.text} /> : <Muted style={{ fontSize: 13 }}>Bidwell reads the store, date, items and total, and checks them against your buy list.</Muted>}
+        {msg ? <Banner tone={msg.tone} title={msg.text} /> : <Muted style={{ fontSize: 13 }}>Studwise reads the store, date, items and total, and checks them against your buy list.</Muted>}
       </Card>
 
       <Card>

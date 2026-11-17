@@ -46,7 +46,7 @@ export const accessToken = async () => (await currentSession())?.access_token ??
 /** Calls one of our server functions as the signed-in user. */
 export async function callFunction<T>(name: string, body: unknown): Promise<T> {
   const token = await accessToken();
-  if (!token) throw new Error('Sign in to Bidwell cloud first.');
+  if (!token) throw new Error('Sign in to Studwise cloud first.');
   const res = await fetch(`${CLOUD.url}/functions/v1/${name}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', Authorization: `Bearer ${token}`, apikey: CLOUD.anonKey },

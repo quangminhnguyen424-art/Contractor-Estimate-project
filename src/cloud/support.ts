@@ -4,7 +4,7 @@ import { supabase } from './client';
 
 export type TicketKind = 'bug' | 'question' | 'billing' | 'idea' | 'other';
 
-/** Sends a problem report to Bidwell support (and the optional screenshot to the private photo store). */
+/** Sends a problem report to Studwise support (and the optional screenshot to the private photo store). */
 export async function sendTicket(t: { uid: string; email?: string | null; kind: TicketKind; message: string; device: string; screenshotUri?: string | null }) {
   let screenshot: string | null = null;
   if (t.screenshotUri) {

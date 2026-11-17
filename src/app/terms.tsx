@@ -61,7 +61,7 @@ export default function TermsScreen() {
             </Tick>
           )
         ))}
-        <Muted style={{ fontSize: 13 }}>{'Without AI you can still build estimates with Quick price or by filling in the questions, and send quotes, sign and take payments. You can turn it on or off any time under Me > Bidwell AI.'}</Muted>
+        <Muted style={{ fontSize: 13 }}>{'Without AI you can still build estimates with Quick price or by filling in the questions, and send quotes, sign and take payments. You can turn it on or off any time under Me > Studwise AI.'}</Muted>
       </Card>
 
       <Card>

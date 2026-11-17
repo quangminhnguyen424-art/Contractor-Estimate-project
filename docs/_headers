@@ -1,0 +1,14 @@
+# Cloudflare Pages: security headers for every page, and caching for the static files.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+/sign.html
+  X-Frame-Options: DENY
+  Cache-Control: no-store
+/reset.html
+  X-Frame-Options: DENY
+  Cache-Control: no-store
+/adu.js
+  Cache-Control: public, max-age=3600

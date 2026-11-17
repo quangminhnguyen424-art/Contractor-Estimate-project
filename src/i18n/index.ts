@@ -10,10 +10,10 @@ import { setDateLocale } from '@/engine/locale';
 
 /**
  * The app's language. One choice, made on the first screen and changed under Me → Language, sets the wording of
- * every screen, the language Bidwell answers in, and the voice.
+ * every screen, the language Studwise answers in, and the voice.
  *
  * English and Tiếng Việt are complete in the app (Español has its first screens). Anything a language is missing is
- * translated by Bidwell AI the first time (after login, because the AI needs an account), kept on the phone, and
+ * translated by Studwise AI the first time (after login, because the AI needs an account), kept on the phone, and
  * used from then on without a network.
  */
 const catalog = catalogJson as Catalog;
@@ -208,7 +208,7 @@ export const isAppText = (text: string) => !!translator?.known(text);
 /** The contractor's language by its English name ("Vietnamese"), or undefined for English: for AI instructions. */
 export const aiLanguage = (): string | undefined => (!language || isEnglish(language) ? undefined : language.english);
 
-/** One line for AI instructions, so Bidwell writes to the contractor in their language. */
+/** One line for AI instructions, so Studwise writes to the contractor in their language. */
 export function aiLanguageLine(): string {
   return !language || isEnglish(language) ? '' : `\nWrite everything the contractor will read in ${language.english}. Keep numbers, units (SF, LF, EA) and product names as they are.`;
 }

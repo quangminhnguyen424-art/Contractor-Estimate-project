@@ -109,7 +109,7 @@ export default function TeamScreen() {
         ))}
       </Card>
       {team.length > 0 && !events.some((e) => e.crew?.length) ? (
-        <Banner tone="info" title="Next: book a crew day">On the Schedule tab, add a Crew day and tap who is coming. Bidwell checks in with you that morning.</Banner>
+        <Banner tone="info" title="Next: book a crew day">On the Schedule tab, add a Crew day and tap who is coming. Studwise checks in with you that morning.</Banner>
       ) : null}
     </Screen>
   );

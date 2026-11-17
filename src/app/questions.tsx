@@ -75,7 +75,7 @@ export default function Questions() {
     });
     const started = Date.now();
     const id = commitDraft(draft);
-    // Bidwell writes the full scope of work for the quote in the background (only if the wording is still its own).
+    // Studwise writes the full scope of work for the quote in the background (only if the wording is still its own).
     setTimeout(() => {
       const est = app.snapshot().estimates.find((e) => e.id === id);
       if (est) void writeScope(id, clientLang(est), app, true);
@@ -99,7 +99,7 @@ export default function Questions() {
 
       {draft.aiNotes && draft.aiNotes.length > 0 ? (
         <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
-          <Text style={{ fontWeight: '700', color: C.infoInk }}>Bidwell noticed</Text>
+          <Text style={{ fontWeight: '700', color: C.infoInk }}>Studwise noticed</Text>
           {draft.aiNotes.map((n, i) => (
             <AiNote key={`${i}-${n}`} note={n} photos={draft.photos}
               onDismiss={() => setDraft({ ...draft, aiNotes: draft.aiNotes!.filter((_, j) => j !== i) })} />
@@ -170,7 +170,7 @@ export default function Questions() {
               <QuestionInput q={qq} value={draft.answers[qq.id]} onChange={(v) => set(qq.id, v)} />
               {draft.aiFilled?.[qq.id] ? (
                 <Text style={{ fontSize: 12, fontWeight: '600', color: draft.aiFilled[qq.id] === 'notes' ? C.okInk : C.warnInk }}>
-                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Bidwell from a photo: check it'
+                  {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Studwise from a photo: check it'
                     : draft.aiFilled[qq.id] === 'satellite' ? '● Measured from satellite: check on site' : '● Filled in from your notes'}
                 </Text>
               ) : null}

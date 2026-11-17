@@ -255,7 +255,7 @@ describe('terms gate', () => {
   });
 });
 
-describe('Bidwell daily check-in', () => {
+describe('Studwise daily check-in', () => {
   it('asks about crew, follow-ups due, money, stale photo updates and unasked quotes', async () => {
     const { dailyCheckIn } = await import('./pm');
     const team: TeamMember[] = [{ id: 't', name: 'Tuan', role: 'crew', trade: 'Tile', phone: '', rate: 300, rateUnit: 'day', lang: 'en', active: true }];

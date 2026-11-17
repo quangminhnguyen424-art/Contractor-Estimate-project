@@ -46,7 +46,7 @@ export function useClientWriter(language: Language, keepAsWritten: (string | und
   const { aiAllowed, profile } = useApp();
   const to = target(language);
   const keep = [...keepAsWritten, profile?.companyName, profile?.contactName, profile?.phone, profile?.email];
-  const allowed = () => { if (!aiAllowed) throw new TranslateError('Translating a document sends it to the AI, and AI sharing is off (Me > Bidwell AI).'); };
+  const allowed = () => { if (!aiAllowed) throw new TranslateError('Translating a document sends it to the AI, and AI sharing is off (Me > Studwise AI).'); };
   return {
     language, lang: base(language), target: to,
     /** A finished document (HTML) in the client's language. Unchanged for English and Vietnamese. */
@@ -114,11 +114,11 @@ export function LanguageSelect({ label, value, onChange, help }: { label: string
           onChange(ordered.find((l) => l.code === v)!);
         }}
         options={[...ordered.map((l) => ({ value: l.code, label: l.name, sub: l.name !== l.english ? l.english : undefined })), { value: OTHER, label: 'Another language' }]}
-        help={typing ? undefined : help ?? (to ? `Bidwell translates what you send into ${to.name}. You keep the English version.` : undefined)} />
+        help={typing ? undefined : help ?? (to ? `Studwise translates what you send into ${to.name}. You keep the English version.` : undefined)} />
       {typing ? (
         <Field label="Another language" value={name} placeholder="Type its name" maxLength={40} autoCorrect={false}
           onChangeText={setName} onEndEditing={() => { if (name.trim()) onChange(customLanguage(name)); }}
-          help="Bidwell translates what you send into it. You keep the English version." />
+          help="Studwise translates what you send into it. You keep the English version." />
       ) : null}
     </>
   );
