@@ -4,6 +4,7 @@ import { useCloud } from '@/cloud/CloudProvider';
 import { useState } from 'react';
 import { Platform, Pressable, Share, View } from 'react-native';
 
+import { LearnedCard } from '@/ui/LearnedCard';
 import { Text } from '@/ui/text';
 import { Tick } from '@/ui/tick';
 import { defaultNotices } from '@/engine/legal';
@@ -29,7 +30,7 @@ const NO_SAVE: SettingsPage[] = ['ai', 'backup'];
 export default function Settings() {
   const { s: param } = useLocalSearchParams<{ s?: string }>();
   const page: SettingsPage = param && param in SETTINGS ? (param as SettingsPage) : 'company';
-  const { profile, saveProfile, resetAll, apiKey, saveApiKey, exportData, importData, aiAllowed } = useApp();
+  const { profile, saveProfile, resetAll, apiKey, saveApiKey, exportData, importData, aiAllowed, estimates } = useApp();
   const cloud = useCloud();
   const [p, setP] = useState<Profile>(profile!);
   const [base, setBase] = useState(profile);
@@ -233,6 +234,7 @@ export default function Settings() {
           <Field label="How you work" multiline value={p.about} onChangeText={(v) => set('about', v)} maxLength={2000}
             placeholder="e.g. Mid-range remodels in King County. I sub out electrical. I always include permits and dump fees. I aim for 25% margin."
             help="Bidwell reads this with every job, so its questions and notes fit how you work." />
+          <LearnedCard estimates={estimates} lang={p.quoteLanguage} />
         </>
       ) : page === 'ai' ? (
         <>

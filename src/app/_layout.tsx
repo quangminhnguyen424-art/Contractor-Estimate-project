@@ -173,6 +173,8 @@ function RootStack() {
         <Stack.Screen name="site/[id]/share" options={{ title: 'Share' }} />
         <Stack.Screen name="scan" options={{ title: 'Scan 3D' }} />
         <Stack.Screen name="connections" options={{ title: 'Connected apps' }} />
+        <Stack.Screen name="adu" options={{ title: 'ADU check page' }} />
+        <Stack.Screen name="estimate/[id]/permit" options={{ title: 'Permits' }} />
         <Stack.Screen name="event" options={{ title: 'Appointment', presentation: 'modal' }} />
         {/* No swipe-back where a finger draws: a signature is a left-to-right stroke and would close the screen. */}
         <Stack.Screen name="estimate/[id]/sign" options={{ title: 'Client signature', gestureEnabled: false }} />

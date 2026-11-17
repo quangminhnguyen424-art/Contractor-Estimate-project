@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { nextFollowUp } from '@/engine/followup';
+import { cityFromAddress, permitPlan } from '@/engine/permits';
 import { contractTotals } from '@/engine/contract';
 import { dateFmt, money } from '@/engine/format';
 import { nextStep, type Job, type NextKind } from '@/engine/job';
@@ -111,6 +112,17 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
                 right={job.due > 0.5 ? `${money(job.due)} due` : undefined}
                 onPress={() => router.push(`/estimate/${est.id}/contract`)} />
             ) : null}
+            {(() => {
+              const pp = permitPlan({ jobTypeId: est.jobTypeId, answers: est.answers, city: est.permit?.parcel?.city ?? cityFromAddress(est.address) });
+              if (pp.none) return null;
+              const d = (est.permit?.done ?? []).filter((x) => pp.checklist.some((c) => c.id === x)).length;
+              const must = pp.items.filter((i) => i.need === 'required').length;
+              return (
+                <ListRow icon="ribbon" title="Permits"
+                  sub={d ? `${d} of ${pp.checklist.length} steps done · ${pp.jurisdiction.name}` : must ? `${must} permit${must === 1 ? '' : 's'} needed · ${pp.jurisdiction.name}` : `Check what this job needs · ${pp.jurisdiction.name}`}
+                  onPress={() => router.push(`/estimate/${est.id}/permit`)} />
+              );
+            })()}
             <ListRow icon="calendar" title="Schedule" sub={nextVisit ? `Next: ${nextVisit.title}, ${dayLabel(nextVisit.date, today)}` : 'Add a visit, crew day or inspection'}
               onPress={() => router.push(nextVisit ? `/event?id=${nextVisit.id}` : project ? `/event?project=${project.id}` : `/event?estimate=${est.id}`)} />
           </List>

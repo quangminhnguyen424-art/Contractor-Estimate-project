@@ -1,4 +1,5 @@
 import { lessonsContext } from '@/engine/books';
+import { learnedContext, learnFromQuotes } from '@/engine/learned';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -28,11 +29,11 @@ import { toAiImages } from '@/ui/photos';
 import { resolvePhotoUri, savePhoto } from '@/ui/photoStore';
 
 export default function NewEstimate() {
-  const { profile, draft, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects } = useApp();
+  const { profile, draft, setDraft, apiKey, pastJobs, pendingPlan, setPendingPlan, aiAllowed, lessons, projects, estimates } = useApp();
   const cloud = useCloud();
   // The AI is reachable with a Bidwell account, a personal key, or inside the Claude app.
   const claudeOn = aiAllowed && (!!apiKey || inClaudeApp || !!cloud.user);
-  const params = useLocalSearchParams<{ type?: string; project?: string }>();
+  const params = useLocalSearchParams<{ type?: string; project?: string; lead?: string; client?: string; address?: string; note?: string }>();
   const [jobTypeId, setJobTypeId] = useState<JobTypeId | null>(params.type && isJobTypeId(params.type) ? params.type : null);
   // Coming from a Bidwell suggestion on the scan screen picks that type (also when this tab was already open).
   const [lastParam, setLastParam] = useState(params.type);
@@ -57,6 +58,15 @@ export default function NewEstimate() {
     const p = params.project ? projects.find((x) => x.id === params.project && !x.estimateId) : undefined;
     if (p) { setForProject(p.id); setClientName(p.clientName); setAddress(p.address); setTitle(p.title); setKind('describe'); }
   }
+  // "Start an estimate" on an ADU lead: its client, address and what they wrote fill the form.
+  const [seenLead, setSeenLead] = useState<string | undefined>(undefined);
+  if (params.lead !== seenLead) {
+    setSeenLead(params.lead);
+    if (params.lead) {
+      setClientName(params.client ?? ''); setAddress(params.address ?? ''); setDescription(params.note ?? ''); setKind('describe');
+      setTitle(params.client ? `${params.client} — ADU` : '');
+    }
+  }
   const linked = projects.find((x) => x.id === forProject && !x.estimateId);
   // Start fresh once the estimate that came from this form is built (the draft is gone). Until then the form keeps
   // what was typed, so going back from the questions loses nothing.
@@ -64,7 +74,7 @@ export default function NewEstimate() {
   const skipRef = useRef<(() => void) | null>(null);
   const clearForm = () => {
     setJobTypeId(null); setTitle(''); setClientName(''); setAddress(''); setDescription(''); setPhotos([]);
-    setPendingPlan(null); setForProject(null); router.setParams({ project: undefined });
+    setPendingPlan(null); setForProject(null); router.setParams({ project: undefined, lead: undefined, client: undefined, address: undefined, note: undefined });
   };
   if (handedOff && !draft) { setHandedOff(false); clearForm(); }
 
@@ -141,6 +151,7 @@ export default function NewEstimate() {
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${rate(h.perSf)}${perUnit(jobType(type).unit)}` : undefined,
       scope: pendingPlan?.length && isIndoorType(type) ? INDOOR_NOTE : undefined,
       prices: lessonsContext(lessons ?? []),
+      learned: learnedContext(learnFromQuotes(estimates, profile?.quoteLanguage ?? 'en')),
       language: aiLanguage(),
     };
     if (description.trim() || images.length > 0) {

@@ -28,7 +28,7 @@ function answersText(est: Estimate): string {
   return out.join('\n');
 }
 
-export function scopePrompt(est: Estimate, profile: Profile, lang: Lang): string {
+export function scopePrompt(est: Estimate, profile: Profile, lang: Lang, learned = ''): string {
   const jt = estimateJob(est);
   const sections = quoteSections({ ...est, quoteEdits: undefined }, lang);
   const wd = quoteWording({ ...est, quoteEdits: undefined }, profile, lang);
@@ -43,6 +43,7 @@ export function scopePrompt(est: Estimate, profile: Profile, lang: Lang): string
     `The quote's sections (key: title — what the estimate already lists):`,
     ...sections.map((s) => `${s.trade}: ${s.title} — ${s.items.join('; ')}`),
     `Standard "not included" items for this kind of job:\n${wd.exclusions.map((e) => `- ${e}`).join('\n')}`,
+    learned ? `Learned from the quotes this contractor sent before (write the way they write):\n${learned}` : '',
     '',
     'Write the full scope of work. Reply with ONLY this JSON:',
     '{"summary": "2 to 3 sentences describing the project for the homeowner", "sections": {"<key>": ["line", "line"]}, "notIncluded": ["line"]}',

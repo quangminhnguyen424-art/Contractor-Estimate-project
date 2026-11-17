@@ -18,9 +18,9 @@ const SRC = path.join(ROOT, 'src');
 const OUT = path.join(SRC, 'i18n', 'catalog.json');
 
 /** Files whose strings never reach the screen (instructions for the AI, storage, tests). */
-const SKIP_FILE = /(\.test\.tsx?$|\/i18n\/|\/cloud\/config\.ts$|\/store\/sanitize\.ts$|\.d\.ts$)/;
+const SKIP_FILE = /(\/engine\/aduText\.ts$|\/engine\/parcel\.ts$|\/cloud\/adu\.ts$|\.test\.tsx?$|\/i18n\/|\/cloud\/config\.ts$|\/store\/sanitize\.ts$|\.d\.ts$)/;
 /** Inside these functions and constants the text is an instruction for the AI, not something the user reads. */
-const SKIP_SCOPE = /(prompt|system|schema|instruction|^demoAI$|^pickJobType$|regex|pattern|^RE_|_RE$|css|svg|html$)/i;
+const SKIP_SCOPE = /(^(SDCI|PHSKC|MBP|LNI|TACOMA_POWER|TACOMA|PIERCE|KING_DLS|MBP_CITIES|OWN_ELECTRICAL|TACOMA_POWER_AREA|CITIES|cityOffice|jurisdictionFor|learnedContext|shareText)$|prompt|system|schema|instruction|^demoAI$|^pickJobType$|regex|pattern|^RE_|_RE$|css|svg|html$)/i;
 /** JSX attributes and call arguments that are never shown as words. */
 const SKIP_ATTR = new Set(['style', 'name', 'icon', 'kind', 'tone', 'accessibilityRole', 'testID', 'key', 'href', 'behavior', 'keyboardType', 'autoCapitalize', 'autoComplete', 'textContentType', 'returnKeyType', 'resizeMode', 'animationType', 'presentation', 'animation', 'pointerEvents', 'art', 'accessibilityLabel', 'accessibilityHint', 'fontFamily', 'value', 'id', 'type', 'mode', 'source', 'uri', 'keyboardShouldPersistTaps', 'keyboardDismissMode', 'inputMode']);
 const SKIP_CALL = /^(require|console\.\w+|router\.\w+|Linking\.\w+|fetch|encodeURIComponent|RegExp|Date\.parse|JSON\.\w+|\w+\.(includes|startsWith|endsWith|indexOf|split|join|replace|replaceAll|match|test|padStart|padEnd|localeCompare|toLocaleString|toLocaleDateString|toLocaleTimeString|getItem|setItem|removeItem|from|rpc|select|eq|order|storage|addListener|has|get|set|delete|add|querySelector|createElement|setAttribute|log|warn|error)|TypeError|useLocalSearchParams|Symbol|Intl\.\w+)$/;

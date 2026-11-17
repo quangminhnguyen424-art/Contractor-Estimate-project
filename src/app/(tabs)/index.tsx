@@ -72,7 +72,7 @@ export default function Assistant() {
     if (!m.action) return;
     setStarting(m.id);
     try {
-      await startEstimateFromChat(m.action, { apiKey, aiAllowed, profile, pastJobs, lessons, setDraft });
+      await startEstimateFromChat(m.action, { apiKey, aiAllowed, profile, pastJobs, lessons, estimates, setDraft });
     } catch {
       notify('Could not start the estimate', 'Try again, or tap the orange + to start it yourself.');
     } finally {

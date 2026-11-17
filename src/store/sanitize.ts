@@ -298,6 +298,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     extras: sanitizeExtras(e.extras),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
     priceEdits: sanitizePriceEdits(e.priceEdits),
+    permit: sanitizePermit(e.permit),
     ...(typeof e.clientLang === 'string' && /^[\p{L}\p{N}-]{2,60}$/u.test(e.clientLang) ? { clientLang: e.clientLang, ...(typeof e.clientLangName === 'string' && e.clientLangName.trim() ? { clientLangName: e.clientLangName.trim().slice(0, 40) } : {}) } : {}),
     clientNotes: Array.isArray(e.clientNotes)
       ? e.clientNotes.filter((n): n is { at: string; name: string; text: string } => isObj(n) && typeof n.at === 'string' && typeof n.text === 'string')
@@ -610,4 +611,16 @@ export function sanitizeQuoteEdits(v: unknown): QuoteEdits | undefined {
   if (!isObj(v)) return undefined;
   const days = typeof v.validDays === 'number' && Number.isFinite(v.validDays) ? Math.min(365, Math.max(1, Math.round(v.validDays))) : undefined;
   return { en: sanitizeWording(v.en), vi: sanitizeWording(v.vi), validDays: days, prices: v.prices === 'total' ? 'total' : 'sections' };
+}
+
+export function sanitizePermit(v: unknown): Estimate['permit'] {
+  if (!isObj(v)) return undefined;
+  const out: NonNullable<Estimate['permit']> = {};
+  if (Array.isArray(v.done)) out.done = v.done.filter((x): x is string => typeof x === 'string').slice(0, 40).map((x) => x.slice(0, 40));
+  const p = v.parcel;
+  if (isObj(p) && typeof p.pin === 'string' && /^\d{10}$/.test(p.pin)) {
+    out.parcel = { pin: p.pin, city: str(p.city).slice(0, 60), zoning: str(p.zoning).slice(0, 40), lotSqft: Number.isFinite(Number(p.lotSqft)) ? Math.max(0, Math.round(Number(p.lotSqft))) : 0 };
+  }
+  if (typeof v.description === 'string' && v.description.trim()) out.description = v.description.slice(0, 2000);
+  return Object.keys(out).length ? out : undefined;
 }

@@ -63,6 +63,11 @@ export default function Me() {
         <ListRow icon="document-lock" title="Notices on quotes" sub="State notices added to every quote" onPress={() => open('notices')} />
       </List>
 
+      <Section title="Win more work" />
+      <List>
+        <ListRow icon="home" title="ADU check page" sub="A free page where homeowners check their lot and send you leads" onPress={() => router.push('/adu')} />
+      </List>
+
       <Section title="Team and apps" />
       <List>
         <ListRow icon="people" title="Crew and subs" sub={team.length ? `${team.length} ${team.length === 1 ? 'person' : 'people'}` : 'Who works your jobs, and their rates'} onPress={() => router.push('/team')} />

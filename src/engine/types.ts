@@ -340,4 +340,6 @@ export interface Estimate {
   clientLangName?: string;
   /** "Request changes" messages the client sent from a signing link, newest last. */
   clientNotes?: { at: string; name: string; text: string }[];
+  /** Permit help: the lot's parcel record, the checklist and the application's description of work. */
+  permit?: import('./permits').PermitState;
 }

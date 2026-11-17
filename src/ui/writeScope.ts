@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
+import { learnedContext, learnFromQuotes } from '@/engine/learned';
 import { readScope, scopePrompt } from '@/engine/scopeWriter';
 import { quoteSections } from '@/engine/quote';
 import type { Estimate, Lang, Profile, QuoteEdits } from '@/engine/types';
@@ -38,7 +39,9 @@ export async function writeScope(id: string, lang: Lang, app: App, auto = false)
   writing.add(id); changed();
   try {
     const keys = quoteSections(first, lang).map((s) => s.trade);
-    const reply = await aiFor(app.apiKey, app.aiAllowed).complete(scopePrompt(first, profile, lang), undefined, 4000);
+    // Every quote the contractor sent teaches Bidwell their wording and what they always leave out.
+    const learned = learnedContext(learnFromQuotes(app.snapshot().estimates.filter((e) => e.id !== id), lang));
+    const reply = await aiFor(app.apiKey, app.aiAllowed).complete(scopePrompt(first, profile, lang, learned), undefined, 4000);
     const written = readScope(reply, keys);
     // Read again: the contractor may have edited the quote while Bidwell was writing.
     const now = app.snapshot().estimates.find((e) => e.id === id);

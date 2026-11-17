@@ -42,6 +42,7 @@ export interface AiContext {
   history?: string; // e.g. "8 past jobs of this type, average $310/SF"
   scope?: string; // limits on the job, e.g. "interior only" after a 3D room scan
   prices?: string; // what this contractor really paid on recent receipts
+  learned?: string; // what Bidwell learned from the quotes they sent (engine/learned.ts)
   language?: string; // the contractor's language, in English ("Vietnamese"): notes for them are written in it
 }
 
@@ -435,6 +436,7 @@ function contextText(ctx?: AiContext): string {
   if (ctx?.history?.trim()) parts.push(`Their pricing history for this job type: ${ctx.history.trim()}`);
   if (ctx?.scope?.trim()) parts.push(ctx.scope.trim());
   if (ctx?.prices?.trim()) parts.push(ctx.prices.trim().slice(0, 2000));
+  if (ctx?.learned?.trim()) parts.push(`Learned from the quotes this contractor sent:\n${ctx.learned.trim().slice(0, 2500)}`);
   if (ctx?.language?.trim()) parts.push(`Write "heard" and "notes" in ${ctx.language.trim()}, the contractor's language (keep the "Photo 2:" labels). JSON keys, option values, numbers and units stay exactly as specified.`);
   return parts.length ? `\n\n${parts.join('\n\n')}` : '';
 }

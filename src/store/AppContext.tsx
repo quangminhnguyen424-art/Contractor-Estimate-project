@@ -1,3 +1,4 @@
+import type { PermitState } from '@/engine/permits';
 import { reapplySectionPrices, setSectionPrices } from '@/engine/sectionPrice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState } from 'react-native';
@@ -119,7 +120,7 @@ interface Ctx extends Persisted {
   deletePhotosLater: (uris: string[]) => void;
   /** Builds (or rebuilds) an estimate from a draft and saves it. Returns its id. */
   commitDraft: (d: Draft) => string;
-  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; sectionPrices?: Record<string, number | null>; details?: { title: string; clientName: string; address: string }; addClientNote?: { at: string; name: string; text: string } }) => void;
+  updateEstimate: (id: string, patch: { status?: EstimateStatus; markupPct?: number; quoteEdits?: QuoteEdits | null; clientLang?: string; clientLangName?: string; sectionPrices?: Record<string, number | null>; details?: { title: string; clientName: string; address: string }; addClientNote?: { at: string; name: string; text: string }; permit?: PermitState }) => void;
   deleteEstimate: (id: string) => void;
   /** Erases everything on this device. keepPhotos leaves photo files (used on sign-out: they are matched again on the next sign-in). */
   resetAll: (keepPhotos?: boolean) => void;
@@ -258,6 +259,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...(existing?.clientLang ? { clientLang: existing.clientLang, clientLangName: existing.clientLangName } : {}),
         ...(existing?.clientNotes ? { clientNotes: existing.clientNotes } : {}),
         ...(existing?.sentAt ? { sentAt: existing.sentAt } : {}),
+        ...(existing?.permit ? { permit: existing.permit } : {}),
       } as Estimate, existing?.priceEdits);
     },
     [],
@@ -450,6 +452,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
             // The job's name, client and address can be corrected at any time; the job site carries the same three.
             if (patch.details) next = { ...next, title: patch.details.title.trim() || next.title, clientName: patch.details.clientName.trim(), address: patch.details.address.trim(), updatedAt: new Date().toISOString() };
+            if (patch.permit) next = { ...next, permit: { ...next.permit, ...patch.permit } };
             if (patch.clientLang) next = { ...next, clientLang: patch.clientLang, clientLangName: patch.clientLang.startsWith('x-') ? patch.clientLangName : undefined };
             if (patch.quoteEdits !== undefined) {
               const { quoteEdits: _old, ...rest } = next;
