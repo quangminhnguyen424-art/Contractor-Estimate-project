@@ -10,6 +10,9 @@ const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const MODEL = Deno.env.get('AI_MODEL') ?? 'claude-sonnet-5-5';
 const DAILY_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? '150');
+// All accounts together per day (0 = no cap). Set it from the monthly AI budget: budget ÷ 30 ÷ cost per request.
+const TOTAL_LIMIT = Number(Deno.env.get('AI_TOTAL_DAILY_LIMIT') ?? '0');
+const TIMEOUT_MS = 90_000;
 const MAX_BODY = 14_000_000; // up to 8 resized photos
 
 type Msg = { role: 'user' | 'assistant'; content: unknown };
@@ -33,14 +36,31 @@ Deno.serve(async (req) => {
   const maxTokens = Math.max(5, Math.min(4000, Number(body.max_tokens) || 1500));
 
   const admin = createClient(URL_, SERVICE);
-  const { data: allowed, error } = await admin.rpc('use_ai', { p_user: user.id, p_limit: DAILY_LIMIT });
-  if (error) return json({ error: 'Usage check failed. Try again.' }, 500);
-  if (!allowed) return json({ error: `Today's AI limit (${DAILY_LIMIT}) is used up. It resets tomorrow.` }, 429);
+  // The capped check (per user and for everyone) once its migration is in; the per-user one before that.
+  let check = await admin.rpc('use_ai_capped', { p_user: user.id, p_limit: DAILY_LIMIT, p_total_limit: TOTAL_LIMIT });
+  if (check.error) check = await admin.rpc('use_ai', { p_user: user.id, p_limit: DAILY_LIMIT });
+  if (check.error) return json({ error: 'Usage check failed. Try again.' }, 500);
+  if (!check.data) return json({ error: `Today's AI limit is used up. It resets tomorrow.` }, 429);
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages }),
-  });
+  // Busy or overloaded (429, 529, 5xx): wait and try again, twice, before giving up.
+  const payload = JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages });
+  let res: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt) await new Promise((r) => setTimeout(r, 1200 * attempt + Math.random() * 800));
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
+        body: payload,
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch {
+      res = null;
+      continue;
+    }
+    if (res.status !== 429 && res.status !== 529 && res.status < 500) break;
+  }
+  if (!res) return json({ error: 'The AI did not answer in time. Try again.' }, 504);
+  if (res.status === 429 || res.status === 529) return json({ error: 'The AI is very busy right now. Try again in a minute.' }, 503);
   return new Response(await res.text(), { status: res.status, headers: { ...cors, 'content-type': 'application/json' } });
 });

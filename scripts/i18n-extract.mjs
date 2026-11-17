@@ -18,7 +18,7 @@ const SRC = path.join(ROOT, 'src');
 const OUT = path.join(SRC, 'i18n', 'catalog.json');
 
 /** Files whose strings never reach the screen (instructions for the AI, storage, tests). */
-const SKIP_FILE = /(\/engine\/aduText\.ts$|\/engine\/parcel\.ts$|\/cloud\/adu\.ts$|\.test\.tsx?$|\/i18n\/|\/cloud\/config\.ts$|\/store\/sanitize\.ts$|\.d\.ts$)/;
+const SKIP_FILE = /(\/engine\/aduText\.ts$|\/engine\/privacy\.ts$|\/engine\/company\.ts$|\/engine\/parcel\.ts$|\/cloud\/adu\.ts$|\.test\.tsx?$|\/i18n\/|\/cloud\/config\.ts$|\/store\/sanitize\.ts$|\.d\.ts$)/;
 /** Inside these functions and constants the text is an instruction for the AI, not something the user reads. */
 const SKIP_SCOPE = /(^(SDCI|PHSKC|MBP|LNI|TACOMA_POWER|TACOMA|PIERCE|KING_DLS|MBP_CITIES|OWN_ELECTRICAL|TACOMA_POWER_AREA|CITIES|cityOffice|jurisdictionFor|learnedContext|shareText)$|prompt|system|schema|instruction|^demoAI$|^pickJobType$|regex|pattern|^RE_|_RE$|css|svg|html$)/i;
 /** JSX attributes and call arguments that are never shown as words. */

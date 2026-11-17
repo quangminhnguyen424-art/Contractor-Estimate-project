@@ -1,9 +1,11 @@
+import { COMPANY, PUBLISHER_LINE } from './company';
+
 // What every user agrees to before using the app. DRAFT: have a Washington attorney review before opening to the public.
 // Bump TERMS_VERSION whenever the text changes in a way users must agree to again; the app then asks again.
 
 export const TERMS_VERSION = '2026-11-14';
-export const PUBLISHER = 'YM LLC, Federal Way, Washington (the developer of Bidwell AI)';
-export const SUPPORT_EMAIL = 'justin.ngminh@gmail.com';
+export const PUBLISHER = PUBLISHER_LINE;
+export const SUPPORT_EMAIL = COMPANY.support;
 
 export interface ConsentItem {
   id: 'adult' | 'ai-wrong' | 'ai-share' | 'my-duty' | 'terms';
@@ -99,7 +101,7 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '14. Law and contact',
-    body: `These Terms are governed by the laws of the State of Washington, USA, and disputes go to the state or federal courts in King County, Washington, unless the law where you live requires otherwise. Questions: ${SUPPORT_EMAIL}.`,
+    body: `These Terms are governed by the laws of the State of Washington, USA, and disputes go to the state or federal courts in King County, Washington, unless the law where you live requires otherwise. Questions: ${SUPPORT_EMAIL}. Legal notices: ${COMPANY.legal}${COMPANY.mail ? `, or by mail to ${COMPANY.legalName}, ${COMPANY.mail}` : ''}.`,
   },
 ];
 

@@ -214,7 +214,8 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     if (!user || !ready) return;
     const first = setTimeout(() => sync(user.id), 0);
     const sub = AppState.addEventListener('change', (s) => { if (s === 'active') sync(user.id); });
-    const t = setInterval(() => sync(user.id), 3 * 60 * 1000);
+    // Every 5 minutes while the app is open (and on coming back): light, a single timestamp check when nothing changed.
+    const t = setInterval(() => { if (AppState.currentState === 'active') void sync(user.id); }, 5 * 60 * 1000);
     return () => { clearTimeout(first); sub.remove(); clearInterval(t); };
   }, [user, ready, sync]);
 

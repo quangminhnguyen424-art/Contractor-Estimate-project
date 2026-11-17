@@ -2676,5 +2676,11 @@
 "Building permit issued": "Đã được cấp permit xây dựng",
 "Electrical permit issued": "Đã được cấp permit điện",
 "Plumbing permit issued": "Đã được cấp permit ống nước",
-"Mechanical permit issued": "Đã được cấp permit cơ khí"
+"Mechanical permit issued": "Đã được cấp permit cơ khí",
+"These Terms are governed by the laws of the State of Washington, USA, and disputes go to the state or federal courts in King County, Washington, unless the law where you live requires otherwise. Questions: {0}. Legal notices: {1}, or by mail to {2}, {3}.": "Điều khoản này chịu sự điều chỉnh của luật Tiểu bang Washington, Hoa Kỳ, và tranh chấp được đưa ra toà tiểu bang hoặc liên bang tại King County, Washington, trừ khi luật nơi bạn sống quy định khác. Thắc mắc: {0}. Thông báo pháp lý: {1}, hoặc gửi thư tới {2}, {3}.",
+"These Terms are governed by the laws of the State of Washington, USA, and disputes go to the state or federal courts in King County, Washington, unless the law where you live requires otherwise. Questions: {0}. Legal notices: {1}.": "Điều khoản này chịu sự điều chỉnh của luật Tiểu bang Washington, Hoa Kỳ, và tranh chấp được đưa ra toà tiểu bang hoặc liên bang tại King County, Washington, trừ khi luật nơi bạn sống quy định khác. Thắc mắc: {0}. Thông báo pháp lý: {1}.",
+"Call support": "Gọi hỗ trợ",
+"Contact us": "Liên hệ",
+"Privacy Policy": "Chính sách quyền riêng tư",
+", or by mail to {0}, {1}": ", hoặc gửi thư tới {0}, {1}"
 }

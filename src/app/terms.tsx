@@ -2,8 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 
+import { COMPANY } from '@/engine/company';
 import { CONSENT_ITEMS, missingRequired, PRIVACY_SUMMARY, SUPPORT_EMAIL, TERMS, TERMS_VERSION } from '@/engine/legal';
 import { useApp } from '@/store/AppContext';
 import { Button, C, Card, H2, Muted, Screen } from '@/ui/kit';
@@ -86,6 +87,10 @@ export default function TermsScreen() {
         ))}
       </Card>
 
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Button kind="secondary" title="Privacy Policy" icon="shield-checkmark-outline" style={{ flex: 1 }} onPress={() => Linking.openURL(COMPANY.pages.privacy)} />
+        <Button kind="secondary" title="Contact us" icon="mail-outline" style={{ flex: 1 }} onPress={() => Linking.openURL(COMPANY.pages.support)} />
+      </View>
       <Muted style={{ fontSize: 12, textAlign: 'center' }}>Version {TERMS_VERSION} · Questions: {SUPPORT_EMAIL}</Muted>
     </Screen>
   );

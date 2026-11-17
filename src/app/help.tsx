@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ChatTurn } from '@/engine/ai';
 import { HELP_TOPICS, helpSystem, parseHelpReply, searchHelp, type HelpTopic } from '@/engine/help';
+import { COMPANY } from '@/engine/company';
 import { SUPPORT_EMAIL } from '@/engine/legal';
 import { aiLanguageLine } from '@/i18n';
 import { useApp } from '@/store/AppContext';
@@ -18,7 +19,7 @@ const TABS = new Set(['/', '/jobs', '/new', '/schedule', '/me']);
 /** Opens a screen named in a help answer. A tab is returned to (never stacked as a second copy on top of Help). */
 const open = (route: string) => (TABS.has(route.split('?')[0]) ? router.dismissTo(route as never) : router.push(route as never));
 
-const HELP_CENTER = 'https://quangminhnguyen424-art.github.io/Contractor-Estimate-project/help.html';
+const HELP_CENTER = COMPANY.pages.help;
 const POPULAR = ['new-estimate', 'edit-quote', 'sign', 'photos', 'roof-satellite', 'password'];
 
 /** `own`: a line the app wrote (translated on screen); anything else is shown as written. `why`: why the AI did not answer. */
@@ -117,7 +118,9 @@ export default function HelpScreen() {
             <List>
               <ListRow icon="bug" title="Report a problem" sub="Something broken or wrong? Send it with one tap." onPress={() => router.push('/report')} />
               <ListRow icon="mail" title="Email support" sub={SUPPORT_EMAIL} onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bidwell AI help')}`)} />
+              {COMPANY.phone ? <ListRow icon="call" title="Call support" sub={COMPANY.phone} onPress={() => Linking.openURL(`tel:${COMPANY.phone.replace(/[^\d+]/g, '')}`)} /> : null}
               <ListRow icon="book" title="Help Center" sub="All how-to guides on the web" onPress={() => Linking.openURL(HELP_CENTER)} />
+              <ListRow icon="shield-checkmark" title="Privacy Policy" onPress={() => Linking.openURL(COMPANY.pages.privacy)} />
             </List>
           </>
         ) : null}

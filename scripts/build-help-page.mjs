@@ -1,5 +1,15 @@
 // Builds the public Help Center page (docs/help.html, served by GitHub Pages) from the same how-to topics the app uses.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { build } from 'esbuild';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// Contact details from src/engine/company.ts.
+const dir = mkdtempSync(path.join(tmpdir(), 'help-'));
+await build({ entryPoints: ['src/engine/company.ts'], bundle: true, format: 'esm', platform: 'node', outfile: path.join(dir, 'c.mjs'), logLevel: 'silent' });
+const { COMPANY } = await import(pathToFileURL(path.join(dir, 'c.mjs')).href);
+rmSync(dir, { recursive: true, force: true });
 
 const topics = JSON.parse(readFileSync(new URL('../src/engine/help.json', import.meta.url), 'utf8'));
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -19,8 +29,8 @@ summary{font-weight:600;cursor:pointer}.vi{color:var(--muted);font-weight:400;fo
 <h1>Bidwell AI Help Center</h1><p class="sub">How-to guides for contractors. In the app, tap the <b>?</b> on Home to chat with Bidwell AI.</p>
 <input id="q" placeholder="Search: password, roof, sign, photos…" aria-label="Search help">
 ${items}
-<div class="contact"><b>Still need help?</b><p>Email <a href="mailto:${'justin.ngminh@gmail.com'}">justin.ngminh@gmail.com</a> or use <b>Report a problem</b> in the app (Settings → Help &amp; support). We reply within one business day.</p>
-<p><small>Bidwell AI is made by YM LLC, Federal Way, Washington.</small></p></div>
+<div class="contact"><b>Still need help?</b><p>Email <a href="mailto:${COMPANY.support}">${COMPANY.support}</a>${COMPANY.phone ? ` or call <a href="tel:${COMPANY.phone.replace(/[^\d+]/g, '')}">${COMPANY.phone}</a>` : ''}, or use <b>Report a problem</b> in the app (Me → Help and support). We reply within one business day.</p>
+<p><small>${COMPANY.brand} is a trade name of ${COMPANY.legalName}, ${COMPANY.city}. <a href="./support.html">Contact</a> · <a href="./privacy.html">Privacy</a> · <a href="./terms.html">Terms</a></small></p></div>
 </div>
 <script>
 const q=document.getElementById('q');q.addEventListener('input',()=>{const t=q.value.toLowerCase();document.querySelectorAll('details').forEach(d=>{d.style.display=d.textContent.toLowerCase().includes(t)?'':'none';});});
@@ -28,4 +38,5 @@ if(location.hash){const d=document.querySelector(location.hash);if(d)d.open=true
 </script></body></html>
 `;
 writeFileSync(new URL('../docs/help.html', import.meta.url), html);
+writeFileSync(new URL('../public/help.html', import.meta.url), html);
 console.log(`docs/help.html: ${topics.length} topics`);
