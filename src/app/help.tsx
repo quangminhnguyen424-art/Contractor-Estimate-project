@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useRef, useState } from 'react';
 import { Linking, Pressable, ScrollView, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +9,8 @@ import type { ChatTurn } from '@/engine/ai';
 import { HELP_TOPICS, helpSystem, parseHelpReply, searchHelp, type HelpTopic } from '@/engine/help';
 import { COMPANY } from '@/engine/company';
 import { SUPPORT_EMAIL } from '@/engine/legal';
-import { aiLanguageLine } from '@/i18n';
+import { TUTORIALS, tutorialUrl } from '@/engine/tutorials';
+import { aiLanguageLine, currentLanguage } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { Composer } from '@/ui/Composer';
 import { aiFor } from '@/ui/host';
@@ -114,6 +116,13 @@ export default function HelpScreen() {
 
         {msgs.length === 0 ? (
           <>
+            <Section title="Video guides" />
+            <List>
+              {TUTORIALS.map((v) => (
+                <ListRow key={v.id} icon="play-circle" title={v.title} sub={v.sub}
+                  onPress={() => { WebBrowser.openBrowserAsync(tutorialUrl(v.id, currentLanguage()?.code)).catch(() => Linking.openURL(tutorialUrl(v.id, currentLanguage()?.code))); }} />
+              ))}
+            </List>
             <Section title="Get help from a person" />
             <List>
               <ListRow icon="bug" title="Report a problem" sub="Something broken or wrong? Send it with one tap." onPress={() => router.push('/report')} />

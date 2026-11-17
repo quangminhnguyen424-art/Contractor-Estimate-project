@@ -93,7 +93,7 @@ export function Onboarding({ onDone, skipIntro }: { onDone?: () => void; skipInt
           <>
             <Reveal style={{ alignItems: 'center', gap: 4, marginTop: 4 }}>
               <Art name="hero" width={260} />
-              <Text style={{ color: C.accent, fontWeight: '800', fontSize: 15, letterSpacing: 0.5 }}>{review ? 'WELCOME BACK' : 'WELCOME TO BIDWELL AI'}</Text>
+              <Text style={{ color: C.accent, fontWeight: '800', fontSize: 15, letterSpacing: 0.5 }}>{review ? 'WELCOME BACK' : 'WELCOME TO STUDWISE AI'}</Text>
               <Muted style={{ textAlign: 'center' }}>{review
                 ? 'Your setup came back from your account. Walk through the 4 steps to check it; change anything that’s different.'
                 : 'Faster estimates, organized job sites and happy clients. Two minutes to set up.'}</Muted>
