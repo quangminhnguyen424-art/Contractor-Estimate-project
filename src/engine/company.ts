@@ -9,6 +9,12 @@
 /** Flip to true once studwise.ai is registered and support@, privacy@ and legal@ receive mail. */
 export const LIVE = false;
 
+/**
+ * The one inbox behind every address. support@, privacy@, legal@ and billing@studwise.ai are aliases that deliver
+ * here; until studwise.ai is set up, the app shows this address itself.
+ */
+export const INBOX = 'dream@upgradeshome.com';
+
 const NEW = {
   domain: 'studwise.ai',
   site: 'https://studwise.ai',
@@ -25,10 +31,10 @@ const NEW = {
 const NOW = {
   domain: 'quangminhnguyen424-art.github.io',
   site: 'https://quangminhnguyen424-art.github.io/Contractor-Estimate-project',
-  support: 'justin.ngminh@gmail.com',
-  privacy: 'justin.ngminh@gmail.com',
-  legal: 'justin.ngminh@gmail.com',
-  billing: 'justin.ngminh@gmail.com',
+  support: INBOX,
+  privacy: INBOX,
+  legal: INBOX,
+  billing: INBOX,
   phone: '',
   mail: '',
 };
