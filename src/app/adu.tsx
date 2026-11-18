@@ -270,11 +270,13 @@ function CheckAddress({ lang, perSf }: { lang: AduLang; perSf: { low: number; hi
           </View>
           <Text raw style={{ color: C.muted, fontSize: 13 }}>{[lot.address, lot.address.toLowerCase().endsWith(lot.city.toLowerCase()) ? '' : lot.city, lot.zoning && `zoning ${lot.zoning}`, lot.lotSqft ? `${lot.lotSqft.toLocaleString('en-US')} SF lot` : '', `parcel ${lot.pin}`].filter(Boolean).join(' · ')}</Text>
           {aduRules(res, lang).map((r) => <Text raw key={r} style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>• {r}</Text>)}
+          {perSf.low || perSf.high ? <Muted style={{ fontSize: 13 }}>Rough estimate at your prices, not a quote:</Muted> : null}
           {res.sizes.map((s) => {
             const c = aduCost(s.sf, perSf);
             return <Text raw key={s.sf} style={{ color: C.ink, fontSize: 14 }}>{s.sf.toLocaleString('en-US')} SF · {w.beds(s.beds)}{c ? ` · ${money(c.low)}–${money(c.high)}` : ''}</Text>;
           })}
           {res.checks.map((k) => <Text raw key={k} style={{ color: C.warnInk, fontSize: 13, lineHeight: 18 }}>⚠ {w.check[k]}</Text>)}
+          <Muted style={{ fontSize: 13 }}>A first look to help you research, not a decision. Only the city can say what can be built on this lot.</Muted>
         </View>
       ) : null}
     </Card>

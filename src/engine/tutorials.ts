@@ -9,8 +9,8 @@ export const TUTORIALS: Tutorial[] = [
   { id: '03-quote', title: 'Send the quote and get it signed', sub: 'Change any part, text a link, sign on the phone' },
   { id: '04-money', title: 'Invoices and payments', sub: 'Invoices, payments and change orders' },
   { id: '05-site', title: 'Job site, photos and crew', sub: 'Photos by area, work orders, crew days' },
-  { id: '06-permit', title: 'Permit helper', sub: 'What permits a job needs and how to apply' },
-  { id: '07-adu', title: 'ADU check and new leads', sub: 'A free page for homeowners that brings you leads' },
+  { id: '06-permit', title: 'Permit guide', sub: 'Look up the permits a job usually needs and how to apply' },
+  { id: '07-adu', title: 'ADU check and new leads', sub: 'A free pre-check page that brings you leads' },
   { id: '08-learn', title: 'Ask Studwise', sub: 'Chat, learning from your quotes, help' },
 ];
 
