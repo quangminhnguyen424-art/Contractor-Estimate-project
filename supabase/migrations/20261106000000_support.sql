@@ -13,7 +13,9 @@ create table if not exists public.support_tickets (
 alter table public.support_tickets enable row level security;
 
 -- Contractors can send reports and see their own; only the owner (service role / dashboard) answers them.
+drop policy if exists "send own tickets" on public.support_tickets;
 create policy "send own tickets" on public.support_tickets for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "read own tickets" on public.support_tickets;
 create policy "read own tickets" on public.support_tickets for select to authenticated using (user_id = auth.uid());
 
 create index if not exists support_tickets_new on public.support_tickets (status, created_at desc);

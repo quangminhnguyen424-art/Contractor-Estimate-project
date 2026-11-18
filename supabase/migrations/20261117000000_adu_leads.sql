@@ -17,9 +17,13 @@ create table if not exists public.adu_pages (
   updated_at timestamptz not null default now()
 );
 alter table public.adu_pages enable row level security;
+drop policy if exists "own adu page: read" on public.adu_pages;
 create policy "own adu page: read" on public.adu_pages for select using (auth.uid() = owner);
+drop policy if exists "own adu page: add" on public.adu_pages;
 create policy "own adu page: add" on public.adu_pages for insert with check (auth.uid() = owner);
+drop policy if exists "own adu page: change" on public.adu_pages;
 create policy "own adu page: change" on public.adu_pages for update using (auth.uid() = owner) with check (auth.uid() = owner);
+drop policy if exists "own adu page: remove" on public.adu_pages;
 create policy "own adu page: remove" on public.adu_pages for delete using (auth.uid() = owner);
 
 create table if not exists public.adu_leads (
@@ -41,8 +45,11 @@ create table if not exists public.adu_leads (
   seen boolean not null default false
 );
 alter table public.adu_leads enable row level security;
+drop policy if exists "own adu leads: read" on public.adu_leads;
 create policy "own adu leads: read" on public.adu_leads for select using (auth.uid() = owner);
+drop policy if exists "own adu leads: change" on public.adu_leads;
 create policy "own adu leads: change" on public.adu_leads for update using (auth.uid() = owner) with check (auth.uid() = owner);
+drop policy if exists "own adu leads: remove" on public.adu_leads;
 create policy "own adu leads: remove" on public.adu_leads for delete using (auth.uid() = owner);
 create index if not exists adu_leads_owner on public.adu_leads (owner, created_at desc);
 
