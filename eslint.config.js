@@ -2,4 +2,4 @@
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 
-module.exports = defineConfig([expoConfig, { ignores: ['dist/*', 'server/*', 'supabase/functions/*'] }]);
+module.exports = defineConfig([expoConfig, { ignores: ['dist/*', 'dist-single/**', 'docs/**', 'public/*.js', 'server/*', 'supabase/functions/*'] }]);
