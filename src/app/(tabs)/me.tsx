@@ -46,6 +46,7 @@ export default function Me() {
       <List>
         <ListRow icon="person-circle" title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Studwise'}
           sub={cloud.user ? 'Account, password, sync' : 'Turns on the AI, backup and online signing'} onPress={() => router.push(cloud.user ? '/account' : '/login')} />
+        <ListRow icon="diamond" title="Your plan" sub="Free, Pro trial or Pro" onPress={() => router.push('/plan')} />
       </List>
 
       <Section title="Pricing" />
