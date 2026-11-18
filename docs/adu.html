@@ -107,6 +107,7 @@
   .loading { display: flex; align-items: center; gap: 12px; color: var(--muted); }
   .fade { animation: fade .3s ease-out; }
   @keyframes fade { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+  .resnote { background: #FFF6E5; color: #7A4B00; border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 20px; }
   .fine { color: #6B7587; font-size: 12px; line-height: 17px; text-align: center; padding: 8px 4px 0; }
   .powered { text-align: center; color: #94A3B8; font-size: 12px; }
   .powered b { color: var(--muted); }
@@ -149,6 +150,7 @@
 
   <section id="result" hidden class="fade" style="display:flex;flex-direction:column;gap:14px">
     <div class="verdict" id="verdict"><div class="ic" id="vIcon"></div><div><h2 id="vTitle"></h2><div id="vText"></div></div></div>
+    <div class="resnote" id="resNote"></div>
     <div class="facts" id="facts"></div>
     <div class="section" id="buildTitle"></div>
     <div class="sum" id="buildSum"></div>

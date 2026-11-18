@@ -118,8 +118,8 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
               const d = (est.permit?.done ?? []).filter((x) => pp.checklist.some((c) => c.id === x)).length;
               const must = pp.items.filter((i) => i.need === 'required').length;
               return (
-                <ListRow icon="ribbon" title="Permits"
-                  sub={d ? `${d} of ${pp.checklist.length} steps done · ${pp.jurisdiction.name}` : must ? `${must} permit${must === 1 ? '' : 's'} needed · ${pp.jurisdiction.name}` : `Check what this job needs · ${pp.jurisdiction.name}`}
+                <ListRow icon="ribbon" title="Permit guide"
+                  sub={d ? `${d} of ${pp.checklist.length} steps done · ${pp.jurisdiction.name}` : must ? `${must} permit${must === 1 ? '' : 's'} usually needed · ${pp.jurisdiction.name}` : `Look up permits and how to apply · ${pp.jurisdiction.name}`}
                   onPress={() => router.push(`/estimate/${est.id}/permit`)} />
               );
             })()}

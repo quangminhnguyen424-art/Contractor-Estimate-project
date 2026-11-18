@@ -6,7 +6,7 @@ import { Linking, Pressable, Share, View } from 'react-native';
 import { useCloud } from '@/cloud/CloudProvider';
 import { learnFromQuotes } from '@/engine/learned';
 import { findParcels } from '@/engine/parcel';
-import { applicationFields, cityFromAddress, PERMIT_TITLE, permitDescriptionPrompt, permitPlan, type Need } from '@/engine/permits';
+import { applicationFields, cityFromAddress, PERMIT_TITLE, permitDescriptionPrompt, permitPlan, RULE_SOURCES, RULES_CHECKED_LABEL, rulesMayBeOld, type Need } from '@/engine/permits';
 import { useApp } from '@/store/AppContext';
 import { aiFor, inClaudeApp } from '@/ui/host';
 import { Banner, Button, C, Card, Field, H2, Muted, Screen, Section } from '@/ui/kit';
@@ -14,13 +14,14 @@ import { notify } from '@/ui/notify';
 import { Text } from '@/ui/text';
 
 const NEED: Record<Need, { text: string; bg: string; ink: string }> = {
-  required: { text: 'Required', bg: C.badBg, ink: C.danger },
-  likely: { text: 'Likely', bg: C.warnBg, ink: C.warnInk },
-  check: { text: 'Check', bg: C.infoBg, ink: C.infoInk },
+  required: { text: 'Usually needed', bg: C.badBg, ink: C.danger },
+  likely: { text: 'Often needed', bg: C.warnBg, ink: C.warnInk },
+  check: { text: 'Ask the office', bg: C.infoBg, ink: C.infoInk },
 };
 
 /**
- * Permits for a job: which permits the work needs, who issues them where the job is (from the county's parcel
+ * Permit guide for a job. It helps the contractor look things up and never decides: which permits work like this
+ * usually needs, who issues them where the job is (from the county's parcel
  * record), what to prepare, the steps, a checklist, and the application's fields filled in, with the description of
  * work written by Studwise in the contractor's own style.
  */
@@ -92,9 +93,18 @@ export default function PermitScreen() {
   return (
     <Screen>
       <View style={{ gap: 4 }}>
-        <Text style={{ color: C.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.3 }}>Permits</Text>
+        <Text style={{ color: C.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.3 }}>Permit guide</Text>
         <Text raw style={{ color: C.ink2 }}>{est.title}</Text>
       </View>
+
+      <Banner tone="info" title="A guide to help you look things up, not a decision">
+        Studwise helps you find which permits work like this usually needs, who issues them and how to apply. It does not decide what this job needs: only the permit office can. Confirm with them before you bid or start work.
+      </Banner>
+      {rulesMayBeOld() ? (
+        <Banner tone="warn" title="These rules may be out of date">
+          {`They were last checked ${RULES_CHECKED_LABEL}. Check the official sources at the bottom of this page.`}
+        </Banner>
+      ) : null}
 
       <Card style={{ gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -121,7 +131,7 @@ export default function PermitScreen() {
         </Banner>
       ) : (
         <>
-          <Section title="Permits for this job" />
+          <Section title="Permits work like this usually needs" />
           {plan.items.map((it) => (
             <Card key={it.kind} style={{ gap: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -187,7 +197,16 @@ export default function PermitScreen() {
         </>
       )}
 
-      <Muted style={{ fontSize: 12, lineHeight: 17 }}>Guidance from city, county and state rules as of November 2026. The permit office decides what a job needs; check with them before you start work.</Muted>
+      <Section title="Where this comes from" />
+      <Card style={{ gap: 8 }}>
+        <Muted style={{ fontSize: 13, lineHeight: 18 }}>{`City, county and state rules, last checked ${RULES_CHECKED_LABEL}, and the county's parcel records. Rules change: the permit office has the final say.`}</Muted>
+        {RULE_SOURCES.map((s) => (
+          <Pressable key={s.url} accessibilityRole="link" onPress={() => Linking.openURL(s.url)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+            <Ionicons name="open-outline" size={16} color={C.accent} />
+            <Text style={{ color: C.accent, fontSize: 14, flex: 1 }}>{s.name}</Text>
+          </Pressable>
+        ))}
+      </Card>
     </Screen>
   );
 }

@@ -8,10 +8,10 @@ export type AduLang = 'en' | 'vi';
 
 const EN = {
   verdict: {
-    yes: 'Yes: you can most likely build an ADU here',
-    likely: 'Likely: state law lets you build ADUs here',
-    check: 'Maybe: this lot needs a closer look',
-    no: 'Probably not on this lot',
+    yes: 'Looks possible: rules for this zone generally allow ADUs',
+    likely: 'Likely allowed: state law requires cities to allow ADUs on lots like this',
+    check: 'Needs a closer look with your city',
+    no: 'Probably not allowed on this lot',
   } as Record<Verdict, string>,
   reason: {
     'seattle-res': 'Your lot is in a Seattle Neighborhood Residential zone, where two ADUs per lot are allowed: a backyard cottage (DADU), an ADU in or attached to the house (AADU), or one of each.',
@@ -52,10 +52,10 @@ const EN = {
 
 const VI: typeof EN = {
   verdict: {
-    yes: 'Có: nhiều khả năng bạn xây được ADU trên lô này',
-    likely: 'Nhiều khả năng: luật tiểu bang cho phép xây ADU ở đây',
-    check: 'Có thể: lô này cần xem kỹ hơn',
-    no: 'Có lẽ không xây được trên lô này',
+    yes: 'Có vẻ được: luật của khu này thường cho phép ADU',
+    likely: 'Nhiều khả năng được: luật tiểu bang yêu cầu thành phố cho phép ADU trên lô như thế này',
+    check: 'Cần hỏi thêm thành phố',
+    no: 'Có lẽ không được phép trên lô này',
   },
   reason: {
     'seattle-res': 'Lô của bạn nằm trong vùng Neighborhood Residential của Seattle, được xây 2 ADU mỗi lô: nhà sau vườn (DADU), ADU trong hoặc nối với nhà (AADU), hoặc mỗi loại một căn.',

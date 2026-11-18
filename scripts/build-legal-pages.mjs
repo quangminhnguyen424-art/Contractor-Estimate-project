@@ -74,7 +74,7 @@ const made = [
   page({
     file: 'terms.html', title: 'Terms of Use',
     description: `The terms for using ${COMPANY.brand}.`,
-    vi: `Tóm tắt: App dành cho nhà thầu từ 18 tuổi. AI có thể sai: bạn phải kiểm tra mọi báo giá, tài liệu trước khi dùng. Bạn chịu trách nhiệm về license, permit, hợp đồng và thuế của mình. Dữ liệu là của bạn. Bản tiếng Anh dưới đây là bản chính thức.`,
+    vi: `Tóm tắt: App dành cho nhà thầu từ 18 tuổi. AI có thể sai: bạn phải kiểm tra mọi báo giá, tài liệu trước khi dùng. Bạn chịu trách nhiệm về license, permit, hợp đồng và thuế của mình. Dữ liệu là của bạn. Phần hướng dẫn permit và kiểm tra ADU chỉ giúp tra cứu, không phải quyết định: hãy xác nhận với cơ quan cấp phép. Bản tiếng Anh dưới đây là bản chính thức.`,
     body: { meta: `Version ${TERMS_VERSION}`, html: sections(TERMS) },
   }),
   page({

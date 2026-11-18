@@ -3,7 +3,7 @@ import { COMPANY, PUBLISHER_LINE } from './company';
 // What every user agrees to before using the app. DRAFT: have a Washington attorney review before opening to the public.
 // Bump TERMS_VERSION whenever the text changes in a way users must agree to again; the app then asks again.
 
-export const TERMS_VERSION = '2026-11-14';
+export const TERMS_VERSION = '2026-11-17';
 export const PUBLISHER = PUBLISHER_LINE;
 export const SUPPORT_EMAIL = COMPANY.support;
 
@@ -97,11 +97,15 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '13. Ending',
-    body: 'You can stop using the app and delete your account at any time. We may suspend or close accounts that break these Terms or put others at risk. Sections 3, 4, 7 and 10 to 14 continue after the account ends.',
+    body: 'You can stop using the app and delete your account at any time. We may suspend or close accounts that break these Terms or put others at risk. Sections 3, 4, 7 and 10 to 15 continue after the account ends.',
   },
   {
     title: '14. Law and contact',
     body: `These Terms are governed by the laws of the State of Washington, USA, and disputes go to the state or federal courts in King County, Washington, unless the law where you live requires otherwise. Questions: ${SUPPORT_EMAIL}. Legal notices: ${COMPANY.legal}${COMPANY.mail ? `, or by mail to ${COMPANY.legalName}, ${COMPANY.mail}` : ''}.`,
+  },
+  {
+    title: '15. Permit, zoning and ADU information',
+    body: 'The permit guide, the ADU check and the homeowner ADU page help you look up public information: county parcel records and city, county and state rules as we last checked them. They are a research aid, not a decision. They do not decide whether a permit is needed, what zoning allows or what can be built, and they are not a survey or legal advice. Rules and records change and can be wrong or out of date. Only the permit office or city decides; confirm with them before you bid, design, sign or start work, and tell your clients to do the same. You are responsible for the permits for your jobs and for what you tell your clients, including through your ADU page.',
   },
 ];
 

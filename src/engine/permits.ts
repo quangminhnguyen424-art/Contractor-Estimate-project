@@ -12,8 +12,24 @@ import type { Answers, Estimate, JobTypeId, Profile } from './types';
  *   Mercer Island, Normandy Park, Redmond, Renton, Sammamish, SeaTac, Seattle, Tukwila, Everett, Lynnwood,
  *   Marysville, Mountlake Terrace, Milton; Tacoma Power for Tacoma, Fircrest, University Place, Fife, Lakewood and
  *   Steilacoom. Everywhere else: Washington L&I.
- * It is guidance; the city decides. The screen says so.
+ * It is guidance to help a contractor look things up, never a decision: only the permit office decides what a job
+ * needs. The screen says so, shows when the rules were last checked and links the official sources.
  */
+
+/** When the rules in this file (and in adu.ts) were last checked against the official sources. */
+export const RULES_CHECKED = '2026-11-17';
+export const RULES_CHECKED_LABEL = '11/2026';
+/** Older than six months: the screens warn that the rules may be out of date. */
+export const rulesMayBeOld = (now: Date = new Date()) => now.getTime() - Date.parse(RULES_CHECKED) > 183 * 864e5;
+
+/** Where the rules come from, shown under the guide so anyone can check them. */
+export const RULE_SOURCES: { name: string; url: string }[] = [
+  { name: 'Seattle SDCI: permits and accessory dwelling units', url: 'https://seattle.gov/sdci/permits/common-projects/accessory-dwelling-units' },
+  { name: 'Washington L&I: cities that do their own electrical permits', url: 'https://lni.wa.gov/licensing-permits/electrical/electrical-permits-fees-and-inspections/city-electrical-permits-inspections' },
+  { name: 'MyBuildingPermit.com: member cities', url: 'https://www.mybuildingpermit.com' },
+  { name: 'Washington law on ADUs (RCW 36.70A.681)', url: 'https://app.leg.wa.gov/RCW/default.aspx?cite=36.70A.681' },
+  { name: 'King County parcel records (zoning, lot size)', url: 'https://gismaps.kingcounty.gov/parcelviewer2/' },
+];
 
 export type PermitKind = 'building' | 'electrical' | 'plumbing' | 'mechanical';
 export type Need = 'required' | 'likely' | 'check';

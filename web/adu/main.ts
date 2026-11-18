@@ -12,16 +12,16 @@ interface Lot { address: string; pin: string; city: string; zoning: string; lotS
 
 const T = {
   en: {
-    title: 'Can I build an ADU on my lot?', sub: 'Free ADU check',
-    hero: 'Type your address. We read King County’s parcel records and Washington’s ADU rules, and show what you can build and about what it costs.',
+    title: 'Can I build an ADU on my lot?', sub: 'Free ADU pre-check',
+    hero: 'Type your address for a free first look. We read King County’s parcel records and Washington’s ADU rules, and show what the rules generally allow and a rough cost. Only your city can say what you can build.',
     placeholder: '1234 Main St, Seattle', go: 'Check my lot', note: 'Works for homes in King County, WA. Free, no sign-up.',
     loading: 'Looking up your lot…', notFound: 'We couldn’t find that address in King County records. Check the spelling, or enter your city and lot size below.',
     offline: 'The county’s records didn’t answer. Try again in a moment, or enter your city and lot size below.',
     pickOne: 'Which one is your home?', manual: 'Not in King County, or know your lot already? Enter it here:', city: 'City', lot: 'Lot size (SF)', manualGo: 'Check with these',
     city_: 'City', zoning: 'Zoning', lotSize: 'Lot size', parcel: 'Parcel #', unincorporated: 'Unincorporated King County',
-    canBuild: 'What you can build', adus: (n: number) => `${n} ADU${n === 1 ? '' : 's'} on this lot`, upTo: (sf: string) => `up to ${sf} SF each`,
+    canBuild: 'What the rules generally allow', adus: (n: number) => `${n} ADU${n === 1 ? '' : 's'} on this lot`, upTo: (sf: string) => `up to ${sf} SF each`,
     homes: (n: number) => `up to ${n} homes on the lot in total`, kind: 'Backyard cottage (DADU) or attached ADU',
-    from: 'estimated', priceNote: (co: string) => `Estimated construction cost from ${co}’s current prices. Final price depends on design, site and finishes.`,
+    from: 'estimated', priceNote: (co: string) => `A rough estimate from ${co}’s current prices, not a quote. The real price depends on design, site and finishes.`,
     noPrice: 'Ask for the full report to get a price for your lot.',
     gateTitle: 'Get your full report, free', gateText: (co: string) => `See the detailed rules for your lot, what to check before you design, all the costs, and the steps to build. ${co} will follow up to answer your questions.`,
     name: 'Your name', phone: 'Phone', email: 'Email', msg: 'Anything we should know? (optional)', msgPh: 'e.g. rent it out, a home for parents, start next spring',
@@ -44,20 +44,21 @@ const T = {
       'Final inspection: the ADU is approved to live in or rent out.',
     ],
     print: 'Print or save as PDF', again: 'Check another address',
-    fine: 'This is a first look from public records and state and city rules as of November 2026, not a permit decision or legal advice. Confirm with your city before you design or buy.',
+    resNote: 'A first look to help you research, not a decision. Only your city can say what you can build on this lot.',
+    fine: 'This tool helps you look up public information: county parcel records and state and city rules as last checked in November 2026. It is not a permit or zoning decision, a survey, or legal advice, and rules change. Only your city can say what you can build. Confirm with your city before you design, buy or sign anything.',
     powered: 'ADU check by', call: 'Call', text: 'Text', emailBtn: 'Email', other: 'Tiếng Việt',
   },
   vi: {
-    title: 'Lô đất của tôi xây ADU được không?', sub: 'Kiểm tra ADU miễn phí',
-    hero: 'Nhập địa chỉ nhà. Chúng tôi đọc hồ sơ lô đất của King County và luật ADU của Washington, rồi cho bạn biết xây được gì và chi phí khoảng bao nhiêu.',
+    title: 'Lô đất của tôi xây ADU được không?', sub: 'Kiểm tra sơ bộ ADU miễn phí',
+    hero: 'Nhập địa chỉ nhà để xem sơ bộ miễn phí. Chúng tôi đọc hồ sơ lô đất của King County và luật ADU của Washington, rồi cho bạn biết luật thường cho phép gì và chi phí ước chừng. Chỉ thành phố mới quyết định bạn được xây gì.',
     placeholder: '1234 Main St, Seattle', go: 'Kiểm tra lô đất', note: 'Áp dụng cho nhà ở King County, WA. Miễn phí, không cần đăng ký.',
     loading: 'Đang tra lô đất của bạn…', notFound: 'Không tìm thấy địa chỉ này trong hồ sơ King County. Kiểm tra lại chính tả, hoặc nhập thành phố và diện tích lô bên dưới.',
     offline: 'Hệ thống của quận chưa trả lời. Thử lại sau giây lát, hoặc nhập thành phố và diện tích lô bên dưới.',
     pickOne: 'Nhà của bạn là địa chỉ nào?', manual: 'Không ở King County, hoặc đã biết lô đất? Nhập tại đây:', city: 'Thành phố', lot: 'Diện tích lô (SF)', manualGo: 'Kiểm tra với thông tin này',
     city_: 'Thành phố', zoning: 'Zoning', lotSize: 'Diện tích lô', parcel: 'Số parcel', unincorporated: 'Vùng không thuộc thành phố (King County)',
-    canBuild: 'Bạn có thể xây', adus: (n: number) => `${n} ADU trên lô này`, upTo: (sf: string) => `mỗi căn tối đa ${sf} SF`,
+    canBuild: 'Luật thường cho phép', adus: (n: number) => `${n} ADU trên lô này`, upTo: (sf: string) => `mỗi căn tối đa ${sf} SF`,
     homes: (n: number) => `tổng cộng tối đa ${n} căn nhà trên lô`, kind: 'Nhà sau vườn (DADU) hoặc ADU nối với nhà',
-    from: 'ước tính', priceNote: (co: string) => `Chi phí xây ước tính theo giá hiện tại của ${co}. Giá cuối cùng tùy thiết kế, địa hình và vật liệu hoàn thiện.`,
+    from: 'ước tính', priceNote: (co: string) => `Ước tính sơ bộ theo giá hiện tại của ${co}, không phải báo giá. Giá thật tùy thiết kế, địa hình và vật liệu hoàn thiện.`,
     noPrice: 'Nhận báo cáo đầy đủ để có giá cho lô đất của bạn.',
     gateTitle: 'Nhận báo cáo đầy đủ, miễn phí', gateText: (co: string) => `Xem quy định chi tiết cho lô của bạn, những điều cần kiểm tra trước khi thiết kế, tất cả chi phí và các bước để xây. ${co} sẽ liên hệ để giải đáp thắc mắc.`,
     name: 'Họ và tên', phone: 'Số điện thoại', email: 'Email', msg: 'Bạn muốn chúng tôi biết thêm gì? (không bắt buộc)', msgPh: 'vd: cho thuê, nhà cho bố mẹ, muốn bắt đầu mùa xuân tới',
@@ -80,7 +81,8 @@ const T = {
       'Nghiệm thu cuối: ADU được phép ở hoặc cho thuê.',
     ],
     print: 'In hoặc lưu PDF', again: 'Kiểm tra địa chỉ khác',
-    fine: 'Đây là đánh giá sơ bộ từ hồ sơ công khai và luật tiểu bang, thành phố tính đến tháng 11/2026, không phải quyết định cấp phép hay tư vấn pháp lý. Hãy xác nhận với thành phố trước khi thiết kế hoặc mua.',
+    resNote: 'Đây là thông tin sơ bộ để bạn tham khảo, không phải quyết định. Chỉ thành phố mới quyết định bạn được xây gì trên lô này.',
+    fine: 'Công cụ này giúp bạn tra cứu thông tin công khai: hồ sơ lô đất của quận và luật tiểu bang, thành phố được kiểm tra lần cuối vào tháng 11/2026. Đây không phải quyết định cấp phép hay zoning, không phải đo đạc, không phải tư vấn pháp lý, và luật có thể thay đổi. Chỉ thành phố mới quyết định bạn được xây gì. Hãy xác nhận với thành phố trước khi thiết kế, mua hay ký bất cứ gì.',
     powered: 'Kiểm tra ADU bởi', call: 'Gọi', text: 'Nhắn tin', emailBtn: 'Email', other: 'English',
   },
 };
@@ -160,6 +162,7 @@ function words() {
   $('printText').textContent = t.print;
   $('again').textContent = t.again;
   $('fine').textContent = t.fine;
+  $('resNote').textContent = t.resNote;
   const p = $('powered'); p.textContent = `${t.powered} `; p.appendChild(el('b', undefined, page?.company?.trim() || 'Studwise AI'));
   document.title = `${t.title}${page?.company ? ` · ${page.company}` : ''}`;
   if (result) show();

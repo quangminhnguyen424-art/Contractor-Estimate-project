@@ -12,6 +12,7 @@ import { findParcels, type Parcel } from '@/engine/parcel';
 import { useLanguage } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Field, H2, Muted, NumberField, Screen, Section, Segmented } from '@/ui/kit';
+import { RULES_CHECKED_LABEL } from '@/engine/permits';
 import { confirmAction, notify } from '@/ui/notify';
 import { Text } from '@/ui/text';
 
@@ -188,7 +189,10 @@ function Intro() {
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ color: C.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.3 }}>ADU check page</Text>
-      <Muted>A free page for homeowners: they type their address and see if they can build an ADU or backyard cottage, how big, and about what it costs at your prices. To see the full report they leave their name and phone, and you get the lead here.</Muted>
+      <Muted>A free page for homeowners: they type their address for a first look at what the ADU rules generally allow and a rough cost at your prices. To see the full report they leave their name and phone, and you get the lead here.</Muted>
+      <Banner tone="info" title="A research tool, not a decision">
+        {`It reads the county's public records and the rules as last checked ${RULES_CHECKED_LABEL}. Only the city decides what can be built on a lot. Homeowners see the same notice on their page.`}
+      </Banner>
     </View>
   );
 }
@@ -254,7 +258,7 @@ function CheckAddress({ lang, perSf }: { lang: AduLang; perSf: { low: number; hi
   return (
     <Card style={{ gap: 10 }}>
       <H2>Check an address</H2>
-      <Muted style={{ fontSize: 13 }}>King County lots: zoning, lot size and what the ADU rules allow.</Muted>
+      <Muted style={{ fontSize: 13 }}>King County lots: zoning, lot size and what the ADU rules generally allow.</Muted>
       <Field label="Address" value={addr} onChangeText={setAddr} placeholder="1234 Main St, Seattle" autoComplete="street-address" returnKeyType="search" onSubmitEditing={go} />
       <Button kind="secondary" title={busy ? 'Looking up…' : 'Check this lot'} icon="search" disabled={busy || addr.trim().length < 5} onPress={go} />
       {err ? <Text style={{ color: C.danger }}>{err}</Text> : null}
