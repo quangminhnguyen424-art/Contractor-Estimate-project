@@ -5,7 +5,7 @@ import { COMPANY } from './company';
  * It describes what the app actually does; change it whenever data handling changes. DRAFT: have a Washington
  * attorney review before opening to the public.
  */
-export const PRIVACY_VERSION = '2026-11-17';
+export const PRIVACY_VERSION = '2026-11-18';
 
 export interface PolicySection { title: string; body: string[] }
 
@@ -61,7 +61,8 @@ export const PRIVACY_POLICY: PolicySection[] = [
       'Google: when you use Measure roof, the job address is sent to Google to find and measure the roof.',
       'King County (Washington): public property records, looked up directly by your device on the ADU check and permit screens.',
       'Website hosting and email delivery providers: to serve the public pages and to send account emails such as password resets.',
-      'Apple and Google: app distribution, and payments if paid plans are added.',
+      'Stripe, Inc. (United States): payments for paid plans. Stripe receives your email, card and billing details directly; we keep only your plan, its dates and Stripe’s customer reference, never your card number.',
+      'Apple and Google: app distribution.',
       'Other apps you connect yourself (for example Zapier, Make, QuickBooks or Google) receive only what you choose to send them.',
     ],
   },

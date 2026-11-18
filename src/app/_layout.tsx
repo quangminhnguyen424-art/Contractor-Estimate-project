@@ -1,10 +1,12 @@
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CloudProvider, useCloud } from '@/cloud/CloudProvider';
+import { useMyPlan } from '@/cloud/usePlan';
+import { PlanPicker } from '@/ui/PlanPicker';
 import { cloudConfigured } from '@/cloud/config';
 import { initLanguage, setTranslationAI, useLanguage, useT } from '@/i18n';
 import { AppProvider, useApp } from '@/store/AppContext';
@@ -97,6 +99,17 @@ function HeaderTitle({ children }: { children: string }) {
   return <Text numberOfLines={1} style={{ fontWeight: '700', color: C.ink, fontSize: 17 }}>{children}</Text>;
 }
 
+function PlanGate({ plan, onChanged }: { plan: Parameters<typeof PlanPicker>[0]['plan']; onChanged: () => void }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24, gap: 14, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
+      <Text style={{ color: C.ink, fontSize: 26, fontWeight: '800', letterSpacing: -0.3 }}>Pick your plan</Text>
+      <Text style={{ color: C.ink2, fontSize: 15, lineHeight: 21 }}>Try any plan free for 14 days. Cancel before the trial ends and you pay nothing.</Text>
+      <PlanPicker plan={plan} onChanged={onChanged} />
+    </ScrollView>
+  );
+}
+
 function RootStack() {
   const { ready, profile, termsOk } = useApp();
   const cloud = useCloud();
@@ -110,6 +123,7 @@ function RootStack() {
   const who = cloud.user?.id ?? (inClaudeApp ? 'claude' : 'local');
   const [welcomed, setWelcomed] = useState<Record<string, boolean>>({});
   const [goTo, setGoTo] = useState<string | null>(null);
+  const { plan, refresh: refreshPlan } = useMyPlan();
   useEffect(() => {
     if (who in welcomed) return;
     isWelcomed(who).then((v) => setWelcomed((w) => ({ ...w, [who]: v })));
@@ -138,6 +152,8 @@ function RootStack() {
       if (route) setGoTo(route);
     }} />;
   }
+  // Once plans are switched on: a new account picks Starter, Pro or Team (card first, 14 days free) before using the app.
+  if (cloud.user && termsOk && profile && plan?.plan === 'none') return <PlanGate plan={plan} onChanged={refreshPlan} />;
   return (
     <Stack
       screenOptions={{

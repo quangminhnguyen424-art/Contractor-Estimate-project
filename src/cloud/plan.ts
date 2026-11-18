@@ -1,15 +1,32 @@
-// The account's plan: Free (no AI), a 14-day trial of Pro, Pro or Team. Kept on the server (public.plans).
-import { supabase } from './client';
+// The account's plan, kept on the server (public.plans) and paid through Stripe.
+// none = hasn't picked a plan yet · free = no AI · starter/pro/team = paid (14 days free first) · beta = plans not switched on yet.
+import { callFunction, supabase } from './client';
 
-export type PlanName = 'free' | 'trial' | 'pro' | 'team';
-export interface MyPlan { plan: PlanName; trial_ends_at: string | null; paid_until: string | null }
+export type PlanName = 'none' | 'free' | 'starter' | 'pro' | 'team' | 'beta';
+export type PaidPlan = 'starter' | 'pro' | 'team';
+export interface MyPlan {
+  plan: PlanName;
+  status: string | null;
+  trial_ends_at: string | null;
+  paid_until: string | null;
+  cancel_at_period_end: boolean;
+  had_trial: boolean;
+  has_billing: boolean;
+}
+
+export const PLANS: { id: PaidPlan; name: string; price: number; aiPerDay: number; items: string[] }[] = [
+  { id: 'starter', name: 'Starter', price: 19, aiPerDay: 10, items: ['Studwise AI: 10 requests a day', 'Talk or type a job, get the estimate', 'Quotes, contracts, signing, invoices'] },
+  { id: 'pro', name: 'Pro', price: 39, aiPerDay: 40, items: ['Studwise AI: 40 requests a day', 'Scope, client messages and permit descriptions', 'Quotes in your client’s language, crew work orders in theirs'] },
+  { id: 'team', name: 'Team', price: 79, aiPerDay: 40, items: ['Everything in Pro', 'For a company with office help and crew leads', 'Priority help'] },
+];
 
 /** The plan in force now, or null when it can't be read (signed out, offline, or plans not set up on the server yet). */
 export async function getMyPlan(): Promise<MyPlan | null> {
   try {
     const { data, error } = await supabase.rpc('my_plan');
     if (error || !data) return null;
-    return data as MyPlan;
+    const row = (Array.isArray(data) ? data[0] : data) as MyPlan | undefined;
+    return row ?? null;
   } catch {
     return null;
   }
@@ -18,3 +35,11 @@ export async function getMyPlan(): Promise<MyPlan | null> {
 /** Whole days left in the trial (0 on its last day or after). */
 export const trialDaysLeft = (p: MyPlan, now = Date.now()) =>
   p.trial_ends_at ? Math.max(0, Math.ceil((Date.parse(p.trial_ends_at) - now) / 864e5)) : 0;
+
+/** Stripe Checkout for a plan (card first; 14 days free the first time). Returns the page to open. */
+export const startCheckout = (plan: PaidPlan) => callFunction<{ url: string }>('billing', { action: 'checkout', plan });
+/** Stripe's billing page: change plan, update the card, or cancel. */
+export const openBillingPortal = () => callFunction<{ url: string }>('billing', { action: 'portal' });
+
+/** The date the first charge happens if someone starts a trial today. */
+export const firstChargeDate = (now = new Date()) => new Date(now.getTime() + 14 * 864e5);

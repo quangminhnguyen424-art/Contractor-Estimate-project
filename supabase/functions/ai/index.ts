@@ -12,8 +12,8 @@ const MODEL = Deno.env.get('AI_MODEL') ?? 'claude-sonnet-5-5';
 const DAILY_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? '40');
 // All accounts together per day (0 = no cap). Set it from the monthly AI budget: budget ÷ 30 ÷ cost per request.
 const TOTAL_LIMIT = Number(Deno.env.get('AI_TOTAL_DAILY_LIMIT') ?? '0');
-// Plans: when on, accounts on the Free plan (trial over, not paying) get no AI. Off during the beta.
-const PLANS_ON = (Deno.env.get('PLANS_ON') ?? '0') === '1';
+// AI requests a day by plan. 'beta' = plans switched off (app_settings.plans_on), everyone gets the default.
+const PLAN_LIMITS: Record<string, number> = { starter: 10, pro: DAILY_LIMIT, team: DAILY_LIMIT, beta: DAILY_LIMIT };
 const TIMEOUT_MS = 90_000;
 const MAX_BODY = 14_000_000; // up to 8 resized photos
 
@@ -38,15 +38,17 @@ Deno.serve(async (req) => {
   const maxTokens = Math.max(5, Math.min(4000, Number(body.max_tokens) || 1500));
 
   const admin = createClient(URL_, SERVICE);
-  if (PLANS_ON) {
-    const plan = await admin.rpc('plan_for', { p_user: user.id });
-    if (!plan.error && plan.data === 'free') {
-      return json({ error: 'Studwise AI is part of Pro. Your free plan keeps everything else: Quick price, quotes, signing and invoices.', code: 'free_plan' }, 402);
-    }
+  // The plan decides whether there is AI and how much (before the plans migration runs, everyone gets the default).
+  const plan = await admin.rpc('plan_for', { p_user: user.id });
+  const planName = plan.error ? 'beta' : String(plan.data);
+  if (planName === 'none') return json({ error: 'Pick a plan to start your 14-day free trial: Me → Your plan.', code: 'no_plan' }, 402);
+  if (!(planName in PLAN_LIMITS)) {
+    return json({ error: 'Studwise AI is part of Starter, Pro and Team. Your Free plan keeps everything else: Quick price, quotes, signing and invoices.', code: 'free_plan' }, 402);
   }
+  const limit = PLAN_LIMITS[planName];
   // The capped check (per user and for everyone) once its migration is in; the per-user one before that.
-  let check = await admin.rpc('use_ai_capped', { p_user: user.id, p_limit: DAILY_LIMIT, p_total_limit: TOTAL_LIMIT });
-  if (check.error) check = await admin.rpc('use_ai', { p_user: user.id, p_limit: DAILY_LIMIT });
+  let check = await admin.rpc('use_ai_capped', { p_user: user.id, p_limit: limit, p_total_limit: TOTAL_LIMIT });
+  if (check.error) check = await admin.rpc('use_ai', { p_user: user.id, p_limit: limit });
   if (check.error) return json({ error: 'Usage check failed. Try again.' }, 500);
   if (!check.data) return json({ error: `Today's AI limit is used up. It resets tomorrow.` }, 429);
 

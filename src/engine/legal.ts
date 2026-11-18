@@ -3,7 +3,7 @@ import { COMPANY, PUBLISHER_LINE } from './company';
 // What every user agrees to before using the app. DRAFT: have a Washington attorney review before opening to the public.
 // Bump TERMS_VERSION whenever the text changes in a way users must agree to again; the app then asks again.
 
-export const TERMS_VERSION = '2026-11-17';
+export const TERMS_VERSION = '2026-11-18';
 export const PUBLISHER = PUBLISHER_LINE;
 export const SUPPORT_EMAIL = COMPANY.support;
 
@@ -77,11 +77,11 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '8. AI providers and other services',
-    body: 'When you turn on AI, what Studwise needs to answer you is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it: the job notes and photos you choose, your questions, and your business details, prices and recent job names. When you translate a document for a client, its text is sent the same way. When you use Measure roof, the job address is sent to Google to find and measure the roof. Voice typing uses your phone’s own speech service. Cloud storage and sign-in use Supabase. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.',
+    body: 'When you turn on AI, what Studwise needs to answer you is sent to Anthropic, PBC to process your request, under Anthropic’s commercial terms, which do not allow training on it: the job notes and photos you choose, your questions, and your business details, prices and recent job names. When you translate a document for a client, its text is sent the same way. When you use Measure roof, the job address is sent to Google to find and measure the roof. Voice typing uses your phone’s own speech service. Cloud storage and sign-in use Supabase. Paid plans are billed by Stripe, which receives your email and card details. Other apps you connect (for example a webhook to Zapier or Make) receive what you choose to send them and follow their own terms.',
   },
   {
     title: '9. Payments and changes',
-    body: 'The app is free to use today. If we add paid plans, we will show the price before you pay, and payments on iPhone follow Apple’s rules. We may change or stop features. If we change these Terms in a way that matters, the app will ask you to agree again.',
+    body: 'Studwise has three paid plans: Starter ($19 a month), Pro ($39 a month) and Team ($79 a month), plus a Free plan without Studwise AI. Prices are in US dollars and do not include any sales tax. To start a plan you add a card. Your first plan comes with a 14-day free trial: nothing is charged during the trial, and unless you cancel before it ends, your card is charged the plan’s price on the day it ends and then every month on the same date until you cancel. You can cancel or change plans any time under Me → Your plan; when you cancel, you keep your plan until the end of the period you already paid for, and then your account moves to Free. We do not refund partial months, except where the law requires it. If a payment fails, we may move your account to Free until it is paid. Payments are processed by Stripe, Inc.; we never see or store your full card number. We will tell you at least 30 days before a price change, and you can cancel before it applies. During the beta, plans may be switched off and every feature open to everyone. We may change or stop features. If we change these Terms in a way that matters, the app will ask you to agree again.',
   },
   {
     title: '10. No warranty',

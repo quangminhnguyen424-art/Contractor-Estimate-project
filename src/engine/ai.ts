@@ -511,7 +511,7 @@ async function callClaudeTurns(
       const err = (await res.json()) as { error?: { message?: string } | string };
       detail = typeof err.error === 'string' ? err.error : err.error?.message ?? '';
     } catch { /* ignore */ }
-    if (viaCloud && (res.status === 401 || res.status === 429 || res.status === 413 || res.status === 503)) throw new Error(detail || 'Studwise AI is not available right now.');
+    if (viaCloud && (res.status === 401 || res.status === 402 || res.status === 429 || res.status === 413 || res.status === 503)) throw new Error(detail || 'Studwise AI is not available right now.');
     if (res.status === 401) throw new Error('Claude API key is not valid. Check it under Me → Studwise AI.');
     if (res.status === 429) throw new Error('Studwise is busy or your rate limit was reached. Try again in a minute.');
     if (/credit|billing|balance/i.test(detail)) throw new Error('Your Anthropic account is out of credit. Add credit in the Anthropic Console.');
