@@ -1,4 +1,4 @@
--- Plans. Every account picks Starter ($19), Pro ($39) or Team ($79) and enters a card at Stripe; the first 14 days
+-- Plans. Every account picks Starter ($19), Pro ($39) or Team ($79) a month, or yearly at 20% off ($182, $374, $758), and enters a card at Stripe; the first 14 days
 -- are free and Stripe charges on day 15 unless the subscription is cancelled. Cancelled or unpaid = Free: no AI, data kept.
 -- Stripe tells us about every change through the stripe-webhook function, which writes this table.
 --

@@ -26,10 +26,12 @@ export async function stripe<T = Record<string, unknown>>(method: 'GET' | 'POST'
   return data as T;
 }
 
-/** The three plans and their Stripe prices (set as secrets after creating the products in Stripe). */
-export const PRICES: Record<string, string> = {
-  starter: Deno.env.get('STRIPE_PRICE_STARTER') ?? '',
-  pro: Deno.env.get('STRIPE_PRICE_PRO') ?? '',
-  team: Deno.env.get('STRIPE_PRICE_TEAM') ?? '',
+/** The three plans, monthly and yearly, and their Stripe prices (set as secrets after creating the products in Stripe). */
+export type Interval = 'month' | 'year';
+export const PRICES: Record<string, Record<Interval, string>> = {
+  starter: { month: Deno.env.get('STRIPE_PRICE_STARTER') ?? '', year: Deno.env.get('STRIPE_PRICE_STARTER_YEAR') ?? '' },
+  pro: { month: Deno.env.get('STRIPE_PRICE_PRO') ?? '', year: Deno.env.get('STRIPE_PRICE_PRO_YEAR') ?? '' },
+  team: { month: Deno.env.get('STRIPE_PRICE_TEAM') ?? '', year: Deno.env.get('STRIPE_PRICE_TEAM_YEAR') ?? '' },
 };
-export const planForPrice = (priceId: string) => Object.entries(PRICES).find(([, p]) => p && p === priceId)?.[0] ?? null;
+export const planForPrice = (priceId: string) =>
+  Object.entries(PRICES).find(([, p]) => priceId && (p.month === priceId || p.year === priceId))?.[0] ?? null;

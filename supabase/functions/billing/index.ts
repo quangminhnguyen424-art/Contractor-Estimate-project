@@ -1,11 +1,11 @@
 // Plans and payments for the signed-in account, through Stripe:
-//   {action:'checkout', plan:'starter'|'pro'|'team'} → a Stripe Checkout page: card first, 14 days free (first time only),
-//     then the plan's monthly price unless cancelled. Returns {url}.
+//   {action:'checkout', plan:'starter'|'pro'|'team', interval?:'month'|'year'} → a Stripe Checkout page: card first, 14 days free (first time only),
+//     then the plan's monthly or yearly price unless cancelled. Returns {url}.
 //   {action:'portal'} → Stripe's billing page to change plan, update the card or cancel. Returns {url}.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { cors, json } from '../_shared/http.ts';
-import { PRICES, stripe, stripeReady } from '../_shared/stripe.ts';
+import { PRICES, stripe, stripeReady, type Interval } from '../_shared/stripe.ts';
 
 const URL_ = Deno.env.get('SUPABASE_URL')!;
 const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   const { data: { user } } = await userClient.auth.getUser();
   if (!user) return json({ error: 'Please sign in again.' }, 401);
 
-  let body: { action?: string; plan?: string };
+  let body: { action?: string; plan?: string; interval?: string };
   try { body = await req.json(); } catch { return json({ error: 'Bad request' }, 400); }
   const admin = createClient(URL_, SERVICE);
   await admin.from('plans').upsert({ user_id: user.id }, { onConflict: 'user_id', ignoreDuplicates: true });
@@ -43,8 +43,9 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === 'checkout') {
-      const price = PRICES[body.plan ?? ''];
-      if (!price) return json({ error: 'Pick Starter, Pro or Team.' }, 400);
+      const interval: Interval = body.interval === 'year' ? 'year' : 'month';
+      const price = PRICES[body.plan ?? '']?.[interval];
+      if (!price) return json({ error: interval === 'year' ? 'Yearly billing is not set up yet. Pick monthly for now.' : 'Pick Starter, Pro or Team.' }, 400);
       // Already subscribed: change or cancel on the billing page instead of a second subscription.
       if (row?.stripe_subscription_id && ['trialing', 'active', 'past_due'].includes(row.status)) {
         const s = await stripe<{ url: string }>('POST', 'billing_portal/sessions', { customer, return_url: RETURN_URL });

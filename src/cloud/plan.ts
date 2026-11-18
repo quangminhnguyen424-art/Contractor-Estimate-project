@@ -4,6 +4,7 @@ import { callFunction, supabase } from './client';
 
 export type PlanName = 'none' | 'free' | 'starter' | 'pro' | 'team' | 'beta';
 export type PaidPlan = 'starter' | 'pro' | 'team';
+export type Interval = 'month' | 'year';
 export interface MyPlan {
   plan: PlanName;
   status: string | null;
@@ -13,6 +14,10 @@ export interface MyPlan {
   had_trial: boolean;
   has_billing: boolean;
 }
+
+/** Yearly = 12 months less 20%, rounded down to the dollar. */
+export const YEAR_DISCOUNT = 0.2;
+export const yearPrice = (monthly: number) => Math.floor(monthly * 12 * (1 - YEAR_DISCOUNT));
 
 export const PLANS: { id: PaidPlan; name: string; price: number; aiPerDay: number; items: string[] }[] = [
   { id: 'starter', name: 'Starter', price: 19, aiPerDay: 10, items: ['Studwise AI: 10 requests a day', 'Talk or type a job, get the estimate', 'Quotes, contracts, signing, invoices'] },
@@ -37,7 +42,7 @@ export const trialDaysLeft = (p: MyPlan, now = Date.now()) =>
   p.trial_ends_at ? Math.max(0, Math.ceil((Date.parse(p.trial_ends_at) - now) / 864e5)) : 0;
 
 /** Stripe Checkout for a plan (card first; 14 days free the first time). Returns the page to open. */
-export const startCheckout = (plan: PaidPlan) => callFunction<{ url: string }>('billing', { action: 'checkout', plan });
+export const startCheckout = (plan: PaidPlan, interval: Interval = 'month') => callFunction<{ url: string }>('billing', { action: 'checkout', plan, interval });
 /** Stripe's billing page: change plan, update the card, or cancel. */
 export const openBillingPortal = () => callFunction<{ url: string }>('billing', { action: 'portal' });
 
