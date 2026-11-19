@@ -6,6 +6,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { CloudProvider, useCloud } from '@/cloud/CloudProvider';
 import { useMyPlan } from '@/cloud/usePlan';
+import { notify } from '@/ui/notify';
 import { PlanPicker } from '@/ui/PlanPicker';
 import { cloudConfigured } from '@/cloud/config';
 import { initLanguage, setTranslationAI, useLanguage, useT } from '@/i18n';
@@ -101,11 +102,17 @@ function HeaderTitle({ children }: { children: string }) {
 
 function PlanGate({ plan, onChanged }: { plan: Parameters<typeof PlanPicker>[0]['plan']; onChanged: () => void }) {
   const insets = useSafeAreaInsets();
+  const cloud = useCloud();
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24, gap: 14, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
       <Text style={{ color: C.ink, fontSize: 26, fontWeight: '800', letterSpacing: -0.3 }}>Pick your plan</Text>
       <Text style={{ color: C.ink2, fontSize: 15, lineHeight: 21 }}>Try any plan free for 14 days. Cancel before the trial ends and you pay nothing.</Text>
       <PlanPicker plan={plan} onChanged={onChanged} />
+      {/* Never a dead end: someone who doesn't want a plan can still leave or ask for help. */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 28, paddingTop: 6 }}>
+        <Text onPress={() => { void cloud.signOut().then((m) => { if (m) notify('Could not log out', m); }); }} style={{ color: C.ink2, fontWeight: '700', padding: 8 }}>Log out</Text>
+        <Text onPress={() => { void Linking.openURL(`mailto:${SUPPORT_EMAIL}`); }} style={{ color: C.ink2, fontWeight: '700', padding: 8 }}>Get help</Text>
+      </View>
     </ScrollView>
   );
 }

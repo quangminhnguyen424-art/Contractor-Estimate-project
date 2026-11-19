@@ -13,7 +13,7 @@ import { callFunction, storedUser, supabase } from './client';
 import { CLOUD, cloudConfigured } from './config';
 import { fetchClientNotes, fetchNewSignatures, markApplied, markNoteSeen, signedHtml, toSignature } from './sign';
 import { decide } from './decide';
-import { mergeWorkspaces } from './merge';
+import { baseOf, mergeWorkspaces } from './merge';
 import { backupPhotos, clearBase, clearMeta, loadBase, loadMeta, myWorkspace, pullWorkspace, pushWorkspace, restorePhotos, saveBase, saveMeta, workspaceStamp } from './sync';
 import { sanitizePersisted, type Persisted } from '@/store/sanitize';
 
@@ -177,17 +177,29 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
       const localChange = a().changedAt;
       // On someone else's Team, agreeing to the Terms is each person's own: never take another person's agreement.
       const own = (d: Persisted): Persisted => (ws === uid ? d : { ...d, consent: local.consent });
-      /** Both this phone and the cloud changed: join them item by item, then save the joined copy (retrying if someone saves again meanwhile). */
+      const member = ws !== uid;
+      const same = meta?.uid === ws; // this phone already works in this workspace (not a switch of account or team)
+      /**
+       * Joins this phone's copy and the cloud's item by item, then saves the joined copy, but only over the cloud copy
+       * it read (if someone saves in between, it reads and joins again).
+       */
       const merge = async () => {
         const base = await loadBase();
         for (let i = 0; i < 3; i++) {
           const remote = await pullWorkspace(ws);
           if (!remote) break;
-          const merged = own(mergeWorkspaces(a().snapshot(), sanitizePersisted(remote.data).data, base));
-          const at = await pushWorkspace(ws, merged, device, remote.updatedAt);
+          const cloud = sanitizePersisted(remote.data).data;
+          const change = a().changedAt;
+          const snap = a().snapshot();
+          const merged = own(mergeWorkspaces(snap, cloud, base));
+          // A team member never writes their own Terms agreement into the company's copy.
+          const at = await pushWorkspace(ws, member ? { ...merged, consent: cloud.consent } : merged, device, remote.updatedAt);
           if (!at) continue;
-          a().replaceFromCloud(merged);
-          await saveMeta({ uid: ws, remoteAt: at, syncedChange: localChange });
+          // Anything typed while that was saving is joined in too, and goes up with the next sync.
+          const now = a().snapshot();
+          const edited = now !== snap;
+          a().replaceFromCloud(edited ? own(mergeWorkspaces(now, merged, baseOf(snap))) : merged, true);
+          await saveMeta({ uid: ws, remoteAt: at, syncedChange: edited ? Math.min(change, localChange) : change });
           await saveBase(merged);
           backupPhotos(ws, merged).catch(() => {});
           return;
@@ -202,12 +214,14 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
           const unsent = !!local.profile && (!meta || (meta.uid === ws && localChange > meta.syncedChange));
           if (unsent) await AsyncStorage.setItem(REPLACED, JSON.stringify({ at: new Date().toISOString(), data: local })).catch(() => {});
           const next = own(sanitizePersisted(remote.data).data);
-          if (a().replaceFromCloud(next)) {
+          if (a().replaceFromCloud(next, same)) {
             await saveMeta({ uid: ws, remoteAt: remote.updatedAt, syncedChange: Date.now() });
             await saveBase(next);
             if (unsent) notify('Updated from your account', 'The work saved in your account replaced changes made on this phone that had not been backed up.');
           }
         }
+      } else if (action === 'push' && member) {
+        await merge(); // a member's changes always go through the join, so the company's copy keeps its own settings
       } else if (action === 'push') {
         const at = await pushWorkspace(ws, local, device, stamp ? meta?.remoteAt : null);
         if (at) {
@@ -224,6 +238,7 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         a().resetAll();
       } else if (stamp) {
         await saveMeta({ uid: ws, remoteAt: stamp.updatedAt, syncedChange: localChange });
+        if (local.profile && !(await loadBase())) await saveBase(local); // first sync after this update
       }
       // Photos this phone is missing (a new phone, or a restore that was cut short) come down after every sync.
       restorePhotos(ws, a().snapshot()).catch(() => {});
@@ -320,7 +335,12 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         return e instanceof Error ? e.message : 'Could not delete the account.';
       }
     },
-    syncNow: async () => { if (user) await sync(user.id); },
+    syncNow: async () => {
+      if (!user) return;
+      // If a sync is already running, wait for it, then sync again so this call always sees the latest state.
+      for (let i = 0; i < 75 && busy.current; i++) await new Promise((r) => setTimeout(r, 200));
+      await sync(user.id);
+    },
     backupNow: async (onProgress) => (user ? backupPhotos(wsRef.current ?? user.id, appRef.current.snapshot(), onProgress) : { sent: 0, failed: 0 }),
   }), [user, workspaceId, state, lastSync, error, sync, authReady, firstSync]);
 

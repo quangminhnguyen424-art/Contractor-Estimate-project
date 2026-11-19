@@ -13,7 +13,6 @@ export default function PlanScreen() {
   const { checkout } = useLocalSearchParams<{ checkout?: string }>();
   return (
     <Screen>
-      <Text style={{ color: C.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.3 }}>Your plan</Text>
       {checkout === 'done' && <Card><Text style={{ color: C.okInk, fontWeight: '700' }}>Thanks! Your plan is being turned on. It can take a few seconds.</Text></Card>}
       {!cloud.user ? <Muted>Log in to see your plan.</Muted>
         : plan === undefined ? <Muted>Checking…</Muted>

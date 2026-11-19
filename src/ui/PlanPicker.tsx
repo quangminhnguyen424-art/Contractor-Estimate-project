@@ -62,7 +62,7 @@ export function PlanPicker({ plan, onChanged }: { plan: MyPlan | null | undefine
           return (
             <Pressable key={iv} onPress={() => setInterval_(iv)} accessibilityRole="radio" accessibilityState={{ checked: on }}
               style={{ flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: 'center', backgroundColor: on ? C.card : 'transparent' }}>
-              <Text style={{ color: on ? C.ink : C.ink2, fontWeight: '700' }}>{iv === 'month' ? 'Monthly' : 'Yearly · save 20%'}</Text>
+              <Text style={{ color: on ? C.ink : C.ink2, fontWeight: '700', textAlign: 'center' }}>{iv === 'month' ? 'Monthly' : 'Yearly · save 20%'}</Text>
             </Pressable>
           );
         })}

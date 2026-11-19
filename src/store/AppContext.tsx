@@ -133,7 +133,7 @@ interface Ctx extends Persisted {
   /** The data as saved right now. */
   snapshot: () => Persisted;
   /** Replaces everything with the cloud copy (checked first). Returns false when it isn't usable. */
-  replaceFromCloud: (raw: unknown) => boolean;
+  replaceFromCloud: (raw: unknown, keepDraft?: boolean) => boolean;
   /** Replace all data with a backup. */
   importData: (json: string) => { ok: boolean; message: string };
 }
@@ -508,13 +508,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
       changedAt,
       snapshot: () => dataRef.current,
-      replaceFromCloud: (raw) => {
+      replaceFromCloud: (raw, keepDraft) => {
         const { data: next } = sanitizePersisted(raw);
         if (!next.profile) {
           setCustomJobs(dataRef.current.customTypes, dataRef.current.customQuestions);
           return false;
         }
-        setDraft(null);
+        // The same account's newer copy leaves an estimate being written alone; another account's data clears it.
+        if (!keepDraft) setDraft(null);
         // Reminders belong to this phone: set them again for what's coming up.
         const restored = { ...next, events: next.events.map(({ notificationId: _n, ...e }) => e) };
         update(() => restored, { fromCloud: true });
