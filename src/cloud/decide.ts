@@ -7,16 +7,16 @@ export interface SyncMeta { uid: string; remoteAt: string; syncedChange: number 
  * - nothing in the cloud: send the phone's data (if any)
  * - nothing on the phone, or this phone has never synced: take the cloud copy. A phone that never synced holds
  *   at most a fresh setup, and that must not replace the account's saved work.
- * - only one side changed since the last sync: that side wins; both changed: the most recent change wins
+ * - only one side changed since the last sync: that side wins; both changed: join them item by item ('merge')
  */
-export function decide(input: { uid: string; meta: SyncMeta | null; remote: { updatedAt: string } | null; localChange: number; localEmpty: boolean }): 'pull' | 'push' | 'wipe' | 'none' {
+export function decide(input: { uid: string; meta: SyncMeta | null; remote: { updatedAt: string } | null; localChange: number; localEmpty: boolean }): 'pull' | 'push' | 'merge' | 'wipe' | 'none' {
   const { uid, meta, remote, localChange, localEmpty } = input;
   const someoneElses = !!meta && meta.uid !== uid;
   if (!remote) return localEmpty ? 'none' : someoneElses ? 'wipe' : 'push';
   if (localEmpty || someoneElses || !meta) return 'pull';
   const cloudChanged = remote.updatedAt > meta.remoteAt;
   const phoneChanged = localChange > meta.syncedChange;
-  if (cloudChanged && phoneChanged) return Date.parse(remote.updatedAt) > localChange ? 'pull' : 'push';
+  if (cloudChanged && phoneChanged) return 'merge';
   if (cloudChanged) return 'pull';
   if (phoneChanged) return 'push';
   return 'none';

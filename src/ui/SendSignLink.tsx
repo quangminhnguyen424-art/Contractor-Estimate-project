@@ -35,7 +35,7 @@ export function SendSignLink(props: {
       const madeId = props.before?.();
       const company = profile?.companyName ?? '';
       const link = await createSignLink({
-        uid: cloud.user.id, kind: props.kind, estimateId: props.estimateId, changeId: madeId || props.changeId, title: props.title,
+        uid: cloud.workspaceId ?? cloud.user.id, kind: props.kind, estimateId: props.estimateId, changeId: madeId || props.changeId, title: props.title,
         company, clientName: props.clientName, total: props.total, html: await props.html(),
         phone: profile?.phone, email: profile?.email, payLink: profile?.payLink,
       });

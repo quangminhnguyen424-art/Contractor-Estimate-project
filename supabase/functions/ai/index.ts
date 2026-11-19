@@ -13,7 +13,8 @@ const DAILY_LIMIT = Number(Deno.env.get('AI_DAILY_LIMIT') ?? '40');
 // All accounts together per day (0 = no cap). Set it from the monthly AI budget: budget ÷ 30 ÷ cost per request.
 const TOTAL_LIMIT = Number(Deno.env.get('AI_TOTAL_DAILY_LIMIT') ?? '0');
 // AI requests a day by plan. 'beta' = plans switched off (app_settings.plans_on), everyone gets the default.
-const PLAN_LIMITS: Record<string, number> = { starter: 10, pro: DAILY_LIMIT, team: DAILY_LIMIT, beta: DAILY_LIMIT };
+// Per person per day. Team: each of the (up to 3) people on the account gets its own 25.
+const PLAN_LIMITS: Record<string, number> = { starter: 10, pro: 25, team: 25, beta: DAILY_LIMIT };
 const TIMEOUT_MS = 90_000;
 const MAX_BODY = 14_000_000; // up to 8 resized photos
 

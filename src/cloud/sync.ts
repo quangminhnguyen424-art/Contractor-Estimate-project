@@ -6,12 +6,36 @@ import { hasPhoto, photoBytes, photoCloudName, restorePhoto } from '@/ui/photoSt
 
 import { supabase } from './client';
 import type { SyncMeta } from './decide';
+import { baseOf, type Base } from './merge';
 
 export { decide } from './decide';
 export type { SyncMeta };
 
 const META = 'estimating-app/cloud-meta';
 const UPLOADED = 'estimating-app/cloud-photos';
+const BASE = 'estimating-app/cloud-base';
+
+/** Fingerprints of the workspace as it was at the last sync, to join two changed copies item by item. */
+export async function loadBase(): Promise<Base | null> {
+  try {
+    const raw = await AsyncStorage.getItem(BASE);
+    return raw ? (JSON.parse(raw) as Base) : null;
+  } catch {
+    return null;
+  }
+}
+export const saveBase = (d: Persisted) => AsyncStorage.setItem(BASE, JSON.stringify(baseOf(d))).catch(() => {});
+export const clearBase = () => AsyncStorage.removeItem(BASE).catch(() => {});
+
+/** Which workspace this account works in: a Team owner's, or its own. Its own when the server can't say. */
+export async function myWorkspace(uid: string): Promise<string> {
+  try {
+    const { data, error } = await supabase.rpc('my_workspace');
+    return !error && typeof data === 'string' && data ? data : uid;
+  } catch {
+    return uid;
+  }
+}
 
 
 export async function loadMeta(): Promise<SyncMeta | null> {
@@ -38,9 +62,19 @@ export async function pullWorkspace(uid: string): Promise<{ data: unknown; updat
   return data ? { data: data.data, updatedAt: data.updated_at as string } : null;
 }
 
-export async function pushWorkspace(uid: string, data: Persisted, device: string): Promise<string> {
+/**
+ * Sends the workspace. With `expectedAt` (the cloud copy this phone last saw) it only replaces that exact copy:
+ * when someone else saved in between, nothing is written and null comes back, so the two can be joined first.
+ */
+export async function pushWorkspace(ws: string, data: Persisted, device: string, expectedAt?: string | null): Promise<string | null> {
   const updated_at = new Date().toISOString();
-  const { error } = await supabase.from('workspaces').upsert({ user_id: uid, data, updated_at, device });
+  if (expectedAt) {
+    const { data: rows, error } = await supabase.from('workspaces').update({ data, updated_at, device })
+      .eq('user_id', ws).eq('updated_at', expectedAt).select('updated_at');
+    if (error) throw new Error(error.message);
+    return rows && rows.length ? updated_at : null;
+  }
+  const { error } = await supabase.from('workspaces').upsert({ user_id: ws, data, updated_at, device });
   if (error) throw new Error(error.message);
   return updated_at;
 }

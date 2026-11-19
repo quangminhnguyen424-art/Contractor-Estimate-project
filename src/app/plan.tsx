@@ -18,7 +18,14 @@ export default function PlanScreen() {
       {!cloud.user ? <Muted>Log in to see your plan.</Muted>
         : plan === undefined ? <Muted>Checking…</Muted>
         : plan === null || plan.plan === 'beta' ? <Muted>{"Everything, AI included, is open to everyone during the beta. Plans start later; we'll tell you before anything is charged."}</Muted>
-        : (
+        : plan.team_member ? (
+          <Card style={{ gap: 6 }}>
+            <Text style={{ color: C.ink, fontSize: 20, fontWeight: '800' }}>{plan.plan === 'team' ? 'Team' : 'Free'}</Text>
+            <Muted>{plan.plan === 'team'
+              ? 'You are on your company’s Team plan. The owner of the account manages the plan and billing.'
+              : 'Your company’s Team plan has ended, so Studwise AI is off. Ask the owner of the account to turn it back on.'}</Muted>
+          </Card>
+        ) : (
           <>
             {plan.plan === 'free' && <Muted>{"You're on Free: everything except Studwise AI. Pick a plan to turn AI back on."}</Muted>}
             <PlanPicker plan={plan} onChanged={refresh} />

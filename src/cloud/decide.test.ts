@@ -28,8 +28,8 @@ describe('cloud sync decisions', () => {
     expect(decide({ uid: 'u', meta, remote: { updatedAt: meta.remoteAt }, localChange: t('2026-11-04T11:00:00Z'), localEmpty: false })).toBe('push');
     expect(decide({ uid: 'u', meta, remote: { updatedAt: meta.remoteAt }, localChange: meta.syncedChange, localEmpty: false })).toBe('none');
   });
-  it('both changed: the latest change wins', () => {
-    expect(decide({ uid: 'u', meta, remote: { updatedAt: '2026-11-04T12:00:00.000Z' }, localChange: t('2026-11-04T13:00:00Z'), localEmpty: false })).toBe('push');
-    expect(decide({ uid: 'u', meta, remote: { updatedAt: '2026-11-04T14:00:00.000Z' }, localChange: t('2026-11-04T13:00:00Z'), localEmpty: false })).toBe('pull');
+  it('both changed: the two copies are joined', () => {
+    expect(decide({ uid: 'u', meta, remote: { updatedAt: '2026-11-04T12:00:00.000Z' }, localChange: t('2026-11-04T13:00:00Z'), localEmpty: false })).toBe('merge');
+    expect(decide({ uid: 'u', meta, remote: { updatedAt: '2026-11-04T14:00:00.000Z' }, localChange: t('2026-11-04T13:00:00Z'), localEmpty: false })).toBe('merge');
   });
 });

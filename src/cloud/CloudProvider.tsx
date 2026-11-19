@@ -13,13 +13,17 @@ import { callFunction, storedUser, supabase } from './client';
 import { CLOUD, cloudConfigured } from './config';
 import { fetchClientNotes, fetchNewSignatures, markApplied, markNoteSeen, signedHtml, toSignature } from './sign';
 import { decide } from './decide';
-import { backupPhotos, clearMeta, loadMeta, pullWorkspace, pushWorkspace, restorePhotos, saveMeta, workspaceStamp } from './sync';
+import { mergeWorkspaces } from './merge';
+import { backupPhotos, clearBase, clearMeta, loadBase, loadMeta, myWorkspace, pullWorkspace, pushWorkspace, restorePhotos, saveBase, saveMeta, workspaceStamp } from './sync';
+import { sanitizePersisted, type Persisted } from '@/store/sanitize';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'error';
 
 interface CloudCtx {
   configured: boolean;
   user: User | null;
+  /** The workspace this account works in: its own id, or its Team owner's. Signing links and photos live there. */
+  workspaceId: string | null;
   state: SyncState;
   lastSync: string | null;
   error: string | null;
@@ -121,6 +125,8 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
   const app = useApp();
   const { ready, changedAt } = app;
   const [user, setUser] = useState<User | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const wsRef = useRef<string | null>(null);
   const [state, setState] = useState<SyncState>('off');
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -161,39 +167,68 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
     // Read the app through the ref: this function must not change with every edit, or each keystroke starts a sync.
     const a = () => appRef.current;
     try {
+      const ws = await myWorkspace(uid);
+      if (wsRef.current !== ws) { wsRef.current = ws; setWorkspaceId(ws); }
       const meta = await loadMeta();
       // This phone already holds this account's work: open it now; the sync carries on behind.
-      if (meta?.uid === uid && a().snapshot().profile) setFirstSync('done');
-      const stamp = await workspaceStamp(uid);
+      if (meta?.uid === ws && a().snapshot().profile) setFirstSync('done');
+      const stamp = await workspaceStamp(ws);
       const local = a().snapshot();
       const localChange = a().changedAt;
-      const action = decide({ uid, meta, remote: stamp, localChange, localEmpty: !local.profile });
+      // On someone else's Team, agreeing to the Terms is each person's own: never take another person's agreement.
+      const own = (d: Persisted): Persisted => (ws === uid ? d : { ...d, consent: local.consent });
+      /** Both this phone and the cloud changed: join them item by item, then save the joined copy (retrying if someone saves again meanwhile). */
+      const merge = async () => {
+        const base = await loadBase();
+        for (let i = 0; i < 3; i++) {
+          const remote = await pullWorkspace(ws);
+          if (!remote) break;
+          const merged = own(mergeWorkspaces(a().snapshot(), sanitizePersisted(remote.data).data, base));
+          const at = await pushWorkspace(ws, merged, device, remote.updatedAt);
+          if (!at) continue;
+          a().replaceFromCloud(merged);
+          await saveMeta({ uid: ws, remoteAt: at, syncedChange: localChange });
+          await saveBase(merged);
+          backupPhotos(ws, merged).catch(() => {});
+          return;
+        }
+        throw new Error('Others are saving at the same time. Trying again shortly.');
+      };
+      const action = decide({ uid: ws, meta, remote: stamp, localChange, localEmpty: !local.profile });
       if (action === 'pull') {
-        const remote = await pullWorkspace(uid);
+        const remote = await pullWorkspace(ws);
         if (remote) {
           // Work done here while offline is about to be replaced by newer work from another device: keep a copy.
-          const unsent = !!local.profile && (!meta || (meta.uid === uid && localChange > meta.syncedChange));
+          const unsent = !!local.profile && (!meta || (meta.uid === ws && localChange > meta.syncedChange));
           if (unsent) await AsyncStorage.setItem(REPLACED, JSON.stringify({ at: new Date().toISOString(), data: local })).catch(() => {});
-          if (a().replaceFromCloud(remote.data)) {
-            await saveMeta({ uid, remoteAt: remote.updatedAt, syncedChange: Date.now() });
+          const next = own(sanitizePersisted(remote.data).data);
+          if (a().replaceFromCloud(next)) {
+            await saveMeta({ uid: ws, remoteAt: remote.updatedAt, syncedChange: Date.now() });
+            await saveBase(next);
             if (unsent) notify('Updated from your account', 'The work saved in your account replaced changes made on this phone that had not been backed up.');
           }
         }
       } else if (action === 'push') {
-        const at = await pushWorkspace(uid, local, device);
-        await saveMeta({ uid, remoteAt: at, syncedChange: localChange });
-        backupPhotos(uid, local).catch(() => {});
+        const at = await pushWorkspace(ws, local, device, stamp ? meta?.remoteAt : null);
+        if (at) {
+          await saveMeta({ uid: ws, remoteAt: at, syncedChange: localChange });
+          await saveBase(local);
+          backupPhotos(ws, local).catch(() => {});
+        } else await merge(); // someone saved in between
+      } else if (action === 'merge') {
+        await merge();
       } else if (action === 'wipe') {
         // Another account's work is on this phone and this account has none yet: start clean, send nothing.
         await clearMeta();
+        await clearBase();
         a().resetAll();
       } else if (stamp) {
-        await saveMeta({ uid, remoteAt: stamp.updatedAt, syncedChange: localChange });
+        await saveMeta({ uid: ws, remoteAt: stamp.updatedAt, syncedChange: localChange });
       }
       // Photos this phone is missing (a new phone, or a restore that was cut short) come down after every sync.
-      restorePhotos(uid, a().snapshot()).catch(() => {});
-      await applySignatures(uid, a());
-      await applyClientNotes(uid, a());
+      restorePhotos(ws, a().snapshot()).catch(() => {});
+      await applySignatures(ws, a());
+      await applyClientNotes(ws, a());
       setLastSync(new Date().toISOString());
       setError(null);
       setState('ok');
@@ -228,7 +263,7 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<CloudCtx>(() => ({
     configured: cloudConfigured,
-    user, state: user ? state : 'off', lastSync, error,
+    user, workspaceId: user ? workspaceId ?? user.id : null, state: user ? state : 'off', lastSync, error,
     signIn: async (email, password) => {
       const { error: e } = await supabase.auth.signInWithPassword({ email: email.trim(), password }).catch((x: unknown) => ({ error: x as Error }));
       return e ? plainAuthError(e.message) : null;
@@ -259,11 +294,13 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         for (let i = 0; i < 40 && busy.current; i++) await new Promise((r) => setTimeout(r, 250));
         const ok = await sync(user.id);
         if (!ok) return 'Could not save your latest work to the cloud. Check your connection, or sign out anyway and lose changes made since the last sync.';
-        await backupPhotos(user.id, appRef.current.snapshot()).catch(() => null);
+        await backupPhotos(wsRef.current ?? user.id, appRef.current.snapshot()).catch(() => null);
       }
       // This phone only: other devices stay logged in, and it works with no signal.
       await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
       await clearMeta();
+      await clearBase();
+      wsRef.current = null; setWorkspaceId(null);
       appRef.current.resetAll(true);
       setLastSync(null);
       return null;
@@ -274,6 +311,8 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
         // The account is gone, so its work leaves this phone too (the next person to log in must not find it).
         await clearMeta();
+        await clearBase();
+        wsRef.current = null; setWorkspaceId(null);
         appRef.current.resetAll();
         setLastSync(null);
         return null;
@@ -282,8 +321,8 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
       }
     },
     syncNow: async () => { if (user) await sync(user.id); },
-    backupNow: async (onProgress) => (user ? backupPhotos(user.id, appRef.current.snapshot(), onProgress) : { sent: 0, failed: 0 }),
-  }), [user, state, lastSync, error, sync, authReady, firstSync]);
+    backupNow: async (onProgress) => (user ? backupPhotos(wsRef.current ?? user.id, appRef.current.snapshot(), onProgress) : { sent: 0, failed: 0 }),
+  }), [user, workspaceId, state, lastSync, error, sync, authReady, firstSync]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

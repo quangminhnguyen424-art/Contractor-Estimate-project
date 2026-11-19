@@ -3,7 +3,7 @@ import { COMPANY, PUBLISHER_LINE } from './company';
 // What every user agrees to before using the app. DRAFT: have a Washington attorney review before opening to the public.
 // Bump TERMS_VERSION whenever the text changes in a way users must agree to again; the app then asks again.
 
-export const TERMS_VERSION = '2026-11-18';
+export const TERMS_VERSION = '2026-11-19';
 export const PUBLISHER = PUBLISHER_LINE;
 export const SUPPORT_EMAIL = COMPANY.support;
 
@@ -53,7 +53,7 @@ export const TERMS: TermsSection[] = [
   },
   {
     title: '2. Who may use it',
-    body: 'You must be 18 or older and use the app for your business, such as contracting, remodeling or construction work. You are responsible for your account, your device and anyone you let use them.',
+    body: 'You must be 18 or older and use the app for your business, such as contracting, remodeling or construction work. You are responsible for your account, your device and anyone you let use them. On the Team plan, the account owner can invite up to 2 more people, each with their own login, to work in the same company account; the owner is responsible for who they invite and can remove them at any time, and the people invited can see and change the company’s jobs, quotes, photos and schedule.',
   },
   {
     title: '3. AI is a helper, not a professional',

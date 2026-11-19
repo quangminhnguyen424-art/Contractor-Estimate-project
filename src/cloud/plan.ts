@@ -13,6 +13,8 @@ export interface MyPlan {
   cancel_at_period_end: boolean;
   had_trial: boolean;
   has_billing: boolean;
+  /** On someone else's Team: the plan comes from the owner, who manages billing. */
+  team_member?: boolean;
 }
 
 /** Yearly = 12 months less 20%, rounded down to the dollar. */
@@ -21,8 +23,8 @@ export const yearPrice = (monthly: number) => Math.floor(monthly * 12 * (1 - YEA
 
 export const PLANS: { id: PaidPlan; name: string; price: number; aiPerDay: number; items: string[] }[] = [
   { id: 'starter', name: 'Starter', price: 19, aiPerDay: 10, items: ['Studwise AI: 10 requests a day', 'Talk or type a job, get the estimate', 'Quotes, contracts, signing, invoices'] },
-  { id: 'pro', name: 'Pro', price: 39, aiPerDay: 40, items: ['Studwise AI: 40 requests a day', 'Scope, client messages and permit descriptions', 'Quotes in your client’s language, crew work orders in theirs'] },
-  { id: 'team', name: 'Team', price: 79, aiPerDay: 40, items: ['Everything in Pro', 'For a company with office help and crew leads', 'Priority help'] },
+  { id: 'pro', name: 'Pro', price: 39, aiPerDay: 25, items: ['Studwise AI: 25 requests a day', 'Scope, client messages and permit descriptions', 'Quotes in your client’s language, crew work orders in theirs'] },
+  { id: 'team', name: 'Team', price: 79, aiPerDay: 25, items: ['Everything in Pro', 'Up to 3 people share one company account: same jobs, quotes, photos and schedule', 'Studwise AI: 25 requests a day for each person', 'Priority help'] },
 ];
 
 /** The plan in force now, or null when it can't be read (signed out, offline, or plans not set up on the server yet). */

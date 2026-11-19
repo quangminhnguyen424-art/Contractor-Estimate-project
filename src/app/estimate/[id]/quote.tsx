@@ -55,7 +55,7 @@ export default function QuoteScreen() {
     setBusy(true);
     try {
       const link = await createSignLink({
-        uid: cloud.user.id, kind: 'quote', estimateId: est.id, title: est.title, company: profile.companyName,
+        uid: cloud.workspaceId ?? cloud.user.id, kind: 'quote', estimateId: est.id, title: est.title, company: profile.companyName,
         clientName: est.clientName, total: est.total, html: await docs.doc(quoteHtml(est, profile, lang)),
         phone: profile.phone, email: profile.email, payLink: profile.payLink,
       });

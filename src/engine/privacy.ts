@@ -5,7 +5,7 @@ import { COMPANY } from './company';
  * It describes what the app actually does; change it whenever data handling changes. DRAFT: have a Washington
  * attorney review before opening to the public.
  */
-export const PRIVACY_VERSION = '2026-11-18';
+export const PRIVACY_VERSION = '2026-11-19';
 
 export interface PolicySection { title: string; body: string[] }
 
@@ -64,6 +64,7 @@ export const PRIVACY_POLICY: PolicySection[] = [
       'Stripe, Inc. (United States): payments for paid plans. Stripe receives your email, card and billing details directly; we keep only your plan, its dates and Stripe’s customer reference, never your card number.',
       'Apple and Google: app distribution.',
       'Other apps you connect yourself (for example Zapier, Make, QuickBooks or Google) receive only what you choose to send them.',
+      'Team accounts: if the owner of a Team account invites you, or you invite someone, the people on that team see and change the company’s jobs, quotes, photos and schedule, and see each other’s email address. Leaving or being removed stops this right away.',
     ],
   },
   {
