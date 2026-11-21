@@ -59,7 +59,7 @@ export function Composer({ value, onChange, onSend, actions = [], placeholder, s
             <Ionicons name="add" size={26} color={C.ink} />
           </Pressable>
         ) : null}
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', minHeight: 44, borderRadius: 22, borderWidth: 1, borderColor: listening ? C.accent : C.line, backgroundColor: C.card, paddingLeft: 14, paddingRight: 4 }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', minHeight: 44, borderRadius: 22, borderWidth: 1, borderColor: listening ? C.accent : 'transparent', backgroundColor: C.cardHi, paddingLeft: 14, paddingRight: 4 }}>
           <TextInput value={value} onChangeText={onChange} placeholder={listening ? 'Listening… talk now' : placeholder} placeholderTextColor={C.muted}
             multiline maxLength={maxLength} accessibilityLabel={inputLabel}
             style={{ flex: 1, fontSize: 16, color: C.ink, paddingTop: 11, paddingBottom: 11, maxHeight: 140 }} />

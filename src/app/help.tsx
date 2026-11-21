@@ -83,7 +83,7 @@ export default function HelpScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {POPULAR.map((id) => HELP_TOPICS.find((t) => t.id === id)!).map((t) => (
                 <Pressable key={t.id} accessibilityRole="button" onPress={() => ask(`How do I ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}?`)}
-                  style={{ backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}>
+                  style={{ backgroundColor: C.panel, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 }}>
                   <Text style={{ color: C.ink, fontSize: 14 }}>{t.title}</Text>
                 </Pressable>
               ))}
@@ -99,7 +99,7 @@ export default function HelpScreen() {
               <Text raw={!m.own} style={{ color: m.role === 'user' ? '#FFFFFF' : C.ink, fontSize: 15, lineHeight: 21 }}>{m.text}</Text>
             </View>
             {m.topics?.map((t) => (
-              <View key={t.id} style={{ maxWidth: '88%', backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 12, gap: 6 }}>
+              <View key={t.id} style={{ maxWidth: '88%', backgroundColor: C.panel, borderRadius: 16, padding: 12, gap: 6 }}>
                 <Text style={{ color: C.ink, fontWeight: '700' }}>{t.title}</Text>
                 <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>{t.answer}</Text>
                 <LinkChip label={t.link} onPress={() => open(t.route)} />

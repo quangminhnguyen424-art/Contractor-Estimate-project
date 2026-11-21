@@ -19,7 +19,7 @@ import { aiLanguage } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { contactsAvailable, pickClient } from '@/ui/contacts';
 import { AiWorking, atLeast, workTime, type WorkJob } from '@/ui/AiWorking';
-import { Banner, C, Field, Muted, Screen, Select } from '@/ui/kit';
+import { Banner, C, Field, Muted, Screen, Segmented, Select } from '@/ui/kit';
 import { Composer } from '@/ui/Composer';
 import { QuickPrice } from '@/ui/QuickPrice';
 import { notify, notifySettings } from '@/ui/notify';
@@ -267,8 +267,8 @@ export default function NewEstimate() {
         </Banner>
       ) : null}
       <View style={{ gap: 4 }}>
-        <Text style={{ color: C.ink, fontSize: 22, fontWeight: '700', letterSpacing: -0.3 }}>What’s the job?</Text>
-        <Muted>Say it like you would to a helper: the rooms, the sizes, what’s changing. Tap + to add photos or scan the rooms.</Muted>
+        <Text style={{ color: C.ink, fontSize: 24, fontWeight: '700', letterSpacing: -0.4 }}>What’s the job?</Text>
+        <Muted>Say or type it below: the rooms, the sizes, what’s changing.</Muted>
       </View>
 
       <Select<JobTypeId> label="Type of work" value={effectiveType} onChange={setJobTypeId} placeholder="Studwise picks it from what you say"
@@ -276,7 +276,6 @@ export default function NewEstimate() {
         help={guessed && !jobTypeId ? `Picked from your description. Tap to change.` : undefined} />
       <Field label="Client" value={clientName} onChangeText={setClientName} placeholder="Name (optional)" />
       <Field label="Job address" value={address} onChangeText={setAddress} placeholder="Street, city (optional)" />
-      <Muted style={{ fontSize: 12 }}>Your notes stay private. Only the quote you approve goes to the client.</Muted>
     </Screen>
   );
 }
@@ -284,23 +283,7 @@ export default function NewEstimate() {
 /** Two ways to price: describe the job (AI, photos, scan) or a quick price per unit for repeat work. */
 function KindSwitch({ kind, onChange }: { kind: 'describe' | 'quick'; onChange: (k: 'describe' | 'quick') => void }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 10 }}>
-      <KindItem k="describe" kind={kind} onChange={onChange} icon="sparkles" title="Describe the job" sub="Talk, photos or scan. Studwise builds it." />
-      <KindItem k="quick" kind={kind} onChange={onChange} icon="flash" title="Quick price" sub="Size × your price. Repeat jobs in 30 s." />
-    </View>
-  );
-}
-
-function KindItem({ k, kind, onChange, icon, title, sub }: {
-  k: 'describe' | 'quick'; kind: 'describe' | 'quick'; onChange: (k: 'describe' | 'quick') => void; icon: 'sparkles' | 'flash'; title: string; sub: string;
-}) {
-  const on = kind === k;
-  return (
-    <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
-      style={{ flex: 1, borderRadius: 18, padding: 12, gap: 4, borderWidth: on ? 2 : 1, borderColor: on ? C.accent : C.line, backgroundColor: on ? C.accentTint : C.card }}>
-      <Ionicons name={icon} size={20} color={on ? C.accent : C.ink2} />
-      <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{title}</Text>
-      <Text style={{ color: C.muted, fontSize: 12 }}>{sub}</Text>
-    </Pressable>
+    <Segmented<'describe' | 'quick'> value={kind} onChange={onChange}
+      options={[{ value: 'describe', label: 'Describe the job' }, { value: 'quick', label: 'Quick price' }]} />
   );
 }

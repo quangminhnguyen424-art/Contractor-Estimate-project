@@ -28,61 +28,53 @@ export default function Me() {
   return (
     <Screen>
       <Pressable accessibilityRole="button" accessibilityLabel={`${profile.companyName}. Edit company info.`} onPress={() => open('company')}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.line, padding: 16, opacity: pressed ? 0.85 : 1 })}>
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 6, opacity: pressed ? 0.7 : 1 })}>
         {profile.logo ? (
-          <Image source={{ uri: profile.logo }} resizeMode="contain" style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: '#FFFFFF' }} />
+          <Image source={{ uri: profile.logo }} resizeMode="contain" style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: C.panel }} />
         ) : (
-          <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '700' }}>{initials}</Text>
+          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>{initials}</Text>
           </View>
         )}
         <View style={{ flex: 1, gap: 2 }}>
-          <Text raw style={{ color: C.ink, fontSize: 19, fontWeight: '700' }} numberOfLines={1}>{profile.companyName}</Text>
+          <Text raw style={{ color: C.ink, fontSize: 20, fontWeight: '700', letterSpacing: -0.2 }} numberOfLines={1}>{profile.companyName}</Text>
           <Text style={{ color: C.muted, fontSize: 14 }} numberOfLines={1}>{[profile.contactName, profile.phone].filter(Boolean).join(' · ') || 'Add your name and phone'}</Text>
-          <Text style={{ color: C.accent, fontSize: 13, fontWeight: '600' }}>{profile.logo ? 'Edit company info' : 'Add your logo and details'}</Text>
         </View>
+        <Text style={{ color: C.accent, fontSize: 15, fontWeight: '500' }}>Edit</Text>
       </Pressable>
 
+      <Section title="Prices and quotes" />
       <List>
-        <ListRow icon="person-circle" title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Studwise'}
-          sub={cloud.user ? 'Account, password, sync' : 'Turns on the AI, backup and online signing'} onPress={() => router.push(cloud.user ? '/account' : '/login')} />
-        <ListRow icon="diamond" title="Your plan" sub="Starter, Pro or Team" onPress={() => router.push('/plan')} />
-        {cloud.user && <ListRow icon="people" title="Team accounts" sub="Share this company with up to 2 more people" onPress={() => router.push('/team-accounts')} />}
+        <ListRow title="My prices" right={priced ? `${types} type${types === 1 ? '' : 's'} of work` : 'Not set'} onPress={() => router.push('/pricing')} />
+        <ListRow title="Markup and tax" right={`${profile.markupPct}% · ${profile.salesTaxPct}%`} onPress={() => open('rules')} />
+        <ListRow title="Payment schedule" right={`${profile.schedule.length} payment${profile.schedule.length === 1 ? '' : 's'}`} onPress={() => open('schedule')} />
+        <ListRow title="Getting paid" right={profile.payLink ? 'Payment link' : profile.payNote ? 'Set' : 'Not set'} onPress={() => open('pay')} />
+        <ListRow title="Notices on quotes" onPress={() => open('notices')} />
       </List>
 
-      <Section title="Pricing" />
+      <Section title="Your work" />
       <List>
-        <ListRow icon="pricetags" title="My pricing" sub={priced ? `Your prices for ${types} type${types === 1 ? '' : 's'} of work, and past jobs` : 'Set what you charge for each type of work'} onPress={() => router.push('/pricing')} />
-        <ListRow icon="calculator" title="Markup, tax and quote defaults" sub={`${profile.markupPct}% markup · ${profile.salesTaxPct}% tax · quotes valid ${profile.quoteValidDays} days`} onPress={() => open('rules')} />
-        <ListRow icon="hammer" title="Work you do" sub={`${types} type${types === 1 ? '' : 's'} of work`} onPress={() => open('work')} />
-        <ListRow icon="bulb" title="How you work" sub="What Studwise should know about your jobs" onPress={() => open('about')} />
+        <ListRow title="Work you do" right={`${types} type${types === 1 ? '' : 's'} of work`} onPress={() => open('work')} />
+        <ListRow title="How you work" onPress={() => open('about')} />
+        <ListRow title="Crew and subs" right={team.length ? String(team.length) : undefined} onPress={() => router.push('/team')} />
+        <ListRow title="ADU check page" onPress={() => router.push('/adu')} />
+        <ListRow title="Connected apps" onPress={() => router.push('/connections')} />
       </List>
 
-      <Section title="Quotes and getting paid" />
+      <Section title="Account" />
       <List>
-        <ListRow icon="card" title="Getting paid" sub={profile.payLink ? 'Online payment link is on' : profile.payNote ? 'Other ways to pay are set' : 'Add a payment link, Zelle or check details'} onPress={() => open('pay')} />
-        <ListRow icon="list" title="Payment schedule" sub={profile.schedule.map((m) => `${m.pct}%`).join(' · ')} onPress={() => open('schedule')} />
-        <ListRow icon="document-lock" title="Notices on quotes" sub="State notices added to every quote" onPress={() => open('notices')} />
-      </List>
-
-      <Section title="Win more work" />
-      <List>
-        <ListRow icon="home" title="ADU check page" sub="A free page where homeowners check their lot and send you leads" onPress={() => router.push('/adu')} />
-      </List>
-
-      <Section title="Team and apps" />
-      <List>
-        <ListRow icon="people" title="Crew and subs" sub={team.length ? `${team.length} ${team.length === 1 ? 'person' : 'people'}` : 'Who works your jobs, and their rates'} onPress={() => router.push('/team')} />
-        <ListRow icon="git-network" title="Connected apps" sub="QuickBooks, Sheets, Calendar, Zapier" onPress={() => router.push('/connections')} />
+        <ListRow title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Studwise'} onPress={() => router.push(cloud.user ? '/account' : '/login')} />
+        <ListRow title="Your plan" onPress={() => router.push('/plan')} />
+        {cloud.user && <ListRow title="Team accounts" onPress={() => router.push('/team-accounts')} />}
+        <ListRow title="Backup" right={cloud.user ? 'On' : 'This phone only'} onPress={() => open('backup')} />
       </List>
 
       <Section title="App" />
       <List>
-        <ListRow icon="language" title="Language" right={language?.name ?? 'English'} onPress={() => router.push('/language')} />
-        <ListRow icon="sparkles" title="Studwise AI" sub={aiOn ? 'On' : 'Off'} onPress={() => open('ai')} />
-        <ListRow icon="cloud-done" title="Backup" sub={cloud.user ? 'Backed up to your account' : 'Only on this phone · export a copy'} onPress={() => open('backup')} />
-        <ListRow icon="chatbubbles" title="Help and support" sub="Chat with Studwise, report a problem" onPress={() => router.push('/help')} />
-        <ListRow icon="shield-checkmark" title="Terms, privacy and AI" onPress={() => router.push('/terms')} />
+        <ListRow title="Language" right={language?.name ?? 'English'} onPress={() => router.push('/language')} />
+        <ListRow title="Studwise AI" right={aiOn ? 'On' : 'Off'} onPress={() => open('ai')} />
+        <ListRow title="Help and support" onPress={() => router.push('/help')} />
+        <ListRow title="Terms and privacy" onPress={() => router.push('/terms')} />
       </List>
 
       <Muted style={{ textAlign: 'center', fontSize: 12 }}>Studwise AI{version ? ` · version ${version}` : ''}</Muted>

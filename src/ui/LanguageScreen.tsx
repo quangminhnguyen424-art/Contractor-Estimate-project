@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { deviceLanguage, LANGUAGES, previewLanguage, setLanguage, useLanguage, type Language } from '@/i18n';
@@ -8,12 +8,10 @@ import { BUILT_IN, COMPLETE } from '@/i18n/languages';
 
 import { Button, C, KeyboardSafe } from './kit';
 import { Text } from './text';
-import { Wheel } from './Wheel';
 
 /**
  * "Your language": the first screen of the app, and Me → Language later. One choice sets the wording of every
- * screen, the language Studwise answers in, and the voice. It is a scroll wheel: roll it and the language in the
- * middle is the choice. Ten languages, each named in itself so anyone can find theirs; the phone's own language comes
+ * screen, the language Studwise answers in, and the voice. It is a plain list: tap yours. Ten languages, each named in itself so anyone can find theirs; the phone's own language comes
  * first. On first run, stopping on a built-in language shows the screen in it at once.
  */
 export function LanguageScreen({ onDone, first }: { onDone: () => void; first?: boolean }) {
@@ -42,25 +40,30 @@ export function LanguageScreen({ onDone, first }: { onDone: () => void; first?: 
   return (
     <KeyboardSafe style={{ backgroundColor: C.bg }}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: first ? insets.top + 24 : 16, paddingHorizontal: 20, paddingBottom: 20, gap: 6, width: '100%', maxWidth: 560, alignSelf: 'center' }}>
-        {first ? (
-          <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-            <Ionicons name="language" size={28} color="#FFFFFF" />
-          </View>
-        ) : null}
-        <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.4 }}>Your language</Text>
-        <Text style={{ color: C.ink2, fontSize: 15, lineHeight: 21, marginBottom: 12 }}>The whole app, Studwise’s answers and the voice use it. You can change it later in the Me tab.</Text>
-
-        <Wheel label="Your language" value={picked} onChange={pick}
-          options={ordered.map((l) => ({ key: l.code, label: l.name, sub: l.name !== l.english ? l.english : undefined, raw: true }))} />
+        <Text style={{ color: C.ink, fontSize: 26, fontWeight: '700', letterSpacing: -0.4, marginBottom: 14 }}>Your language</Text>
+        <View style={{ backgroundColor: C.panel, borderRadius: 16, overflow: 'hidden' }}>
+          {ordered.map((l, i) => {
+            const on = l.code === picked;
+            return (
+              <Pressable key={l.code} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={l.english} onPress={() => pick(l.code)}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingHorizontal: 16, backgroundColor: pressed ? C.cardHi : 'transparent',
+                  borderTopWidth: i ? StyleSheet.hairlineWidth : 0, borderColor: C.line })}>
+                <Text raw style={{ flex: 1, color: C.ink, fontSize: 17, fontWeight: on ? '600' : '400' }}>{l.name}</Text>
+                {l.name !== l.english ? <Text raw style={{ color: C.muted, fontSize: 14 }}>{l.english}</Text> : null}
+                <Ionicons name="checkmark" size={20} color={on ? C.accent : 'transparent'} />
+              </Pressable>
+            );
+          })}
+        </View>
 
         {choice && !COMPLETE.includes(choice.code) ? (
           <Text style={{ color: C.muted, fontSize: 13, lineHeight: 18, marginTop: 8 }}>Studwise translates the app into this language after you log in. It takes a few minutes the first time and needs the internet; until then screens show in English.</Text>
         ) : null}
       </ScrollView>
 
-      <View style={{ padding: 16, paddingBottom: insets.bottom + 16, borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: insets.bottom + 16, backgroundColor: C.bg }}>
         <View style={{ width: '100%', maxWidth: 520, alignSelf: 'center' }}>
-          <Button title="Continue" icon="arrow-forward" disabled={!choice} onPress={go} />
+          <Button title="Continue" disabled={!choice} onPress={go} />
         </View>
       </View>
     </KeyboardSafe>

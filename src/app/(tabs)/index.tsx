@@ -146,7 +146,7 @@ export default function Assistant() {
         )}
       </ScrollView>
 
-      <View style={{ borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg, padding: 10 }}>
+      <View style={{ backgroundColor: C.bg, paddingHorizontal: 12, paddingVertical: 8 }}>
         <View style={{ width: '100%', maxWidth: 740, alignSelf: 'center' }}>
           <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} inputLabel="Ask Studwise"
             placeholder="Ask Studwise anything…" />

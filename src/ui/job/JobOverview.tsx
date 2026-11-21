@@ -11,8 +11,8 @@ import { nextStep, type Job, type NextKind } from '@/engine/job';
 import { dayLabel, upcoming } from '@/engine/schedule';
 import { useApp } from '@/store/AppContext';
 
-import { Banner, Button, List, ListRow, Section } from '../kit';
-import { Text } from '../text';
+import { Banner, Button, List, ListRow } from '../kit';
+import { NUM, Text } from '../text';
 import { C } from '../theme';
 import { useToday } from '../useToday';
 
@@ -60,54 +60,50 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
 
       {est ? (
         <Pressable accessibilityRole="button" accessibilityLabel={`Client total ${money(job.total ?? est.total)}. Open price details.`} onPress={() => router.push(`/estimate/${est.id}`)}
-          style={({ pressed }) => ({ backgroundColor: C.dark, borderRadius: 22, padding: 18, gap: 6, borderWidth: 1, borderColor: '#D6E0FF', opacity: pressed ? 0.85 : 1 })}>
-          <Text style={{ color: C.ink2, fontSize: 14 }}>Client total</Text>
-          <Text style={{ color: C.accent, fontSize: 36, fontWeight: '800', letterSpacing: -0.5 }}>{money(job.total ?? est.total)}</Text>
-          <Text style={{ color: C.ink2, fontSize: 13 }}>{money(shown?.price ?? est.price)} + {est.salesTaxPct}% tax {money(shown?.tax ?? est.tax)}{job.paid > 0 ? ` · paid ${money(job.paid)}` : ''}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-            <Text style={{ color: C.accentDark, fontWeight: '600', fontSize: 14 }}>Price details{warns ? ` · ${warns} to check` : ''}</Text>
-            <Ionicons name="chevron-forward" size={14} color={C.accentDark} />
+          style={({ pressed }) => ({ gap: 2, opacity: pressed ? 0.7 : 1 })}>
+          <Text style={{ color: C.muted, fontSize: 14 }}>Client total</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
+            <Text style={{ color: C.ink, fontSize: 38, fontWeight: '700', letterSpacing: -1, fontFamily: NUM }}>{money(job.total ?? est.total)}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={{ color: C.accent, fontWeight: '500', fontSize: 15 }}>{warns ? `${warns} to check` : 'Details'}</Text>
+              <Ionicons name="chevron-forward" size={14} color={C.accent} />
+            </View>
           </View>
+          <Text style={{ color: C.muted, fontSize: 13 }}>{money(shown?.price ?? est.price)} + {est.salesTaxPct}% tax {money(shown?.tax ?? est.tax)}{job.paid > 0 ? ` · paid ${money(job.paid)}` : ''}</Text>
         </Pressable>
       ) : null}
 
       {/* The one next step. */}
-      <View style={{ backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.line, padding: 16, gap: 12 }}>
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name={NEXT_ICON[step.kind]} size={22} color={C.accent} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>{step.title}</Text>
-            <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>{step.sub}</Text>
-          </View>
+      <View style={{ backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 12 }}>
+        <View style={{ gap: 2 }}>
+          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '600' }}>{step.title}</Text>
+          <Text style={{ color: C.muted, fontSize: 14, lineHeight: 20 }}>{step.sub}</Text>
         </View>
         <Button title={step.action} icon={NEXT_ICON[step.kind]} onPress={act} />
         {job.stage === 'sent' && est ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button kind="secondary" title="Send again" icon="paper-plane-outline" style={{ flex: 1 }} onPress={() => router.push(`/estimate/${est.id}/quote`)} />
-            <Button kind="secondary" title="Mark won" icon="trophy-outline" style={{ flex: 1 }} onPress={() => updateEstimate(est.id, { status: 'won' })} />
+            <Button kind="secondary" title="Send again" style={{ flex: 1, backgroundColor: C.card }} onPress={() => router.push(`/estimate/${est.id}/quote`)} />
+            <Button kind="secondary" title="Mark won" style={{ flex: 1, backgroundColor: C.card }} onPress={() => updateEstimate(est.id, { status: 'won' })} />
           </View>
         ) : null}
         {!est && job.stage === 'site' ? (
-          <Button kind="secondary" title="Price this job" icon="add" onPress={() => router.dismissTo(`/new?project=${project?.id ?? ''}`)} />
+          <Button kind="secondary" title="Price this job" icon="add" style={{ backgroundColor: C.card }} onPress={() => router.dismissTo(`/new?project=${project?.id ?? ''}`)} />
         ) : null}
       </View>
 
       {est ? (
         <>
-          <Section title="Quote and contract" />
           <List>
-            <ListRow icon="document-text" title="Client quote"
+            <ListRow title="Client quote"
               sub={signedAt ? `Signed ${dateFmt(signedAt)}` : job.stage === 'draft' ? 'Not sent yet · edit the wording, then send' : job.stage === 'sent' ? `Sent ${dateFmt(est.sentAt ?? est.updatedAt)}` : 'See, edit or send it again'}
               onPress={() => router.push(`/estimate/${est.id}/quote`)} />
             {job.stage === 'sent' ? (
-              <ListRow icon="notifications" title="Follow-ups"
+              <ListRow title="Follow-ups"
                 sub={!plan || plan.consent === 'not-asked' ? 'Ask the client first, then Studwise reminds them' : plan.stopped ? 'Stopped' : (() => { const n = nextFollowUp(plan, est.status); return n ? `Next reminder ${dateFmt(`${n.date}T12:00:00`)}` : 'All reminders sent'; })()}
                 onPress={() => router.push(`/estimate/${est.id}/follow`)} />
             ) : null}
             {job.stage === 'won' || job.stage === 'done' || contract ? (
-              <ListRow icon="wallet" title="Contract and payments"
+              <ListRow title="Contract and payments"
                 sub={job.paid > 0 ? `Paid ${money(job.paid)} of ${money(job.total ?? est.total)}` : 'Deposit, invoices, change orders'}
                 right={job.due > 0.5 ? `${money(job.due)} due` : undefined}
                 onPress={() => router.push(`/estimate/${est.id}/contract`)} />
@@ -118,12 +114,12 @@ export function JobOverview({ job, onPhotos, onMoney, onReopen }: {
               const d = (est.permit?.done ?? []).filter((x) => pp.checklist.some((c) => c.id === x)).length;
               const must = pp.items.filter((i) => i.need === 'required').length;
               return (
-                <ListRow icon="ribbon" title="Permit guide"
+                <ListRow title="Permit guide"
                   sub={d ? `${d} of ${pp.checklist.length} steps done · ${pp.jurisdiction.name}` : must ? `${must} permit${must === 1 ? '' : 's'} usually needed · ${pp.jurisdiction.name}` : `Look up permits and how to apply · ${pp.jurisdiction.name}`}
                   onPress={() => router.push(`/estimate/${est.id}/permit`)} />
               );
             })()}
-            <ListRow icon="calendar" title="Schedule" sub={nextVisit ? `Next: ${nextVisit.title}, ${dayLabel(nextVisit.date, today)}` : 'Add a visit, crew day or inspection'}
+            <ListRow title="Schedule" sub={nextVisit ? `Next: ${nextVisit.title}, ${dayLabel(nextVisit.date, today)}` : 'Add a visit, crew day or inspection'}
               onPress={() => router.push(nextVisit ? `/event?id=${nextVisit.id}` : project ? `/event?project=${project.id}` : `/event?estimate=${est.id}`)} />
           </List>
         </>

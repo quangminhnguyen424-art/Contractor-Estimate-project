@@ -28,7 +28,7 @@ export function QuickTour({ name, onDone }: { name?: string; onDone: (route?: st
         </Reveal>
         {STEPS.map((s, i) => (
           <Reveal key={s.title} index={i + 1}>
-            <View style={{ flexDirection: 'row', gap: 14, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 14, backgroundColor: C.panel, borderRadius: 16, padding: 16 }}>
               <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name={s.icon} size={24} color={C.accent} />
               </View>

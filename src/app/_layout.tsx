@@ -16,10 +16,7 @@ import { aiFor, inClaudeApp } from '@/ui/host';
 import { LanguageScreen } from '@/ui/LanguageScreen';
 import { LoginScreen } from '@/ui/LoginScreen';
 import { SUPPORT_EMAIL } from '@/engine/legal';
-import { IntroVideo } from '@/ui/IntroVideo';
-import { Onboarding } from '@/ui/Onboarding';
-import { QuickTour } from '@/ui/QuickTour';
-import { clearFreshSetup, isFreshSetup, isWelcomed, markWelcomed } from '@/ui/welcome';
+import { clearFreshSetup, isWelcomed, markWelcomed } from '@/ui/welcome';
 import { Button, C } from '@/ui/kit';
 import { Text } from '@/ui/text';
 
@@ -72,17 +69,6 @@ function FirstSync() {
 }
 
 /** Once per account on each phone: the welcome video, a walk through setup (filled in from the account), then a quick tour. */
-function Welcome({ onDone, onSetupDone }: { onDone: (route?: string) => void; onSetupDone: () => void }) {
-  const { profile } = useApp();
-  // Right after a brand-new setup, only the tour is left.
-  const [step, setStep] = useState<'intro' | 'setup' | 'tour'>(() => (isFreshSetup() ? 'tour' : 'intro'));
-  // Setup is done, so this account is welcomed even if the app is closed on the tour: no video and "welcome back" next time.
-  useEffect(() => { if (isFreshSetup()) onSetupDone(); }, [onSetupDone]);
-  if (step === 'intro') return <IntroVideo onDone={() => setStep('setup')} />;
-  if (step === 'setup') return <Onboarding skipIntro onDone={() => setStep('tour')} />;
-  return <QuickTour name={profile?.contactName?.split(' ')[0]} onDone={onDone} />;
-}
-
 /** Lets the app translate itself into a language that is not built in, once there is an AI to ask. */
 function useTranslationAI() {
   const { apiKey } = useApp();
@@ -135,6 +121,11 @@ function RootStack() {
     if (who in welcomed) return;
     isWelcomed(who).then((v) => setWelcomed((w) => ({ ...w, [who]: v })));
   }, [who, welcomed]);
+  // No welcome video or tour any more: once setup is done the app opens straight on Home.
+  useEffect(() => {
+    if (!termsOk || !profile || welcomed[who] !== false) return;
+    markWelcomed(who); clearFreshSetup();
+  }, [termsOk, profile, welcomed, who]);
   // After the tour: open what the contractor picked once the app is on screen.
   useEffect(() => {
     if (!goTo) return;
@@ -152,13 +143,6 @@ function RootStack() {
   if (!lang.chosen) return <LanguageScreen first onDone={() => {}} />;
   if (needLogin) return <LoginScreen gate />;
   if (cloud.user && cloud.firstSync !== 'done') return <FirstSync />;
-  if (termsOk && profile && welcomed[who] === false) {
-    return <Welcome onSetupDone={() => { markWelcomed(who); }} onDone={(route) => {
-      markWelcomed(who); clearFreshSetup();
-      setWelcomed((w) => ({ ...w, [who]: true }));
-      if (route) setGoTo(route);
-    }} />;
-  }
   // Once plans are switched on: a new account picks Starter, Pro or Team (card first, 14 days free) before using the app.
   if (cloud.user && termsOk && profile && plan?.plan === 'none') return <PlanGate plan={plan} onChanged={refreshPlan} />;
   return (

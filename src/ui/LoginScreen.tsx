@@ -78,15 +78,13 @@ export function LoginScreen({ gate }: { gate?: boolean }) {
         ) : null}
 
         <View style={{ alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <View style={{ borderRadius: 22, shadowColor: C.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
-            <BrandMark size={72} />
-          </View>
-          <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }}>Studwise AI</Text>
+          <BrandMark size={56} />
+          <Text style={{ color: C.ink, fontSize: 26, fontWeight: '700', letterSpacing: -0.4 }}>Studwise AI</Text>
           <Text style={{ color: C.muted, fontSize: 14, textAlign: 'center' }}>Estimates, job sites and clients, all in one place.</Text>
         </View>
 
-        <View style={{ backgroundColor: C.card, borderRadius: 22, padding: 18, gap: 14, borderWidth: 1, borderColor: C.line }}>
-          <Text style={{ color: C.ink, fontSize: 20, fontWeight: '700' }}>{title}</Text>
+        <View style={{ gap: 14, marginTop: 8 }}>
+          <Text style={{ color: C.ink, fontSize: 18, fontWeight: '600' }}>{title}</Text>
           {mode === 'forgot' ? (
             <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 20 }}>Enter the email you signed up with. We’ll email you a link to choose a new password.</Text>
           ) : null}

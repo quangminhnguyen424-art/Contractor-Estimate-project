@@ -1,12 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { Pressable, useWindowDimensions, View, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandMark } from '@/ui/BrandMark';
 import { C } from '@/ui/kit';
-import { Pulse } from '@/ui/motion';
 import { Text } from '@/ui/text';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -15,17 +14,13 @@ const icon = (outline: IconName, filled: IconName) =>
     return <Ionicons name={focused ? filled : outline} color={typeof color === 'string' ? color : C.muted} size={size} />;
   };
 
-/** The raised orange + in the middle of the tab bar: a new estimate, the one thing the app is for. */
+/** The orange + in the middle of the tab bar: a new estimate, the one thing the app is for. */
 function PlusButton() {
   return (
-    <View style={{ flex: 1, alignItems: 'center' }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="New estimate" onPress={() => router.push('/new')} style={{ marginTop: -22 }}>
-        <Pulse min={0.97} max={1.04}>
-          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: C.card,
-            shadowColor: C.orange, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
-            <Ionicons name="add" size={30} color="#FFFFFF" />
-          </View>
-        </Pulse>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="New estimate" onPress={() => router.push('/new')} hitSlop={6}
+        style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
+        <Ionicons name="add" size={28} color="#FFFFFF" />
       </Pressable>
     </View>
   );
@@ -35,17 +30,16 @@ const TABS: Record<string, { label: string; icon: IconName; active: IconName }> 
   index: { label: 'Home', icon: 'home-outline', active: 'home' },
   jobs: { label: 'Jobs', icon: 'briefcase-outline', active: 'briefcase' },
   schedule: { label: 'Schedule', icon: 'calendar-outline', active: 'calendar' },
-  me: { label: 'Me', icon: 'person-circle-outline', active: 'person-circle' },
+  me: { label: 'Me', icon: 'person-outline', active: 'person' },
 };
 
-/** Floating tab bar like Facebook's: a rounded bar lifted off the bottom edge, the open tab in a soft blue pill, the orange + in the middle. */
+/** A plain tab bar on the page itself: a hairline above, dark ink for the open tab, the orange + in the middle. */
 function FloatingTabBar({ state, navigateToTab }: { state: { index: number; routes: { key: string; name: string }[] }; navigateToTab: (key: string) => void }) {
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
   return (
-    <View style={{ backgroundColor: C.bg, paddingHorizontal: 14, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 10) + 4 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 32, height: 64, paddingHorizontal: 6, width: '100%', maxWidth: 520, alignSelf: 'center',
-        borderWidth: 1, borderColor: C.line, shadowColor: '#0B1324', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+    <View style={{ backgroundColor: C.bg, borderTopWidth: StyleSheet.hairlineWidth, borderColor: C.line, paddingBottom: Math.max(insets.bottom, 6) }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', height: 58, width: '100%', maxWidth: 520, alignSelf: 'center' }}>
         {state.routes.map((r) => {
           if (r.name === 'new') return <PlusButton key={r.key} />;
           const t = TABS[r.name];
@@ -53,11 +47,9 @@ function FloatingTabBar({ state, navigateToTab }: { state: { index: number; rout
           const on = current === r.name;
           return (
             <Pressable key={r.key} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t.label}
-              onPress={() => navigateToTab(r.key)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 64 }}>
-              <View style={{ alignItems: 'center', justifyContent: 'center', width: 58, height: 40, borderRadius: 20, backgroundColor: on ? C.accentTint : 'transparent' }}>
-                <Ionicons name={on ? t.active : t.icon} size={24} color={on ? C.accent : C.ink2} />
-              </View>
-              <Text style={{ fontSize: 10, fontWeight: on ? '700' : '500', color: on ? C.accent : C.muted, marginTop: 1 }} numberOfLines={1}>{t.label}</Text>
+              onPress={() => navigateToTab(r.key)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 58, gap: 3 }}>
+              <Ionicons name={on ? t.active : t.icon} size={23} color={on ? C.ink : '#8791A1'} />
+              <Text style={{ fontSize: 11, fontWeight: on ? '600' : '500', color: on ? C.ink : C.muted }} numberOfLines={1}>{t.label}</Text>
             </Pressable>
           );
         })}
@@ -72,7 +64,7 @@ const WIDE = 960;
 function SideBar({ state, navigateToTab }: { state: { index: number; routes: { key: string; name: string }[] }; navigateToTab: (key: string) => void }) {
   const current = state.routes[state.index]?.name;
   return (
-    <View style={{ width: 248, backgroundColor: C.card, borderRightWidth: 1, borderColor: C.line, paddingHorizontal: 16, paddingTop: 22, paddingBottom: 18, gap: 6 }}>
+    <View style={{ width: 248, backgroundColor: C.panel, paddingHorizontal: 16, paddingTop: 22, paddingBottom: 18, gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 6, marginBottom: 14 }}>
         <BrandMark size={34} />
         <Text style={{ fontSize: 19, fontWeight: '800', color: C.ink, letterSpacing: -0.3 }}>Studwise AI</Text>
@@ -88,9 +80,9 @@ function SideBar({ state, navigateToTab }: { state: { index: number; routes: { k
         const on = current === r.name;
         return (
           <Pressable key={r.key} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t.label} onPress={() => navigateToTab(r.key)}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, height: 44, borderRadius: 12, paddingHorizontal: 12, backgroundColor: on ? C.accentTint : 'transparent' }}>
-            <Ionicons name={on ? t.active : t.icon} size={22} color={on ? C.accent : C.ink2} />
-            <Text style={{ fontSize: 15, fontWeight: on ? '700' : '500', color: on ? C.accent : C.ink }}>{t.label}</Text>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, height: 44, borderRadius: 12, paddingHorizontal: 12, backgroundColor: on ? C.card : 'transparent' }}>
+            <Ionicons name={on ? t.active : t.icon} size={22} color={on ? C.ink : C.ink2} />
+            <Text style={{ fontSize: 15, fontWeight: on ? '600' : '400', color: C.ink }}>{t.label}</Text>
           </Pressable>
         );
       })}
@@ -114,8 +106,8 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: C.bg },
         headerShadowVisible: false,
         headerTintColor: C.ink,
-        headerTitleStyle: { fontWeight: '700', fontSize: 18 },
-        headerTitle: ({ children }) => <Text numberOfLines={1} style={{ fontWeight: '700', fontSize: 18, color: C.ink }}>{children}</Text>,
+        headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+        headerTitle: ({ children }) => <Text numberOfLines={1} style={{ fontWeight: '600', fontSize: 17, color: C.ink }}>{children}</Text>,
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: { fontWeight: '600', fontSize: 12 },
@@ -123,7 +115,7 @@ export default function TabsLayout() {
         headerRight: wide ? () => null : () => (
           <View style={{ flexDirection: 'row' }}>
           <Pressable accessibilityRole="button" accessibilityLabel="Help and support" onPress={() => router.push('/help')} hitSlop={10} style={{ paddingHorizontal: 16 }}>
-            <Ionicons name="help-circle-outline" size={24} color={C.ink} />
+            <Ionicons name="help-circle-outline" size={23} color={C.ink2} />
           </Pressable>
           </View>
         ),

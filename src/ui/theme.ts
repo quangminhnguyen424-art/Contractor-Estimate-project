@@ -1,16 +1,18 @@
 /**
- * Colors. A light, easy-to-read look for phones used outside on job sites: white cards on a pale background,
- * blue for the thing to tap, orange only for the + button and "now" markers.
+ * Colors. A quiet "job sheet" look for phones used outside on job sites: one white page, groups set off by a pale
+ * fill instead of boxes and shadows, dark ink for words and numbers, blue only for the thing to tap, and orange
+ * only for the + button.
  */
 export const C = {
-  bg: '#F5F7FB',
+  bg: '#FFFFFF',
   card: '#FFFFFF',
-  cardHi: '#EEF2F8',
+  panel: '#F5F7FA', // the pale fill behind a group of rows or fields
+  cardHi: '#F2F4F8',
   ink: '#0B1324',
   ink2: '#3B4659',
-  muted: '#4F5A6B',
-  line: '#DCE3EC',
-  lineSoft: '#EEF2F8',
+  muted: '#5D6878',
+  line: '#E3E7ED',
+  lineSoft: '#ECEFF3',
   accent: '#2457F5', // the main action color (blue)
   accentDark: '#1A3FC0', // accent used as text on a tinted background
   accentTint: 'rgba(36,87,245,0.10)',

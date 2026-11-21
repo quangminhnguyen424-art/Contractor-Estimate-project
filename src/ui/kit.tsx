@@ -49,7 +49,7 @@ export function Screen({ children, scroll = true, padded = true, footer, scrollE
 }) {
   const insets = useSafeAreaInsets();
   // On a computer screen, keep content at a comfortable reading width.
-  const pad = padded ? { padding: 16, gap: 14, width: '100%' as const, maxWidth: 760, alignSelf: 'center' as const } : null;
+  const pad = padded ? { padding: 20, paddingTop: 12, gap: 16, width: '100%' as const, maxWidth: 760, alignSelf: 'center' as const } : null;
   return (
     <KeyboardSafe style={{ backgroundColor: C.bg }}>
       {scroll ? (
@@ -61,7 +61,7 @@ export function Screen({ children, scroll = true, padded = true, footer, scrollE
         <View style={[{ flex: 1 }, pad]}>{children}</View>
       )}
       {footer ? (
-        <View style={{ padding: 16, paddingBottom: Math.max(16, insets.bottom), borderTopWidth: 1, borderColor: C.line, backgroundColor: C.bg }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: Math.max(16, insets.bottom), backgroundColor: C.bg }}>
           <View style={{ width: '100%', maxWidth: 728, alignSelf: 'center', gap: 10 }}>{footer}</View>
         </View>
       ) : null}
@@ -90,7 +90,7 @@ export function Button({ title, onPress, kind = 'primary', disabled, style, acce
   title: string; onPress: () => void; kind?: 'primary' | 'secondary' | 'ghost' | 'danger'; disabled?: boolean;
   style?: StyleProp<ViewStyle>; accessibilityLabel?: string; icon?: IconName;
 }) {
-  const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.card : 'transparent';
+  const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.cardHi : 'transparent';
   const fg = kind === 'primary' ? C.onAccent : kind === 'danger' ? C.danger : kind === 'ghost' ? C.accent : C.ink;
   return (
     <PressScale
@@ -102,13 +102,11 @@ export function Button({ title, onPress, kind = 'primary', disabled, style, acce
       style={[
         s.btn,
         { backgroundColor: bg, opacity: disabled ? 0.4 : 1 },
-        kind === 'secondary' && { borderWidth: 1, borderColor: C.line },
-        kind === 'primary' && !disabled && { shadowColor: C.accent, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
         kind === 'ghost' || kind === 'danger' ? { height: 44 } : null,
         style,
       ]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {icon ? <Ionicons name={icon} size={20} color={fg} /> : null}
+        {icon ? <Ionicons name={icon} size={19} color={fg} /> : null}
         <Text style={[s.btnText, { color: fg }]}>{title}</Text>
       </View>
     </PressScale>
@@ -184,8 +182,8 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
-      style={[s.chip, selected && { borderColor: C.accent, borderWidth: 2, backgroundColor: C.accentTint }]}>
-      <Text style={[s.chipText, selected && { color: C.accentDark, fontWeight: '700' }]}>{label}</Text>
+      style={[s.chip, selected && { backgroundColor: C.ink }]}>
+      <Text style={[s.chipText, selected && { color: '#FFFFFF', fontWeight: '600' }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -205,7 +203,7 @@ export function Segmented<T extends string>({ options, value, onChange }: {
             disabled={o.disabled}
             onPress={() => onChange(o.value)}
             style={[s.segItem, on && s.segOn, o.disabled && { opacity: 0.4 }]}>
-            <Text style={[s.segText, on && { color: C.ink, fontWeight: '700' }]}>{o.label}</Text>
+            <Text style={[s.segText, on && { color: C.ink, fontWeight: '600' }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -230,8 +228,8 @@ export function Banner({ tone, title, children }: { tone: 'warn' | 'info' | 'ok'
   const bg = tone === 'warn' ? C.warnBg : tone === 'info' ? C.infoBg : C.okBg;
   const fg = tone === 'warn' ? C.warnInk : tone === 'info' ? C.infoInk : C.okInk;
   return (
-    <View style={{ backgroundColor: bg, borderRadius: 14, padding: 14, gap: 4 }}>
-      <Text style={{ color: fg, fontWeight: '700', fontSize: 15 }}>{title}</Text>
+    <View style={{ backgroundColor: bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, gap: 2 }}>
+      <Text style={{ color: fg, fontWeight: '600', fontSize: 15 }}>{title}</Text>
       {children ? <Text style={{ color: fg, fontSize: 14, lineHeight: 20 }}>{children}</Text> : null}
     </View>
   );
@@ -300,8 +298,8 @@ export function Select<T extends string | number>({ label, value, options, onCha
           const on = o.value === value;
           return (
             <Pressable key={String(o.value)} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => { onChange(o.value); setOpen(false); }}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 51, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
-                borderWidth: 1, borderColor: on ? C.accent : C.line, backgroundColor: on ? C.accentTint : pressed ? C.cardHi : C.card })}>
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 51, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12,
+                backgroundColor: on ? C.accentTint : pressed ? C.cardHi : C.panel })}>
               <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? C.accent : C.muted} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: C.ink, fontSize: 16, fontWeight: on ? '600' : '400' }}>{o.label}</Text>
@@ -315,12 +313,17 @@ export function Select<T extends string | number>({ label, value, options, onCha
   );
 }
 
-/** A white card holding rows separated by thin lines (like a phone settings list). */
+/** A pale group of rows separated by hairlines (like a phone settings list). */
 export function List({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const items = React.Children.toArray(children).filter(Boolean);
   return (
-    <View style={[{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }, style]}>
-      {items.map((c, i) => <View key={i} style={i ? { borderTopWidth: 1, borderColor: C.lineSoft } : null}>{c}</View>)}
+    <View style={[{ backgroundColor: C.panel, borderRadius: 16, overflow: 'hidden' }, style]}>
+      {items.map((c, i) => (
+        <View key={i}>
+          {i ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.line, marginLeft: 16 }} /> : null}
+          {c}
+        </View>
+      ))}
     </View>
   );
 }
@@ -329,33 +332,29 @@ export function List({ children, style }: { children: React.ReactNode; style?: S
 export function ListRow({ icon, title, sub, right, onPress, tone, danger }: {
   icon?: IconName; title: string; sub?: string; right?: string; onPress: () => void; tone?: string; danger?: boolean;
 }) {
-  const color = danger ? C.danger : tone ?? C.accent;
+  const color = danger ? C.danger : tone ?? C.ink2;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, minHeight: 56, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
-      {icon ? (
-        <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: danger ? C.badBg : `${color}1A`, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={icon} size={18} color={color} />
-        </View>
-      ) : null}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, minHeight: 52, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
+      {icon ? <Ionicons name={icon} size={20} color={color} style={{ width: 22, textAlign: 'center' }} /> : null}
       <View style={{ flex: 1, gap: 1 }}>
-        <Text style={{ color: danger ? C.danger : C.ink, fontSize: 16, fontWeight: '500' }} numberOfLines={1}>{title}</Text>
+        <Text style={{ color: danger ? C.danger : C.ink, fontSize: 16 }} numberOfLines={1}>{title}</Text>
         {sub ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={2}>{sub}</Text> : null}
       </View>
-      {right ? <Text style={{ color: C.ink2, fontSize: 14, fontWeight: '600' }}>{right}</Text> : null}
-      {danger ? null : <Ionicons name="chevron-forward" size={16} color={C.muted} />}
+      {right ? <Text style={{ color: C.muted, fontSize: 15, flexShrink: 1, maxWidth: '50%' }} numberOfLines={1}>{right}</Text> : null}
+      {danger ? null : <Ionicons name="chevron-forward" size={16} color="#A3ACB9" />}
     </Pressable>
   );
 }
 
 /** A friendly picture with a short message and one action, for screens with nothing in them yet. */
-export function Empty({ art, title, text, action, onAction, width = 260 }: {
+export function Empty({ art, title, text, action, onAction, width = 180 }: {
   art: keyof typeof ART; title: string; text?: string; action?: string; onAction?: () => void; width?: number;
 }) {
   return (
     <Reveal style={{ alignItems: 'center', gap: 10, paddingVertical: 12 }}>
       <Art name={art} width={width} />
-      <Text style={{ color: C.ink, fontSize: 19, fontWeight: '700', textAlign: 'center' }}>{title}</Text>
+      <Text style={{ color: C.ink, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>{title}</Text>
       {text ? <Text style={{ color: C.muted, fontSize: 14, lineHeight: 21, textAlign: 'center', maxWidth: 340 }}>{text}</Text> : null}
       {action && onAction ? <Button title={action} onPress={onAction} style={{ alignSelf: 'stretch', marginTop: 4 }} /> : null}
     </Reveal>
@@ -365,8 +364,8 @@ export function Empty({ art, title, text, action, onAction, width = 260 }: {
 /** Section title with an optional link on the right ("See all"). */
 export function Section({ title, link, onLink }: { title: string; link?: string; onLink?: () => void }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-      <Text style={{ color: C.ink, fontSize: 17, fontWeight: '700' }}>{title}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: -6, paddingHorizontal: 4 }}>
+      <Text style={{ color: C.muted, fontSize: 14, fontWeight: '600' }}>{title}</Text>
       {link && onLink ? (
         <Pressable accessibilityRole="button" onPress={onLink} hitSlop={8}>
           <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{link}</Text>
@@ -380,7 +379,7 @@ export function Section({ title, link, onLink }: { title: string; link?: string;
 export function Stat({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'warn' | 'accent' }) {
   const color = tone === 'ok' ? C.okInk : tone === 'warn' ? C.warnInk : tone === 'accent' ? C.accent : C.ink;
   return (
-    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 12, gap: 2 }}>
+    <View style={{ flex: 1, minWidth: 96, backgroundColor: C.panel, borderRadius: 14, padding: 12, gap: 2 }}>
       <Text style={{ color: C.muted, fontSize: 12 }}>{label}</Text>
       <Text style={{ color, fontSize: 17, fontWeight: '700', fontFamily: mono }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
     </View>
@@ -388,25 +387,25 @@ export function Stat({ label, value, tone }: { label: string; value: string; ton
 }
 
 export const s = StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10, shadowColor: '#0B1324', shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
-  h1: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: -0.4 },
-  h2: { fontSize: 17, fontWeight: '700', color: C.ink },
-  label: { fontSize: 14, fontWeight: '600', color: C.ink2 },
-  muted: { fontSize: 14, color: C.muted, lineHeight: 21 },
-  btn: { height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  card: { backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 10 },
+  h1: { fontSize: 26, fontWeight: '700', color: C.ink, letterSpacing: -0.4 },
+  h2: { fontSize: 17, fontWeight: '600', color: C.ink },
+  label: { fontSize: 14, fontWeight: '500', color: C.ink2 },
+  muted: { fontSize: 14, color: C.muted, lineHeight: 20 },
+  btn: { height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
+  btnText: { fontSize: 16, fontWeight: '600' },
   inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingRight: 12 },
   // minWidth 0 lets the box shrink in a narrow field (two side by side), so the unit after it stays inside the border.
   input: { flex: 1, minWidth: 0, minHeight: 48, paddingHorizontal: 14, fontSize: 16, color: C.ink, ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null) },
   suffix: { color: C.muted, fontSize: 14, flexShrink: 0 },
-  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  chipText: { fontSize: 15, color: C.ink, fontWeight: '500' },
-  seg: { flexDirection: 'row', backgroundColor: '#E7ECF4', borderRadius: 14, padding: 4, gap: 4 },
-  segItem: { flex: 1, height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  segOn: { backgroundColor: C.card, shadowColor: '#0B1324', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  segText: { fontSize: 14, color: C.ink2, fontWeight: '500' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderColor: C.lineSoft },
+  chip: { minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
+  chipText: { fontSize: 15, color: C.ink },
+  seg: { flexDirection: 'row', backgroundColor: C.cardHi, borderRadius: 12, padding: 3, gap: 3 },
+  segItem: { flex: 1, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  segOn: { backgroundColor: C.card, shadowColor: '#0B1324', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segText: { fontSize: 14, color: C.muted, fontWeight: '500' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: C.line },
   rowText: { fontSize: 15, color: C.ink },
-  stepBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.cardHi, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 22, color: C.ink },
 });

@@ -33,34 +33,34 @@ export function JobMoney({ job, needSite }: {
 
   return (
     <>
-      <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
+      <View style={{ flexDirection: 'row', backgroundColor: C.panel, borderRadius: 16 }}>
         <Num label="Client pays" value={est ? money(total) : '—'} />
         <Num label="Paid so far" value={money(job.paid)} divider />
         <Num label="Still owed" value={est ? money(Math.max(0, total - job.paid)) : '—'} divider bad={job.due > 0.5} sub={job.due > 0.5 ? `${money(job.due)} invoiced` : undefined} />
       </View>
-      <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
+      <View style={{ flexDirection: 'row', backgroundColor: C.panel, borderRadius: 16 }}>
         <Num label="Your cost so far" value={books ? money(books.cost.total) : '$0'} sub={planned ? `of ${money(planned.cost)} planned` : undefined} />
         <Num label={final ? 'Profit' : 'Planned profit'} divider value={profit == null ? '—' : money(profit)}
           sub={profit == null ? 'Shown for detailed estimates' : `${marginPct}% margin`} />
       </View>
-      <Muted style={{ fontSize: 12 }}>Private to you. Cost and profit never appear on client or crew documents.</Muted>
+      <Muted style={{ fontSize: 13, paddingHorizontal: 4 }}>Only you see this. Cost and profit never show on client or crew papers.</Muted>
 
       <Section title="Money in" />
       <List>
         {est ? (
-          <ListRow icon="wallet" title="Contract and payments" sub="Signature, deposit and invoices, change orders" right={job.due > 0.5 ? `${money(job.due)} due` : undefined}
+          <ListRow title="Contract and payments" sub="Signature, deposit and invoices, change orders" right={job.due > 0.5 ? `${money(job.due)} due` : undefined}
             onPress={() => router.push(`/estimate/${est.id}/contract`)} />
         ) : (
-          <ListRow icon="add-circle" title="Price this job" sub="Make an estimate to send a quote and invoices" onPress={() => router.dismissTo(`/new?project=${project?.id ?? ''}`)} />
+          <ListRow title="Price this job" sub="Make an estimate to send a quote and invoices" onPress={() => router.dismissTo(`/new?project=${project?.id ?? ''}`)} />
         )}
       </List>
 
       <Section title="Money out" />
       <List>
-        <ListRow icon="receipt" title="Costs and receipts" sub={m.costs.length ? `${m.costs.length} saved · snap a receipt and Studwise reads it` : 'Snap a receipt and Studwise reads it'} onPress={() => site('money')} />
-        <ListRow icon="cart" title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'What to pick up, made from the estimate'} onPress={() => site('buy')} />
+        <ListRow title="Costs and receipts" sub={m.costs.length ? `${m.costs.length} saved · snap a receipt and Studwise reads it` : 'Snap a receipt and Studwise reads it'} onPress={() => site('money')} />
+        <ListRow title="Buy list" sub={buy.count ? `${buy.boughtCount} of ${buy.count} bought` : 'What to pick up, made from the estimate'} onPress={() => site('buy')} />
         {est?.mode === 'detailed' ? (
-          <ListRow icon="list" title="Material list" sub={`${est.materials.length} items · ${money(est.materialTotal)} planned`} onPress={() => router.push(`/estimate/${est.id}/materials`)} />
+          <ListRow title="Material list" sub={`${est.materials.length} items · ${money(est.materialTotal)} planned`} onPress={() => router.push(`/estimate/${est.id}/materials`)} />
         ) : null}
       </List>
     </>

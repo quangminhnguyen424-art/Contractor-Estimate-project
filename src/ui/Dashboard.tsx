@@ -4,7 +4,7 @@ import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { contractTotals, invoiceStates } from '@/engine/contract';
 import { money } from '@/engine/format';
@@ -15,9 +15,9 @@ import { useCloud } from '@/cloud/CloudProvider';
 import { useApp } from '@/store/AppContext';
 
 import { Button, C, Card, Section } from './kit';
-import { PressScale, Reveal, Shine } from './motion';
+import { PressScale, Reveal } from './motion';
 import { PhotoView } from './SitePhotoView';
-import { Text } from './text';
+import { NUM, Text } from './text';
 import { useToday } from './useToday';
 
 
@@ -28,7 +28,6 @@ const showJobs = (show: 'all' | 'quote' | 'active') => router.push(`/jobs?show=$
 export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
   useLanguage(); // dates on this screen are written here, so redraw when the language changes
   const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
-  const { width } = useWindowDimensions();
   const today = useToday();
   const first = (profile?.contactName ?? '').trim().split(/\s+/)[0];
   const hour = new Date().getHours();
@@ -52,10 +51,6 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   const activeJobs = jobs.filter(isLive).length;
   const photos: { ph: SitePhoto; pid: string; rid: string }[] = projects.flatMap((p) => p.rooms.flatMap((r) => r.photos.map((ph) => ({ ph, pid: p.id, rid: r.id }))))
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
-  const cardW = Math.min(width, 760) - 32;
-  const summary = [`${activeJobs} job${activeJobs === 1 ? '' : 's'} live`, todays.length ? `${todays.length} on today` : '', overdue ? `${overdue} invoice${overdue > 1 ? 's' : ''} overdue` : '']
-    .filter(Boolean).join(' · ');
-
   // One list of what needs you today: Studwise's check-ins first, then today's (or the next) appointments.
   const [allItems, setAllItems] = useState(false);
   const rows: Row[] = [
@@ -68,65 +63,79 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   const shown = allItems ? rows : rows.slice(0, 4);
 
   return (
-    <View style={{ gap: 22 }}>
-      <Reveal style={{ gap: 2 }}>
-        <Text style={{ color: C.muted, fontSize: 14, fontWeight: '500' }}>{new Date().toLocaleDateString(dateLocale(), { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-        <Text style={{ color: C.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
-        {summary ? <Text style={{ color: C.muted, fontSize: 14 }}>{summary}</Text> : null}
-      </Reveal>
+    <View style={{ gap: 20 }}>
+      <View style={{ gap: 2, paddingTop: 4 }}>
+        <Text style={{ color: C.ink, fontSize: 26, fontWeight: '700', letterSpacing: -0.4 }} numberOfLines={1}>{hello}{first ? `, ${first}` : ''}</Text>
+        <Text style={{ color: C.muted, fontSize: 14 }}>{[new Date().toLocaleDateString(dateLocale(), { weekday: 'long', month: 'long', day: 'numeric' }), overdue ? `${overdue} invoice${overdue > 1 ? 's' : ''} overdue` : ''].filter(Boolean).join(' · ')}</Text>
+      </View>
 
       {!claudeOn ? <ConnectClaude /> : null}
 
-      {/* The one main action. */}
-      <Reveal index={1}>
-        <View style={{ overflow: 'hidden', borderRadius: 16 }}>
-          <Button title="New estimate" icon="add" onPress={() => router.push('/new')} style={{ height: 56 }} />
-          <Shine width={cardW} height={56} />
-        </View>
-      </Reveal>
-
-      <Reveal index={2} style={{ gap: 8 }}>
-        <Section title="Needs you today" link="Schedule" onLink={() => router.push('/schedule')} />
-        <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
-          {shown.length ? shown.map((r, i) => (
-            <Pressable key={r.id} accessibilityRole="button" onPress={() => router.push(r.route as never)}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12,
-                borderTopWidth: i ? 1 : 0, borderColor: C.lineSoft, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
-              <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: `${r.color}1A`, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={r.icon} size={18} color={r.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: C.ink, fontSize: 15, lineHeight: 20 }} numberOfLines={3}>{r.title}</Text>
-                {r.sub ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{r.sub}</Text> : null}
-              </View>
-              {r.action ? <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{r.action}</Text> : <Ionicons name="chevron-forward" size={16} color={C.muted} />}
-            </Pressable>
-          )) : (
-            <Pressable accessibilityRole="button" onPress={() => router.push('/event')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 }}>
-              <Ionicons name="checkmark-circle" size={22} color={C.okInk} />
-              <Text style={{ color: C.ink2, flex: 1 }}>All caught up. Tap to add a visit or crew day.</Text>
-            </Pressable>
-          )}
-          {rows.length > 4 ? (
-            <Pressable accessibilityRole="button" onPress={() => setAllItems((v) => !v)} style={{ padding: 12, alignItems: 'center', borderTopWidth: 1, borderColor: C.lineSoft }}>
-              <Text style={{ color: C.accent, fontWeight: '600' }}>{allItems ? 'Show less' : `See all ${rows.length}`}</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      </Reveal>
-
-      {/* Money and work at a glance: one card, three numbers. */}
-      <Reveal index={3}>
-        <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line }}>
+      {jobs.length ? (
+        <View style={{ flexDirection: 'row', backgroundColor: C.panel, borderRadius: 16 }}>
           <Glance label="To collect" value={money(due)} sub={overdue ? `${overdue} overdue` : undefined} bad={!!overdue} onPress={() => showJobs('all')} />
           <Glance label="Quotes out" value={String(waiting)} onPress={() => showJobs('quote')} divider />
           <Glance label="Active jobs" value={String(activeJobs)} onPress={() => showJobs('active')} divider />
         </View>
-      </Reveal>
+      ) : (
+        <View style={{ backgroundColor: C.panel, borderRadius: 16, padding: 18, gap: 12 }}>
+          <Text style={{ color: C.ink, fontSize: 17, fontWeight: '600' }}>Price your first job</Text>
+          <Text style={{ color: C.muted, fontSize: 14, lineHeight: 20 }}>Say or type what the job is. Studwise builds the estimate with your prices.</Text>
+          <Button title="New estimate" icon="add" onPress={() => router.push('/new')} />
+        </View>
+      )}
+
+      <View style={{ gap: 12 }}>
+        <Section title="Needs you today" link="Schedule" onLink={() => router.push('/schedule')} />
+        <View style={{ backgroundColor: C.panel, borderRadius: 16, overflow: 'hidden' }}>
+          {shown.length ? shown.map((r, i) => (
+            <Pressable key={r.id} accessibilityRole="button" onPress={() => router.push(r.route as never)}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 13,
+                borderTopWidth: i ? StyleSheet.hairlineWidth : 0, borderColor: C.line, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
+              <Ionicons name={r.icon} size={20} color={r.color} style={{ width: 22, textAlign: 'center' }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.ink, fontSize: 15, lineHeight: 20 }} numberOfLines={3}>{r.title}</Text>
+                {r.sub ? <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{r.sub}</Text> : null}
+              </View>
+              {r.action ? <Text style={{ color: C.accent, fontWeight: '500', fontSize: 15 }}>{r.action}</Text> : <Ionicons name="chevron-forward" size={16} color="#A3ACB9" />}
+            </Pressable>
+          )) : (
+            <Pressable accessibilityRole="button" onPress={() => router.push('/event')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 }}>
+              <Ionicons name="checkmark" size={20} color={C.okInk} style={{ width: 22, textAlign: 'center' }} />
+              <Text style={{ color: C.ink2, flex: 1, fontSize: 15 }}>All caught up. Tap to add a visit or crew day.</Text>
+            </Pressable>
+          )}
+          {rows.length > 4 ? (
+            <Pressable accessibilityRole="button" onPress={() => setAllItems((v) => !v)} style={{ padding: 12, alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderColor: C.line }}>
+              <Text style={{ color: C.accent, fontWeight: '500' }}>{allItems ? 'Show less' : `See all ${rows.length}`}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
+      {jobs.length ? (
+        <View style={{ gap: 12 }}>
+          <Section title="Recent jobs" link="All jobs" onLink={() => showJobs('all')} />
+          <View style={{ backgroundColor: C.panel, borderRadius: 16, overflow: 'hidden' }}>
+            {[...jobs].sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 3).map((j, i) => (
+              <Pressable key={j.key} accessibilityRole="button" accessibilityLabel={`${j.title}, ${j.label}`} onPress={() => router.push(`/job/${j.key}` as never)}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 13,
+                  borderTopWidth: i ? StyleSheet.hairlineWidth : 0, borderColor: C.line, backgroundColor: pressed ? C.cardHi : 'transparent' })}>
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Text raw style={{ color: C.ink, fontSize: 16 }} numberOfLines={1}>{j.title}</Text>
+                  <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{j.label}</Text>
+                </View>
+                {j.total ? <Text style={{ color: C.ink, fontSize: 16, fontWeight: '600', fontFamily: NUM }}>{money(j.total)}</Text> : null}
+                <Ionicons name="chevron-forward" size={16} color="#A3ACB9" />
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
 
       {photos.length ? (
-        <Reveal index={4} style={{ gap: 8 }}>
-          <Section title="Recent photos" link="All jobs" onLink={() => showJobs('all')} />
+        <View style={{ gap: 12 }}>
+          <Section title="Recent photos" />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {photos.map(({ ph, pid, rid }) => (
               <PressScale key={ph.id} accessibilityRole="button" accessibilityLabel="Open photo" onPress={() => router.push(`/site/${pid}/photo/${ph.id}?room=${rid}` as never)}>
@@ -134,19 +143,17 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
               </PressScale>
             ))}
           </ScrollView>
-        </Reveal>
+        </View>
       ) : null}
 
       {chatCount ? (
         <Pressable accessibilityRole="button" onPress={onOpenChat}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 14 }}>
-          <Ionicons name="chatbubbles" size={20} color={C.accent} />
-          <Text style={{ color: C.ink, flex: 1, fontSize: 15, fontWeight: '500' }}>Continue your chat with Studwise</Text>
-          <Ionicons name="chevron-forward" size={16} color={C.muted} />
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.panel, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color={C.ink2} style={{ width: 22, textAlign: 'center' }} />
+          <Text style={{ color: C.ink, flex: 1, fontSize: 16 }}>Continue your chat with Studwise</Text>
+          <Ionicons name="chevron-forward" size={16} color="#A3ACB9" />
         </Pressable>
-      ) : (
-        <Text style={{ color: C.muted, fontSize: 13, textAlign: 'center' }}>Ask Studwise below: prices, materials, permits, what to write to a client.</Text>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -157,9 +164,9 @@ interface Row { id: string; icon: IconName; color: string; title: string; sub?: 
 function Glance({ label, value, sub, bad, divider, onPress }: { label: string; value: string; sub?: string; bad?: boolean; divider?: boolean; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${label} ${value}`} onPress={onPress}
-      style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 12, gap: 2, borderLeftWidth: divider ? 1 : 0, borderColor: C.lineSoft }}>
-      <Text style={{ color: C.muted, fontSize: 12, fontWeight: '500' }}>{label}</Text>
-      <Text style={{ color: bad ? C.danger : C.ink, fontSize: 20, fontWeight: '700' }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, gap: 3, borderLeftWidth: divider ? StyleSheet.hairlineWidth : 0, borderColor: C.line }}>
+      <Text style={{ color: C.muted, fontSize: 13 }}>{label}</Text>
+      <Text style={{ color: bad ? C.danger : C.ink, fontSize: 21, fontWeight: '700', fontFamily: NUM, letterSpacing: -0.3 }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
       {sub ? <Text style={{ color: C.danger, fontSize: 11 }}>{sub}</Text> : null}
     </Pressable>
   );

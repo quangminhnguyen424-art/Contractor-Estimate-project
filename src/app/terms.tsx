@@ -32,6 +32,48 @@ export default function TermsScreen() {
     if (accepted && termsOk) router.replace(profile ? '/' : '/onboarding');
   }, [accepted, termsOk, profile]);
 
+  // First run: one short page. The three things you confirm are written out; one tick agrees to all of it, and
+  // sharing with the AI is its own choice.
+  if (!termsOk || accepted) {
+    const required = CONSENT_ITEMS.filter((c) => c.required && c.id !== 'terms');
+    const agreed = missing.length === 0;
+    const all = () => setTicked((t) => ({ ...t, ...Object.fromEntries(CONSENT_ITEMS.filter((c) => c.required).map((c) => [c.id, !agreed])) }));
+    return (
+      <Screen footer={<Button title="Agree and continue" disabled={!agreed} onPress={agree} />}>
+        <View style={{ gap: 6, paddingTop: insets.top + 20 }}>
+          <Text style={{ color: C.ink, fontSize: 26, fontWeight: '700', letterSpacing: -0.4 }}>Before you start</Text>
+        </View>
+        <View style={{ gap: 12 }}>
+          {required.map((c) => (
+            <View key={c.id} style={{ flexDirection: 'row', gap: 10 }}>
+              <Text style={{ color: C.muted, fontSize: 15, lineHeight: 22 }}>•</Text>
+              <Text style={{ flex: 1, color: C.ink2, fontSize: 15, lineHeight: 22 }}>{c.en}</Text>
+            </View>
+          ))}
+        </View>
+        <View style={{ backgroundColor: C.panel, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 6 }}>
+          <Tick on={agreed} required onPress={all}>
+            <Text style={{ color: C.ink, fontSize: 16, lineHeight: 22, fontWeight: '500' }}>I agree to the above, the Terms of Use and the Privacy Policy.</Text>
+          </Tick>
+          <View style={{ height: 1, backgroundColor: C.line }} />
+          <Tick on={!!ticked['ai-share']} onPress={() => setTicked((t) => ({ ...t, 'ai-share': !t['ai-share'] }))}>
+            <Text style={{ color: C.ink, fontSize: 15, lineHeight: 21 }}>{CONSENT_ITEMS.find((c) => c.id === 'ai-share')?.en ?? ''}</Text>
+          </Tick>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 22, paddingHorizontal: 4 }}>
+          <Text onPress={() => setFull(!full)} style={{ color: C.accent, fontSize: 15, fontWeight: '500' }}>{full ? 'Hide the Terms' : 'Read the Terms'}</Text>
+          <Text onPress={() => Linking.openURL(COMPANY.pages.privacy)} style={{ color: C.accent, fontSize: 15, fontWeight: '500' }}>Privacy Policy</Text>
+        </View>
+        {full ? TERMS.map((t) => (
+          <View key={t.title} style={{ gap: 4 }}>
+            <Text style={{ color: C.ink, fontWeight: '600', fontSize: 15 }}>{t.title}</Text>
+            <Text style={{ color: C.ink2, fontSize: 14, lineHeight: 21 }}>{t.body}</Text>
+          </View>
+        )) : null}
+      </Screen>
+    );
+  }
+
   return (
     <Screen footer={termsOk && !accepted ? (
       <Button title="Save" icon="checkmark" onPress={() => { setAiSharing(ticked['ai-share'] === true); router.back(); }} />

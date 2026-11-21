@@ -40,7 +40,7 @@ export function RoofSatellite({ address: start, onUse }: { address: string; onUs
   };
 
   return (
-    <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 12 }}>
+    <View style={{ backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="planet" size={22} color={C.accent} />

@@ -71,7 +71,7 @@ export function QuickPrice({ initialType, project }: { initialType?: JobTypeId |
         {perJob ? null : <NumberField label={jt.unit === 'EA' ? 'How many' : `Size of each (${unit})`} value={size} onChange={setSize} decimals={false} style={{ flex: 1 }} />}
         <NumberField label={`Your price${perUnit(jt.unit)}`} suffix="$" value={price} onChange={setPrice} style={{ flex: 1 }} />
       </View>
-      <View style={{ backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 12 }}>
+      <View style={{ backgroundColor: C.panel, borderRadius: 16, padding: 12 }}>
         <Stepper label={`How many the same? (e.g. 3 bathrooms)`} value={count} onChange={(n) => setCount(Math.max(1, Math.min(50, n)))} min={1} />
       </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>

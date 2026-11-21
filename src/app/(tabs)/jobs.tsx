@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View, StyleSheet } from 'react-native';
 
 import { money, newId } from '@/engine/format';
 import { listJobs, type Job, type JobStage } from '@/engine/job';
@@ -11,7 +11,7 @@ import { useApp } from '@/store/AppContext';
 import { Button, C, Empty, Field } from '@/ui/kit';
 import { PressScale, Reveal } from '@/ui/motion';
 import { PhotoView } from '@/ui/SitePhotoView';
-import { Text, TextInput } from '@/ui/text';
+import { NUM, Text, TextInput } from '@/ui/text';
 
 type Group = 'quote' | 'active' | 'closed';
 const GROUP: Record<JobStage, Group> = { draft: 'quote', sent: 'quote', won: 'active', site: 'active', done: 'closed', lost: 'closed' };
@@ -73,7 +73,7 @@ export default function Jobs() {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 8, gap: 10, width: '100%', maxWidth: 720, alignSelf: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, height: 46 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.panel, borderRadius: 16, paddingHorizontal: 12, height: 46 }}>
           <Ionicons name="search" size={18} color={C.muted} />
           <TextInput value={q} onChangeText={setQ} placeholder="Search jobs, clients, addresses" placeholderTextColor={C.muted}
             accessibilityLabel="Search jobs" style={{ flex: 1, fontSize: 16, color: C.ink, height: 46 }} />
@@ -99,31 +99,23 @@ export default function Jobs() {
           ) : shown.length === 0 ? (
             <Text style={{ color: C.muted, textAlign: 'center', marginTop: 24 }}>No jobs match.</Text>
           ) : (
-            <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}>
+            <View style={{ backgroundColor: C.panel, borderRadius: 16, overflow: 'hidden' }}>
               {shown.map((j, i) => {
                 const sub = subLine(j);
                 const who = [j.client, j.address].filter(Boolean).join(' · ');
                 return (
                   <Reveal key={j.key} index={Math.min(i, 8)}>
                     <PressScale accessibilityRole="button" accessibilityLabel={`${j.title}, ${j.label}`} onPress={() => router.push(`/job/${j.key}`)} scaleTo={0.99}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderTopWidth: i ? 1 : 0, borderColor: C.lineSoft }}>
-                      {j.cover ? (
-                        <View style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden' }}><PhotoView photo={j.cover} width={56} /></View>
-                      ) : (
-                        <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                          <Ionicons name={j.est ? 'document-text' : 'camera'} size={24} color={C.accent} />
-                        </View>
-                      )}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 13, borderTopWidth: i ? StyleSheet.hairlineWidth : 0, borderColor: C.line }}>
+                      {j.cover ? <View style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden' }}><PhotoView photo={j.cover} width={48} /></View> : null}
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text raw style={{ color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={2}>{j.title}</Text>
                         <Text style={{ color: C.muted, fontSize: 13 }} numberOfLines={1}>{who || sub}</Text>
                         {who && sub ? <Text style={{ color: C.muted, fontSize: 12 }} numberOfLines={1}>{sub}</Text> : null}
                       </View>
                       <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                        {j.total ? <Text style={{ color: C.ink, fontWeight: '700', fontSize: 15 }}>{money(j.total)}</Text> : null}
-                        <View style={{ backgroundColor: PILL[j.stage].bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
-                          <Text style={{ color: PILL[j.stage].fg, fontSize: 12, fontWeight: '700' }}>{j.label}</Text>
-                        </View>
+                        {j.total ? <Text style={{ color: C.ink, fontWeight: '600', fontSize: 16, fontFamily: NUM }}>{money(j.total)}</Text> : null}
+                        <Text style={{ color: PILL[j.stage].fg, fontSize: 13, fontWeight: '500' }}>{j.label}</Text>
                       </View>
                     </PressScale>
                   </Reveal>
@@ -133,7 +125,7 @@ export default function Jobs() {
           )}
 
           {adding ? (
-            <View style={{ backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 16, gap: 10 }}>
+            <View style={{ backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 10 }}>
               <Text style={{ color: C.ink, fontWeight: '700', fontSize: 16 }}>Photo-only job</Text>
               <Field label="Job name" value={title} onChangeText={setTitle} placeholder="e.g. Kim bathroom" maxLength={80} />
               <Field label="Address" value={address} onChangeText={setAddress} placeholder="Street, city" />
@@ -144,7 +136,7 @@ export default function Jobs() {
             </View>
           ) : (
             <Pressable accessibilityRole="button" onPress={() => setAdding(true)} style={{ alignSelf: 'center', padding: 12 }}>
-              <Text style={{ color: C.accent, fontWeight: '600' }}>+ Photo-only job (no estimate)</Text>
+              <Text style={{ color: C.accent, fontWeight: '500', fontSize: 15 }}>Add a photo-only job</Text>
             </Pressable>
           )}
         </ScrollList>
