@@ -26,8 +26,7 @@ export function Brackets({ color = C.accent, size = 14, weight = 3 }: { color?: 
 /** The one main panel on a screen: a white card with a soft blue glow. */
 export function HudPanel({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[{ position: 'relative', padding: 16, borderRadius: 22, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, gap: 10,
-      shadowColor: C.accent, shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 }, style]}>
+    <View style={[{ position: 'relative', padding: 16, borderRadius: 16, backgroundColor: C.panel, gap: 10 }, style]}>
       {children}
     </View>
   );

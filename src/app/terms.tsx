@@ -85,8 +85,7 @@ export default function TermsScreen() {
     )}>
       {/* First run has no header: start below the clock and the camera cut-out. */}
       <View style={{ gap: 6, paddingTop: termsOk ? 12 : insets.top + 12 }}>
-        <Text style={{ color: C.accent, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>STUDWISE AI</Text>
-        <Text style={{ color: C.ink, fontSize: 28, fontWeight: '800' }}>{termsOk ? 'Terms and AI' : 'Before you start'}</Text>
+        <Text style={{ color: C.ink, fontSize: 26, fontWeight: '700', letterSpacing: -0.4 }}>{termsOk ? 'Terms and AI' : 'Before you start'}</Text>
         <Muted>{termsOk ? 'What you agreed to, and your AI sharing choice.' : 'Please read and agree. It takes a minute.'}</Muted>
       </View>
 
