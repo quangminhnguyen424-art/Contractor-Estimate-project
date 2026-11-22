@@ -17,10 +17,10 @@ across projects.
 
 ## Goals
 
-- A purchase tied to the contractor's store account or company card shows up in Studwise with no action per purchase.
+- A purchase tied to the contractor's store account shows up in Studwise with no action per purchase.
 - Each one is filed to a project by the job name / PO given at the register. What cannot be placed waits in one
   inbox and takes one tap to file.
-- A card purchase with no receipt is shown as such, so nothing is silently missing.
+- Purchases that produced no emailed receipt can still be caught, from the store's own purchase-history file.
 - One sheet: per project and all projects, revenue, cost by kind (materials, labor, subs, equipment), profit, margin.
   Export as CSV.
 
@@ -32,12 +32,14 @@ across projects.
 - Paying bills, payroll, tax filing, or replacing QuickBooks.
 - Tracking money owed back to a crew member who paid out of pocket (a paper receipt still comes in by photo; the
   pay-back is a later feature).
-- Banks outside the US.
+- Any connection to a bank or card (see "Approaches"). The owner does not want Studwise to hold customers' bank or
+  card information in any form.
 
 ## Must never happen
 
 - A cost filed to the wrong job without the contractor being able to see why and move it in one tap.
-- Studwise holding a bank or retailer password.
+- Studwise holding a bank login, a retailer password, a card number, or a link into anyone's bank account. Card
+  digits printed on a receipt (last 4) are not kept either.
 - Cost, labor rates or profit shown to a client or to crew.
 - The same purchase counted twice (a snapped photo, an e-receipt and the card line are one purchase).
 
@@ -48,7 +50,10 @@ A. E-receipt emails forwarded to a private Studwise address. Full line items and
 B. Company card / bank feed. Catches every purchase at every store, but only store, date and total.
 C. Robot login to retailer accounts. Rejected, see above.
 
-Chosen by the owner: A and B together. A gives the detail, B is the safety net that shows what A missed.
+The owner first chose A and B together, then said he does not want Studwise to keep bank or card information, to
+stay clear of lawsuits. A bank feed cannot meet that: even through a provider that keeps the logins, Studwise would
+hold an access link to the account and its purchase history. So B is left out. A is built, with a safety net that
+needs no bank: importing the purchase-history file the store itself gives the contractor (section 4).
 
 ## Design
 
@@ -66,27 +71,21 @@ The crew can also email a photo of a paper receipt to the same address. Team mem
 Resend Inbound posts to a new edge function `receipts-in`:
 1. Check the webhook signature; find the account from the address; drop mail for unknown addresses.
 2. Keep the original (body text, attachments) in private storage under the account's folder.
-3. The AI reads it: store, date, total, tax, receipt number, last 4 of the card, the job name / PO text, and each
-   line (name, quantity, unit, amount). Images and PDFs go to the same reader as snapped receipts.
+3. The AI reads it: store, date, total, tax, receipt number, the job name / PO text, and each line (name, quantity,
+   unit, amount). Card digits on the receipt are not read into the record. Images and PDFs go to the same reader as snapped receipts.
 4. Same store + date + total (+ receipt number when present) as an item already held: it is the same purchase, keep one.
 5. Save a row in a new table `money_inbox` with a suggested project: an exact code match, else none.
 Not a receipt (a promo, a shipping notice): saved as ignored, visible under "Not receipts" for 30 days.
 
-### 4. Card and bank feed (server)
-The contractor connects a company card or bank account through the bank-data provider's own hosted page, opened in
-the browser. Studwise never sees the login. First choice of provider: Stripe Financial Connections, because the
-Stripe account, server code and webhook already exist for billing; Plaid is the fallback if coverage or price is
-worse. Price per connected account is to be confirmed before building.
-New transactions arrive by webhook and are saved as `money_inbox` rows of kind `card`. Only purchases are kept
-(no deposits or transfers). By default the inbox shows building-supply and hardware merchants; a switch shows all.
-A card row and a receipt row are one purchase when the totals are equal, the dates are within 3 days and the store
-names agree; they are joined and the receipt's detail wins. A card row with no receipt after 2 days is listed under
-"No receipt yet".
+### 4. Safety net without a bank: the store's purchase-history file
+Home Depot Pro Xtra and Lowe's Pro let the contractor download their purchase history (with job name / PO) as a
+file. Under Me > Receipts, "Add a purchase-history file" reads it (CSV or PDF) the same way as a receipt. Purchases
+already held are skipped by the duplicate check; the rest land in the inbox. Once a month is enough to catch
+anything the emails missed. The file is the contractor's own purchase record, not bank data.
 
 ### 5. In the app
-- **Receipts inbox** (from Home's "Needs you today" and from Me): three lists. *Needs a job* (pick the project, one
-  tap; the AI's guess first, with why), *No receipt yet* (pick the project and the kind of cost, or mark "not a job
-  cost"), *Filed* (last 30 days, with Move and Undo).
+- **Receipts inbox** (from Home's "Needs you today" and from Me): two lists. *Needs a job* (pick the project, one
+  tap, or mark "not a job cost"; the AI's guess first, with why) and *Filed* (last 30 days, with Move and Undo).
 - **Filing** creates the same `CostEntry` a snapped receipt creates today, in that project's money, so the buy list,
   price lessons and `projectBooks()` keep working unchanged. The inbox row then points at the cost.
 - **Automatic filing**: on by default when the code matches exactly. Shown as "Filed by Studwise" with the code it
@@ -98,39 +97,38 @@ names agree; they are joined and the receipt's detail wins. A card row with no r
 - **Labor** keeps coming from crew days on the schedule and from costs typed in; the sheet reads the same numbers.
 
 ### 6. Who gets it
-Pro and Team plans (it uses AI on every receipt and a paid bank connection). Starter keeps snap-a-receipt.
-Only the account owner can connect or remove a bank; team members can file receipts.
+Pro and Team plans (it uses AI on every receipt). Starter keeps snap-a-receipt. Team members can file receipts.
 
 ### 7. Privacy and terms
-Terms and Privacy name Resend (incoming mail) and the bank-data provider, say what is kept (receipt contents,
-purchase store / date / amount / last 4, never bank logins), and how to disconnect and delete. Connecting a bank
-shows that summary first. New version dates on both documents.
+Terms and Privacy name Resend (incoming mail), say what is kept (the receipt and what was read from it: store,
+date, items, amounts, job name) and what is never collected (bank logins, card numbers, bank-account links), and how
+to turn the address off and delete what came in. New version dates on both documents. Subscription cards stay with
+Stripe as today; Studwise never sees them.
 
 ### 8. Data
 - `receipt_addresses` (address token -> account owner).
-- `money_inbox` (owner, kind `email | photo | card`, store, date, total, tax, receipt no., card last 4, lines, job/PO
-  text, suggested project, status `new | filed | ignored`, project id, cost id, joined row id, original file path).
-- `bank_links` (owner, provider ids, institution name, last 4, status).
+- `money_inbox` (owner, kind `email | photo | file`, store, date, total, tax, receipt no., lines, job/PO text,
+  suggested project, status `new | filed | ignored`, project id, cost id, original file path). No card digits.
 All readable and writable only by the account and its team (same `workspace_of()` rule as photos); written by the
 server on arrival. The workspace JSON stays the only home of costs; the inbox is a queue in front of it.
 
 ## Order of work
 1. Job codes, inbox table, inbox screen, filing, duplicate check, books sheet and CSV (testable with snapped receipts).
 2. Mail in: address, `receipts-in`, set-up screen. Needs the studwise.ai domain and a Resend account.
-3. Card feed: connect flow, webhook, joining with receipts, "No receipt yet". Needs the Stripe account.
+3. Purchase-history file import.
 4. Plan gating, Terms / Privacy, Vietnamese wording.
 
 ## Needed from the owner
 - Buy studwise.ai and create the Resend account (also needed for password emails).
-- Open the Stripe account under YM LLC (also needed for billing) and turn on Financial Connections.
-- Forward three or four real e-receipts (Home Depot, Lowe's, any other store he uses) so the reader is built
-  against real ones; check whether Ace and his lumber / supply houses email receipts.
+- Forward three or four real e-receipts (Home Depot, Lowe's, any other store he uses) and one purchase-history
+  download from Pro Xtra, so the reader is built against real ones; check whether Ace and his lumber / supply
+  houses email receipts.
 
 ## Left to the builder
 Screen layout within the app's current style, the merchant list for "building supply", the reader's prompt, how the
 code is derived when an address has no number, retry and rate limits on the two webhooks.
 
 ## My calls, not the owner's
-Job code format; Resend for incoming mail; Stripe Financial Connections first with Plaid as fallback; automatic
-filing only on an exact code match; 3-day / 2-day windows; Pro and Team only; CSV as the export format; pay-backs
-to crew left out.
+Job code format; Resend for incoming mail; leaving the bank feed out to honor "no bank or card information";
+the purchase-history file as the safety net; automatic filing only on an exact code match; Pro and Team only; CSV
+as the export format; pay-backs to crew left out.
