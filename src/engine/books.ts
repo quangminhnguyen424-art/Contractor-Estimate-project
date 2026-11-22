@@ -168,14 +168,28 @@ export function buyTotals(items: BuyItem[]) {
 
 // ---------- Receipts ----------
 
-export interface ReceiptRead { vendor: string; date: string; tax: number; total: number; kind: CostKind; lines: ReceiptLine[] }
+export interface ReceiptRead {
+  vendor: string; date: string; tax: number;
+  /** What was paid, tax included. Negative for a return (`refund`). */
+  total: number;
+  kind: CostKind; lines: ReceiptLine[];
+  /** The job name / PO printed on the receipt, as printed ('' when none): how a receipt finds its job. */
+  po: string;
+  /** The store's receipt or order number ('' when none): the same purchase arriving twice is recognised by it. */
+  receiptNo: string;
+  refund: boolean;
+}
 
 export function receiptPrompt(buyNames: string[]): string {
   return `Read this purchase receipt for a construction job. Reply with JSON only, no other text:
 {"vendor": string, "date": "YYYY-MM-DD" or "", "tax": number, "total": number, "kind": "materials" | "equipment" | "subs" | "labor",
+ "po": string, "receiptNo": string, "refund": boolean,
  "lines": [{"name": string, "qty": number, "unit": string, "total": number}]}
 Rules: "total" is the amount paid including tax. Each line's "total" is that line's price before tax. Use the short plain item name (no SKU codes).
 "kind" is "equipment" for tool or machine rentals, otherwise "materials". If something can't be read, leave it out; never guess numbers.
+"po" is the job name, PO or project reference printed on the receipt, exactly as printed ("" if none). "receiptNo" is the store's receipt, transaction or order number ("" if none).
+"refund" is true for a return or refund; give its "total" as a positive amount.
+Never include card numbers, card digits or any payment account detail in your reply.
 ${buyNames.length ? `Items the contractor planned to buy (use these names when a line clearly matches one):\n${buyNames.slice(0, 80).map((n) => `- ${n}`).join('\n')}` : ''}`;
 }
 
@@ -204,13 +218,20 @@ export function parseReceipt(reply: string): ReceiptRead {
   });
   const tax = r2(Math.max(0, numOr(raw.tax)));
   let total = r2(numOr(raw.total, NaN));
-  if (!Number.isFinite(total) || total <= 0) total = r2(sum(lines.map((l) => l.total)) + tax);
+  // A return is money back: its total is kept negative, however the reader signed it.
+  const refund = raw.refund === true || total < 0;
+  total = Math.abs(total);
+  if (!Number.isFinite(total) || total === 0) total = r2(Math.abs(sum(lines.map((l) => l.total))) + tax);
   if (!(total > 0) || total > 1e6) throw new Error('Studwise could not find the total on this receipt. Type the amount instead.');
+  // Only these fields leave the reader: nothing else in the reply (a card number, say) is ever kept.
   return {
     vendor: typeof raw.vendor === 'string' ? raw.vendor.trim().slice(0, 60) : '',
     date: isYmd(raw.date) ? raw.date : '',
-    tax, total, lines,
+    tax, total: refund ? -total : total, lines,
     kind: kinds.includes(raw.kind as CostKind) ? (raw.kind as CostKind) : 'materials',
+    po: typeof raw.po === 'string' ? raw.po.trim().slice(0, 40) : '',
+    receiptNo: typeof raw.receiptNo === 'string' ? raw.receiptNo.trim().slice(0, 40) : '',
+    refund,
   };
 }
 
