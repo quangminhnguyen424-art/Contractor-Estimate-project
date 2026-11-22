@@ -87,6 +87,8 @@ export function photoUris(d: Persisted): string[] {
     for (const c of p.money?.costs ?? []) if (c.receiptUri) out.add(c.receiptUri);
   }
   for (const e of d.estimates) for (const u of e.photos) out.add(u);
+  // Receipts still waiting for a job: their photos are backed up and brought to the other phones too.
+  for (const x of d.inbox ?? []) if (x.fileUri) out.add(x.fileUri);
   return [...out];
 }
 

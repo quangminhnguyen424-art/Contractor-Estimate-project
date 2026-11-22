@@ -32,6 +32,8 @@ export interface InboxItem {
   costId?: string;
   /** Filed by Studwise on an exact job-code match (shown as such, with Undo). */
   auto?: boolean;
+  /** A mail no receipt could be read from. It sits with the set-aside items so nothing sent in goes missing unseen. */
+  unread?: boolean;
   at: string;
 }
 
@@ -130,7 +132,7 @@ export function ignoreItem(s: InboxState, id: string): InboxState {
 
 /** Puts a set-aside item back in line for a job. */
 export function restoreItem(s: InboxState, id: string): InboxState {
-  return s.inbox.some((x) => x.id === id && x.status === 'ignored') ? setItem(s, id, (x) => ({ ...x, status: 'new' })) : s;
+  return s.inbox.some((x) => x.id === id && x.status === 'ignored' && !x.unread) ? setItem(s, id, (x) => ({ ...x, status: 'new' })) : s;
 }
 
 /**
@@ -170,4 +172,11 @@ function receiveItem(
   const added: InboxState = { ...s, inbox: [item, ...s.inbox] };
   return where.projectId ? { state: fileItem(added, item.id, where.projectId, meta.newId, true), id: item.id, filedTo: where.projectId }
     : { state: added, id: item.id };
+}
+
+/** A mail Studwise could not read a receipt from: kept in sight (set aside, with its subject), never counted as a cost. */
+export function receiveUnread(s: InboxState, m: { id: string; at: string; from: string; subject: string }): InboxState {
+  if (s.inbox.some((x) => x.id === m.id)) return s;
+  const item: InboxItem = { id: m.id, kind: 'email', vendor: (m.subject || m.from).slice(0, 60), date: '', total: 0, tax: 0, costKind: 'materials', lines: [], status: 'ignored', unread: true, at: m.at };
+  return { ...s, inbox: [item, ...s.inbox] };
 }

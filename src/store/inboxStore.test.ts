@@ -18,6 +18,12 @@ describe('the inbox is part of the saved workspace', () => {
     expect(d.inbox![1]).toMatchObject({ status: 'new', total: -12.5 });
   });
 
+  it('keeps the mark on a mail that could not be read', () => {
+    const d = sanitize({ ...EMPTY, inbox: [{ ...item('m'), total: 0, status: 'ignored', unread: true }, { ...item('n'), unread: 'yes' }] });
+    expect(d.inbox![0].unread).toBe(true);
+    expect('unread' in d.inbox![1]).toBe(false);
+  });
+
   it('never keeps card details that some other version or a tampered copy put on an item', () => {
     const d = sanitize({ ...EMPTY, inbox: [{ ...item('a'), card: '4242', last4: '4242' }] });
     expect(Object.keys(d.inbox![0])).not.toContain('card');

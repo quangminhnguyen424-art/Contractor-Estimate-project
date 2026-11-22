@@ -429,6 +429,7 @@ export function sanitizeInbox(v: unknown): InboxItem[] {
       // A "filed" item that lost its job or its cost is waiting again, never silently counted as done.
       status: status === 'filed' && !filed ? 'new' : status,
       ...(filed ? { projectId: x.projectId as string, costId: x.costId as string, ...(x.auto === true ? { auto: true } : {}) } : {}),
+      ...(x.unread === true && status === 'ignored' ? { unread: true } : {}),
       at: str(x.at, new Date().toISOString()),
     }];
   }).slice(0, 2000);

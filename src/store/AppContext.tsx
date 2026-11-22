@@ -7,7 +7,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
-import { fileItem, ignoreItem, receive, restoreItem, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
+import { fileItem, ignoreItem, receive, receiveUnread, restoreItem, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
+import { idsFrom } from '@/engine/mailIn';
 import { codeOf } from '@/engine/jobCode';
 import { laborToLearn } from '@/engine/learned';
 import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
@@ -114,7 +115,9 @@ interface Ctx extends Persisted {
    * A receipt arrives in the inbox (snapped, mailed in, from a store file). Returns whether Studwise filed it to a job
    * by its job code, or already had this purchase. `id` is given for mail so two phones make the same item.
    */
-  addReceipt: (read: ReceiptRead, kind: InboxItem['kind'], fileUri?: string, id?: string) => { id: string; filedTo?: string; duplicate?: boolean; keptFile: boolean };
+  addReceipt: (read: ReceiptRead, kind: InboxItem['kind'], fileUri?: string, mail?: { id: string; at: string }) => { id: string; filedTo?: string; duplicate?: boolean; keptFile: boolean };
+  /** A mail no receipt could be read from: set aside in the inbox with its subject, so it is seen and not lost. */
+  addUnreadMail: (m: { id: string; at: string; from: string; subject: string }) => void;
   /** Files a receipt to a job, moving it if it was filed to another. */
   fileReceipt: (id: string, projectId: string) => void;
   /** Takes a filed receipt back out of its job: it waits in the inbox again. */
@@ -397,12 +400,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, money: fn(p.money ?? emptyMoney()) } : p)) })),
       addLessons: (ls) => update((d) => ({ ...d, lessons: [...(d.lessons ?? []), ...ls].slice(-3000) })),
       dropLessons: (costId) => update((d) => ({ ...d, lessons: (d.lessons ?? []).filter((l) => l.costId !== costId) })),
-      addReceipt: (read, kind, fileUri, id) => {
-        const meta = { id: id ?? newId(), kind, at: new Date().toISOString(), ...(fileUri ? { fileUri } : {}), newId };
-        const r = receive(inboxOf(dataRef.current), read, meta);
-        update((d) => ({ ...d, ...receive(inboxOf(d), read, meta).state }));
+      addReceipt: (read, kind, fileUri, mail) => {
+        const head = { id: mail?.id ?? newId(), kind, at: mail?.at ?? new Date().toISOString(), ...(fileUri ? { fileUri } : {}) };
+        // Mail is taken by every phone on the account: ids counted from the mail's own id make them all write the same cost.
+        const meta = () => ({ ...head, newId: mail ? idsFrom(mail.id) : newId });
+        const r = receive(inboxOf(dataRef.current), read, meta());
+        update((d) => ({ ...d, ...receive(inboxOf(d), read, meta()).state }));
         return { id: r.id, keptFile: r.keptFile, ...(r.filedTo ? { filedTo: r.filedTo } : {}), ...(r.duplicate ? { duplicate: true } : {}) };
       },
+      addUnreadMail: (m) => update((d) => ({ ...d, ...receiveUnread(inboxOf(d), m) })),
       fileReceipt: (id, projectId) => update((d) => ({ ...d, ...fileItem(inboxOf(d), id, projectId, newId) })),
       unfileReceipt: (id) => update((d) => ({ ...d, ...unfileItem(inboxOf(d), id) })),
       ignoreReceipt: (id) => update((d) => ({ ...d, ...ignoreItem(inboxOf(d), id) })),

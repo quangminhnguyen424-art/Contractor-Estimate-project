@@ -73,6 +73,11 @@ export function deletePhotoFile(uri: string) {
 
 // ---- Cloud backup ----
 
+/** The address of a photo that exists only in the account's photo folder so far (a receipt photo that came by mail). */
+export function cloudPhotoUri(name: string): string {
+  return `${PREFIX}${name}`;
+}
+
 /** The file name a photo is backed up under, or null for photos that aren't kept as files. */
 export function photoCloudName(uri: string): string | null {
   return uri.startsWith(PREFIX) ? uri.slice(PREFIX.length) : null;

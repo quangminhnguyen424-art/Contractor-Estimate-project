@@ -1,8 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, Share, View } from 'react-native';
 
+import { useCloud } from '@/cloud/CloudProvider';
+import { getReceiptAddress, newReceiptAddress } from '@/cloud/receipts';
 import { useMyPlan } from '@/cloud/usePlan';
 import { parseReceipt, receiptPrompt } from '@/engine/books';
 import { money2 } from '@/engine/format';
@@ -13,6 +15,7 @@ import type { SiteProject } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
 import { Banner, Button, C, Card, H2, Muted, Screen, Section, mono } from '@/ui/kit';
+import { confirmAction } from '@/ui/notify';
 import { savePhoto } from '@/ui/photoStore';
 import { toAiImage } from '@/ui/photos';
 import { Text } from '@/ui/text';
@@ -28,11 +31,18 @@ const amount = (n: number) => (n < 0 ? `−${money2(-n)}` : money2(n));
 export default function Receipts() {
   const { inbox = [], projects, addReceipt, fileReceipt, unfileReceipt, ignoreReceipt, restoreReceipt, apiKey, aiAllowed, deletePhotosLater } = useApp();
   const { plan } = useMyPlan();
+  const cloud = useCloud();
   const today = useToday();
   const [reading, setReading] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'warn' | 'info' | 'ok'; title: string; text?: string } | null>(null);
   const [moving, setMoving] = useState<string | null>(null);
   const [allFiled, setAllFiled] = useState(false);
+
+  // Opening the screen asks the account for mail that came in since the last sync.
+  const signedIn = !!cloud.user;
+  const sync = useRef(cloud.syncNow);
+  useEffect(() => { sync.current = cloud.syncNow; });
+  useEffect(() => { if (signedIn) sync.current().catch(() => {}); }, [signedIn]);
 
   // Starter keeps snap-a-receipt inside a job; the inbox is part of Pro and Team (and open while plans are off).
   const included = !plan || plan.plan === 'pro' || plan.plan === 'team' || plan.plan === 'beta';
@@ -100,6 +110,8 @@ export default function Receipts() {
       </View>
       {msg ? <Banner tone={msg.tone} title={msg.title}>{msg.text ? <Text raw>{msg.text}</Text> : null}</Banner> : null}
 
+      <MailIn signedIn={signedIn} owner={!!cloud.user && cloud.workspaceId === cloud.user.id} />
+
       {inbox.length === 0 ? (
         <Card>
           <H2>How receipts find their job</H2>
@@ -136,7 +148,7 @@ export default function Receipts() {
       {aside.slice(0, 10).map((x) => (
         <Card key={x.id} style={{ gap: 8 }}>
           <Head item={x} />
-          <Button kind="ghost" title="Put back" onPress={() => restoreReceipt(x.id)} />
+          {x.unread ? null : <Button kind="ghost" title="Put back" onPress={() => restoreReceipt(x.id)} />}
         </Card>
       ))}
       <Muted style={{ fontSize: 13 }}>Only you and your team accounts see receipts. Studwise keeps what was bought and what it cost, never card or bank details.</Muted>
@@ -147,6 +159,15 @@ export default function Receipts() {
 /** One receipt at a glance: store, day, amount, the job name it carries. */
 function Head({ item }: { item: InboxItem }) {
   const n = item.lines.length;
+  if (item.unread) {
+    return (
+      <View style={{ gap: 2 }}>
+        <Text style={{ color: C.ink, fontSize: 15, fontWeight: '600' }}>Mail with no receipt Studwise could read</Text>
+        <Text raw selectable style={{ color: C.ink2, fontSize: 14 }}>{item.vendor}</Text>
+        <Muted raw style={{ fontSize: 13 }}>{day(item.at.slice(0, 10))}</Muted>
+      </View>
+    );
+  }
   return (
     <View style={{ gap: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
@@ -177,5 +198,78 @@ function JobPicker({ jobs, onPick }: { jobs: SiteProject[]; onPick: (projectId: 
       ))}
       {jobs.length > 5 && !all ? <Button kind="ghost" title={`All ${jobs.length} jobs`} onPress={() => setAll(true)} /> : null}
     </View>
+  );
+}
+
+const STEPS: { title: string; text: string }[] = [
+  { title: 'At the store', text: 'Your crew gives the job’s code as the Job Name or PO at checkout, on every purchase.' },
+  { title: 'Home Depot (Pro Xtra) and Lowe’s (Pro)', text: 'E-receipts go to the email on your store account. Have that mailbox forward them to this address.' },
+  { title: 'Forward from your email', text: 'In Gmail: Settings, then Forwarding, and add this address. Gmail mails a confirmation code to it: the code shows up on this screen under “Not job costs” within a few minutes. Then make a filter that forwards mail from each store.' },
+  { title: 'Paper receipts', text: 'Anyone on the crew can email a photo of a receipt to this address.' },
+  { title: 'Once a month', text: 'Download your purchase history from the store’s website and email the file to this address. Purchases Studwise already has are skipped, so this only catches what was missed.' },
+];
+
+/** The company's receipts address and how to point store receipts at it. Mail sent there is read and filed like a snapped receipt. */
+function MailIn({ signedIn, owner }: { signedIn: boolean; owner: boolean }) {
+  // undefined while asking; null when the account has no address yet (mail-in is not switched on for it).
+  const [found, setFound] = useState<string | null | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!signedIn) return;
+    let on = true;
+    getReceiptAddress().then((a) => { if (on) setFound(a); });
+    return () => { on = false; };
+  }, [signedIn]);
+
+  if (!signedIn) {
+    return (
+      <Card>
+        <H2>Receipts by email</H2>
+        <Muted>Log in to get an address your store receipts can be mailed to. Studwise reads them and files each one to its job.</Muted>
+        <Button kind="secondary" title="Log in" onPress={() => router.push('/login')} />
+      </Card>
+    );
+  }
+  if (found === undefined) return <Muted style={{ fontSize: 13 }}>Checking your receipts address…</Muted>;
+  if (found === null) {
+    return (
+      <Card>
+        <H2>Receipts by email</H2>
+        <Muted>Mail-in is being set up. Soon your store receipts can be mailed to Studwise and filed on their own. Until then, snap receipts here.</Muted>
+      </Card>
+    );
+  }
+  const copy = async () => {
+    try {
+      if (Platform.OS === 'web') await navigator.clipboard.writeText(found);
+      else await Share.share({ message: found });
+      setCopied(true);
+    } catch { /* the address is on screen and can be selected */ }
+  };
+  const renew = () => confirmAction('Get a new address?', 'The address you have now stops taking mail at once. Forwarding you set up has to be changed to the new one.', 'Get a new address', () => {
+    newReceiptAddress().then((a) => { if (a) { setFound(a); setCopied(false); } });
+  });
+  return (
+    <Card style={{ gap: 10 }}>
+      <H2>Receipts by email</H2>
+      <Text raw selectable style={{ fontFamily: mono, color: C.ink, fontSize: 15, backgroundColor: C.cardHi, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 }}>{found}</Text>
+      <Muted>Mail a receipt to this address and Studwise reads it. One that carries a job’s code is filed to that job; any other waits here.</Muted>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Button kind="secondary" style={{ flex: 1 }} title={Platform.OS === 'web' ? (copied ? 'Copied' : 'Copy address') : 'Send the address'} onPress={copy} />
+        <Button kind="ghost" style={{ flex: 1 }} title={open ? 'Hide the steps' : 'How to set it up'} onPress={() => setOpen(!open)} />
+      </View>
+      {open ? (
+        <View style={{ gap: 10 }}>
+          {STEPS.map((st) => (
+            <View key={st.title} style={{ gap: 2 }}>
+              <Text style={{ color: C.ink, fontSize: 15, fontWeight: '600' }}>{st.title}</Text>
+              <Muted>{st.text}</Muted>
+            </View>
+          ))}
+          {owner ? <Button kind="ghost" title="Get a new address" onPress={renew} /> : null}
+        </View>
+      ) : null}
+    </Card>
   );
 }

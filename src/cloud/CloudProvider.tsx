@@ -14,6 +14,7 @@ import { CLOUD, cloudConfigured } from './config';
 import { fetchClientNotes, fetchNewSignatures, markApplied, markNoteSeen, signedHtml, toSignature } from './sign';
 import { decide } from './decide';
 import { baseOf, mergeWorkspaces } from './merge';
+import { drainMail } from './receipts';
 import { backupPhotos, clearBase, clearMeta, loadBase, loadMeta, myWorkspace, pullWorkspace, pushWorkspace, restorePhotos, saveBase, saveMeta, workspaceStamp } from './sync';
 import { sanitizePersisted, type Persisted } from '@/store/sanitize';
 
@@ -240,6 +241,8 @@ export function CloudProvider({ children }: { children: React.ReactNode }) {
         await saveMeta({ uid: ws, remoteAt: stamp.updatedAt, syncedChange: localChange });
         if (local.profile && !(await loadBase())) await saveBase(local); // first sync after this update
       }
+      // Receipts that came by mail since the last sync join the inbox (and go up with the next one).
+      await drainMail(a());
       // Photos this phone is missing (a new phone, or a restore that was cut short) come down after every sync.
       restorePhotos(ws, a().snapshot()).catch(() => {});
       await applySignatures(ws, a());
