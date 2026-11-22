@@ -7,7 +7,7 @@
  */
 
 /** Flip to true once studwise.ai is registered and support@, privacy@ and legal@ receive mail. */
-export const LIVE = false;
+export const LIVE = true;
 
 /**
  * The one inbox behind every address. support@, privacy@, legal@ and billing@studwise.ai are aliases that deliver

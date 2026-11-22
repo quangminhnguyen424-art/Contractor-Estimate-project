@@ -11,7 +11,7 @@ const URL_ = Deno.env.get('SUPABASE_URL')!;
 const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // Where Stripe sends people back (the web app; the phone app checks the plan again when it comes back to the front).
-const RETURN_URL = Deno.env.get('BILLING_RETURN_URL') ?? 'https://quangminhnguyen424-art.github.io/Contractor-Estimate-project/app/plan';
+const RETURN_URL = Deno.env.get('BILLING_RETURN_URL') ?? 'https://studwise.ai/app/plan';
 const TRIAL_DAYS = 14;
 
 Deno.serve(async (req) => {
