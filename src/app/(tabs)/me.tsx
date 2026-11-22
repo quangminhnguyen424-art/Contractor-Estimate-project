@@ -15,7 +15,7 @@ const open = (s: SettingsPage) => router.push(`/settings?s=${s}`);
 
 /** Me: who you are, then one row per thing you can set up. Every row opens its own page. */
 export default function Me() {
-  const { profile, team = [], aiAllowed, apiKey, presets, inbox = [] } = useApp();
+  const { profile, team = [], aiAllowed, apiKey, presets, inbox = [], projects } = useApp();
   const receiptsWaiting = inbox.filter((x) => x.status === 'new').length;
   const cloud = useCloud();
   const { language } = useLanguage();
@@ -58,6 +58,7 @@ export default function Me() {
         <ListRow title="Work you do" right={`${types} type${types === 1 ? '' : 's'} of work`} onPress={() => open('work')} />
         <ListRow title="How you work" onPress={() => open('about')} />
         <ListRow title="Receipts" right={receiptsWaiting ? `${receiptsWaiting} to sort` : undefined} onPress={() => router.push('/receipts')} />
+        <ListRow title="Money sheet" right={projects.length ? `${projects.length} job${projects.length === 1 ? '' : 's'}` : undefined} onPress={() => router.push('/books')} />
         <ListRow title="Crew and subs" right={team.length ? String(team.length) : undefined} onPress={() => router.push('/team')} />
         <ListRow title="ADU check page" onPress={() => router.push('/adu')} />
         <ListRow title="Connected apps" onPress={() => router.push('/connections')} />

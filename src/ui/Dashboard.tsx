@@ -81,7 +81,16 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
           <Glance label="Quotes out" value={String(waiting)} onPress={() => showJobs('quote')} divider />
           <Glance label="Active jobs" value={String(activeJobs)} onPress={() => showJobs('active')} divider />
         </View>
-      ) : (
+      ) : null}
+      {jobs.length && projects.length ? (
+        <Pressable accessibilityRole="button" onPress={() => router.push('/books')} hitSlop={6}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: -10, paddingHorizontal: 4, opacity: pressed ? 0.6 : 1 })}>
+          <Ionicons name="stats-chart-outline" size={16} color={C.accent} />
+          <Text style={{ flex: 1, color: C.accent, fontSize: 14, fontWeight: '600' }}>Money sheet: revenue, cost and profit by job</Text>
+          <Ionicons name="chevron-forward" size={14} color={C.accent} />
+        </Pressable>
+      ) : null}
+      {jobs.length ? null : (
         <View style={{ backgroundColor: C.panel, borderRadius: 16, padding: 18, gap: 12 }}>
           <Text style={{ color: C.ink, fontSize: 17, fontWeight: '600' }}>Price your first job</Text>
           <Text style={{ color: C.muted, fontSize: 14, lineHeight: 20 }}>Say or type what the job is. Studwise builds the estimate with your prices.</Text>
