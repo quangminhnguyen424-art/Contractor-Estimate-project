@@ -1,6 +1,7 @@
 // Job site: projects after a job is won. Room-by-room photos with drawings and instructions, tasks the
 // crew checks off with "after" photos, daily logs, client updates and marketing posts. Plain TypeScript.
 import { money } from './format';
+import { jobCodeFor } from './jobCode';
 import type { Estimate } from './types';
 
 export type ShapeKind = 'arrow' | 'circle' | 'line' | 'text';
@@ -70,6 +71,8 @@ export interface SiteProject {
   clientName: string;
   address: string;
   status: 'active' | 'done';
+  /** The short code the crew gives as Job Name / PO at a store, so receipts find this job (engine/jobCode.ts). */
+  code?: string;
   createdAt: string;
   rooms: SiteRoom[];
   logs: DailyLog[];
@@ -90,10 +93,11 @@ export const LANG_NAMES: Record<CrewLang, { en: string; native: string }> = {
 // ---- Creating ----
 
 /** A new project from a won estimate: its rooms come from the floor plan, else one room named for the work. */
-export function projectFromEstimate(est: Estimate, jobName: string, id: string, newId: () => string): SiteProject {
+export function projectFromEstimate(est: Estimate, jobName: string, id: string, newId: () => string, takenCodes: string[] = []): SiteProject {
   const roomNames = est.plan?.length ? est.plan.map((r) => r.name) : [jobName];
   return {
     id, estimateId: est.id, title: est.title, clientName: est.clientName, address: est.address, status: 'active',
+    code: jobCodeFor(est.address ?? '', est.title ?? '', takenCodes),
     createdAt: new Date().toISOString(), logs: [],
     rooms: roomNames.map((name) => emptyRoom(newId(), name)),
   };

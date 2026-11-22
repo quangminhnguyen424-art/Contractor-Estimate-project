@@ -7,6 +7,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
+import { codeOf } from '@/engine/jobCode';
 import { laborToLearn } from '@/engine/learned';
 import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
 import { emptyContract, nextInvoiceNo, termsFrom, type Contract, type Invoice } from '@/engine/contract';
@@ -335,7 +336,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (existing) return existing.id;
         const est = cur.estimates.find((e) => e.id === estimateId);
         if (!est) return null;
-        const p = projectFromEstimate(est, est.job?.name ?? jobType(est.jobTypeId).name, newId(), newId);
+        const p = projectFromEstimate(est, est.job?.name ?? jobType(est.jobTypeId).name, newId(), newId, cur.projects.map(codeOf));
         update((d) => ({ ...d, projects: [p, ...d.projects] }));
         return p.id;
       },
@@ -393,7 +394,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (!projectId && a.state === 'worked' && ev.estimateId) {
           const est = cur.estimates.find((e) => e.id === ev.estimateId);
           if (est) {
-            const made = projectFromEstimate(est, est.job?.name ?? jobType(est.jobTypeId).name, newId(), newId);
+            const made = projectFromEstimate(est, est.job?.name ?? jobType(est.jobTypeId).name, newId(), newId, projects.map(codeOf));
             projects = [made, ...projects];
             projectId = made.id;
           }

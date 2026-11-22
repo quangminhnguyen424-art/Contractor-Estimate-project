@@ -259,6 +259,7 @@ export function sanitizeProjects(v: unknown): SiteProject[] {
       id: p.id, ...(typeof p.estimateId === 'string' ? { estimateId: p.estimateId } : {}),
       title: str(p.title, 'Job').trim().slice(0, 80) || 'Job', clientName: str(p.clientName).slice(0, 80), address: str(p.address).slice(0, 160),
       status: p.status === 'done' ? 'done' : 'active', createdAt: str(p.createdAt, new Date().toISOString()),
+      ...(typeof p.code === 'string' && p.code.trim() ? { code: p.code.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12) } : {}),
       rooms: Array.isArray(p.rooms) ? p.rooms.map(sanitizeRoom).filter((x): x is SiteRoom => !!x).slice(0, 500) : [],
       logs,
       ...(typeof p.lastClientUpdateAt === 'string' ? { lastClientUpdateAt: p.lastClientUpdateAt } : {}),
