@@ -18,7 +18,7 @@ const ROW = 54;
 const JOB_W = 112;
 // The three numbers a contractor asks for first sit beside the job; the rest are a swipe away.
 const COLS: { key: keyof SheetRow; label: string }[] = [
-  { key: 'revenue', label: 'Revenue' }, { key: 'cost', label: 'Total cost' }, { key: 'profit', label: 'Profit' }, { key: 'marginPct', label: 'Margin' },
+  { key: 'revenue', label: 'Revenue' }, { key: 'cost', label: 'Cost' }, { key: 'profit', label: 'Profit' }, { key: 'marginPct', label: 'Margin' },
   { key: 'received', label: 'Received' }, { key: 'materials', label: 'Materials' }, { key: 'labor', label: 'Labor' }, { key: 'subs', label: 'Subs' }, { key: 'equipment', label: 'Equipment' },
 ];
 
@@ -65,7 +65,7 @@ export default function Books() {
         {PERIODS.map((p) => <Chip key={p.value} label={p.label} selected={period === p.value} onPress={() => setPeriod(p.value)} />)}
       </View>
       <Segmented<Which> value={which} onChange={setWhich}
-        options={[{ value: 'all', label: 'All jobs' }, { value: 'active', label: 'Open' }, { value: 'done', label: 'Finished' }]} />
+        options={[{ value: 'all', label: 'All jobs' }, { value: 'active', label: 'Active' }, { value: 'done', label: 'Finished' }]} />
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Stat label={inPeriod ? 'Invoiced' : 'Revenue'} value={money(total.revenue)} />

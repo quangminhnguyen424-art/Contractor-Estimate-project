@@ -10,8 +10,10 @@ import { parseReceipt, receiptPrompt } from '@/engine/books';
 import { money2 } from '@/engine/format';
 import type { InboxItem } from '@/engine/inbox';
 import { codeOf } from '@/engine/jobCode';
+import { dateLocale } from '@/engine/locale';
 import { addDays } from '@/engine/schedule';
 import type { SiteProject } from '@/engine/site';
+import { useT } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
 import { Banner, Button, C, Card, H2, Muted, Screen, Section, mono } from '@/ui/kit';
@@ -21,7 +23,7 @@ import { toAiImage } from '@/ui/photos';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
 
-const day = (ymd: string) => (ymd ? new Date(`${ymd}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '');
+const day = (ymd: string) => (ymd ? new Date(`${ymd}T12:00:00`).toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' }) : '');
 const amount = (n: number) => (n < 0 ? `−${money2(-n)}` : money2(n));
 
 /**
@@ -108,7 +110,7 @@ export default function Receipts() {
         <Button title={reading ? 'Reading…' : 'Snap receipt'} icon="camera-outline" style={{ flex: 1 }} disabled={reading} onPress={() => snap(true)} />
         <Button title="Pick a photo" kind="secondary" style={{ flex: 1 }} disabled={reading} onPress={() => snap(false)} />
       </View>
-      {msg ? <Banner tone={msg.tone} title={msg.title}>{msg.text ? <Text raw>{msg.text}</Text> : null}</Banner> : null}
+      {msg ? <Banner tone={msg.tone} title={msg.title}>{msg.text ? <Text>{msg.text}</Text> : null}</Banner> : null}
 
       <MailIn signedIn={signedIn} owner={!!cloud.user && cloud.workspaceId === cloud.user.id} />
 
@@ -158,6 +160,7 @@ export default function Receipts() {
 
 /** One receipt at a glance: store, day, amount, the job name it carries. */
 function Head({ item }: { item: InboxItem }) {
+  const t = useT();
   const n = item.lines.length;
   if (item.unread) {
     return (
@@ -174,8 +177,8 @@ function Head({ item }: { item: InboxItem }) {
         <Text raw style={{ flex: 1, color: C.ink, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{item.vendor || 'Receipt'}</Text>
         <Text style={{ fontFamily: mono, color: item.total < 0 ? C.okInk : C.ink, fontSize: 16 }}>{amount(item.total)}</Text>
       </View>
-      <Muted style={{ fontSize: 13 }}>
-        {[day(item.date), item.total < 0 ? 'Return' : '', n ? `${n} item${n === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') || 'No date on the receipt'}
+      <Muted raw style={{ fontSize: 13 }}>
+        {[day(item.date), item.total < 0 ? t('Return') : '', n ? t(n === 1 ? '1 item' : `${n} items`) : ''].filter(Boolean).join(' · ') || t('No date on the receipt')}
       </Muted>
       {item.po ? <Muted style={{ fontSize: 13 }}>{`Job name on the receipt: ${item.po}`}</Muted> : null}
     </View>

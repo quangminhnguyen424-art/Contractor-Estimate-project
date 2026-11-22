@@ -58,7 +58,7 @@ export default function Me() {
         <ListRow title="Work you do" right={`${types} type${types === 1 ? '' : 's'} of work`} onPress={() => open('work')} />
         <ListRow title="How you work" onPress={() => open('about')} />
         <ListRow title="Receipts" right={receiptsWaiting ? `${receiptsWaiting} to sort` : undefined} onPress={() => router.push('/receipts')} />
-        <ListRow title="Money sheet" right={projects.length ? `${projects.length} job${projects.length === 1 ? '' : 's'}` : undefined} onPress={() => router.push('/books')} />
+        <ListRow title="Money sheet" right={projects.length ? (projects.length === 1 ? '1 job' : `${projects.length} jobs`) : undefined} onPress={() => router.push('/books')} />
         <ListRow title="Crew and subs" right={team.length ? String(team.length) : undefined} onPress={() => router.push('/team')} />
         <ListRow title="ADU check page" onPress={() => router.push('/adu')} />
         <ListRow title="Connected apps" onPress={() => router.push('/connections')} />

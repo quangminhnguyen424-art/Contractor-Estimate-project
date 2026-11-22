@@ -5,7 +5,7 @@ import { COMPANY } from './company';
  * It describes what the app actually does; change it whenever data handling changes. DRAFT: have a Washington
  * attorney review before opening to the public.
  */
-export const PRIVACY_VERSION = '2026-11-19';
+export const PRIVACY_VERSION = '2026-11-22';
 
 export interface PolicySection { title: string; body: string[] }
 
@@ -23,6 +23,8 @@ export const PRIVACY_POLICY: PolicySection[] = [
       'Account: your email address and password (the password is stored only as a secure hash by our sign-in provider).',
       'What you enter: your company profile and logo, license and contact details, prices, estimates, quotes, contracts, invoices, change orders, receipts, schedules, notes, crew and subcontractor names and rates, and the names, addresses, phone numbers and emails of your clients.',
       'Photos and files you add. If you allow location, the place a job-site photo was taken is saved with it.',
+      'Receipts: what Studwise reads from a receipt you snap or mail in: the store, the date, the items and amounts, the receipt number and the job name or PO on it, and the photo when the receipt was photographed. For a receipt that came by mail we also keep who sent the mail and its subject. The mail itself is not kept. Mail to your receipts address that holds no receipt is listed in the app with its subject, so nothing sent there goes missing unseen.',
+      'What we never collect: how a purchase was paid. No card numbers, no card digits, no bank logins and no link to a bank account. Card digits printed on an e-receipt are blanked before it is read.',
       'Voice: voice typing uses your phone’s own speech service. Recordings are not stored by us unless you choose to attach one to a job.',
       'Support: what you send in a problem report, and a screenshot if you add one.',
       'Technical: the device model and app version in problem reports, and the usage counts we need to apply daily limits (for example, how many AI requests an account made today). We do not use advertising or third-party tracking tools.',
@@ -57,7 +59,8 @@ export const PRIVACY_POLICY: PolicySection[] = [
     body: [
       'We use these companies to run the app. They may use your information only to provide their service to us.',
       'Supabase (United States): sign-in, database, file storage and server functions.',
-      'Anthropic, PBC (United States): the AI behind Studwise. When AI is on, the job notes, photos, questions and business details needed for each request are sent to Anthropic under its commercial terms, which do not allow training AI models on them.',
+      'Anthropic, PBC (United States): the AI behind Studwise. When AI is on, the job notes, photos, questions and business details needed for each request are sent to Anthropic under its commercial terms, which do not allow training AI models on them. A receipt you snap, and a receipt mailed to your receipts address, is read the same way.',
+      'Resend (United States): receives the mail sent to your company’s receipts address and hands it to us to be read.',
       'Google: when you use Measure roof, the job address is sent to Google to find and measure the roof.',
       'King County (Washington): public property records, looked up directly by your device on the ADU check and permit screens.',
       'Website hosting and email delivery providers: to serve the public pages and to send account emails such as password resets.',
@@ -78,6 +81,7 @@ export const PRIVACY_POLICY: PolicySection[] = [
     body: [
       'Contractor accounts: until you delete the account. Deleting the account (Me > your account > Delete my account, or the delete-account page) removes your workspace, photos, signing records, leads and support history from our systems; copies in backups are removed within 30 days.',
       'Signing records and leads belong to the contractor’s account and are deleted with it, or earlier if the contractor deletes them.',
+      'Receipts that came by mail are part of your workspace and are deleted with it. You can get a new receipts address at any time (Me > Receipts); the old one stops taking mail at once. To switch mail-in off for your account and delete what came in, write to us.',
       'Usage counts for limits: up to 90 days.',
     ],
   },
