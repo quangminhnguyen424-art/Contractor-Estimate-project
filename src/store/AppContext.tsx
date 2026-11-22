@@ -7,6 +7,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
+import { laborToLearn } from '@/engine/learned';
 import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
 import { emptyContract, nextInvoiceNo, termsFrom, type Contract, type Invoice } from '@/engine/contract';
 import { emptyMoney, type PriceLesson, type ProjectMoney } from '@/engine/books';
@@ -48,6 +49,8 @@ export interface Draft {
   customItems: ScopeItem[];
   /** The work Studwise planned for this job (see engine/workPlan.ts). With it, the work list is what gets priced. */
   work?: WorkSection[];
+  /** The list as Studwise first wrote it, kept with the estimate so its changes can be learned from. */
+  workAi?: WorkSection[];
   heard: string[];
   markupPct?: number;
   /** Floor plan rooms (scanned or measured). */
@@ -254,7 +257,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         status: existing?.status ?? 'draft', mode: d.mode, jobTypeId: d.jobTypeId,
         title: d.title.trim() || 'Untitled estimate', clientName: d.clientName.trim(), address: d.address.trim(),
         description: d.description.trim(), scopeNote: d.scopeNote.trim(), aiNotes: d.aiNotes ?? existing?.aiNotes ?? [], photos: d.photos, finish: d.finish, answers: d.answers,
-        customItems: d.customItems, ...(d.work ? { work: d.work } : {}), markupPct, salesTaxPct: profile.salesTaxPct, ...r,
+        customItems: d.customItems, ...(d.work ? { work: d.work } : {}), ...(d.workAi ?? existing?.workAi ? { workAi: d.workAi ?? existing?.workAi } : {}), markupPct, salesTaxPct: profile.salesTaxPct, ...r,
         plan: d.plan?.length ? d.plan : undefined,
         // Editing the job details re-prices it; the quote's own wording, the client's language and their notes stay.
         ...(existing?.quoteEdits ? { quoteEdits: existing.quoteEdits } : {}),
@@ -271,8 +274,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     (d: Draft) => {
       const prev = dataRef.current;
       const existing = d.id ? prev.estimates.find((e) => e.id === d.id) : undefined;
-      const est = compute(d, prev, existing);
+      let est = compute(d, prev, existing);
+      // Learning: a task's labor cost set by hand on this job and on an earlier one becomes their price-book price.
+      const learn = laborToLearn([est, ...prev.estimates.filter((e) => e.id !== est.id)], est, prev.priceBook);
+      if (learn.length) {
+        est = { ...est, checks: [...est.checks.filter((c) => c.id !== 'learned'), { id: 'learned', level: 'info',
+          title: `Studwise learned your labor cost for: ${learn.map((l) => l.name).join(', ')}`,
+          detail: 'You set these by hand on two or more jobs, so your price book now starts new estimates from your number. Change or reset it under Me → Price book.' }] };
+      }
       update((cur) => {
+        if (learn.length) cur = { ...cur, priceBook: { ...cur.priceBook, labor: { ...cur.priceBook.labor, ...Object.fromEntries(learn.map((l) => [l.assemblyId, l.rate])) } } };
         const estimates = [est, ...cur.estimates.filter((e) => e.id !== est.id)];
         // Pricing a photo-only job: its photos and costs now belong to this estimate's job.
         const projects = d.projectId ? cur.projects.map((p) => (p.id === d.projectId && !p.estimateId ? { ...p, estimateId: est.id } : p)) : cur.projects;

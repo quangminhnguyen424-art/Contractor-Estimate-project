@@ -1,5 +1,5 @@
 import { lessonsContext } from '@/engine/books';
-import { learnedContext, learnFromQuotes } from '@/engine/learned';
+import { learnedContext, learnFromQuotes, learnFromWork, taughtContext } from '@/engine/learned';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -134,6 +134,7 @@ export default function NewEstimate() {
       answers: { ...own, ...(plan?.answers as Record<string, number | string | boolean> | undefined), ...(mainSize > 0 ? { sizeSf: mainSize } : {}) },
       customItems: [],
       work: plan?.work ?? [],
+      ...(plan ? { workAi: plan.work } : {}),
       heard: [],
       ...(pendingPlan?.length ? { plan: pendingPlan } : {}),
       aiNotes: plan?.notes ?? [],
@@ -188,7 +189,8 @@ export default function NewEstimate() {
       history: h.perSf ? `${h.count} past job${h.count === 1 ? '' : 's'}, average ${rate(h.perSf)}${perUnit(jt.unit)}` : undefined,
       scope: pendingPlan?.length && isIndoorType(type) ? INDOOR_NOTE : undefined,
       prices: lessonsContext(lessons ?? []),
-      learned: learnedContext(learnFromQuotes(estimates, profile?.quoteLanguage ?? 'en')),
+      // How they word and price quotes, and how they corrected Studwise's earlier work lists for this type of work.
+      learned: [learnedContext(learnFromQuotes(estimates, profile?.quoteLanguage ?? 'en')), taughtContext(learnFromWork(estimates), type)].filter(Boolean).join('\n\n'),
       language: aiLanguage(),
     };
     const t = pendingPlan?.length ? planTotals(pendingPlan) : null;

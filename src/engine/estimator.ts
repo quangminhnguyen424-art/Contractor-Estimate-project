@@ -148,7 +148,7 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
   if (input.work) {
     const work = pricedWork(input.work);
     const entries: Entry[] = work.flatMap((sec) => sec.items.map((i) => (i.assemblyId
-      ? { section: sec.key, assemblyId: i.assemblyId, qty: i.qty } : { section: sec.key, qty: i.qty, own: i })));
+      ? { section: sec.key, assemblyId: i.assemblyId, qty: i.qty, labor: i.labor } : { section: sec.key, qty: i.qty, own: i })));
     const scope = mergeScope(entries.filter((e) => e.assemblyId).map((e) => ({ assemblyId: e.assemblyId!, qty: e.qty })));
     return priceWork(input, entries, work, scope, extras, sizeSf);
   }
@@ -196,7 +196,7 @@ export function pricedWork(work: WorkSection[]): WorkSection[] {
     .filter((s) => s.items.length > 0);
 }
 
-interface Entry { section: string; assemblyId?: string; qty: number; own?: WorkItem }
+interface Entry { section: string; assemblyId?: string; qty: number; own?: WorkItem; labor?: number }
 
 /** Prices a list of work: price-book tasks from the price book, the job's own items from hours and their materials. */
 function priceWork(
@@ -222,7 +222,9 @@ function priceWork(
         laborUnit: it.qty > 0 ? round2(labor / it.qty) : 0, labor, rawMat: 0, ownMat: mat, hours };
     }
     const a = ASSEMBLY_BY_ID[it.assemblyId!];
-    const lu = round2(laborRate(a.id, pb) * (FINISH_LABOR_TRADES.includes(a.trade) ? FINISH_LABOR_FACTOR[input.finish] : 1));
+    // A labor cost the contractor set on this job stands as typed; otherwise their price book, by finish level.
+    const lu = typeof it.labor === 'number' && Number.isFinite(it.labor) && it.labor >= 0 ? round2(it.labor)
+      : round2(laborRate(a.id, pb) * (FINISH_LABOR_TRADES.includes(a.trade) ? FINISH_LABOR_FACTOR[input.finish] : 1));
     let rawMat = 0;
     for (const am of a.materials) {
       const q = am.perUnit * it.qty;

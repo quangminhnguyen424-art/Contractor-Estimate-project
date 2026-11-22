@@ -151,6 +151,8 @@ export interface WorkItem {
   unit: string;
   hours?: number;
   materials?: number;
+  /** A price-book task whose labor cost per unit the contractor set by hand on this job (Studwise learns from it). */
+  labor?: number;
   /** Where it came from: the contractor's notes, a photo, Studwise's judgment, or added by the contractor. */
   from?: 'notes' | 'photo' | 'assumed' | 'you';
 }
@@ -341,6 +343,8 @@ export interface Estimate {
   customItems: ScopeItem[];
   /** The work Studwise planned for this job, as the contractor left it. Estimates made from fixed questions have none. */
   work?: WorkSection[];
+  /** The list exactly as Studwise wrote it, before the contractor's changes: what they change teaches it (engine/learned.ts). */
+  workAi?: WorkSection[];
   markupPct: number;
   salesTaxPct: number;
   extras: ExtraLine[];

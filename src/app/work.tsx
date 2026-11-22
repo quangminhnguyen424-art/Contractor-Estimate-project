@@ -3,8 +3,8 @@ import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { ASSEMBLIES, TRADE_NAMES } from '@/engine/catalog';
-import { buildEstimate, hourlyRate, pricedWork } from '@/engine/estimator';
+import { ASSEMBLIES, ASSEMBLY_BY_ID, TRADE_NAMES } from '@/engine/catalog';
+import { buildEstimate, hourlyRate, laborRate, pricedWork } from '@/engine/estimator';
 import { money, qtyFmt, rate } from '@/engine/format';
 import { FINISH_LABELS, jobType, qtyWithUnit } from '@/engine/jobTypes';
 import type { AnswerValue, FinishLevel, Question, WorkItem, WorkSection } from '@/engine/types';
@@ -176,7 +176,7 @@ export default function Work() {
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text raw style={{ color: C.ink, fontSize: 15, fontWeight: '600' }}>{nameOf(i)}</Text>
                     <Muted style={{ fontSize: 13 }}>
-                      {i.assemblyId ? `${qtyFmt(i.qty)} ${i.unit} · your price book` : `${i.unit === 'LS' ? '' : `${qtyFmt(i.qty)} ${i.unit} · `}${qtyFmt(i.hours ?? 0)} hr · ${money(i.materials ?? 0)} materials`}
+                      {i.assemblyId ? (i.labor != null ? `${qtyFmt(i.qty)} ${i.unit} · your price for this job` : `${qtyFmt(i.qty)} ${i.unit} · your price book`) : `${i.unit === 'LS' ? '' : `${qtyFmt(i.qty)} ${i.unit} · `}${qtyFmt(i.hours ?? 0)} hr · ${money(i.materials ?? 0)} materials`}
                     </Muted>
                     {i.from === 'photo' || i.from === 'assumed' ? (
                       <Text style={{ fontSize: 12, fontWeight: '600', color: C.warnInk }}>
@@ -188,6 +188,7 @@ export default function Work() {
                 </Pressable>
                 {openItem === i.id ? (
                   <ItemEditor item={i} name={nameOf(i)} hourly={hourlyRate(priceBook)}
+                    laborUnit={i.assemblyId && ASSEMBLY_BY_ID[i.assemblyId]?.labor > 0 ? priced?.lines.find((x) => x.assemblyId === i.assemblyId)?.laborUnit ?? laborRate(i.assemblyId, priceBook) : undefined}
                     onChange={(patch) => patchItem(sec.key, i.id, patch)}
                     onRemove={() => { removeItem(sec.key, i.id); setOpenItem(null); }}
                     onDone={() => setOpenItem(null)} />
@@ -224,14 +225,22 @@ export default function Work() {
 }
 
 /** Change one item: how much of it, and for work that is not in the price book, its name, hours and materials. */
-function ItemEditor({ item, name, hourly, onChange, onRemove, onDone }: {
-  item: WorkItem; name: string; hourly: number; onChange: (patch: Partial<WorkItem>) => void; onRemove: () => void; onDone: () => void;
+function ItemEditor({ item, name, hourly, laborUnit, onChange, onRemove, onDone }: {
+  item: WorkItem; name: string; hourly: number;
+  /** A price-book task's labor cost per unit as priced now; none for a materials-only task. */
+  laborUnit?: number;
+  onChange: (patch: Partial<WorkItem>) => void; onRemove: () => void; onDone: () => void;
 }) {
   return (
     <View style={{ gap: 10, paddingBottom: 12 }}>
       {item.assemblyId ? (
-        <NumberField label="How much" suffix={item.unit} value={item.qty} onChange={(qty) => onChange({ qty })}
-          help="Priced from your price book. Change the price itself under Me → Price book." />
+        <>
+          <NumberField label="How much" suffix={item.unit} value={item.qty} onChange={(qty) => onChange({ qty })} />
+          {laborUnit != null ? (
+            <NumberField label={`Your labor cost per ${item.unit}`} suffix="$" value={item.labor ?? laborUnit} max={100000} onChange={(labor) => onChange({ labor })}
+              help="From your price book. Change it here when this job is different. Change the same work on two jobs and Studwise uses your number from then on." />
+          ) : <Muted style={{ fontSize: 13 }}>Materials only, priced from your price book (Me → Price book).</Muted>}
+        </>
       ) : (
         <>
           <Field label="Work" value={name} maxLength={80} onChangeText={(v) => onChange({ name: v, vi: v })} />

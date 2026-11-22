@@ -215,7 +215,8 @@ export function sanitizeWork(v: unknown): WorkSection[] | undefined {
       const from = i.from === 'notes' || i.from === 'photo' || i.from === 'assumed' || i.from === 'you' ? i.from : undefined;
       items.push({
         id, ...(assemblyId ? { assemblyId } : {}), name, vi: text(i.vi, 100) || name, qty: round2(qty), unit: text(i.unit, 6) || 'EA',
-        ...(assemblyId ? {} : { hours: Math.max(0, round2(number(i.hours) || 0)), materials: Math.max(0, round2(number(i.materials) || 0)) }),
+        ...(assemblyId ? (Number.isFinite(number(i.labor)) && number(i.labor) >= 0 ? { labor: round2(number(i.labor)) } : {})
+          : { hours: Math.max(0, round2(number(i.hours) || 0)), materials: Math.max(0, round2(number(i.materials) || 0)) }),
         ...(from ? { from } : {}),
       });
     }

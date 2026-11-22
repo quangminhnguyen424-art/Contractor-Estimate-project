@@ -298,6 +298,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
     ...((w) => (w ? { work: w } : {}))(sanitizePlannedWork(e.work)),
+    ...((w) => (w ? { workAi: w } : {}))(sanitizePlannedWork(e.workAi)),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
     priceEdits: sanitizePriceEdits(e.priceEdits),
     permit: sanitizePermit(e.permit),

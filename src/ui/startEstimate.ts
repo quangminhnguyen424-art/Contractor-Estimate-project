@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 
 import type { EstimateAction } from '@/engine/assistant';
 import { lessonsContext, type PriceLesson } from '@/engine/books';
-import { learnedContext, learnFromQuotes } from '@/engine/learned';
+import { learnedContext, learnFromQuotes, learnFromWork, taughtContext } from '@/engine/learned';
 import { historyPerSf } from '@/engine/estimator';
 import { money } from '@/engine/format';
 import { jobType, perUnit } from '@/engine/jobTypes';
@@ -29,7 +29,7 @@ export async function startEstimateFromChat(
     work: workSummary(opts.profile?.work),
     history: h.perSf ? `${h.count} past jobs, average ${money(h.perSf)}${perUnit(jt.unit)}` : undefined,
     prices: lessonsContext(opts.lessons ?? []),
-    learned: learnedContext(learnFromQuotes(opts.estimates ?? [], opts.profile?.quoteLanguage ?? 'en')),
+    learned: [learnedContext(learnFromQuotes(opts.estimates ?? [], opts.profile?.quoteLanguage ?? 'en')), taughtContext(learnFromWork(opts.estimates ?? []), action.jobTypeId)].filter(Boolean).join('\n\n'),
     language: aiLanguage(),
   });
   const own = Object.fromEntries(jt.questions.filter((q) => q.custom).map((q) => [q.id, q.default]));
@@ -42,6 +42,7 @@ export async function startEstimateFromChat(
     answers: { ...own, ...(plan.answers as Draft['answers']), ...(plan.size ? { sizeSf: plan.size } : {}) },
     customItems: [],
     work: plan.work,
+    workAi: plan.work,
     heard: [],
     aiNotes: plan.notes,
   });
