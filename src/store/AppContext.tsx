@@ -7,11 +7,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
+import { fileItem, ignoreItem, receive, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
 import { codeOf } from '@/engine/jobCode';
 import { laborToLearn } from '@/engine/learned';
 import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
 import { emptyContract, nextInvoiceNo, termsFrom, type Contract, type Invoice } from '@/engine/contract';
-import { emptyMoney, type PriceLesson, type ProjectMoney } from '@/engine/books';
+import { emptyMoney, type PriceLesson, type ProjectMoney, type ReceiptRead } from '@/engine/books';
 import { stopPlan, type FollowUpPlan } from '@/engine/followup';
 import { consentCurrent, TERMS_VERSION } from '@/engine/legal';
 import type { CalEvent } from '@/engine/schedule';
@@ -110,6 +111,19 @@ interface Ctx extends Persisted {
   /** Forgets the price lessons a deleted receipt taught. */
   dropLessons: (costId: string) => void;
   /**
+   * A receipt arrives in the inbox (snapped, mailed in, from a store file). Returns whether Studwise filed it to a job
+   * by its job code, or already had this purchase. `id` is given for mail so two phones make the same item.
+   */
+  addReceipt: (read: ReceiptRead, kind: InboxItem['kind'], fileUri?: string, id?: string) => { id: string; filedTo?: string; duplicate?: boolean };
+  /** Files a receipt to a job, moving it if it was filed to another. */
+  fileReceipt: (id: string, projectId: string) => void;
+  /** Takes a filed receipt back out of its job: it waits in the inbox again. */
+  unfileReceipt: (id: string) => void;
+  /** Sets a receipt aside as not a job cost. */
+  ignoreReceipt: (id: string) => void;
+  /** Changes the code the crew gives at a store for this job. */
+  setJobCode: (projectId: string, code: string) => void;
+  /**
    * Morning check for one person on one booked day. "worked" adds their labor cost to the job (once);
    * "moved" books them on the new date.
    */
@@ -163,6 +177,9 @@ function dropFollowEvents(events: CalEvent[], estimateId: string): CalEvent[] {
     return !drop;
   });
 }
+
+/** The part of the workspace that filing a receipt touches. */
+const inboxOf = (d: Persisted): InboxState => ({ inbox: d.inbox ?? [], projects: d.projects, lessons: d.lessons ?? [] });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<Persisted>(EMPTY);
@@ -378,6 +395,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, money: fn(p.money ?? emptyMoney()) } : p)) })),
       addLessons: (ls) => update((d) => ({ ...d, lessons: [...(d.lessons ?? []), ...ls].slice(-3000) })),
       dropLessons: (costId) => update((d) => ({ ...d, lessons: (d.lessons ?? []).filter((l) => l.costId !== costId) })),
+      addReceipt: (read, kind, fileUri, id) => {
+        const meta = { id: id ?? newId(), kind, at: new Date().toISOString(), ...(fileUri ? { fileUri } : {}), newId };
+        const r = receive(inboxOf(dataRef.current), read, meta);
+        update((d) => ({ ...d, ...receive(inboxOf(d), read, meta).state }));
+        return { id: r.id, ...(r.filedTo ? { filedTo: r.filedTo } : {}), ...(r.duplicate ? { duplicate: true } : {}) };
+      },
+      fileReceipt: (id, projectId) => update((d) => ({ ...d, ...fileItem(inboxOf(d), id, projectId, newId) })),
+      unfileReceipt: (id) => update((d) => ({ ...d, ...unfileItem(inboxOf(d), id) })),
+      ignoreReceipt: (id) => update((d) => ({ ...d, ...ignoreItem(inboxOf(d), id) })),
+      setJobCode: (projectId, code) => update((d) => ({
+        ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, code: code.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12) || codeOf(p) } : p)),
+      })),
       markAttendance: (eventId, memberId, a) => {
         const cur = dataRef.current;
         const ev = cur.events.find((e) => e.id === eventId);

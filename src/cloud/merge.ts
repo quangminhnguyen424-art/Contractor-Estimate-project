@@ -21,6 +21,7 @@ const LISTS: Record<string, (x: Item) => string> = {
   team: (x) => String(x.id),
   followups: (x) => String(x.estimateId),
   lessons: (x) => String(x.id),
+  inbox: (x) => String(x.id),
 };
 const VALUES = ['profile', 'presets', 'priceBook', 'customQuestions', 'connections', 'consent'] as const;
 

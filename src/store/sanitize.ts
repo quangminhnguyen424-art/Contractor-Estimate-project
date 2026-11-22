@@ -1,6 +1,7 @@
 // Checks saved or restored data before the app uses it, so a damaged or partial backup
 // can never crash the app (and can't lock the user out on every launch).
 import type { BuyItem, CostEntry, CostKind, PriceLesson, ProjectMoney, ReceiptLine } from '../engine/books';
+import type { InboxItem } from '../engine/inbox';
 import type { FollowUpPlan } from '../engine/followup';
 import type { Consent } from '../engine/legal';
 import type { AttendState, Attendance, TeamMember } from '../engine/team';
@@ -40,6 +41,8 @@ export interface Persisted {
   followups?: FollowUpPlan[];
   /** Prices learned from this contractor's own receipts. */
   lessons?: PriceLesson[];
+  /** Receipts that arrived (snapped, mailed in, from a store file): waiting for a job, filed, or set aside. */
+  inbox?: InboxItem[];
 }
 
 export const EMPTY: Persisted = {
@@ -358,6 +361,7 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
       ...(Array.isArray(raw.team) ? { team: sanitizeTeam(raw.team) } : {}),
       ...(Array.isArray(raw.followups) ? { followups: sanitizeFollowups(raw.followups) } : {}),
       ...(Array.isArray(raw.lessons) ? { lessons: sanitizeLessons(raw.lessons) } : {}),
+      ...(Array.isArray(raw.inbox) ? { inbox: sanitizeInbox(raw.inbox) } : {}),
     },
     dropped: estimatesIn.length - estimates.length + (pastIn.length - pastJobs.length),
   };
@@ -399,6 +403,36 @@ function sanitizeTerms(v: unknown): Terms | null {
 
 const PAY: PayMethod[] = ['check', 'cash', 'zelle', 'card', 'transfer', 'other'];
 const CO_STATUS: ChangeStatus[] = ['pending', 'approved', 'declined'];
+
+/** The receipts inbox. Only the known fields are kept: nothing about how a purchase was paid can ride along. */
+export function sanitizeInbox(v: unknown): InboxItem[] {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set<string>();
+  const kinds: CostKind[] = ['labor', 'materials', 'subs', 'equipment'];
+  return v.flatMap((x): InboxItem[] => {
+    if (!isObj(x) || typeof x.id !== 'string' || !x.id || seen.has(x.id)) return [];
+    const total = typeof x.total === 'number' && Number.isFinite(x.total) && Math.abs(x.total) <= 1e7 ? Math.round(x.total * 100) / 100 : null;
+    if (total === null || typeof x.vendor !== 'string') return [];
+    seen.add(x.id);
+    const lines = (Array.isArray(x.lines) ? x.lines : []).slice(0, 100).flatMap((l): ReceiptLine[] => (
+      isObj(l) && typeof l.name === 'string' && typeof l.total === 'number' && Number.isFinite(l.total)
+        ? [{ name: l.name.slice(0, 80), qty: num(l.qty, 1), unit: str(l.unit).slice(0, 12), total: l.total, ...(typeof l.buyId === 'string' ? { buyId: l.buyId } : {}) }] : []));
+    const status = x.status === 'filed' || x.status === 'ignored' ? x.status : 'new';
+    const filed = status === 'filed' && typeof x.projectId === 'string' && typeof x.costId === 'string';
+    return [{
+      id: x.id.slice(0, 80), kind: x.kind === 'photo' || x.kind === 'file' ? x.kind : 'email',
+      vendor: x.vendor.slice(0, 60), date: YMD.test(str(x.date)) ? str(x.date) : '', total, tax: Math.max(0, num(x.tax, 0)),
+      costKind: kinds.includes(x.costKind as CostKind) ? (x.costKind as CostKind) : 'materials',
+      ...(typeof x.receiptNo === 'string' && x.receiptNo ? { receiptNo: x.receiptNo.slice(0, 40) } : {}),
+      ...(typeof x.po === 'string' && x.po ? { po: x.po.slice(0, 40) } : {}),
+      lines, ...(typeof x.fileUri === 'string' && x.fileUri ? { fileUri: x.fileUri.slice(0, 500) } : {}),
+      // A "filed" item that lost its job or its cost is waiting again, never silently counted as done.
+      status: status === 'filed' && !filed ? 'new' : status,
+      ...(filed ? { projectId: x.projectId as string, costId: x.costId as string, ...(x.auto === true ? { auto: true } : {}) } : {}),
+      at: str(x.at, new Date().toISOString()),
+    }];
+  }).slice(0, 2000);
+}
 
 export function sanitizeContracts(v: unknown): Contract[] {
   if (!Array.isArray(v)) return [];
