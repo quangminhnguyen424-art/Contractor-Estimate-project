@@ -7,7 +7,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
-import { fileItem, ignoreItem, receive, receiveUnread, restoreItem, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
+import { fileItem, ignoreItem, receive, receiveUnread, restoreItem, settleInbox, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
 import { idsFrom } from '@/engine/mailIn';
 import { codeOf } from '@/engine/jobCode';
 import { laborToLearn } from '@/engine/learned';
@@ -251,7 +251,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [flush]);
 
   const update = useCallback((fn: (d: Persisted) => Persisted, opts?: { fromCloud?: boolean }) => {
-    const next = fn(dataRef.current);
+    const prev = dataRef.current;
+    let next = fn(prev);
+    // A cost or a job deleted anywhere in the app takes the "filed" mark off the receipt it came from.
+    if (next.inbox?.length && (next.projects !== prev.projects || next.inbox !== prev.inbox)) {
+      const inbox = settleInbox(next.inbox, next.projects);
+      if (inbox !== next.inbox) next = { ...next, inbox };
+    }
     // A change made here (not one that just arrived from the cloud) is what the next sync sends.
     if (!opts?.fromCloud) { changedRef.current = Date.now(); setChangedAt(changedRef.current); }
     // Keep the job type list in step with the contractor's own types and questions before anything renders.

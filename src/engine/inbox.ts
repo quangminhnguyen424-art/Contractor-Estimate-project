@@ -180,3 +180,20 @@ export function receiveUnread(s: InboxState, m: { id: string; at: string; from: 
   const item: InboxItem = { id: m.id, kind: 'email', vendor: (m.subject || m.from).slice(0, 60), date: '', total: 0, tax: 0, costKind: 'materials', lines: [], status: 'ignored', unread: true, at: m.at };
   return { ...s, inbox: [item, ...s.inbox] };
 }
+
+/**
+ * Keeps "filed" true: a filed receipt whose cost was deleted inside the job, or whose job was deleted, waits for a
+ * job again, so it is never shown as counted when it is not. Returns the same list when nothing had to change.
+ */
+export function settleInbox(inbox: InboxItem[], projects: SiteProject[]): InboxItem[] {
+  const costs = new Map(projects.map((p) => [p.id, new Set((p.money?.costs ?? []).map((c) => c.id))]));
+  let changed = false;
+  const out = inbox.map((x) => {
+    if (x.status !== 'filed' || (x.projectId && x.costId && costs.get(x.projectId)?.has(x.costId))) return x;
+    changed = true;
+    const { projectId, costId, auto, ...rest } = x;
+    void projectId; void costId; void auto;
+    return { ...rest, status: 'new' as const };
+  });
+  return changed ? out : inbox;
+}

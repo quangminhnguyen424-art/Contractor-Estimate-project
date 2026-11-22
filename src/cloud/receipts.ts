@@ -54,6 +54,8 @@ export async function drainMail(app: Taker): Promise<number> {
     }
     // Only now: a phone that stops halfway takes the same rows again next time, and the ids make that harmless.
     await supabase.from('receipt_mail').update({ taken_at: new Date().toISOString() }).in('id', data.map((r) => r.id as string));
+    // What was taken lives in the workspace now. The server's copy is kept a week for the account's other phones, then removed.
+    await supabase.from('receipt_mail').delete().lt('taken_at', new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString());
     return reads.length;
   } catch {
     return 0;

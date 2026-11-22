@@ -153,7 +153,7 @@ export default function Receipts() {
           {x.unread ? null : <Button kind="ghost" title="Put back" onPress={() => restoreReceipt(x.id)} />}
         </Card>
       ))}
-      <Muted style={{ fontSize: 13 }}>Only you and your team accounts see receipts. Studwise keeps what was bought and what it cost, never card or bank details.</Muted>
+      <Muted style={{ fontSize: 13 }}>Only you and your team accounts see receipts. Studwise keeps what was bought and what it cost, and reads nothing about the card or the bank into your records.</Muted>
     </Screen>
   );
 }

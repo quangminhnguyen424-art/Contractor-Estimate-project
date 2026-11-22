@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { emptyMoney, type ReceiptRead } from './books';
-import { fileItem, ignoreItem, inboxCounts, receive, samePurchase, unfileItem, type InboxState } from './inbox';
+import { fileItem, ignoreItem, inboxCounts, receive, samePurchase, settleInbox, unfileItem, type InboxState } from './inbox';
 import type { SiteProject } from './site';
 
 const proj = (id: string, address: string, over: Partial<SiteProject> = {}): SiteProject => ({
@@ -169,5 +169,29 @@ describe('the photo that came with a receipt', () => {
     expect(again.keptFile).toBe(false); // a second photo of a purchase already held is spare
     const mailFirst = receive(start([]), read({ receiptNo: '9' }), meta('m1', 'email'));
     expect(receive(mailFirst.state, read({ receiptNo: '9' }), { ...meta('m2', 'photo'), fileUri: 'photo-3' }).keptFile).toBe(true); // it had none: this one is kept
+  });
+});
+
+describe('a filed receipt whose cost is gone', () => {
+  const filed = () => receive(start([proj('a', '11752 20th Ave NE'), proj('b', '1241 SW Myrtle St')]), read({ po: '11752' }), meta('m1')).state;
+
+  it('waits for a job again when its cost was deleted in the job', () => {
+    const s = filed();
+    const gone = s.projects.map((p) => (p.id === 'a' ? { ...p, money: { ...p.money!, costs: [] } } : p));
+    const [x] = settleInbox(s.inbox, gone);
+    expect(x).toMatchObject({ id: 'm1', status: 'new' });
+    expect('projectId' in x || 'costId' in x || 'auto' in x).toBe(false);
+  });
+
+  it('waits for a job again when its job was deleted', () => {
+    const s = filed();
+    expect(settleInbox(s.inbox, s.projects.filter((p) => p.id !== 'a'))[0].status).toBe('new');
+  });
+
+  it('is left as it is while its cost is in the job, and the list is not rebuilt', () => {
+    const s = filed();
+    expect(settleInbox(s.inbox, s.projects)).toBe(s.inbox);
+    const waiting = receive(s, read({ date: '2026-11-21', total: 12 }), meta('m2')).state;
+    expect(settleInbox(waiting.inbox, waiting.projects)).toBe(waiting.inbox);
   });
 });
