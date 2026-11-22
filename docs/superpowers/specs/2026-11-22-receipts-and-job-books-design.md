@@ -79,8 +79,7 @@ Not a receipt (a promo, a shipping notice): saved as ignored, visible under "Not
 
 ### 4. Safety net without a bank: the store's purchase-history file
 Home Depot Pro Xtra lets the contractor download their purchase history (with job name / PO) as a file; Lowe's Pro
-and other stores are to be checked one by one. Where a store offers such a
-file. Under Me > Receipts, "Add a purchase-history file" reads it (CSV or PDF) the same way as a receipt. Purchases
+and other stores are to be checked one by one. Under Me > Receipts, "Add a purchase-history file" reads it (CSV or PDF) the same way as a receipt. Purchases
 already held are skipped by the duplicate check; the rest land in the inbox. Once a month is enough to catch
 anything the emails missed. The file is the contractor's own purchase record, not bank data.
 
