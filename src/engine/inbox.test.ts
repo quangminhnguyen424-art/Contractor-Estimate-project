@@ -150,3 +150,24 @@ describe('filing by hand, moving and undoing', () => {
     expect(unfileItem(s, 'm1')).toBe(s);
   });
 });
+
+describe('putting a set-aside receipt back', () => {
+  it('makes it wait for a job again', async () => {
+    const { restoreItem } = await import('./inbox');
+    const s0 = receive(start([proj('a', '11752 20th Ave NE')]), read(), meta('m1')).state;
+    const s = restoreItem(ignoreItem(s0, 'm1'), 'm1');
+    expect(s.inbox[0].status).toBe('new');
+    expect(restoreItem(s0, 'm1')).toBe(s0); // only a set-aside one changes
+  });
+});
+
+describe('the photo that came with a receipt', () => {
+  it('is reported as kept only when an item now points at it', () => {
+    const first = receive(start([proj('a', '11752 20th Ave NE')]), read({ receiptNo: '9' }), { ...meta('m1', 'photo'), fileUri: 'photo-1' });
+    expect(first.keptFile).toBe(true);
+    const again = receive(first.state, read({ receiptNo: '9' }), { ...meta('m2', 'photo'), fileUri: 'photo-2' });
+    expect(again.keptFile).toBe(false); // a second photo of a purchase already held is spare
+    const mailFirst = receive(start([]), read({ receiptNo: '9' }), meta('m1', 'email'));
+    expect(receive(mailFirst.state, read({ receiptNo: '9' }), { ...meta('m2', 'photo'), fileUri: 'photo-3' }).keptFile).toBe(true); // it had none: this one is kept
+  });
+});

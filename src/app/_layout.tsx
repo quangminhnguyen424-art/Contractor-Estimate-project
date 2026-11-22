@@ -163,6 +163,7 @@ function RootStack() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="questions" options={{ title: 'Check the details' }} />
         <Stack.Screen name="work" options={{ title: 'Work for this job' }} />
+        <Stack.Screen name="receipts" options={{ title: 'Receipts' }} />
         <Stack.Screen name="job/[id]" options={{ title: 'Job' }} />
         <Stack.Screen name="estimate/[id]/index" options={{ title: 'Price details' }} />
         <Stack.Screen name="estimate/[id]/quote" options={{ title: 'Client quote' }} />

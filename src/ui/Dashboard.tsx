@@ -1,4 +1,5 @@
 import { useLanguage } from '@/i18n';
+import { inboxCounts } from '@/engine/inbox';
 import { dateLocale } from '@/engine/locale';
 import { dailyCheckIn } from '@/engine/pm';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -27,7 +28,7 @@ const showJobs = (show: 'all' | 'quote' | 'active') => router.push(`/jobs?show=$
 
 export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
   useLanguage(); // dates on this screen are written here, so redraw when the language changes
-  const { profile, events, contracts, estimates, projects, team = [], followups = [] } = useApp();
+  const { profile, events, contracts, estimates, projects, team = [], followups = [], inbox = [] } = useApp();
   const today = useToday();
   const first = (profile?.contactName ?? '').trim().split(/\s+/)[0];
   const hour = new Date().getHours();
@@ -53,7 +54,10 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
   // One list of what needs you today: Studwise's check-ins first, then today's (or the next) appointments.
   const [allItems, setAllItems] = useState(false);
+  const receiptsWaiting = inboxCounts(inbox).waiting;
   const rows: Row[] = [
+    ...(receiptsWaiting ? [{ id: 'receipts', icon: 'receipt-outline' as IconName, color: C.accent, action: 'Sort', route: '/receipts',
+      title: receiptsWaiting === 1 ? '1 receipt needs a job' : `${receiptsWaiting} receipts need a job` }] : []),
     ...checkIns.map((c) => ({ id: c.id, icon: c.icon as IconName, color: C.accent, title: c.text, action: c.action, route: c.route })),
     ...[...todays, ...nextUp].map((e) => ({
       id: e.id, icon: 'calendar' as IconName, color: KINDS[e.kind].color, title: e.title, route: `/event?id=${e.id}`,

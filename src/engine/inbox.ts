@@ -128,12 +128,25 @@ export function ignoreItem(s: InboxState, id: string): InboxState {
   return setItem(unfileItem(s, id), id, (x) => ({ ...x, status: 'ignored' }));
 }
 
+/** Puts a set-aside item back in line for a job. */
+export function restoreItem(s: InboxState, id: string): InboxState {
+  return s.inbox.some((x) => x.id === id && x.status === 'ignored') ? setItem(s, id, (x) => ({ ...x, status: 'new' })) : s;
+}
+
 /**
  * A receipt arrives. One already held is not added again; if the one held is still waiting and this copy knows more
  * (the items, the job name), it is filled in, and filed when that names a job. A new one whose job name is exactly a
  * job's code is filed by Studwise; any other waits.
  */
 export function receive(
+  s: InboxState, read: ReceiptRead, meta: { id: string; kind: InboxItem['kind']; at: string; fileUri?: string; newId: () => string },
+): { state: InboxState; id: string; filedTo?: string; duplicate?: boolean; keptFile: boolean } {
+  const r = receiveItem(s, read, meta);
+  // A photo nobody points at (a second copy of a purchase already held) is spare: the caller may delete it.
+  return { ...r, keptFile: !!meta.fileUri && r.state.inbox.some((x) => x.fileUri === meta.fileUri) };
+}
+
+function receiveItem(
   s: InboxState, read: ReceiptRead, meta: { id: string; kind: InboxItem['kind']; at: string; fileUri?: string; newId: () => string },
 ): { state: InboxState; id: string; filedTo?: string; duplicate?: boolean } {
   const item: InboxItem = {

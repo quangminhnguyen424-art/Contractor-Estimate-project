@@ -7,7 +7,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { applyMarkup, buildEstimate } from '@/engine/estimator';
 import { newId } from '@/engine/format';
 import { jobType, setCustomJobs } from '@/engine/jobTypes';
-import { fileItem, ignoreItem, receive, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
+import { fileItem, ignoreItem, receive, restoreItem, unfileItem, type InboxItem, type InboxState } from '@/engine/inbox';
 import { codeOf } from '@/engine/jobCode';
 import { laborToLearn } from '@/engine/learned';
 import { estimatePayload, type Connections, type HookEvent } from '@/engine/connect';
@@ -114,13 +114,15 @@ interface Ctx extends Persisted {
    * A receipt arrives in the inbox (snapped, mailed in, from a store file). Returns whether Studwise filed it to a job
    * by its job code, or already had this purchase. `id` is given for mail so two phones make the same item.
    */
-  addReceipt: (read: ReceiptRead, kind: InboxItem['kind'], fileUri?: string, id?: string) => { id: string; filedTo?: string; duplicate?: boolean };
+  addReceipt: (read: ReceiptRead, kind: InboxItem['kind'], fileUri?: string, id?: string) => { id: string; filedTo?: string; duplicate?: boolean; keptFile: boolean };
   /** Files a receipt to a job, moving it if it was filed to another. */
   fileReceipt: (id: string, projectId: string) => void;
   /** Takes a filed receipt back out of its job: it waits in the inbox again. */
   unfileReceipt: (id: string) => void;
   /** Sets a receipt aside as not a job cost. */
   ignoreReceipt: (id: string) => void;
+  /** Puts a set-aside receipt back in line for a job. */
+  restoreReceipt: (id: string) => void;
   /** Changes the code the crew gives at a store for this job. */
   setJobCode: (projectId: string, code: string) => void;
   /**
@@ -399,11 +401,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const meta = { id: id ?? newId(), kind, at: new Date().toISOString(), ...(fileUri ? { fileUri } : {}), newId };
         const r = receive(inboxOf(dataRef.current), read, meta);
         update((d) => ({ ...d, ...receive(inboxOf(d), read, meta).state }));
-        return { id: r.id, ...(r.filedTo ? { filedTo: r.filedTo } : {}), ...(r.duplicate ? { duplicate: true } : {}) };
+        return { id: r.id, keptFile: r.keptFile, ...(r.filedTo ? { filedTo: r.filedTo } : {}), ...(r.duplicate ? { duplicate: true } : {}) };
       },
       fileReceipt: (id, projectId) => update((d) => ({ ...d, ...fileItem(inboxOf(d), id, projectId, newId) })),
       unfileReceipt: (id) => update((d) => ({ ...d, ...unfileItem(inboxOf(d), id) })),
       ignoreReceipt: (id) => update((d) => ({ ...d, ...ignoreItem(inboxOf(d), id) })),
+      restoreReceipt: (id) => update((d) => ({ ...d, ...restoreItem(inboxOf(d), id) })),
       setJobCode: (projectId, code) => update((d) => ({
         ...d, projects: d.projects.map((p) => (p.id === projectId ? { ...p, code: code.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12) || codeOf(p) } : p)),
       })),
