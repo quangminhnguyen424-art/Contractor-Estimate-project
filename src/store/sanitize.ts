@@ -5,6 +5,7 @@ import type { FollowUpPlan } from '../engine/followup';
 import type { Consent } from '../engine/legal';
 import type { AttendState, Attendance, TeamMember } from '../engine/team';
 import { isJobTypeId, jobType, setCustomJobs } from '../engine/jobTypes';
+import { sanitizeWork as sanitizePlannedWork } from '../engine/workPlan';
 import type { ChangeOrder, ChangeStatus, Contract, Invoice, PayMethod, Payment, Signature, Terms } from '../engine/contract';
 import { HOOK_EVENTS, NO_CONNECTIONS, validHookUrl, type Connections } from '../engine/connect';
 import type { CalEvent, EventKind } from '../engine/schedule';
@@ -296,6 +297,7 @@ function sanitizeEstimate(v: unknown): Estimate | null {
     description: str(e.description), scopeNote: str(e.scopeNote),
     aiNotes: Array.isArray(e.aiNotes) ? e.aiNotes.filter((x) => typeof x === 'string') : [],
     extras: sanitizeExtras(e.extras),
+    ...((w) => (w ? { work: w } : {}))(sanitizePlannedWork(e.work)),
     quoteEdits: sanitizeQuoteEdits(e.quoteEdits),
     priceEdits: sanitizePriceEdits(e.priceEdits),
     permit: sanitizePermit(e.permit),
@@ -339,7 +341,7 @@ export function sanitizePersisted(raw: unknown): SanitizeResult {
     data: {
       profile: sanitizeProfile(raw.profile),
       presets: sanitizePresets(raw.presets),
-      priceBook: { labor: numberMap(pb.labor), materials: numberMap(pb.materials) },
+      priceBook: { labor: numberMap(pb.labor), materials: numberMap(pb.materials), ...(typeof pb.hourly === 'number' && pb.hourly > 0 && pb.hourly <= 1000 ? { hourly: pb.hourly } : {}) },
       pastJobs,
       estimates,
       customTypes,

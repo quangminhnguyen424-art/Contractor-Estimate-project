@@ -1,4 +1,4 @@
-import { TRADE_NAMES } from './catalog';
+import { sectionName } from './catalog';
 import { hasDivisions, splitDivisions } from './divisions';
 import type { Check, Estimate } from './types';
 
@@ -60,7 +60,7 @@ export function setSectionPrices<T extends Priced>(e: T, wanted: Record<string, 
   const under = isQuick(e) ? [] : trades.filter((t) => edits[t.trade] && t.price < t.cost);
   const checks: Check[] = e.checks.filter((c) => c.id !== 'below-cost');
   if (under.length) {
-    checks.unshift({ id: 'below-cost', level: 'warn', title: `Priced below your cost: ${under.map((t) => TRADE_NAMES[t.trade]?.en ?? t.trade).join(', ')}`,
+    checks.unshift({ id: 'below-cost', level: 'warn', title: `Priced below your cost: ${under.map((t) => sectionName(t, 'en')).join(', ')}`,
       detail: 'A price you set on the quote is less than the labor and materials for that section.' });
   }
   const kept = Object.keys(edits).length ? edits : undefined;

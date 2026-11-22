@@ -23,7 +23,7 @@ import { wonToPastJobs } from './learning';
 import { DEFAULT_SCHEDULE, EMPTY, sanitizePersisted, type Persisted } from './sanitize';
 import type {
   Answers, CustomJobType, Estimate, EstimateMode, EstimateStatus, FinishLevel, JobTypeId, QuoteEdits, PastJob, PlanRoom, Presets, PriceBook, Profile,
-  Question, ScopeItem,
+  Question, ScopeItem, WorkSection,
 } from '@/engine/types';
 
 const KEY = 'estimating-app/v1';
@@ -46,6 +46,8 @@ export interface Draft {
   finish: FinishLevel;
   answers: Answers;
   customItems: ScopeItem[];
+  /** The work Studwise planned for this job (see engine/workPlan.ts). With it, the work list is what gets priced. */
+  work?: WorkSection[];
   heard: string[];
   markupPct?: number;
   /** Floor plan rooms (scanned or measured). */
@@ -239,7 +241,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const profile = base.profile!;
       const markupPct = d.markupPct ?? existing?.markupPct ?? profile.markupPct;
       const r = buildEstimate({
-        jobTypeId: d.jobTypeId, mode: d.mode, finish: d.finish, answers: d.answers, customItems: d.customItems,
+        jobTypeId: d.jobTypeId, mode: d.mode, finish: d.finish, answers: d.answers, customItems: d.customItems, work: d.work,
         markupPct, minMarkupPct: profile.minMarkupPct, salesTaxPct: profile.salesTaxPct,
         priceBook: base.priceBook, presets: base.presets, pastJobs: base.pastJobs,
       });
@@ -252,7 +254,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         status: existing?.status ?? 'draft', mode: d.mode, jobTypeId: d.jobTypeId,
         title: d.title.trim() || 'Untitled estimate', clientName: d.clientName.trim(), address: d.address.trim(),
         description: d.description.trim(), scopeNote: d.scopeNote.trim(), aiNotes: d.aiNotes ?? existing?.aiNotes ?? [], photos: d.photos, finish: d.finish, answers: d.answers,
-        customItems: d.customItems, markupPct, salesTaxPct: profile.salesTaxPct, ...r,
+        customItems: d.customItems, ...(d.work ? { work: d.work } : {}), markupPct, salesTaxPct: profile.salesTaxPct, ...r,
         plan: d.plan?.length ? d.plan : undefined,
         // Editing the job details re-prices it; the quote's own wording, the client's language and their notes stay.
         ...(existing?.quoteEdits ? { quoteEdits: existing.quoteEdits } : {}),

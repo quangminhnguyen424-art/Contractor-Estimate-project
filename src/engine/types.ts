@@ -40,7 +40,8 @@ export type MaterialCategory =
   | 'Paint'
   | 'Fixtures'
   | 'Roofing'
-  | 'Site & disposal';
+  | 'Site & disposal'
+  | 'Other materials';
 
 export interface Material {
   id: string;
@@ -136,6 +137,32 @@ export interface ScopeItem {
   qty: number;
 }
 
+/**
+ * One piece of work on a job Studwise planned for this job alone (engine/workPlan.ts).
+ * A price-book task (`assemblyId`) is priced from the contractor's own labor and material prices.
+ * Anything else is the contractor's labor cost per hour × `hours`, plus `materials` (what they cost the contractor).
+ */
+export interface WorkItem {
+  id: string;
+  assemblyId?: string;
+  name: string;
+  vi: string;
+  qty: number;
+  unit: string;
+  hours?: number;
+  materials?: number;
+  /** Where it came from: the contractor's notes, a photo, Studwise's judgment, or added by the contractor. */
+  from?: 'notes' | 'photo' | 'assumed' | 'you';
+}
+
+/** A stage of this job as it is written on the quote ("Demo & site cleanup", "Tile", "Plumbing"…). */
+export interface WorkSection {
+  key: string; // 's1', 's2'… stays the same when the job is re-priced, so wording and hand-set prices keep their place
+  title: string;
+  vi: string;
+  items: WorkItem[];
+}
+
 export interface JobType {
   id: JobTypeId;
   name: string;
@@ -159,6 +186,8 @@ export type Presets = Partial<Record<JobTypeId, Record<FinishLevel, number>>>;
 export interface PriceBook {
   labor: Record<string, number>; // assemblyId -> labor per unit override
   materials: Record<string, number>; // materialId -> price override
+  /** What an hour of labor costs the contractor, for work that is not in the price book. */
+  hourly?: number;
 }
 
 export interface PaymentMilestone {
@@ -217,15 +246,17 @@ export interface PastJob {
 }
 
 export interface EstimateLine {
-  assemblyId: string;
+  assemblyId: string; // a price-book task, or 'w:<id>' for work written for this job
   name: string;
   vi: string;
-  trade: Trade;
+  /** The section it is listed under: a trade, or a planned job's own section key ('s1'). */
+  trade: string;
   qty: number;
   unit: string;
   laborUnit: number;
   labor: number;
   materials: number; // allocated material cost (after purchase rounding)
+  hours?: number; // work written for this job: the labor hours behind `labor`
 }
 
 export interface MaterialLine {
@@ -240,7 +271,11 @@ export interface MaterialLine {
 }
 
 export interface TradeTotal {
-  trade: Trade;
+  /** Section key: a trade, 'general' (quick price), or a planned job's own section ('s1'). */
+  trade: string;
+  /** A planned job's own name for the section. Trades take theirs from the catalog. */
+  title?: string;
+  vi?: string;
   labor: number;
   materials: number;
   cost: number;
@@ -304,6 +339,8 @@ export interface Estimate {
   finish: FinishLevel;
   answers: Answers;
   customItems: ScopeItem[];
+  /** The work Studwise planned for this job, as the contractor left it. Estimates made from fixed questions have none. */
+  work?: WorkSection[];
   markupPct: number;
   salesTaxPct: number;
   extras: ExtraLine[];

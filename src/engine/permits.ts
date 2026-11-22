@@ -288,7 +288,9 @@ export function permitDescriptionPrompt(est: Estimate, items: PermitItem[], lear
   const size = est.comparison?.sizeSf > 0 ? ` (about ${est.comparison.sizeSf} SF)` : '';
   const byTrade = new Map<string, string[]>();
   for (const l of est.lines ?? []) if (l.qty > 0) byTrade.set(l.trade, [...(byTrade.get(l.trade) ?? []), `${l.name} (${l.qty} ${l.unit})`]);
-  const sections = [...byTrade].map(([t, ls]) => `- ${t}: ${ls.slice(0, 12).join('; ')}`).join('\n');
+  // A planned job's sections go by their own names ("Demo & site cleanup"), not their keys.
+  const titleOf = (t: string) => est.trades?.find((x) => x.trade === t)?.title ?? t;
+  const sections = [...byTrade].map(([t, ls]) => `- ${titleOf(t)}: ${ls.slice(0, 12).join('; ')}`).join('\n');
   return [
     'You are a Washington State general contractor filling in a building permit application.',
     `Job: ${name}${size}.`,

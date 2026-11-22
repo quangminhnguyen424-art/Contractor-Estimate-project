@@ -1,5 +1,6 @@
 import { isJobTypeId, JOB_TYPES, jobType } from './jobTypes';
 import type { Answers, AnswerValue, FinishLevel, JobTypeId } from './types';
+import { cleanPlan, planSystem, planUserText, type PlanRequest, type PlanResult } from './workPlan';
 
 /**
  * The AI layer.
@@ -59,6 +60,11 @@ export interface EstimatorAI {
   /** One-off writing task (step lists, translations, logs, posts). Rejects with a message the contractor can act on. */
   complete(prompt: string, images?: ImageInput[], maxTokens?: number): Promise<string>;
   parseScope(text: string, jobTypeId?: JobTypeId, images?: ImageInput[], ctx?: AiContext): Promise<ScopeResult>;
+  /**
+   * Plans one job: its own sections and items, from the notes, photos and size. Rejects when the AI is off, could not
+   * answer, or needs a measurement (NeedSizeError): there is no offline stand-in, a job is never priced from a template.
+   */
+  planJob(req: PlanRequest, images?: ImageInput[], ctx?: AiContext): Promise<PlanResult>;
   extractPastJob(text: string): Promise<PastJobResult>;
 }
 
@@ -140,12 +146,16 @@ export const sharingOffAI = (): EstimatorAI => ({
   ...demoAI,
   async complete() { throw new AiOffError(AI_OFF.sharing); },
   async chat() { throw new AiOffError(AI_OFF.sharing); },
+  async planJob() { throw new AiOffError(AI_OFF.sharing); },
 });
 
 /** Rule-based stand-in for Claude: pulls quantities out of a spoken or typed job description. */
 export const demoAI: EstimatorAI = {
   name: 'Demo AI (offline)',
   async complete() {
+    throw new AiOffError(AI_OFF.connect);
+  },
+  async planJob() {
     throw new AiOffError(AI_OFF.connect);
   },
   async chat() {
@@ -294,6 +304,9 @@ export function claudeAI(baseUrl: string): EstimatorAI {
       return post<{ text: string }>('/complete', { prompt, images: imgs, maxTokens })
         .then((r) => r.text)
         .catch(() => { throw new Error('Could not reach the AI server. Try again.'); });
+    },
+    async planJob() {
+      throw new AiOffError(AI_OFF.connect);
     },
     async parseScope(text, jobTypeId) {
       try {
@@ -461,6 +474,22 @@ function questionsFor(jobTypeId?: JobTypeId) {
 }
 
 const CLAUDE_TIMEOUT_MS = 60_000;
+/** Planning a whole job with photos is the longest answer the app asks for. */
+const PLAN_TIMEOUT_MS = 95_000;
+
+/** The plan from the AI's reply, with the answers to the contractor's own questions checked against those questions. */
+function planFromReply(reply: string, req: PlanRequest): PlanResult {
+  const plan = cleanPlan(parseReply(reply));
+  if (plan.work.length === 0) throw new Error('Studwise did not find any work to price in this job. Say more about what is being done, then try again.');
+  const own = new Set(jobType(req.jobTypeId).questions.filter((q) => q.custom).map((q) => q.id));
+  const answers = Object.fromEntries(Object.entries(cleanAnswers(req.jobTypeId, plan.answers)).filter(([k]) => own.has(k)));
+  return { ...plan, answers };
+}
+
+function planContextText(ctx?: AiContext): string {
+  // The plan has no "heard" list: only the notes are written in the contractor's language.
+  return contextText(ctx).replace('Write "heard" and "notes" in', 'Write "notes" in');
+}
 
 /**
  * How to reach Claude: the contractor's own API key, or (signed in to Studwise cloud) the Studwise server, which
@@ -468,16 +497,17 @@ const CLAUDE_TIMEOUT_MS = 60_000;
  */
 export type ClaudeAuth = string | { proxyUrl: string; anonKey: string; getToken: () => Promise<string | null> };
 
-async function callClaude(apiKey: ClaudeAuth, system: string, content: unknown[], maxTokens: number): Promise<string> {
-  return callClaudeTurns(apiKey, system, [{ role: 'user', content }], maxTokens);
+async function callClaude(apiKey: ClaudeAuth, system: string, content: unknown[], maxTokens: number, timeoutMs = CLAUDE_TIMEOUT_MS): Promise<string> {
+  return callClaudeTurns(apiKey, system, [{ role: 'user', content }], maxTokens, false, timeoutMs);
 }
 
 async function callClaudeTurns(
   apiKey: ClaudeAuth, system: string, messages: { role: 'user' | 'assistant'; content: unknown }[], maxTokens: number, keepPartial = false,
+  timeoutMs = CLAUDE_TIMEOUT_MS,
 ): Promise<string> {
   let res: Response;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const viaCloud = typeof apiKey !== 'string';
   try {
     if (viaCloud) {
@@ -555,6 +585,16 @@ export function directClaudeAI(apiKey: ClaudeAuth): EstimatorAI {
       ]);
       content.push({ type: 'text', text: prompt });
       return callClaude(apiKey, 'You help a construction contractor. Follow the reply format exactly.', content, maxTokens);
+    },
+    async planJob(req, images, ctx) {
+      const imgs = (images ?? []).slice(0, 8);
+      const content: unknown[] = imgs.flatMap((img, i) => [
+        { type: 'text', text: `${img.label ?? `Photo ${i + 1}`}:` },
+        { type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 } },
+      ]);
+      content.push({ type: 'text', text: planUserText(req, photoLine(imgs)) });
+      const reply = await callClaude(apiKey, planSystem(req.wantVi) + planContextText(ctx), content, 4000, PLAN_TIMEOUT_MS);
+      return planFromReply(reply, req);
     },
     async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);
@@ -636,7 +676,7 @@ function base64ToBlob(img: ImageInput): Blob {
 
 /** Claude built into claude.ai: no API key needed, it runs on the viewer's own Claude plan. */
 export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): EstimatorAI {
-  const ask = async (prompt: string, images?: ImageInput[]) => {
+  const ask = async (prompt: string, images?: ImageInput[], timeoutMs = CLAUDE_TIMEOUT_MS) => {
     const sample = await getSample();
     if (!sample) throw new Error('Claude is not available on this page.');
     let res: { text: string; truncated: boolean };
@@ -644,7 +684,7 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
       // The page's AI has no timeout of its own: without one a lost request leaves "Reading the job" up forever.
       res = await Promise.race([
         sample(prompt, images?.length ? { images: images.map(base64ToBlob) } : undefined),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Studwise took too long to answer. Try again.')), CLAUDE_TIMEOUT_MS)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Studwise took too long to answer. Try again.')), timeoutMs)),
       ]);
     } catch (e) {
       if (e instanceof Error && /took too long/.test(e.message)) throw e;
@@ -668,6 +708,11 @@ export function hostClaudeAI(getSample: () => Promise<SampleFn | null>): Estimat
       } catch (e) {
         throw new Error(sampleErrorMessage(e));
       }
+    },
+    async planJob(req, images, ctx) {
+      const imgs = (images ?? []).slice(0, 8);
+      const prompt = `${planSystem(req.wantVi)}${planContextText(ctx)}\n\n${planUserText(req, photoLine(imgs))}`;
+      return planFromReply(await ask(prompt, imgs, PLAN_TIMEOUT_MS), req);
     },
     async parseScope(text, jobTypeId, images, ctx) {
       const jt = jobTypeId ?? guessJobType(text);

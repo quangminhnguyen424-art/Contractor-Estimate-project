@@ -2,7 +2,7 @@ import { DIVISIONS, hasDivisions } from './divisions';
 import { sectionPrices } from './sectionPrice';
 import { logoHtml, payHtml } from './brand';
 import { fillNotice } from './legal';
-import { TRADE_NAMES } from './catalog';
+import { sectionName } from './catalog';
 import { dateFmt, money, qtyFmt } from './format';
 import { planSvg, planTotals } from './floorplan';
 import { estimateJob, FINISH_LABELS, qtyWithUnit } from './jobTypes';
@@ -98,10 +98,10 @@ export function baseSections(est: Estimate, lang: Lang): QuoteSection[] {
   }
   const tradeSections: QuoteSection[] = est.trades.map((t) => ({
     trade: t.trade,
-    title: TRADE_NAMES[t.trade][lang],
+    title: sectionName(t, lang),
     items: est.lines.filter((l) => l.trade === t.trade).map((l) => {
       const label = lang === 'vi' ? l.vi : l.name;
-      return l.unit === 'EA' && l.qty === 1 ? label : `${label} (${qtyFmt(l.qty)} ${l.unit})`;
+      return (l.unit === 'EA' || l.unit === 'LS') && l.qty === 1 ? label : `${label} (${qtyFmt(l.qty)} ${l.unit})`;
     }),
     price: t.price,
   }));

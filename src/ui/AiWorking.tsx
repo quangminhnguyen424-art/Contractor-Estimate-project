@@ -11,7 +11,7 @@ import { MONO, Text } from './text';
 export interface WorkJob {
   title: string;
   steps: string[];
-  /** How long the show runs (3–8 s). If the real work takes longer, it waits at the last step. */
+  /** How long the show runs (3–8 s; longer when the AI plans a whole job). If the real work takes longer, it waits at the last step. */
   ms: number;
 }
 

@@ -1,7 +1,10 @@
-import type { Assembly, Material, Trade } from './types';
+import type { Assembly, Lang, Material, Trade } from './types';
 
 // Default prices are typical Seattle-area big-box retail (Oct 2026), pre-tax.
 // Every contractor can override any price or labor rate in their Price Book.
+// Nov 2026: labor rates and the materials named on them were re-based on real Seattle-Tacoma contractor quotes
+// (a whole-house interior remodel, an ADU conversion, a re-roof, a new DADU, a temple build-out, a condo refresh).
+// A labor rate here is the quoted price to the client ÷ 1.20, so the default 20% markup lands on the quoted price.
 
 export const MATERIALS: Material[] = [
   // Lumber & framing
@@ -13,7 +16,7 @@ export const MATERIALS: Material[] = [
   { id: 'pa_pins', name: 'Powder-actuated pins + loads (100)', unit: 'set', price: 38, category: 'Lumber & framing' },
 
   // Drywall
-  { id: 'drywall_sheet', name: '1/2" drywall 4x8', unit: 'sheet', price: 16.5, category: 'Drywall' },
+  { id: 'drywall_sheet', name: '1/2" drywall 4x8', unit: 'sheet', price: 18, category: 'Drywall' },
   { id: 'drywall_mr_sheet', name: '1/2" moisture-resistant drywall 4x8', unit: 'sheet', price: 21, category: 'Drywall' },
   { id: 'insulation_r15', name: 'R-15 batt insulation (bag, ~60 SF)', unit: 'bag', price: 65, category: 'Drywall' },
   { id: 'drywall_screws', name: '1-1/4" drywall screws, 5 lb', unit: 'box', price: 28, category: 'Drywall' },
@@ -63,13 +66,13 @@ export const MATERIALS: Material[] = [
   { id: 'elec_misc', name: 'Wire nuts, staples, clamps', unit: 'lot', price: 30, category: 'Electrical' },
 
   // Ventilation
-  { id: 'bath_fan', name: 'Bath exhaust fan, 80 CFM', unit: 'ea', price: 110, category: 'Ventilation' },
+  { id: 'bath_fan', name: 'Bath exhaust fan, 80 CFM', unit: 'ea', price: 150, category: 'Ventilation' },
   { id: 'fan_duct_kit', name: '4" duct + wall cap (bath fan)', unit: 'set', price: 35, category: 'Ventilation' },
   { id: 'hood_duct_kit', name: '6" range hood duct, elbows + wall cap', unit: 'set', price: 66, category: 'Ventilation' },
   { id: 'dryer_vent_kit', name: '4" rigid dryer duct + wall vent', unit: 'set', price: 46, category: 'Ventilation' },
 
   // Tile & flooring
-  { id: 'tile', name: 'Porcelain tile', unit: 'SF', price: 2.75, category: 'Tile & flooring', finishSensitive: true },
+  { id: 'tile', name: 'Porcelain tile', unit: 'SF', price: 5, category: 'Tile & flooring', finishSensitive: true },
   { id: 'thinset', name: 'Modified thinset, 50 lb', unit: 'bag', price: 28, category: 'Tile & flooring' },
   { id: 'grout', name: 'Grout, 25 lb', unit: 'bag', price: 24, category: 'Tile & flooring' },
   { id: 'leveler', name: 'Self-leveler, 50 lb', unit: 'bag', price: 42, category: 'Tile & flooring' },
@@ -78,35 +81,35 @@ export const MATERIALS: Material[] = [
   { id: 'membrane', name: 'Waterproofing membrane', unit: 'SF', price: 2.2, category: 'Tile & flooring' },
   { id: 'shower_pan_kit', name: 'Shower pan kit (sloped pan, curb, drain)', unit: 'kit', price: 380, category: 'Tile & flooring', finishSensitive: true },
   { id: 'uncoupling', name: 'Uncoupling membrane (tile over wood subfloor)', unit: 'SF', price: 1.9, category: 'Tile & flooring' },
-  { id: 'lvp', name: 'Luxury vinyl plank (LVP)', unit: 'SF', price: 3.2, category: 'Tile & flooring', finishSensitive: true },
+  { id: 'lvp', name: 'Luxury vinyl plank (LVP)', unit: 'SF', price: 2.75, category: 'Tile & flooring', finishSensitive: true },
   { id: 'transition', name: 'Transition strip', unit: 'ea', price: 22, category: 'Tile & flooring' },
 
   // Cabinets & counters
-  { id: 'cabinet_lf', name: 'Kitchen cabinets (per LF)', unit: 'LF', price: 250, category: 'Cabinets & counters', finishSensitive: true },
+  { id: 'cabinet_lf', name: 'Kitchen cabinets (per LF)', unit: 'LF', price: 275, category: 'Cabinets & counters', finishSensitive: true },
   { id: 'countertop_sf', name: 'Countertop, fabricated + installed', unit: 'SF', price: 75, category: 'Cabinets & counters', finishSensitive: true },
 
   // Doors & trim
   { id: 'door_30', name: '30" prehung interior door', unit: 'ea', price: 135, category: 'Doors & trim', finishSensitive: true },
   { id: 'bifold', name: 'Bifold door', unit: 'ea', price: 95, category: 'Doors & trim', finishSensitive: true },
-  { id: 'knob', name: 'Door knob set', unit: 'ea', price: 22, category: 'Doors & trim', finishSensitive: true },
-  { id: 'casing', name: 'Door casing, primed MDF', unit: 'LF', price: 1.15, category: 'Doors & trim' },
-  { id: 'baseboard', name: 'Baseboard, primed MDF', unit: 'LF', price: 1.3, category: 'Doors & trim' },
+  { id: 'knob', name: 'Door knob set', unit: 'ea', price: 30, category: 'Doors & trim', finishSensitive: true },
+  { id: 'casing', name: 'Door casing, primed MDF', unit: 'LF', price: 1.25, category: 'Doors & trim' },
+  { id: 'baseboard', name: 'Baseboard, primed MDF', unit: 'LF', price: 1.5, category: 'Doors & trim' },
   { id: 'shims', name: 'Door shims', unit: 'bundle', price: 5, category: 'Doors & trim' },
   { id: 'finish_nails', name: 'Finish nails', unit: 'box', price: 14, category: 'Doors & trim' },
 
   // Paint
   { id: 'primer', name: 'PVA drywall primer', unit: 'gal', price: 18, category: 'Paint' },
-  { id: 'paint_5gal', name: 'Wall paint, 5 gal', unit: 'bucket', price: 165, category: 'Paint', finishSensitive: true },
+  { id: 'paint_5gal', name: 'Wall paint, 5 gal', unit: 'bucket', price: 225, category: 'Paint', finishSensitive: true },
   { id: 'caulk', name: 'Paintable caulk', unit: 'tube', price: 5.5, category: 'Paint' },
 
   // Fixtures (contractor-supplied)
-  { id: 'toilet', name: 'Toilet', unit: 'ea', price: 280, category: 'Fixtures', finishSensitive: true },
+  { id: 'toilet', name: 'Toilet', unit: 'ea', price: 200, category: 'Fixtures', finishSensitive: true },
   { id: 'vanity', name: 'Vanity with top', unit: 'ea', price: 450, category: 'Fixtures', finishSensitive: true },
   { id: 'faucet', name: 'Faucet', unit: 'ea', price: 150, category: 'Fixtures', finishSensitive: true },
   { id: 'shower_stall', name: 'Shower stall 3x3', unit: 'ea', price: 650, category: 'Fixtures', finishSensitive: true },
-  { id: 'shower_trim', name: 'Shower trim kit', unit: 'ea', price: 180, category: 'Fixtures', finishSensitive: true },
+  { id: 'shower_trim', name: 'Shower trim kit', unit: 'ea', price: 205, category: 'Fixtures', finishSensitive: true },
   { id: 'tub', name: 'Bathtub, 60"', unit: 'ea', price: 450, category: 'Fixtures', finishSensitive: true },
-  { id: 'kitchen_sink', name: 'Kitchen sink', unit: 'ea', price: 250, category: 'Fixtures', finishSensitive: true },
+  { id: 'kitchen_sink', name: 'Kitchen sink', unit: 'ea', price: 350, category: 'Fixtures', finishSensitive: true },
 
   // Site & disposal
   { id: 'haul_load', name: 'Dump / haul-off', unit: 'load', price: 350, category: 'Site & disposal' },
@@ -140,9 +143,9 @@ const m = (materialId: string, perUnit: number) => ({ materialId, perUnit });
 export const ASSEMBLIES: Assembly[] = [
   // Demo
   { id: 'demo_wall', name: 'Remove interior wall', vi: 'Phá dỡ tường', trade: 'demo', unit: 'LF', labor: 25, materials: [m('haul_load', 0.04)] },
-  { id: 'demo_bath', name: 'Bathroom demolition', vi: 'Phá dỡ phòng tắm', trade: 'demo', unit: 'EA', labor: 1200, materials: [m('haul_load', 1)] },
-  { id: 'demo_kitchen', name: 'Kitchen demolition', vi: 'Phá dỡ bếp', trade: 'demo', unit: 'EA', labor: 1800, materials: [m('haul_load', 1.5)] },
-  { id: 'demo_floor', name: 'Remove existing flooring', vi: 'Gỡ sàn cũ', trade: 'demo', unit: 'SF', labor: 2, materials: [m('haul_load', 0.003)] },
+  { id: 'demo_bath', name: 'Bathroom demolition', vi: 'Phá dỡ phòng tắm', trade: 'demo', unit: 'EA', labor: 750, materials: [m('haul_load', 1)] },
+  { id: 'demo_kitchen', name: 'Kitchen demolition', vi: 'Phá dỡ bếp', trade: 'demo', unit: 'EA', labor: 1000, materials: [m('haul_load', 1)] },
+  { id: 'demo_floor', name: 'Remove existing flooring', vi: 'Gỡ sàn cũ', trade: 'demo', unit: 'SF', labor: 0.85, materials: [m('haul_load', 0.0015)] },
 
   // Framing
   { id: 'frame_wall', name: 'Frame new interior wall (8 ft)', vi: 'Dựng khung tường mới (8 ft)', trade: 'framing', unit: 'LF', labor: 40,
@@ -153,9 +156,9 @@ export const ASSEMBLIES: Assembly[] = [
     materials: [m('header_2x6x8', 1), m('stud_2x4x8', 2)] },
 
   // Drywall
-  { id: 'drywall_hang', name: 'Hang drywall, new wall (both sides)', vi: 'Lắp thạch cao tường mới (hai mặt)', trade: 'drywall', unit: 'LF', labor: 33,
+  { id: 'drywall_hang', name: 'Hang drywall, new wall (both sides)', vi: 'Lắp thạch cao tường mới (hai mặt)', trade: 'drywall', unit: 'LF', labor: 27.5,
     materials: [m('drywall_sheet', 0.55), m('drywall_screws', 0.025)] },
-  { id: 'drywall_finish', name: 'Tape, mud and texture, new wall', vi: 'Băng keo, trét và tạo vân tường mới', trade: 'drywall', unit: 'LF', labor: 55,
+  { id: 'drywall_finish', name: 'Tape, mud and texture, new wall', vi: 'Băng keo, trét và tạo vân tường mới', trade: 'drywall', unit: 'LF', labor: 46,
     materials: [m('joint_compound', 0.065), m('paper_tape', 0.065), m('corner_bead', 0.18)] },
   { id: 'drywall_wet_room', name: 'Moisture-resistant drywall, bathroom', vi: 'Thạch cao chống ẩm phòng tắm', trade: 'drywall', unit: 'EA', labor: 450,
     materials: [m('drywall_mr_sheet', 8), m('drywall_screws', 0.3), m('joint_compound', 0.5), m('paper_tape', 0.5)] },
@@ -163,20 +166,20 @@ export const ASSEMBLIES: Assembly[] = [
     materials: [m('drywall_sheet', 0.5), m('joint_compound', 0.25), m('paper_tape', 0.2)] },
 
   // Plumbing
-  { id: 'plumb_shower', name: 'Shower drain, valve and supply', vi: 'Ống thoát, van và cấp nước vòi sen', trade: 'plumbing', unit: 'EA', labor: 1300,
+  { id: 'plumb_shower', name: 'Shower drain, valve and supply', vi: 'Ống thoát, van và cấp nước vòi sen', trade: 'plumbing', unit: 'EA', labor: 1460,
     materials: [m('abs_2', 1), m('abs_fittings', 1), m('pex_fittings', 1), m('pex_half', 0.2), m('shower_valve', 1), m('ptrap_2', 1), m('abs_cement', 0.25)] },
   { id: 'plumb_tub', name: 'Tub drain, valve and supply', vi: 'Ống thoát, van và cấp nước bồn tắm', trade: 'plumbing', unit: 'EA', labor: 1100,
     materials: [m('abs_15', 1), m('abs_fittings', 1), m('pex_fittings', 1), m('pex_half', 0.2), m('shower_valve', 1), m('abs_cement', 0.25)] },
-  { id: 'plumb_toilet', name: 'Toilet drain and supply (new location)', vi: 'Ống thoát và cấp nước bồn cầu (vị trí mới)', trade: 'plumbing', unit: 'EA', labor: 800,
+  { id: 'plumb_toilet', name: 'Toilet drain and supply (new location)', vi: 'Ống thoát và cấp nước bồn cầu (vị trí mới)', trade: 'plumbing', unit: 'EA', labor: 915,
     materials: [m('abs_3', 1), m('abs_fittings', 1), m('pex_fittings', 0.5), m('pex_half', 0.1), m('closet_flange', 1), m('abs_cement', 0.25)] },
-  { id: 'plumb_vanity', name: 'Vanity drain and supply (new location)', vi: 'Ống thoát và cấp nước lavabo (vị trí mới)', trade: 'plumbing', unit: 'EA', labor: 700,
+  { id: 'plumb_vanity', name: 'Vanity drain and supply (new location)', vi: 'Ống thoát và cấp nước lavabo (vị trí mới)', trade: 'plumbing', unit: 'EA', labor: 790,
     materials: [m('abs_15', 0.5), m('abs_fittings', 1), m('pex_fittings', 1), m('pex_half', 0.1), m('abs_cement', 0.25)] },
-  { id: 'plumb_kitchen_sink', name: 'Kitchen sink drain and supply', vi: 'Ống thoát và cấp nước bồn rửa bếp', trade: 'plumbing', unit: 'EA', labor: 800,
+  { id: 'plumb_kitchen_sink', name: 'Kitchen sink drain and supply', vi: 'Ống thoát và cấp nước bồn rửa bếp', trade: 'plumbing', unit: 'EA', labor: 915,
     materials: [m('abs_15', 1), m('abs_fittings', 1), m('pex_fittings', 1), m('pex_half', 0.2), m('aav', 1), m('abs_cement', 0.25)] },
   { id: 'plumb_dishwasher', name: 'Dishwasher hookup', vi: 'Đấu nối máy rửa chén', trade: 'plumbing', unit: 'EA', labor: 250, materials: [m('angle_stop', 1)] },
-  { id: 'plumb_washer', name: 'Washer box, drain and supply', vi: 'Hộp máy giặt, ống thoát và cấp nước', trade: 'plumbing', unit: 'EA', labor: 700,
+  { id: 'plumb_washer', name: 'Washer box, drain and supply', vi: 'Hộp máy giặt, ống thoát và cấp nước', trade: 'plumbing', unit: 'EA', labor: 790,
     materials: [m('washer_box', 1), m('abs_2', 1), m('abs_fittings', 1), m('pex_fittings', 1), m('pex_half', 0.1), m('ptrap_2', 1)] },
-  { id: 'plumb_icemaker', name: 'Ice maker line for fridge', vi: 'Đường nước tủ lạnh làm đá', trade: 'plumbing', unit: 'EA', labor: 300,
+  { id: 'plumb_icemaker', name: 'Ice maker line for fridge', vi: 'Đường nước tủ lạnh làm đá', trade: 'plumbing', unit: 'EA', labor: 335,
     materials: [m('icemaker_box', 1), m('pex_fittings', 0.5)] },
   { id: 'plumb_supply_run', name: 'Water supply run from source', vi: 'Đường cấp nước chính', trade: 'plumbing', unit: 'LF', labor: 12,
     materials: [m('pex_34', 0.02), m('pex_half', 0.02)] },
@@ -184,7 +187,7 @@ export const ASSEMBLIES: Assembly[] = [
     materials: [m('concrete_80', 0.6), m('gravel_50', 0.3), m('abs_3', 0.1)] },
   { id: 'install_toilet', name: 'Set toilet', vi: 'Lắp bồn cầu', trade: 'fixtures', unit: 'EA', labor: 200, materials: [m('wax_ring', 1), m('angle_stop', 1)] },
   { id: 'install_vanity', name: 'Install vanity and faucet', vi: 'Lắp lavabo và vòi', trade: 'fixtures', unit: 'EA', labor: 350, materials: [m('trap_15', 1), m('angle_stop', 2)] },
-  { id: 'install_shower_stall', name: 'Install shower stall', vi: 'Lắp buồng tắm đứng', trade: 'fixtures', unit: 'EA', labor: 500, materials: [] },
+  { id: 'install_shower_stall', name: 'Install shower stall', vi: 'Lắp buồng tắm đứng', trade: 'fixtures', unit: 'EA', labor: 415, materials: [] },
   { id: 'install_sink', name: 'Install kitchen sink and faucet', vi: 'Lắp bồn rửa và vòi bếp', trade: 'fixtures', unit: 'EA', labor: 300, materials: [m('trap_15', 1), m('angle_stop', 2)] },
 
   // Fixtures supplied by contractor (no labor; install is separate)
@@ -200,7 +203,7 @@ export const ASSEMBLIES: Assembly[] = [
   { id: 'elec_run_63', name: '6/3 wire run for range', vi: 'Dây 6/3 cho bếp', trade: 'electrical', unit: 'LF', labor: 2, materials: [m('wire_63', 1)] },
   { id: 'elec_dryer_30a', name: '30A dryer circuit', vi: 'Mạch điện máy sấy 30A', trade: 'electrical', unit: 'EA', labor: 450, materials: [m('breaker_30', 1), m('recept_1430', 1)] },
   { id: 'elec_run_103', name: '10/3 wire run for dryer', vi: 'Dây 10/3 cho máy sấy', trade: 'electrical', unit: 'LF', labor: 1.5, materials: [m('wire_103', 1)] },
-  { id: 'elec_light', name: 'Add light (recessed LED)', vi: 'Thêm đèn (LED âm trần)', trade: 'electrical', unit: 'EA', labor: 120, materials: [m('wafer_light', 1), m('wire_142', 0.1)] },
+  { id: 'elec_light', name: 'Add light (recessed LED)', vi: 'Thêm đèn (LED âm trần)', trade: 'electrical', unit: 'EA', labor: 100, materials: [m('wafer_light', 1), m('wire_142', 0.1)] },
   { id: 'elec_switch', name: 'Add or move switch', vi: 'Thêm hoặc dời công tắc', trade: 'electrical', unit: 'EA', labor: 90,
     materials: [m('box_1g', 1), m('switch_sp', 1), m('cover_plate', 1), m('wire_142', 0.04)] },
   { id: 'elec_outlet', name: 'Add outlet', vi: 'Thêm ổ cắm', trade: 'electrical', unit: 'EA', labor: 85,
@@ -218,7 +221,7 @@ export const ASSEMBLIES: Assembly[] = [
   // Ventilation
   { id: 'vent_bath_fan', name: 'Bath exhaust fan, vented outside', vi: 'Quạt hút phòng tắm, thoát ra ngoài', trade: 'ventilation', unit: 'EA', labor: 250,
     materials: [m('bath_fan', 1), m('fan_duct_kit', 1), m('switch_sp', 1), m('box_1g', 1), m('cover_plate', 1), m('wire_142', 0.1)] },
-  { id: 'vent_range_hood', name: 'Range hood vent to exterior', vi: 'Ống thoát máy hút mùi ra ngoài', trade: 'ventilation', unit: 'EA', labor: 500, materials: [m('hood_duct_kit', 1)] },
+  { id: 'vent_range_hood', name: 'Range hood vent to exterior', vi: 'Ống thoát máy hút mùi ra ngoài', trade: 'ventilation', unit: 'EA', labor: 415, materials: [m('hood_duct_kit', 1)] },
   { id: 'vent_dryer', name: 'Dryer vent to exterior', vi: 'Ống thoát máy sấy ra ngoài', trade: 'ventilation', unit: 'EA', labor: 200, materials: [m('dryer_vent_kit', 1)] },
 
   // Tile & flooring
@@ -230,30 +233,30 @@ export const ASSEMBLIES: Assembly[] = [
     materials: [m('shower_pan_kit', 1), m('thinset', 0.3)] },
   { id: 'tile_underlayment', name: 'Uncoupling membrane under tile (wood subfloor)', vi: 'Màng lót dưới gạch (sàn gỗ)', trade: 'tile', unit: 'SF', labor: 2,
     materials: [m('uncoupling', 1.05), m('thinset', 0.02)] },
-  { id: 'tile_backsplash', name: 'Tile backsplash', vi: 'Ốp gạch tường bếp', trade: 'tile', unit: 'SF', labor: 16,
+  { id: 'tile_backsplash', name: 'Tile backsplash', vi: 'Ốp gạch tường bếp', trade: 'tile', unit: 'SF', labor: 50,
     materials: [m('tile', 1.1), m('thinset', 0.02), m('grout', 0.015)] },
-  { id: 'lvp_floor', name: 'LVP floor', vi: 'Sàn vinyl LVP', trade: 'tile', unit: 'SF', labor: 3, materials: [m('lvp', 1.08)] },
+  { id: 'lvp_floor', name: 'LVP floor', vi: 'Sàn vinyl LVP', trade: 'tile', unit: 'SF', labor: 3.15, materials: [m('lvp', 1.08)] },
   { id: 'floor_transition', name: 'Floor transition strip', vi: 'Nẹp chuyển sàn', trade: 'tile', unit: 'EA', labor: 25, materials: [m('transition', 1)] },
 
   // Cabinets & counters
-  { id: 'cabinet_install', name: 'Install cabinets', vi: 'Lắp tủ', trade: 'cabinets', unit: 'LF', labor: 150, materials: [] },
+  { id: 'cabinet_install', name: 'Install cabinets', vi: 'Lắp tủ', trade: 'cabinets', unit: 'LF', labor: 125, materials: [] },
   { id: 'cabinet_supply', name: 'Cabinets (supplied)', vi: 'Tủ bếp (cung cấp)', trade: 'cabinets', unit: 'LF', labor: 0, materials: [m('cabinet_lf', 1)] },
   { id: 'countertop', name: 'Countertops, fabricated and installed', vi: 'Mặt bàn, gia công và lắp đặt', trade: 'cabinets', unit: 'SF', labor: 0, materials: [m('countertop_sf', 1)] },
 
   // Carpentry
-  { id: 'door_interior', name: 'Install 30" prehung door with trim', vi: 'Lắp cửa 30" kèm khung và nẹp', trade: 'carpentry', unit: 'EA', labor: 250,
+  { id: 'door_interior', name: 'Install 30" prehung door with trim', vi: 'Lắp cửa 30" kèm khung và nẹp', trade: 'carpentry', unit: 'EA', labor: 167,
     materials: [m('door_30', 1), m('knob', 1), m('casing', 34), m('shims', 0.3), m('finish_nails', 0.1)] },
   { id: 'door_bifold', name: 'Install bifold door with trim', vi: 'Lắp cửa xếp kèm nẹp', trade: 'carpentry', unit: 'EA', labor: 180,
     materials: [m('bifold', 1), m('casing', 17), m('finish_nails', 0.05)] },
-  { id: 'baseboard', name: 'Baseboard', vi: 'Len chân tường', trade: 'carpentry', unit: 'LF', labor: 3,
+  { id: 'baseboard', name: 'Baseboard', vi: 'Len chân tường', trade: 'carpentry', unit: 'LF', labor: 3.85,
     materials: [m('baseboard', 1.05), m('caulk', 0.02), m('finish_nails', 0.005)] },
 
   // Painting
-  { id: 'paint_new_wall', name: 'Prime and paint new wall (both sides)', vi: 'Sơn lót và sơn tường mới (hai mặt)', trade: 'painting', unit: 'LF', labor: 33,
+  { id: 'paint_new_wall', name: 'Prime and paint new wall (both sides)', vi: 'Sơn lót và sơn tường mới (hai mặt)', trade: 'painting', unit: 'LF', labor: 27.5,
     materials: [m('primer', 0.07), m('paint_5gal', 0.022), m('caulk', 0.1)] },
-  { id: 'paint_room', name: 'Paint walls (per SF of floor area)', vi: 'Sơn tường (theo SF diện tích sàn)', trade: 'painting', unit: 'SF', labor: 2.2,
-    materials: [m('primer', 0.01), m('paint_5gal', 0.004), m('caulk', 0.01)] },
-  { id: 'paint_ceiling', name: 'Paint ceilings', vi: 'Sơn trần', trade: 'painting', unit: 'SF', labor: 1.2, materials: [m('paint_5gal', 0.002)] },
+  { id: 'paint_room', name: 'Paint walls (per SF of floor area)', vi: 'Sơn tường (theo SF diện tích sàn)', trade: 'painting', unit: 'SF', labor: 2,
+    materials: [m('primer', 0.006), m('paint_5gal', 0.0027), m('caulk', 0.01)] },
+  { id: 'paint_ceiling', name: 'Paint ceilings', vi: 'Sơn trần', trade: 'painting', unit: 'SF', labor: 1, materials: [m('paint_5gal', 0.0011)] },
 
   // General
   { id: 'site_protection', name: 'Floor and wall protection, dust control', vi: 'Bảo vệ sàn, tường và chống bụi', trade: 'general', unit: 'EA', labor: 400,
@@ -261,26 +264,26 @@ export const ASSEMBLIES: Assembly[] = [
   { id: 'cleanup_final', name: 'Final cleanup', vi: 'Dọn dẹp hoàn công', trade: 'general', unit: 'EA', labor: 450, materials: [] },
 
   // Roofing (SQ = one square, 100 SF of roof)
-  { id: 'roof_tearoff', name: 'Tear off existing roofing, per layer', vi: 'Gỡ mái cũ, mỗi lớp', trade: 'roofing', unit: 'SQ', labor: 85, materials: [] },
+  { id: 'roof_tearoff', name: 'Tear off existing roofing, per layer', vi: 'Gỡ mái cũ, mỗi lớp', trade: 'roofing', unit: 'SQ', labor: 44, materials: [] },
   { id: 'roof_dumpster', name: 'Dumpster and haul-away', vi: 'Thùng rác và chở đi', trade: 'roofing', unit: 'EA', labor: 0, materials: [m('dumpster_30', 1)] },
-  { id: 'roof_sheathing', name: 'Replace damaged roof sheathing', vi: 'Thay ván mái bị hư', trade: 'roofing', unit: 'sheet', labor: 45, materials: [m('osb_716', 1)] },
-  { id: 'roof_shingles', name: 'Architectural shingles over synthetic underlayment', vi: 'Ngói asphalt kiến trúc trên lớp lót tổng hợp', trade: 'roofing', unit: 'SQ', labor: 150,
+  { id: 'roof_sheathing', name: 'Replace damaged roof sheathing', vi: 'Thay ván mái bị hư', trade: 'roofing', unit: 'sheet', labor: 34, materials: [m('osb_716', 1)] },
+  { id: 'roof_shingles', name: 'Architectural shingles over synthetic underlayment', vi: 'Ngói asphalt kiến trúc trên lớp lót tổng hợp', trade: 'roofing', unit: 'SQ', labor: 78,
     materials: [m('shingle_bundle', 3), m('synthetic_underlay', 0.1), m('roof_nails', 0.12)] },
   { id: 'roof_metal', name: 'Standing seam metal roof over high-temp underlayment', vi: 'Mái kim loại standing seam trên lớp lót chịu nhiệt', trade: 'roofing', unit: 'SQ', labor: 380,
     materials: [m('metal_panels_sq', 1), m('hightemp_underlay', 0.5)] },
-  { id: 'roof_ice_water', name: 'Ice & water shield at eaves and valleys', vi: 'Màng chống thấm ở mép mái và khe mái', trade: 'roofing', unit: 'LF', labor: 1.2, materials: [m('ice_water', 1 / 60)] },
-  { id: 'roof_starter', name: 'Starter course at eaves and rakes', vi: 'Hàng ngói khởi đầu ở mép mái', trade: 'roofing', unit: 'LF', labor: 0.6, materials: [m('starter_strip', 1 / 100)] },
-  { id: 'roof_drip_edge', name: 'Drip edge at eaves and rakes', vi: 'Viền nhỏ giọt ở mép mái', trade: 'roofing', unit: 'LF', labor: 1, materials: [m('drip_edge', 0.11)] },
-  { id: 'roof_ridge_cap', name: 'Hip and ridge cap', vi: 'Ngói úp nóc và sống mái', trade: 'roofing', unit: 'LF', labor: 2.5, materials: [m('ridge_cap', 1 / 30)] },
-  { id: 'roof_ridge_vent', name: 'Ridge vent', vi: 'Thông gió nóc mái', trade: 'roofing', unit: 'LF', labor: 4, materials: [m('ridge_vent', 0.26)] },
-  { id: 'roof_box_vent', name: 'Roof box vent', vi: 'Lỗ thông gió mái', trade: 'roofing', unit: 'EA', labor: 60, materials: [m('box_vent', 1), m('roof_sealant', 0.5)] },
-  { id: 'roof_pipe_boot', name: 'Pipe boot flashing', vi: 'Gioăng ống xuyên mái', trade: 'roofing', unit: 'EA', labor: 45, materials: [m('pipe_boot', 1), m('roof_sealant', 0.3)] },
-  { id: 'roof_wall_flashing', name: 'Step flashing at walls', vi: 'Tôn chống thấm chân tường', trade: 'roofing', unit: 'LF', labor: 4, materials: [m('step_flashing', 0.012)] },
-  { id: 'roof_chimney', name: 'Chimney flashing', vi: 'Chống thấm quanh ống khói', trade: 'roofing', unit: 'EA', labor: 380, materials: [m('chimney_flash_kit', 1), m('roof_sealant', 1)] },
-  { id: 'roof_skylight', name: 'Skylight re-flash', vi: 'Chống thấm lại giếng trời', trade: 'roofing', unit: 'EA', labor: 320, materials: [m('skylight_flash_kit', 1)] },
-  { id: 'roof_steep', name: 'Steep roof charge (8/12 and up)', vi: 'Phụ phí mái dốc (từ 8/12)', trade: 'roofing', unit: 'SQ', labor: 35, materials: [] },
-  { id: 'roof_very_steep', name: 'Very steep roof charge (10/12 and up)', vi: 'Phụ phí mái rất dốc (từ 10/12)', trade: 'roofing', unit: 'SQ', labor: 30, materials: [] },
-  { id: 'roof_high', name: 'Two-story or higher access', vi: 'Phụ phí nhà từ hai tầng', trade: 'roofing', unit: 'SQ', labor: 18, materials: [] },
+  { id: 'roof_ice_water', name: 'Ice & water shield at eaves and valleys', vi: 'Màng chống thấm ở mép mái và khe mái', trade: 'roofing', unit: 'LF', labor: 0.6, materials: [m('ice_water', 1 / 60)] },
+  { id: 'roof_starter', name: 'Starter course at eaves and rakes', vi: 'Hàng ngói khởi đầu ở mép mái', trade: 'roofing', unit: 'LF', labor: 0.3, materials: [m('starter_strip', 1 / 100)] },
+  { id: 'roof_drip_edge', name: 'Drip edge at eaves and rakes', vi: 'Viền nhỏ giọt ở mép mái', trade: 'roofing', unit: 'LF', labor: 0.5, materials: [m('drip_edge', 0.11)] },
+  { id: 'roof_ridge_cap', name: 'Hip and ridge cap', vi: 'Ngói úp nóc và sống mái', trade: 'roofing', unit: 'LF', labor: 1.3, materials: [m('ridge_cap', 1 / 30)] },
+  { id: 'roof_ridge_vent', name: 'Ridge vent', vi: 'Thông gió nóc mái', trade: 'roofing', unit: 'LF', labor: 2.1, materials: [m('ridge_vent', 0.26)] },
+  { id: 'roof_box_vent', name: 'Roof box vent', vi: 'Lỗ thông gió mái', trade: 'roofing', unit: 'EA', labor: 31, materials: [m('box_vent', 1), m('roof_sealant', 0.5)] },
+  { id: 'roof_pipe_boot', name: 'Pipe boot flashing', vi: 'Gioăng ống xuyên mái', trade: 'roofing', unit: 'EA', labor: 23, materials: [m('pipe_boot', 1), m('roof_sealant', 0.3)] },
+  { id: 'roof_wall_flashing', name: 'Step flashing at walls', vi: 'Tôn chống thấm chân tường', trade: 'roofing', unit: 'LF', labor: 2.1, materials: [m('step_flashing', 0.012)] },
+  { id: 'roof_chimney', name: 'Chimney flashing', vi: 'Chống thấm quanh ống khói', trade: 'roofing', unit: 'EA', labor: 200, materials: [m('chimney_flash_kit', 1), m('roof_sealant', 1)] },
+  { id: 'roof_skylight', name: 'Skylight re-flash', vi: 'Chống thấm lại giếng trời', trade: 'roofing', unit: 'EA', labor: 165, materials: [m('skylight_flash_kit', 1)] },
+  { id: 'roof_steep', name: 'Steep roof charge (8/12 and up)', vi: 'Phụ phí mái dốc (từ 8/12)', trade: 'roofing', unit: 'SQ', labor: 18, materials: [] },
+  { id: 'roof_very_steep', name: 'Very steep roof charge (10/12 and up)', vi: 'Phụ phí mái rất dốc (từ 10/12)', trade: 'roofing', unit: 'SQ', labor: 16, materials: [] },
+  { id: 'roof_high', name: 'Two-story or higher access', vi: 'Phụ phí nhà từ hai tầng', trade: 'roofing', unit: 'SQ', labor: 9, materials: [] },
 ];
 
 export const MATERIAL_BY_ID: Record<string, Material> = Object.fromEntries(MATERIALS.map((x) => [x.id, x]));
@@ -306,3 +309,12 @@ export const TRADE_NAMES: Record<Trade, { en: string; vi: string }> = {
   roofing: { en: 'Roofing', vi: 'Mái nhà' },
   general: { en: 'Site protection & cleanup', vi: 'Bảo vệ công trình & dọn dẹp' },
 };
+
+/** What an hour of labor costs the contractor until they set their own (Price book). */
+export const DEFAULT_HOURLY = 60;
+
+/** A section's name: a planned job's own, else the trade's. */
+export function sectionName(t: { trade: string; title?: string; vi?: string }, lang: Lang): string {
+  const own = lang === 'vi' ? t.vi?.trim() || t.title?.trim() : t.title?.trim();
+  return own || TRADE_NAMES[t.trade as Trade]?.[lang] || t.trade;
+}

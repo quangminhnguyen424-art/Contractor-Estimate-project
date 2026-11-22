@@ -73,9 +73,9 @@ export default function JobScreen() {
     app.setDraft({
       id: est.id, jobTypeId: est.jobTypeId, mode: est.mode, title: est.title, clientName: est.clientName, address: est.address,
       description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: est.photos, finish: est.finish, answers: est.answers,
-      customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan,
+      customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan, ...(est.work ? { work: est.work } : {}),
     });
-    router.push('/questions');
+    router.push(est.work ? '/work' : '/questions');
   };
 
   // Same job for another client (or the next unit): a new draft with the same scope, prices and quote wording.
@@ -84,7 +84,7 @@ export default function JobScreen() {
     const newEst = app.commitDraft({
       jobTypeId: est.jobTypeId, mode: est.mode, title: `${estimateJob(est).name} (copy)`, clientName: '', address: '',
       description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: [], finish: est.finish,
-      answers: est.answers, customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan,
+      answers: est.answers, customItems: est.customItems, heard: [], markupPct: est.markupPct, plan: est.plan, ...(est.work ? { work: est.work } : {}),
     });
     if (est.quoteEdits) app.updateEstimate(newEst, { quoteEdits: est.quoteEdits });
     // The copy opens with its name, client and address ready to fill in.

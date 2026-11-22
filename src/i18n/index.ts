@@ -202,6 +202,8 @@ export function useLanguage(): Snapshot {
 /** Outside components (alerts, notifications): the wording as it is right now. */
 export const tr: T = (text) => t(text);
 export const currentLanguage = (): Language | null => language;
+/** The language the app's own job wording is shown in: Vietnamese in a Vietnamese app, else English. */
+export const docLang = (): 'en' | 'vi' => (language?.code.toLowerCase().startsWith('vi') ? 'vi' : 'en');
 /** Whether a text is the app's own wording. */
 export const isAppText = (text: string) => !!translator?.known(text);
 

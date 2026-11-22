@@ -4,11 +4,10 @@ import { Image, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 import { Text } from '@/ui/text';
-import { TRADE_NAMES } from '@/engine/catalog';
+import { sectionName } from '@/engine/catalog';
 import { planSvg, planTotals } from '@/engine/floorplan';
 import { money, qtyFmt, rate } from '@/engine/format';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
-import type { Trade } from '@/engine/types';
 import { useApp } from '@/store/AppContext';
 import { Banner, Button, C, Card, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
 import { resolvePhotoUri } from '@/ui/photoStore';
@@ -19,7 +18,7 @@ import { confirmAction, notify } from '@/ui/notify';
 export default function PriceDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { estimates, updateEstimate, setDraft, profile } = useApp();
-  const [open, setOpen] = useState<Trade | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
   const est = estimates.find((e) => e.id === id);
@@ -46,9 +45,9 @@ export default function PriceDetails() {
     setDraft({
       id: est.id, jobTypeId: est.jobTypeId, mode: est.mode, title: est.title, clientName: est.clientName, address: est.address,
       description: est.description, scopeNote: est.scopeNote ?? '', aiNotes: est.aiNotes ?? [], photos: est.photos, finish: est.finish, answers: est.answers, customItems: est.customItems,
-      heard: [], markupPct: est.markupPct, plan: est.plan,
+      heard: [], markupPct: est.markupPct, plan: est.plan, ...(est.work ? { work: est.work } : {}),
     });
-    router.push('/questions');
+    router.push(est.work ? '/work' : '/questions');
   };
 
   const changeMarkup = (n: number) => {
@@ -143,11 +142,11 @@ export default function PriceDetails() {
           </View>
           {est.trades.map((t) => (
             <View key={t.trade}>
-              <Row left={TRADE_NAMES[t.trade].en} right={money(t.cost)} sub={`Labor ${money(t.labor)} · Materials ${money(t.materials)}${est.priceEdits?.[t.trade] ? ` · client price set by you: ${money(t.price)}` : ''}`}
+              <Row left={sectionName(t, 'en')} right={money(t.cost)} sub={`Labor ${money(t.labor)} · Materials ${money(t.materials)}${est.priceEdits?.[t.trade] ? ` · client price set by you: ${money(t.price)}` : ''}`}
                 onPress={() => setOpen(open === t.trade ? null : t.trade)} />
               {open === t.trade
                 ? est.lines.filter((l) => l.trade === t.trade).map((l) => (
-                    <Row key={l.assemblyId} left={`  ${l.name}`} sub={`  ${qtyFmt(l.qty)} ${l.unit} × ${money(l.laborUnit)} labor`} right={money(l.labor + l.materials)} />
+                    <Row key={l.assemblyId} left={`  ${l.name}`} sub={l.hours != null ? `  ${qtyFmt(l.qty)} ${l.unit} · ${qtyFmt(l.hours)} hr labor · ${money(l.materials)} materials` : `  ${qtyFmt(l.qty)} ${l.unit} × ${money(l.laborUnit)} labor`} right={money(l.labor + l.materials)} />
                   ))
                 : null}
             </View>

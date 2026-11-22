@@ -329,7 +329,7 @@ const flooring: JobType = {
 // ---- Interior painting ----
 const painting: JobType = {
   id: 'painting', name: 'Interior painting', vi: 'Sơn nội thất', detailed: true, unit: 'SF', category: 'Remodel',
-  defaultPreset: { basic: 6.5, mid: 7.25, high: 10 },
+  defaultPreset: { basic: 5.75, mid: 6.35, high: 8.75 },
   questions: [
     size(1200, 'Floor area to paint'),
     { id: 'ceilings', label: 'Paint ceilings too', kind: 'yesno', default: true, group: 'Scope' },
@@ -353,7 +353,7 @@ const painting: JobType = {
 // ---- Quick-only types (Phase 1) ----
 const adu: JobType = {
   id: 'adu', name: 'New ADU / DADU', vi: 'Xây ADU / DADU mới', detailed: false, unit: 'SF', category: 'New construction',
-  defaultPreset: { basic: 300, mid: 350, high: 425 },
+  defaultPreset: { basic: 280, mid: 325, high: 395 },
   questions: [size(800, 'Finished area'), yearBuilt],
   scope: () => [],
   exclusions: [...COMMON_EXCLUSIONS, 'Architectural and engineering design', 'Utility connection and capacity charges', 'Landscaping, fencing and driveway'],
@@ -406,7 +406,7 @@ function quick(
 // ---- Roofing (detailed: squares, pitch, edges and penetrations; can be filled from a satellite measurement) ----
 const roofing: JobType = {
   id: 'roofing', name: 'Roof replacement', vi: 'Thay mái', detailed: true, unit: 'SF', category: 'Exterior',
-  defaultPreset: { basic: 7, mid: 9.5, high: 14 },
+  defaultPreset: { basic: 4.5, mid: 6, high: 8.75 },
   questions: [
     { ...size(2000, 'Roof area (along the slope)'), group: 'Roof size', help: 'Not the footprint. Tap “Measure from satellite” to fill this in.' },
     { id: 'pitch', label: 'Main pitch', kind: 'number', unit: '/12', default: 6, group: 'Roof size', help: 'Rise in inches per 12 inches. 8/12 and up is a steep roof.' },
@@ -488,13 +488,13 @@ const roofing: JobType = {
 const ROT: [string, string] = ['Replacement of rotted sheathing or framing beyond what is listed', 'Thay ván hoặc khung bị mục ngoài phạm vi đã liệt kê'];
 const MORE_TYPES: JobType[] = [
   // Remodel
-  quick('wholehouse', 'Whole-house remodel', 'Sửa toàn bộ nhà', 'Remodel', 'SF', 'Area being remodeled', 1500, { basic: 150, mid: 225, high: 350 }, { house: true }),
+  quick('wholehouse', 'Whole-house remodel', 'Sửa toàn bộ nhà', 'Remodel', 'SF', 'Area being remodeled', 1500, { basic: 65, mid: 95, high: 150 }, { house: true }),
   quick('garage', 'Garage conversion', 'Chuyển đổi garage', 'Remodel', 'SF', 'Garage area', 400, { basic: 150, mid: 200, high: 275 }, { house: true }),
-  quick('drywall', 'Drywall hang & finish', 'Thạch cao (lắp và hoàn thiện)', 'Remodel', 'SF', 'Board area (walls + ceilings)', 1200, { basic: 3.5, mid: 4.5, high: 6 }),
-  quick('doors', 'Interior doors & trim', 'Cửa trong nhà và nẹp', 'Remodel', 'EA', 'Number of doors', 6, { basic: 450, mid: 650, high: 1100 }),
+  quick('drywall', 'Drywall hang & finish', 'Thạch cao (lắp và hoàn thiện)', 'Remodel', 'SF', 'Board area (walls + ceilings)', 1200, { basic: 1.8, mid: 2.3, high: 3 }),
+  quick('doors', 'Interior doors & trim', 'Cửa trong nhà và nẹp', 'Remodel', 'EA', 'Number of doors', 6, { basic: 150, mid: 200, high: 340 }),
   quick('windows', 'Window replacement', 'Thay cửa sổ', 'Remodel', 'EA', 'Number of windows', 8, { basic: 900, mid: 1300, high: 2200 }, { house: true }),
   quick('countertops', 'Countertops', 'Mặt bàn đá', 'Remodel', 'SF', 'Countertop area', 50, { basic: 60, mid: 85, high: 140 }),
-  quick('demolition', 'Interior demolition', 'Phá dỡ bên trong', 'Remodel', 'SF', 'Area to demo', 500, { basic: 4, mid: 6, high: 10 }, { house: true }),
+  quick('demolition', 'Interior demolition', 'Phá dỡ bên trong', 'Remodel', 'SF', 'Area to demo', 500, { basic: 3.5, mid: 5, high: 8 }, { house: true }),
   quick('insulation', 'Insulation', 'Cách nhiệt', 'Remodel', 'SF', 'Area to insulate', 1000, { basic: 1.5, mid: 2.5, high: 4 }),
   // Exterior
   quick('siding', 'Siding', 'Ốp tường ngoài (siding)', 'Exterior', 'SF', 'Wall area', 1800, { basic: 9, mid: 12, high: 18 }, { house: true, exclusions: [ROT] }),

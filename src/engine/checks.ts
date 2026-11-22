@@ -12,6 +12,8 @@ export interface CheckInput {
   markupPct: number;
   minMarkupPct: number;
   salesTaxPct: number;
+  /** A job Studwise planned item by item (any type of work can be). */
+  planned?: boolean;
 }
 
 /**
@@ -80,7 +82,7 @@ export function runChecks(input: CheckInput): Check[] {
       detail: 'Permit fees are listed as not included. Confirm with the city before scheduling.' });
   }
 
-  if (input.mode === 'quick' || !jt.detailed) {
+  if (input.mode === 'quick' || (!jt.detailed && !input.planned)) {
     const per = perUnit(jt.unit);
     out.push({ id: 'quick', level: 'info', title: `Quick estimate based on your price${per}`,
       detail: jt.detailed

@@ -1,12 +1,12 @@
 import { reapplySectionPrices } from './sectionPrice';
 import { rate } from './format';
-import { ASSEMBLY_BY_ID, MATERIAL_BY_ID, TRADE_ORDER } from './catalog';
+import { ASSEMBLY_BY_ID, DEFAULT_HOURLY, MATERIAL_BY_ID, TRADE_ORDER } from './catalog';
 import { runChecks } from './checks';
 import { FINISH_FACTOR, FINISH_LABOR_FACTOR, FINISH_LABOR_TRADES, jobType, mainQuantity, num, perUnit, yes } from './jobTypes';
 import type {
   Estimate,
   Answers, EstimateLine, ExtraLine, FinishLevel, JobType, JobTypeId, MaterialLine, PastJob, PriceUnit, Presets, PriceBook,
-  PriceComparison, ScopeItem, Trade, TradeTotal,
+  PriceComparison, ScopeItem, TradeTotal, WorkItem, WorkSection,
 } from './types';
 
 export const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -17,6 +17,8 @@ export interface EstimateInput {
   finish: FinishLevel;
   answers: Answers;
   customItems: ScopeItem[];
+  /** The work planned for this job. When set, it is what gets priced (not the job type's fixed questions). */
+  work?: WorkSection[];
   markupPct: number;
   minMarkupPct: number;
   salesTaxPct: number;
@@ -137,11 +139,19 @@ export interface EstimateResult {
 
 export function buildEstimate(input: EstimateInput): EstimateResult {
   const jt = jobType(input.jobTypeId);
-  const pb = input.priceBook;
   const sizeSf = mainQuantity(jt, input.answers);
   const markupRate = Math.max(0, input.markupPct) / 100;
   const extras = extraLines(jt, input.answers);
   const extrasTotal = extras.reduce((t, x) => t + x.price, 0);
+
+  // ---- A job Studwise planned: its own sections and items ----
+  if (input.work) {
+    const work = pricedWork(input.work);
+    const entries: Entry[] = work.flatMap((sec) => sec.items.map((i) => (i.assemblyId
+      ? { section: sec.key, assemblyId: i.assemblyId, qty: i.qty } : { section: sec.key, qty: i.qty, own: i })));
+    const scope = mergeScope(entries.filter((e) => e.assemblyId).map((e) => ({ assemblyId: e.assemblyId!, qty: e.qty })));
+    return priceWork(input, entries, work, scope, extras, sizeSf);
+  }
 
   // ---- Quick mode: quantity x price per unit, plus the contractor's priced extras ----
   // Small jobs are always itemized; a single price per job makes no sense for them.
@@ -171,11 +181,47 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
 
   // ---- Detailed mode: assemblies ----
   const scope = mergeScope([...jt.scope(input.answers), ...input.customItems]);
+  return priceWork(input, scope.map((it) => ({ section: ASSEMBLY_BY_ID[it.assemblyId].trade, assemblyId: it.assemblyId, qty: it.qty })), null, scope, extras, sizeSf);
+}
+
+/** The contractor's labor cost per hour, for work that is not in the price book. */
+export function hourlyRate(pb: PriceBook): number {
+  const h = pb.hourly;
+  return typeof h === 'number' && Number.isFinite(h) && h > 0 ? h : DEFAULT_HOURLY;
+}
+
+/** A planned job's items that can be priced: a known price-book task, or work with a name; and more than none of it. */
+export function pricedWork(work: WorkSection[]): WorkSection[] {
+  return work.map((s) => ({ ...s, items: s.items.filter((i) => i.qty > 0 && (i.assemblyId ? !!ASSEMBLY_BY_ID[i.assemblyId] : !!i.name.trim())) }))
+    .filter((s) => s.items.length > 0);
+}
+
+interface Entry { section: string; assemblyId?: string; qty: number; own?: WorkItem }
+
+/** Prices a list of work: price-book tasks from the price book, the job's own items from hours and their materials. */
+function priceWork(
+  input: EstimateInput, entries: Entry[], sections: WorkSection[] | null, scope: ScopeItem[], extras: ExtraLine[], sizeSf: number,
+): EstimateResult {
+  const pb = input.priceBook;
+  const markupRate = Math.max(0, input.markupPct) / 100;
+  const extrasTotal = extras.reduce((t, x) => t + x.price, 0);
+  const hourly = hourlyRate(pb);
 
   // Raw material quantities per line, then total purchase quantities rounded up.
   const rawByMaterial = new Map<string, number>();
-  const linesRaw = scope.map((it) => {
-    const a = ASSEMBLY_BY_ID[it.assemblyId];
+  const ownMaterials: MaterialLine[] = [];
+  const linesRaw = entries.map((it) => {
+    if (it.own) {
+      const hours = Math.max(0, it.own.hours ?? 0);
+      const labor = round2(hours * hourly);
+      const mat = round2(Math.max(0, it.own.materials ?? 0));
+      if (mat > 0) {
+        ownMaterials.push({ materialId: `w:${it.own.id}`, name: it.own.name, category: 'Other materials', rawQty: 1, qty: 1, unit: 'lot', unitPrice: mat, total: mat });
+      }
+      return { id: `w:${it.own.id}`, name: it.own.name, vi: it.own.vi || it.own.name, unit: it.own.unit, section: it.section, qty: it.qty,
+        laborUnit: it.qty > 0 ? round2(labor / it.qty) : 0, labor, rawMat: 0, ownMat: mat, hours };
+    }
+    const a = ASSEMBLY_BY_ID[it.assemblyId!];
     const lu = round2(laborRate(a.id, pb) * (FINISH_LABOR_TRADES.includes(a.trade) ? FINISH_LABOR_FACTOR[input.finish] : 1));
     let rawMat = 0;
     for (const am of a.materials) {
@@ -183,38 +229,45 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
       rawByMaterial.set(am.materialId, (rawByMaterial.get(am.materialId) ?? 0) + q);
       rawMat += q * materialPrice(am.materialId, pb, input.finish);
     }
-    return { a, qty: it.qty, laborUnit: lu, labor: round2(lu * it.qty), rawMat };
+    return { id: a.id, name: a.name, vi: a.vi, unit: a.unit, section: it.section, qty: it.qty, laborUnit: lu, labor: round2(lu * it.qty), rawMat, ownMat: 0, hours: undefined as number | undefined };
   });
 
-  const materials: MaterialLine[] = [...rawByMaterial.entries()].map(([id, rawQty]) => {
+  const bookMaterials: MaterialLine[] = [...rawByMaterial.entries()].map(([id, rawQty]) => {
     const mat = MATERIAL_BY_ID[id];
     const qty = Math.max(1, Math.ceil(rawQty - 1e-6));
     const unitPrice = round2(materialPrice(id, pb, input.finish));
     return { materialId: id, name: mat.name, category: mat.category, rawQty: round2(rawQty), qty, unit: mat.unit, unitPrice, total: round2(qty * unitPrice) };
-  }).sort((x, y) => x.category.localeCompare(y.category) || x.name.localeCompare(y.name));
+  });
+  const materials = [...bookMaterials, ...ownMaterials].sort((x, y) => x.category.localeCompare(y.category) || x.name.localeCompare(y.name));
 
+  const bookTotal = round2(bookMaterials.reduce((t, x) => t + x.total, 0));
   const materialTotal = round2(materials.reduce((t, x) => t + x.total, 0));
   const rawMatTotal = linesRaw.reduce((t, l) => t + l.rawMat, 0);
   // Spread purchase rounding (buying whole boxes/sheets) across lines in proportion to their raw use.
-  const factor = rawMatTotal > 0 ? materialTotal / rawMatTotal : 0;
+  const factor = rawMatTotal > 0 ? bookTotal / rawMatTotal : 0;
 
   const lines: EstimateLine[] = linesRaw.map((l) => ({
-    assemblyId: l.a.id, name: l.a.name, vi: l.a.vi, trade: l.a.trade, qty: round2(l.qty), unit: l.a.unit,
-    laborUnit: l.laborUnit, labor: l.labor, materials: round2(l.rawMat * factor),
+    assemblyId: l.id, name: l.name, vi: l.vi, trade: l.section, qty: round2(l.qty), unit: l.unit,
+    laborUnit: l.laborUnit, labor: l.labor, materials: round2(l.rawMat * factor + l.ownMat),
+    ...(l.hours != null ? { hours: round2(l.hours) } : {}),
   }));
 
-  const tradeMap = new Map<Trade, TradeTotal>();
+  const tradeMap = new Map<string, TradeTotal>();
   for (const l of lines) {
     const t = tradeMap.get(l.trade) ?? { trade: l.trade, labor: 0, materials: 0, cost: 0, price: 0 };
     t.labor += l.labor;
     t.materials += l.materials;
     tradeMap.set(l.trade, t);
   }
-  const trades = TRADE_ORDER.filter((t) => tradeMap.has(t)).map((t) => {
-    const x = tradeMap.get(t)!;
+  // A planned job keeps its own sections in its own order; the others follow the usual order of the trades.
+  const order: { key: string; title?: string; vi?: string }[] = sections
+    ? sections.map((x) => ({ key: x.key, title: x.title, vi: x.vi || x.title }))
+    : TRADE_ORDER.map((t) => ({ key: t as string }));
+  const trades = order.filter((o) => tradeMap.has(o.key)).map((o) => {
+    const x = tradeMap.get(o.key)!;
     const cost = round2(x.labor + x.materials);
     // Client-facing amounts are whole dollars so every section adds up exactly to the quote total.
-    return { trade: t, labor: round2(x.labor), materials: round2(x.materials), cost, price: Math.round(cost * (1 + markupRate)) };
+    return { trade: o.key, ...(o.title ? { title: o.title, vi: o.vi } : {}), labor: round2(x.labor), materials: round2(x.materials), cost, price: Math.round(cost * (1 + markupRate)) };
   });
 
   const laborTotal = round2(lines.reduce((t, l) => t + l.labor, 0));
@@ -225,9 +278,23 @@ export function buildEstimate(input: EstimateInput): EstimateResult {
   const markup = round2(price - cost);
   const tax = round2(price * input.salesTaxPct / 100);
 
+  const checks = runChecks({ ...input, mode: 'detailed', scope, planned: !!sections });
+  if (sections) {
+    const own = entries.filter((e) => e.own);
+    const judged = sections.flatMap((x) => x.items).filter((i) => i.from === 'assumed' || i.from === 'photo').length;
+    if (own.length) {
+      checks.push({ id: 'own-items', level: 'info', title: `Items not in your price book: ${own.length}`,
+        detail: `Priced from the hours shown at your labor cost of ${rate(hourly)} per hour, plus the materials shown. Change either on the work list, or the hourly cost in your price book.` });
+    }
+    if (judged) {
+      checks.push({ id: 'judged', level: 'info', title: `Items from Studwise’s reading of the job: ${judged}`,
+        detail: 'They are marked on the work list. Check them against what you saw on site before sending.' });
+    }
+  }
+
   return {
     extras, lines, materials, trades, laborTotal, materialTotal, cost, markup, price, tax, total: round2(price + tax),
-    checks: runChecks({ ...input, mode: 'detailed', scope }),
+    checks,
     comparison: comparePrice(input.jobTypeId, input.finish, sizeSf, tradesPrice, input.presets, input.pastJobs),
   };
 }

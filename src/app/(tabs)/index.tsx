@@ -7,6 +7,7 @@ import { useCloud } from '@/cloud/CloudProvider';
 import type { ChatTurn } from '@/engine/ai';
 import { assistantSystem, parseAssistantReply } from '@/engine/assistant';
 import { newId } from '@/engine/format';
+import { NeedSizeError } from '@/engine/workPlan';
 import { aiLanguageLine } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { useChat, type ChatMessage } from '@/store/chat';
@@ -25,7 +26,7 @@ import { speak, stopSpeaking } from '@/ui/voice';
  * day back, and the chat is still there to continue.
  */
 export default function Assistant() {
-  const { profile, presets, pastJobs, estimates, apiKey, setDraft, aiAllowed, lessons } = useApp();
+  const { profile, presets, pastJobs, estimates, apiKey, setDraft, aiAllowed, lessons, priceBook } = useApp();
   const { messages, add, clear, settings, setSettings, current } = useChat();
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -72,9 +73,10 @@ export default function Assistant() {
     if (!m.action) return;
     setStarting(m.id);
     try {
-      await startEstimateFromChat(m.action, { apiKey, aiAllowed, profile, pastJobs, lessons, estimates, setDraft });
-    } catch {
-      notify('Could not start the estimate', 'Try again, or tap the orange + to start it yourself.');
+      await startEstimateFromChat(m.action, { apiKey, aiAllowed, profile, pastJobs, lessons, estimates, priceBook, setDraft });
+    } catch (e) {
+      // The usual reason is a missing measurement: Studwise never guesses the size of a job.
+      notify('Could not start the estimate', e instanceof NeedSizeError ? `${e.message}\n\nTap the orange + to start it with the size.` : `${e instanceof Error ? `${e.message}\n\n` : ''}Try again, or tap the orange + to start it yourself.`);
     } finally {
       setStarting(null);
     }

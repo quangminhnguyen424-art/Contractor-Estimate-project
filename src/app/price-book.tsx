@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from '@/ui/text';
 import { ASSEMBLIES, MATERIALS, TRADE_NAMES, TRADE_ORDER } from '@/engine/catalog';
+import { hourlyRate } from '@/engine/estimator';
 import { useApp } from '@/store/AppContext';
 import { C, Card, Field, Muted, NumberField, Screen, Segmented } from '@/ui/kit';
 
@@ -37,6 +38,14 @@ export default function PriceBook() {
           ? 'Your labor cost per unit (what it costs you, before markup). Changes apply to new and rebuilt estimates.'
           : 'Default prices are typical Seattle-area retail. Put in your pro pricing. Tile, fixtures, cabinets and doors adjust automatically for basic and high-end finishes.'}
       </Muted>
+
+      {tab === 'labor' && !query ? (
+        <Card>
+          <NumberField label="Your labor cost per hour" suffix="$" max={1000} value={hourlyRate(priceBook)}
+            onChange={(v) => savePriceBook({ ...priceBook, hourly: v > 0 ? v : undefined })}
+            help="What an hour of work costs you, before markup. Studwise uses it for work on a job that is not in the list below: its hours × this." />
+        </Card>
+      ) : null}
 
       {tab === 'labor'
         ? labor.map((g) => (
