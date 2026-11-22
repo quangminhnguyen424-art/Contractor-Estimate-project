@@ -51,7 +51,7 @@ export interface Draft {
   /** Floor plan rooms (scanned or measured). */
   plan?: PlanRoom[];
   /** Answers Claude filled in, and where from, so the contractor confirms them. */
-  aiFilled?: Record<string, 'notes' | 'photo' | 'satellite'>;
+  aiFilled?: Record<string, 'notes' | 'photo' | 'satellite' | 'assumed'>;
   /** Pricing a photo-only job: the new estimate joins that job instead of starting another one. */
   projectId?: string;
 }

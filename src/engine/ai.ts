@@ -21,7 +21,7 @@ export interface ScopeResult {
   heard: string[]; // human-readable list of what was picked up
   notes?: string[]; // things Claude noticed (conditions, risks, questions to ask); photo findings start with "Photo N:"
   /** Where each filled-in answer came from, so the contractor can confirm anything taken from a photo. */
-  sources?: Record<string, 'notes' | 'photo'>;
+  sources?: Record<string, 'notes' | 'photo' | 'assumed'>;
   source?: 'claude' | 'demo';
   error?: string; // set when Claude was asked but failed and the demo result was used instead
 }
@@ -368,7 +368,7 @@ export function cleanScopeResult(raw: unknown, jobTypeId?: JobTypeId): ScopeResu
       .map((q) => `Check: ${q.label}${q.kind === 'number' ? ` = ${answers[q.id]}` : ''} (adds to the price)`)
     : [];
   const rawSources = (r.sources && typeof r.sources === 'object' ? r.sources : {}) as Record<string, unknown>;
-  const sources = Object.fromEntries(Object.keys(answers).map((k) => [k, rawSources[k] === 'photo' ? 'photo' : 'notes'])) as Record<string, 'notes' | 'photo'>;
+  const sources = Object.fromEntries(Object.keys(answers).map((k) => [k, rawSources[k] === 'photo' ? 'photo' : rawSources[k] === 'assumed' ? 'assumed' : 'notes'])) as Record<string, 'notes' | 'photo' | 'assumed'>;
   return {
     jobTypeId: jt,
     answers,
@@ -400,20 +400,25 @@ export function extractJson(text: string): unknown {
 
 const SCOPE_SYSTEM = `You are an experienced Washington State general contractor helping another contractor fill in an estimate.
 You get the contractor's notes about a job (typed or dictated, may be informal, in any language or mixed with English) and sometimes site photos.
-Fill in answers ONLY for the listed questions, and only when the notes or photos actually support the value. Never guess.
+Work this job out on its own, the way you would if you walked it yourself. Do not fall back on a standard package: two bathrooms are never the same job.
+Give an answer for EVERY listed question, in this order of trust:
+1. What the contractor's notes say. Their numbers always win.
+2. What is clearly visible in the photos (which fixtures exist, what is damaged, what finish is there now, how many of something).
+3. Otherwise your own judgment of what THIS job needs, given everything in the notes and photos. If a piece of work is not part of this job, answer 0, false or the "none" option, so it is left out of the price. Include only work this job really calls for.
+The one exception is the job's main size ("sizeSf") and other measured sizes: never invent a measurement. If no size is given and none can be worked out from a stated dimension or a known-size reference, leave that question out and say in "notes" which size is still needed.
 - Numbers are plain numbers in the question's unit (no text). Yes/no answers are true or false. Choice answers must be one of the listed option values. Text answers are short phrases.
 - "sizeSf" is always the job's main quantity in its price unit (SF, LF or number of items).
 - Questions marked custom were written by this contractor for their own way of working: answer them whenever the notes or photos support it.
 - When the contractor describes how they work, use it: for example what they always include, sub out, or flag.
 - "heard": short English phrases of what you picked up, e.g. "45 LF new wall", "2 showers".
 - "notes": up to 8 short, concrete observations a GC would flag from the notes or photos: visible damage (water stains, rot, mold), code issues (no GFCI near water, missing egress, ungrounded outlets, double-tapped breakers), access problems, items to confirm with the owner, likely hidden conditions. Do not repeat the answers. Empty list if nothing.
-- "sources": for every answer you filled, "notes" if the contractor's notes say it, or "photo" if you took it from a photo.
+- "sources": for every answer, "notes" if the contractor's notes say it, "photo" if you took it from a photo, or "assumed" if it is your own judgment (rule 3). The contractor is shown which is which, so be exact.
 Photos — accuracy matters more than finding something:
 - Photos are labeled (Photo 1, Photo 2 …). Start every finding from a photo with its label, e.g. "Photo 2: water stain on the ceiling below the tub".
 - Report only what is clearly visible. If you are not sure, say "Possible …, check on site" — never state a guess as fact. Do not describe things that are out of frame or hidden.
 - Do not read measurements or areas from a photo unless a known-size reference is visible (a standard 80" door, a 4x8 drywall sheet, a 12" tile, a tape measure); then say which reference you used. Counts of clearly visible items (outlets, windows, fixtures) are fine.
 - If a photo disagrees with the notes, keep the contractor's number and add a note about the difference.
-Reply with ONLY a JSON object: {"jobTypeId": string, "answers": {questionId: value}, "sources": {questionId: "notes"|"photo"}, "heard": [string], "notes": [string]}`;
+Reply with ONLY a JSON object: {"jobTypeId": string, "answers": {questionId: value}, "sources": {questionId: "notes"|"photo"|"assumed"}, "heard": [string], "notes": [string]}`;
 
 /** Built when used, so it lists the contractor's own job types too. */
 const pastJobSystem = () => `Extract a completed construction job from pasted quote or invoice text.

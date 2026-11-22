@@ -171,7 +171,8 @@ export default function Questions() {
               {draft.aiFilled?.[qq.id] ? (
                 <Text style={{ fontSize: 12, fontWeight: '600', color: draft.aiFilled[qq.id] === 'notes' ? C.okInk : C.warnInk }}>
                   {draft.aiFilled[qq.id] === 'photo' ? '● Filled by Studwise from a photo: check it'
-                    : draft.aiFilled[qq.id] === 'satellite' ? '● Measured from satellite: check on site' : '● Filled in from your notes'}
+                    : draft.aiFilled[qq.id] === 'satellite' ? '● Measured from satellite: check on site'
+                    : draft.aiFilled[qq.id] === 'assumed' ? '● Studwise’s judgment for this job: check it' : '● Filled in from your notes'}
                 </Text>
               ) : null}
             </View>
