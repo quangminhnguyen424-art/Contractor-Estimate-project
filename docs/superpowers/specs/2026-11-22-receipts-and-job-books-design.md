@@ -41,7 +41,7 @@ across projects.
 - Studwise holding a bank login, a retailer password, a card number, or a link into anyone's bank account. Card
   digits printed on a receipt (last 4) are not kept either.
 - Cost, labor rates or profit shown to a client or to crew.
-- The same purchase counted twice (a snapped photo, an e-receipt and the card line are one purchase).
+- The same purchase counted twice (a snapped photo, an e-receipt and a line in the store file are one purchase).
 
 ## Approaches considered
 
@@ -63,7 +63,7 @@ number), editable, unique among open projects. The job page shows it large with 
 give this as the Job Name / PO". Codes are matched case-insensitively and ignoring spaces, "#", "PO" and "JOB".
 
 ### 2. The receipts address
-One address per company account, `r-<random>@in.studwise.ai`, shown under Me > Receipts & cards with short set-up
+One address per company account, `r-<random>@in.studwise.ai`, shown under Me > Receipts with short set-up
 steps for Home Depot Pro Xtra, Lowe's Pro, and "any other store" (an auto-forward rule in the contractor's own mail).
 The crew can also email a photo of a paper receipt to the same address. Team members share the company's address.
 
@@ -78,7 +78,8 @@ Resend Inbound posts to a new edge function `receipts-in`:
 Not a receipt (a promo, a shipping notice): saved as ignored, visible under "Not receipts" for 30 days.
 
 ### 4. Safety net without a bank: the store's purchase-history file
-Home Depot Pro Xtra and Lowe's Pro let the contractor download their purchase history (with job name / PO) as a
+Home Depot Pro Xtra lets the contractor download their purchase history (with job name / PO) as a file; Lowe's Pro
+and other stores are to be checked one by one. Where a store offers such a
 file. Under Me > Receipts, "Add a purchase-history file" reads it (CSV or PDF) the same way as a receipt. Purchases
 already held are skipped by the duplicate check; the rest land in the inbox. Once a month is enough to catch
 anything the emails missed. The file is the contractor's own purchase record, not bank data.
