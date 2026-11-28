@@ -9,7 +9,8 @@ import { planSvg, planTotals } from '@/engine/floorplan';
 import { money, qtyFmt, rate } from '@/engine/format';
 import { estimateJob, FINISH_LABELS, perUnit, qtyWithUnit } from '@/engine/jobTypes';
 import { useApp } from '@/store/AppContext';
-import { Banner, Button, C, Card, Muted, Row, Screen, Stepper, mono } from '@/ui/kit';
+import { Banner, Button, C, Card, Muted, Row, Screen, Stepper, TwoPane, mono } from '@/ui/kit';
+import { useRoomy } from '@/ui/wide';
 import { resolvePhotoUri } from '@/ui/photoStore';
 import { AiNote } from '@/ui/AiNote';
 import { confirmAction, notify } from '@/ui/notify';
@@ -21,6 +22,7 @@ export default function PriceDetails() {
   const [open, setOpen] = useState<string | null>(null);
   const [okToRepriceSent, setOkToRepriceSent] = useState(false);
   const { width } = useWindowDimensions();
+  const wide = useRoomy();
   const est = estimates.find((e) => e.id === id);
 
   if (!est || !profile) {
@@ -60,15 +62,17 @@ export default function PriceDetails() {
     });
   };
 
-  return (
-    <Screen footer={<Button title={est.status === 'draft' ? 'Review and send quote' : 'Open client quote'} icon="document-text-outline" onPress={() => router.push(`/estimate/${est.id}/quote`)} />}>
-      <Stack.Screen options={{ title: 'Price details' }} />
+  const head = (
+    <>
       <View style={{ gap: 4 }}>
         <Text raw style={{ fontSize: 22, fontWeight: '700', color: C.ink }}>{est.title}</Text>
         <Muted>{jt.name} · {FINISH_LABELS[est.finish].en} · {est.mode === 'quick' ? 'Quick' : 'Detailed'}</Muted>
         <Muted style={{ fontSize: 12 }}>Private. Your client never sees cost, labor or markup.</Muted>
       </View>
-
+    </>
+  );
+  const priceCard = (
+    <>
       <View style={{ backgroundColor: C.dark, borderRadius: 22, padding: 18, gap: 12, borderWidth: 1, borderColor: "#D6E0FF" }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Text style={{ color: C.darkMuted, fontSize: 14 }}>Client price</Text>
@@ -89,7 +93,10 @@ export default function PriceDetails() {
         )}
         <Text style={{ color: C.darkMuted, fontSize: 13 }}>+ {est.salesTaxPct}% sales tax {money(est.tax)} = {money(est.total)} total</Text>
       </View>
-
+    </>
+  );
+  const markup = (
+    <>
       {est.mode === 'detailed' ? (
         <Card>
           <Stepper label={`Markup ${est.markupPct}%`} value={est.markupPct} onChange={changeMarkup} />
@@ -103,13 +110,19 @@ export default function PriceDetails() {
           Quick estimates use your price{perUnit(cmp.unit)}. Change it in Pricing{jt.detailed ? ', or switch to Detailed for markup and a trade breakdown' : ''}.
         </Muted>
       )}
-
+    </>
+  );
+  const priceCheck = (
+    <>
       <Banner
         tone={cmp.flag === 'ok' ? 'ok' : cmp.flag === 'none' ? 'info' : 'warn'}
         title={cmp.pricePerSf > 0 && cmp.unit !== 'JOB' ? `${rate(cmp.pricePerSf)}${perUnit(cmp.unit)} for ${qtyWithUnit(cmp.sizeSf, cmp.unit)}` : 'Your price check'}>
         {cmp.message}
       </Banner>
-
+    </>
+  );
+  const checks = (
+    <>
       {warns.length > 0 || infos.length > 0 ? (
         <Card style={{ backgroundColor: warns.length ? C.warnBg : C.card, borderColor: warns.length ? C.warnBg : C.line }}>
           <Text style={{ fontWeight: '700', fontSize: 15, color: warns.length ? C.warnInk : C.ink }}>
@@ -126,14 +139,20 @@ export default function PriceDetails() {
           ))}
         </Card>
       ) : null}
-
+    </>
+  );
+  const noticed = (
+    <>
       {est.aiNotes && est.aiNotes.length > 0 ? (
         <Card style={{ backgroundColor: C.infoBg, borderColor: C.infoBg }}>
           <Text style={{ fontWeight: '700', fontSize: 15, color: C.infoInk }}>Studwise noticed (from notes and photos)</Text>
           {est.aiNotes.map((n, i) => <AiNote key={i} note={n} photos={est.photos} />)}
         </Card>
       ) : null}
-
+    </>
+  );
+  const trades = (
+    <>
       {est.mode === 'detailed' ? (
         <Card style={{ paddingVertical: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8 }}>
@@ -154,7 +173,10 @@ export default function PriceDetails() {
           <Row left="Total cost" right={money(est.cost)} bold />
         </Card>
       ) : null}
-
+    </>
+  );
+  const pricedQuestions = (
+    <>
       {extras.length > 0 ? (
         <Card style={{ paddingVertical: 6 }}>
           <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted, paddingTop: 8 }}>YOUR PRICED QUESTIONS (CLIENT PRICE)</Text>
@@ -164,7 +186,10 @@ export default function PriceDetails() {
           ))}
         </Card>
       ) : null}
-
+    </>
+  );
+  const floorPlan = (
+    <>
       {est.plan?.length ? (
         <Card>
           <Text style={{ fontWeight: '700', fontSize: 15, color: C.ink }}>Floor plan · {planTotals(est.plan).floorSf} SF</Text>
@@ -174,14 +199,40 @@ export default function PriceDetails() {
           <Muted style={{ fontSize: 12 }}>Included on the client quote.</Muted>
         </Card>
       ) : null}
-
+    </>
+  );
+  const photos = (
+    <>
       {est.photos.length > 0 ? (
         <ScrollView horizontal contentContainerStyle={{ gap: 6 }}>
           {est.photos.map((uri) => <Image key={uri} source={{ uri: resolvePhotoUri(uri) }} style={{ width: 90, height: 90, borderRadius: 8 }} />)}
         </ScrollView>
       ) : null}
-
+    </>
+  );
+  const editButton = (
+    <>
       <Button kind="secondary" title="Edit job details" icon="create-outline" onPress={edit} />
+    </>
+  );
+  const footer = <Button title={est.status === 'draft' ? 'Review and send quote' : 'Open client quote'} icon="document-text-outline" onPress={() => router.push(`/estimate/${est.id}/quote`)} />;
+
+  // A computer screen: the cost by trade on the left; the price, markup and checks stay in view on the right.
+  if (wide && est.mode === 'detailed') {
+    return (
+      <Screen size="page" footer={footer}>
+        <Stack.Screen options={{ title: 'Price details' }} />
+        <TwoPane
+          main={<>{head}{trades}{pricedQuestions}{floorPlan}{photos}</>}
+          side={<>{priceCard}{markup}{priceCheck}{checks}{noticed}{editButton}</>} />
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen footer={footer}>
+      <Stack.Screen options={{ title: 'Price details' }} />
+      {head}{priceCard}{markup}{priceCheck}{checks}{noticed}{trades}{pricedQuestions}{floorPlan}{photos}{editButton}
     </Screen>
   );
 }

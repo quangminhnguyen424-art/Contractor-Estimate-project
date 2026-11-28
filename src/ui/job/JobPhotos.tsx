@@ -17,8 +17,10 @@ import { C } from '../theme';
 import { useToday } from '../useToday';
 
 /** The job site: photos by area, to-dos, and what to send the crew and the client. */
-export function JobPhotos({ project, onStart }: {
+export function JobPhotos({ project, onStart, contentWidth }: {
   project?: SiteProject;
+  /** The width the photos have to fill, when it is not the phone's screen (a column on a computer). */
+  contentWidth?: number;
   /** No job site yet: make one (the first photo needs somewhere to go). */
   onStart: () => void;
 }) {
@@ -37,7 +39,8 @@ export function JobPhotos({ project, onStart }: {
   const pr = projectProgress(p);
   const pairs = beforeAfterPairs(p);
   const reviewCount = p.rooms.reduce((t, r) => t + r.tasks.filter((x) => x.review).length, 0);
-  const thumb = Math.floor((Math.min(width, 760) - 32 - 12) / 3);
+  const perRow = contentWidth && contentWidth > 560 ? 4 : 3;
+  const thumb = contentWidth ? Math.floor((contentWidth - 6 * (perRow - 1)) / perRow) : Math.floor((Math.min(width, 760) - 32 - 12) / 3);
   // All photos by the day they were taken, newest first (like a feed).
   const byDay = new Map<string, { ph: SitePhoto; rid: string }[]>();
   for (const r of p.rooms) for (const ph of r.photos) {

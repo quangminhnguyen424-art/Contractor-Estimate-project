@@ -116,6 +116,21 @@ function WideFooter({ children }: { children: React.ReactNode }) {
   return <>{flat(children).map((c, i) => <View key={i} style={React.isValidElement(c) && c.type === Button ? { minWidth: 200, flexShrink: 1 } : { width: '100%' }}>{c}</View>)}</>;
 }
 
+/**
+ * A page in two columns on a computer screen: the main content on a white sheet, and a narrower sheet beside it that
+ * stays in view while the main one scrolls (the price, the next step, the buttons). Used inside <Screen size="page">.
+ */
+export function TwoPane({ main, side, sideWidth = 400 }: { main: React.ReactNode; side: React.ReactNode; sideWidth?: number }) {
+  const sheet = { backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 24, gap: 16 };
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 20 }}>
+      <View style={[{ flex: 1, minWidth: 0 }, sheet]}>{main}</View>
+      <View style={[{ width: sideWidth }, sheet, STICKY]}>{side}</View>
+    </View>
+  );
+}
+const STICKY = Platform.OS === 'web' ? ({ position: 'sticky', top: 0 } as object) : null;
+
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[s.card, style]}>{children}</View>;
 }

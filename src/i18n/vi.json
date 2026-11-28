@@ -3087,5 +3087,7 @@
 "What should I follow up on this week?": "Tuần này tôi nên theo dõi việc gì?",
 "Which invoices are overdue?": "Hoá đơn nào đang quá hạn?",
 "{0} more": "thêm {0}",
-"{0} waiting": "{0} đang chờ"
+"{0} waiting": "{0} đang chờ",
+"No estimate yet. Price it to send a quote and invoices.": "Chưa có estimate. Tính giá để gửi báo giá và hoá đơn.",
+"Nothing waiting. Every receipt has a job.": "Không còn biên lai nào chờ. Biên lai nào cũng đã có job."
 }

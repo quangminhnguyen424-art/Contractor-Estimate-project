@@ -8,6 +8,7 @@ import { useApp } from '@/store/AppContext';
 import { inClaudeApp } from '@/ui/host';
 import { C, List, ListRow, Muted, Screen, Section } from '@/ui/kit';
 import { Text } from '@/ui/text';
+import { useWide } from '@/ui/wide';
 
 import type { SettingsPage } from '../settings';
 
@@ -18,6 +19,7 @@ export default function Me() {
   const { profile, team = [], aiAllowed, apiKey, presets, inbox = [], projects } = useApp();
   const receiptsWaiting = inbox.filter((x) => x.status === 'new').length;
   const cloud = useCloud();
+  const wide = useWide();
   const { language } = useLanguage();
   if (!profile) return null;
   const types = profile.specialties.filter((id) => id !== 'small').length;
@@ -26,8 +28,8 @@ export default function Me() {
   const initials = profile.companyName.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || 'B';
   const version = Constants.expoConfig?.version;
 
-  return (
-    <Screen>
+  const company = (
+    <>
       <Pressable accessibilityRole="button" accessibilityLabel={`${profile.companyName}. Edit company info.`} onPress={() => open('company')}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 6, opacity: pressed ? 0.7 : 1 })}>
         {profile.logo ? (
@@ -43,7 +45,10 @@ export default function Me() {
         </View>
         <Text style={{ color: C.accent, fontSize: 15, fontWeight: '500' }}>Edit</Text>
       </Pressable>
-
+    </>
+  );
+  const prices = (
+    <>
       <Section title="Prices and quotes" />
       <List>
         <ListRow title="My prices" right={priced ? `${types} type${types === 1 ? '' : 's'} of work` : 'Not set'} onPress={() => router.push('/pricing')} />
@@ -52,7 +57,10 @@ export default function Me() {
         <ListRow title="Getting paid" right={profile.payLink ? 'Payment link' : profile.payNote ? 'Set' : 'Not set'} onPress={() => open('pay')} />
         <ListRow title="Notices on quotes" onPress={() => open('notices')} />
       </List>
-
+    </>
+  );
+  const work = (
+    <>
       <Section title="Your work" />
       <List>
         <ListRow title="Work you do" right={`${types} type${types === 1 ? '' : 's'} of work`} onPress={() => open('work')} />
@@ -63,7 +71,10 @@ export default function Me() {
         <ListRow title="ADU check page" onPress={() => router.push('/adu')} />
         <ListRow title="Connected apps" onPress={() => router.push('/connections')} />
       </List>
-
+    </>
+  );
+  const account = (
+    <>
       <Section title="Account" />
       <List>
         <ListRow title={cloud.user ? (cloud.user.email ?? 'Account') : 'Log in to Studwise'} onPress={() => router.push(cloud.user ? '/account' : '/login')} />
@@ -71,7 +82,10 @@ export default function Me() {
         {cloud.user && <ListRow title="Team accounts" onPress={() => router.push('/team-accounts')} />}
         <ListRow title="Backup" right={cloud.user ? 'On' : 'This phone only'} onPress={() => open('backup')} />
       </List>
-
+    </>
+  );
+  const appRows = (
+    <>
       <Section title="App" />
       <List>
         <ListRow title="Language" right={language?.name ?? 'English'} onPress={() => router.push('/language')} />
@@ -79,8 +93,32 @@ export default function Me() {
         <ListRow title="Help and support" onPress={() => router.push('/help')} />
         <ListRow title="Terms and privacy" onPress={() => router.push('/terms')} />
       </List>
-
+    </>
+  );
+  const versionLine = (
+    <>
       <Muted style={{ textAlign: 'center', fontSize: 12 }}>Studwise AI{version ? ` · version ${version}` : ''}</Muted>
+    </>
+  );
+
+  // A computer screen: the same rows in two columns, so everything is in view without scrolling.
+  if (wide) {
+    const sheet = { flex: 1, minWidth: 0, backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 24, gap: 16 };
+    return (
+      <Screen size="page">
+        <View style={[sheet, { flex: undefined }]}>{company}</View>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 20 }}>
+          <View style={sheet}>{prices}{account}</View>
+          <View style={sheet}>{work}{appRows}</View>
+        </View>
+        {versionLine}
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen>
+      {company}{prices}{work}{account}{appRows}{versionLine}
     </Screen>
   );
 }

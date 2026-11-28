@@ -17,8 +17,14 @@ browser windows narrower than 960 px, stay exactly as they were.
 - Schedule: a month calendar, with the picked day and what is coming up beside it.
 - Money sheet: all nine columns in view, no sideways scrolling.
 
-**Not in this step.** The estimate flow, the job page and Settings keep their one-column content inside the white sheet; two-pane
-layouts for them come next. No change to what any screen does, to data, or to the phone apps.
+**Second step (two columns, from 1240 px).** A `TwoPane` page has its main content on one white sheet and a narrower sheet beside
+it that stays in view. The job page: the job site and money on the left, the price, next step and papers on the right. Price
+details: cost by trade on the left, the price, markup and checks on the right. Receipts: the receipts to sort on the left, adding
+one and the mail-in address on the right. Settings: its sections in two columns. Between 960 and 1240 px these pages keep the
+one-column sheet.
+
+**Not done.** The quote editor, the new-estimate flow and the contract page keep their one-column content inside the white sheet.
+No change to what any screen does, to data, or to the phone apps.
 
 **Approaches considered.** (1) A separate web front end: best result, but two apps to keep in step for every feature. (2) Only
 widen the phone screens: cheap, still looks like a phone. (3) One code base, with a desktop shell and desktop layouts for the

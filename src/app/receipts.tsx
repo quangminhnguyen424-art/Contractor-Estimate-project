@@ -16,7 +16,8 @@ import type { SiteProject } from '@/engine/site';
 import { useT } from '@/i18n';
 import { useApp } from '@/store/AppContext';
 import { aiFor } from '@/ui/host';
-import { Banner, Button, C, Card, H2, Muted, Screen, Section, mono } from '@/ui/kit';
+import { Banner, Button, C, Card, H2, Muted, Screen, Section, TwoPane, mono } from '@/ui/kit';
+import { useRoomy } from '@/ui/wide';
 import { confirmAction } from '@/ui/notify';
 import { savePhoto } from '@/ui/photoStore';
 import { toAiImage } from '@/ui/photos';
@@ -34,6 +35,7 @@ export default function Receipts() {
   const { inbox = [], projects, addReceipt, fileReceipt, unfileReceipt, ignoreReceipt, restoreReceipt, apiKey, aiAllowed, deletePhotosLater } = useApp();
   const { plan } = useMyPlan();
   const cloud = useCloud();
+  const wide = useRoomy();
   const today = useToday();
   const [reading, setReading] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'warn' | 'info' | 'ok'; title: string; text?: string } | null>(null);
@@ -104,23 +106,32 @@ export default function Receipts() {
     );
   }
 
-  return (
-    <Screen>
+  const capture = (
+    <>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Button title={reading ? 'Reading…' : 'Snap receipt'} icon="camera-outline" style={{ flex: 1 }} disabled={reading} onPress={() => snap(true)} />
         <Button title="Pick a photo" kind="secondary" style={{ flex: 1 }} disabled={reading} onPress={() => snap(false)} />
       </View>
       {msg ? <Banner tone={msg.tone} title={msg.title}>{msg.text ? <Text>{msg.text}</Text> : null}</Banner> : null}
-
+    </>
+  );
+  const mailIn = (
+    <>
       <MailIn signedIn={signedIn} owner={!!cloud.user && cloud.workspaceId === cloud.user.id} />
-
+    </>
+  );
+  const howItWorks = (
+    <>
       {inbox.length === 0 ? (
         <Card>
           <H2>How receipts find their job</H2>
           <Muted>Every job has a short code (open the job, then Money). At the store, your crew gives that code as the Job Name or PO. A receipt that carries a job’s code is filed to that job by Studwise. Any other receipt waits here, and one tap files it.</Muted>
         </Card>
       ) : null}
-
+    </>
+  );
+  const lists = (
+    <>
       {waiting.length ? <Section title={`Needs a job (${waiting.length})`} /> : null}
       {waiting.map((x) => (
         <Card key={x.id} style={{ gap: 10 }}>
@@ -153,7 +164,32 @@ export default function Receipts() {
           {x.unread ? null : <Button kind="ghost" title="Put back" onPress={() => restoreReceipt(x.id)} />}
         </Card>
       ))}
+    </>
+  );
+  const privacy = (
+    <>
       <Muted style={{ fontSize: 13 }}>Only you and your team accounts see receipts. Studwise keeps what was bought and what it cost, and reads nothing about the card or the bank into your records.</Muted>
+    </>
+  );
+
+  // A computer screen: the receipts to sort on the left; adding one and the mail-in address beside them.
+  if (wide) {
+    return (
+      <Screen size="page">
+        <TwoPane
+          main={<>
+            {howItWorks}
+            {inbox.length && !waiting.length ? <Banner tone="ok" title="Nothing waiting. Every receipt has a job." /> : null}
+            {lists}
+          </>}
+          side={<>{capture}{mailIn}{privacy}</>} />
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen>
+      {capture}{mailIn}{howItWorks}{lists}{privacy}
     </Screen>
   );
 }

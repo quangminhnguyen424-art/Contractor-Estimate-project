@@ -13,9 +13,10 @@ import { JobMoney } from '@/ui/job/JobMoney';
 import { JobOverview } from '@/ui/job/JobOverview';
 import { JobPhotos, TakePhotos } from '@/ui/job/JobPhotos';
 import { StageBar } from '@/ui/job/StageBar';
-import { Button, C, Card, Field, Muted, Screen, Segmented } from '@/ui/kit';
+import { Button, C, Card, Field, Muted, Screen, Segmented, TwoPane } from '@/ui/kit';
 import { confirmAction, notify } from '@/ui/notify';
-import { ActionSheet, type SheetAction } from '@/ui/Sheet';
+import { ActionSheet, Sheet, type SheetAction } from '@/ui/Sheet';
+import { useRoomy } from '@/ui/wide';
 import { addSitePhotos } from '@/ui/SitePhotoView';
 import { Text } from '@/ui/text';
 
@@ -39,6 +40,9 @@ export default function JobScreen() {
   const [dTitle, setDTitle] = useState('');
   const [dClient, setDClient] = useState('');
   const [dAddress, setDAddress] = useState('');
+  // Two columns need a window with room for both; a narrower one gets the one-column page.
+  const wide = useRoomy();
+  const [colW, setColW] = useState(0);
 
   if (!job) {
     return (
@@ -134,34 +138,87 @@ export default function JobScreen() {
 
   const shootProject = shooting ? project : undefined;
 
+  const heading = (
+    <>
+      {editing ? (
+        <Card>
+          <Field label="Job name" value={dTitle} onChangeText={setDTitle} maxLength={80} />
+          <Field label="Client" value={dClient} onChangeText={setDClient} placeholder="Name" maxLength={80} autoCapitalize="words" />
+          <Field label="Job address" value={dAddress} onChangeText={setDAddress} placeholder="Street, city" maxLength={160} autoCapitalize="words" />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={() => setEditing(false)} />
+            <Button title="Save" style={{ flex: 1 }} disabled={!dTitle.trim()} onPress={saveDetails} />
+          </View>
+        </Card>
+      ) : (
+        <Pressable accessibilityRole="button" accessibilityLabel="Edit name, client and address" onPress={startEdit} style={{ gap: 4 }}>
+          <Text raw style={{ fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.3 }}>{job.title}</Text>
+          <Muted>{[job.client, job.address].filter(Boolean).join(' · ') || (est ? `${estimateJob(est).name} · no client yet` : 'No address yet')}</Muted>
+          {!job.client || !job.address ? <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{!job.client ? '+ Add the client' : '+ Add the address'}</Text> : null}
+        </Pressable>
+      )}
+    </>
+  );
+  const header = (
+    <Stack.Screen options={{
+      title: 'Job',
+      headerRight: () => (
+        <Pressable accessibilityRole="button" accessibilityLabel="More actions" onPress={() => setMenu(true)} hitSlop={10} style={{ paddingHorizontal: 6 }}>
+          <Ionicons name="ellipsis-horizontal-circle-outline" size={26} color={C.ink} />
+        </Pressable>
+      ),
+    }} />
+  );
+  // A computer screen: the job's working pages on the left, and its price, next step and papers always in view beside them.
+  if (wide) {
+    const tab: 'photos' | 'money' = view === 'overview' ? (project ? 'photos' : 'money') : view;
+    return (
+      <View style={{ flex: 1 }}>
+        {header}
+        <Screen size="page">
+          <TwoPane
+            main={<>
+              {heading}
+              {est ? <StageBar job={job} /> : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 320 }}>
+                  <Segmented<'photos' | 'money'> value={tab} onChange={setPicked} options={[{ value: 'photos', label: 'Job site' }, { value: 'money', label: 'Money' }]} />
+                </View>
+                <View style={{ flex: 1 }} />
+                {tab === 'photos' && project ? <Button kind="secondary" title="Take photos" icon="camera" onPress={openCamera} style={{ height: 42 }} /> : null}
+              </View>
+              <View onLayout={(e) => setColW(Math.round(e.nativeEvent.layout.width))} style={{ gap: 16 }}>
+                {tab === 'photos' ? <JobPhotos project={project} onStart={openCamera} contentWidth={colW || undefined} /> : <JobMoney job={job} needSite={needSite} />}
+              </View>
+            </>}
+            side={est
+              ? <JobOverview job={job} onPhotos={openCamera} onMoney={() => setPicked('money')} onReopen={() => setStatus('sent')} />
+              : <><Text style={{ color: C.ink, fontSize: 17, fontWeight: '600' }}>Photo-only job</Text><Muted>No estimate yet. Price it to send a quote and invoices.</Muted>
+                  <Button kind="secondary" title="Price this job" icon="add" onPress={() => router.dismissTo(`/new?project=${project?.id ?? ''}`)} /></>}
+          />
+        </Screen>
+        <ActionSheet visible={menu} onClose={() => setMenu(false)} title={job.title} actions={actions} />
+        <Sheet visible={shooting && !!shootProject} onClose={() => setShooting(false)} title="Take photos">
+          <View style={{ padding: 8, gap: 12 }}>
+            {shootProject?.rooms.length ? (
+              <TakePhotos project={shootProject} onClose={() => setShooting(false)} onCapture={capture} />
+            ) : shootProject ? (
+              <>
+                <Text style={{ color: C.ink2 }}>Add an area first (a room, the siding, a repair spot) so every photo has a place.</Text>
+                <Button title="Add “Area 1”" icon="add" onPress={() => app.updateProject(shootProject.id, (x) => ({ ...x, rooms: [...x.rooms, emptyRoom(newId(), 'Area 1')] }))} />
+              </>
+            ) : null}
+          </View>
+        </Sheet>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <Stack.Screen options={{
-        title: 'Job',
-        headerRight: () => (
-          <Pressable accessibilityRole="button" accessibilityLabel="More actions" onPress={() => setMenu(true)} hitSlop={10} style={{ paddingHorizontal: 6 }}>
-            <Ionicons name="ellipsis-horizontal-circle-outline" size={26} color={C.ink} />
-          </Pressable>
-        ),
-      }} />
+      {header}
       <Screen footer={view === 'photos' && project ? <Button title="Take photos" icon="camera" onPress={openCamera} /> : undefined}>
-        {editing ? (
-          <Card>
-            <Field label="Job name" value={dTitle} onChangeText={setDTitle} maxLength={80} />
-            <Field label="Client" value={dClient} onChangeText={setDClient} placeholder="Name" maxLength={80} autoCapitalize="words" />
-            <Field label="Job address" value={dAddress} onChangeText={setDAddress} placeholder="Street, city" maxLength={160} autoCapitalize="words" />
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Button kind="secondary" title="Cancel" style={{ flex: 1 }} onPress={() => setEditing(false)} />
-              <Button title="Save" style={{ flex: 1 }} disabled={!dTitle.trim()} onPress={saveDetails} />
-            </View>
-          </Card>
-        ) : (
-          <Pressable accessibilityRole="button" accessibilityLabel="Edit name, client and address" onPress={startEdit} style={{ gap: 4 }}>
-            <Text raw style={{ fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.3 }}>{job.title}</Text>
-            <Muted>{[job.client, job.address].filter(Boolean).join(' · ') || (est ? `${estimateJob(est).name} · no client yet` : 'No address yet')}</Muted>
-            {!job.client || !job.address ? <Text style={{ color: C.accent, fontWeight: '600', fontSize: 14 }}>{!job.client ? '+ Add the client' : '+ Add the address'}</Text> : null}
-          </Pressable>
-        )}
+        {heading}
         {est ? <StageBar job={job} /> : null}
         <Segmented<View3> value={view} onChange={setPicked}
           options={[{ value: 'overview', label: 'Overview' }, { value: 'photos', label: 'Job site' }, { value: 'money', label: 'Money' }]} />
