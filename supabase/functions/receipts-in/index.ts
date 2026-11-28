@@ -9,7 +9,7 @@
 // webhook's signing secret. Secrets: RESEND_WEBHOOK_SECRET, RESEND_API_KEY, ANTHROPIC_API_KEY (already set for `ai`).
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
-import { htmlToText, mailPrompt, pickAttachment, purchasesFrom, tokenFrom, verifySvix, withoutCardDigits, type MailAttachment, type Picked } from '../_shared/receiptMail.ts';
+import { htmlToText, mailPrompt, pickAttachment, purchasesFrom, tokenFrom, verifySvix, whyRefused, withoutCardDigits, type MailAttachment, type Picked } from '../_shared/receiptMail.ts';
 
 const URL_ = Deno.env.get('SUPABASE_URL')!;
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -134,10 +134,12 @@ async function handle(admin: SupabaseClient, mail: Received): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('POST only', { status: 405 });
   const payload = await req.text();
-  const signed = await verifySvix(SECRET, {
-    id: req.headers.get('svix-id'), timestamp: req.headers.get('svix-timestamp'), signature: req.headers.get('svix-signature'),
-  }, payload, Date.now() / 1000);
-  if (!signed) return new Response('bad signature', { status: 400 });
+  const headers = { id: req.headers.get('svix-id'), timestamp: req.headers.get('svix-timestamp'), signature: req.headers.get('svix-signature') };
+  const signed = await verifySvix(SECRET, headers, payload, Date.now() / 1000);
+  if (!signed) {
+    console.warn('receipts-in refused a call:', whyRefused(SECRET, headers, Date.now() / 1000));
+    return new Response('bad signature', { status: 400 });
+  }
   let event: { type?: string; data?: Received };
   try { event = JSON.parse(payload); } catch { return ok('not json'); }
   if (event.type !== 'email.received' || !event.data) return ok('ignored');

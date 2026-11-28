@@ -2,7 +2,7 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
-import { cleanRead, htmlToText, withoutCardDigits, mailPrompt, pickAttachment, purchasesFrom, RECEIPT_PROMPT, tokenFrom, verifySvix } from '../../supabase/functions/_shared/receiptMail';
+import { cleanRead, htmlToText, withoutCardDigits, mailPrompt, pickAttachment, purchasesFrom, RECEIPT_PROMPT, tokenFrom, verifySvix, whyRefused } from '../../supabase/functions/_shared/receiptMail';
 import { receiptPrompt } from '../engine/books';
 
 describe('mail in: is this really from the mail provider', () => {
@@ -23,6 +23,24 @@ describe('mail in: is this really from the mail provider', () => {
     expect(await verifySvix(secret, { id: 'msg_1', timestamp: String(now), signature: sig }, body, now + 301)).toBe(false);
     expect(await verifySvix(secret, { id: null, timestamp: String(now), signature: sig }, body, now)).toBe(false);
     expect(await verifySvix('', { id: 'msg_1', timestamp: String(now), signature: sig }, body, now)).toBe(false);
+  });
+  it('agrees with the worked example the signing service publishes', async () => {
+    const h = { id: 'msg_p5jXN8AQM9LWM0D4loKWxJek', timestamp: '1614265330', signature: 'v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=' };
+    expect(await verifySvix('whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw', h, '{"test": 2432232314}', 1614265330)).toBe(true);
+  });
+  it('accepts a secret that was pasted with a space or a line break around it', async () => {
+    const sig = sign('msg_1', now, body);
+    expect(await verifySvix(` ${secret}\n`, { id: 'msg_1', timestamp: String(now), signature: sig }, body, now)).toBe(true);
+    expect(await verifySvix(`\t${secret} `, { id: 'msg_1', timestamp: String(now), signature: sig }, body, now)).toBe(true);
+  });
+  it('says why a call was refused, without the secret in it', () => {
+    const h = { id: 'msg_1', timestamp: String(now), signature: 'v1,AAAA' };
+    expect(whyRefused('', h, now)).toBe('no signing secret is set');
+    expect(whyRefused('re_123456789', h, now)).toBe('the secret set is not a signing secret (it does not start with whsec_)');
+    expect(whyRefused(secret, { ...h, signature: null }, now)).toBe('the call carries no signature');
+    expect(whyRefused(secret, h, now + 301)).toBe('the call is older than five minutes');
+    expect(whyRefused(secret, h, now)).toBe('the signature does not match the secret set');
+    expect(whyRefused(secret, h, now)).not.toContain(secret.slice(6));
   });
 });
 

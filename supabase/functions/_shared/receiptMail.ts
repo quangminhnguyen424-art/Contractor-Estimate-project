@@ -41,6 +41,8 @@ const sameText = (a: string, b: string) => {
 export async function verifySvix(
   secret: string, h: { id: string | null; timestamp: string | null; signature: string | null }, body: string, nowSec: number,
 ): Promise<boolean> {
+  // A secret pasted into a settings page often comes with a space or a line break around it.
+  secret = secret.trim();
   if (!secret || !h.id || !h.timestamp || !h.signature) return false;
   const t = Number(h.timestamp);
   if (!Number.isFinite(t) || Math.abs(nowSec - t) > 300) return false;
@@ -52,6 +54,16 @@ export async function verifySvix(
   }
   const want = b64Of(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${h.id}.${h.timestamp}.${body}`)));
   return h.signature.split(/\s+/).some((s) => s.startsWith('v1,') && sameText(s.slice(3), want));
+}
+
+/** Why a call was refused, for the function's log: says what to fix and never holds any part of the secret. */
+export function whyRefused(secret: string, h: { id: string | null; timestamp: string | null; signature: string | null }, nowSec: number): string {
+  if (!secret.trim()) return 'no signing secret is set';
+  if (!secret.trim().startsWith('whsec_')) return 'the secret set is not a signing secret (it does not start with whsec_)';
+  if (!h.id || !h.timestamp || !h.signature) return 'the call carries no signature';
+  const t = Number(h.timestamp);
+  if (!Number.isFinite(t) || Math.abs(nowSec - t) > 300) return 'the call is older than five minutes';
+  return 'the signature does not match the secret set';
 }
 
 /** The account code in a receipts address, "r-<12 letters and digits>@…", from the addresses a mail was sent to. */
