@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { Pressable, StyleSheet, useWindowDimensions, View, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BrandMark } from '@/ui/BrandMark';
 import { C } from '@/ui/kit';
 import { Text } from '@/ui/text';
+import { useWide } from '@/ui/wide';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const icon = (outline: IconName, filled: IconName) =>
@@ -58,56 +58,18 @@ function FloatingTabBar({ state, navigateToTab }: { state: { index: number; rout
   );
 }
 
-/** Wide screens (a computer's browser): a left sidebar with labels and a big New estimate button, like a web app. */
-const WIDE = 960;
-
-function SideBar({ state, navigateToTab }: { state: { index: number; routes: { key: string; name: string }[] }; navigateToTab: (key: string) => void }) {
-  const current = state.routes[state.index]?.name;
-  return (
-    <View style={{ width: 248, backgroundColor: C.panel, paddingHorizontal: 16, paddingTop: 22, paddingBottom: 18, gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 6, marginBottom: 14 }}>
-        <BrandMark size={34} />
-        <Text style={{ fontSize: 19, fontWeight: '800', color: C.ink, letterSpacing: -0.3 }}>Studwise AI</Text>
-      </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="New estimate" onPress={() => router.push('/new')}
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.orange, borderRadius: 14, height: 46, marginBottom: 12 }}>
-        <Ionicons name="add" size={22} color="#FFFFFF" />
-        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>New estimate</Text>
-      </Pressable>
-      {state.routes.map((r) => {
-        const t = TABS[r.name];
-        if (!t) return null;
-        const on = current === r.name;
-        return (
-          <Pressable key={r.key} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t.label} onPress={() => navigateToTab(r.key)}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, height: 44, borderRadius: 12, paddingHorizontal: 12, backgroundColor: on ? C.card : 'transparent' }}>
-            <Ionicons name={on ? t.active : t.icon} size={22} color={on ? C.ink : C.ink2} />
-            <Text style={{ fontSize: 15, fontWeight: on ? '600' : '400', color: C.ink }}>{t.label}</Text>
-          </Pressable>
-        );
-      })}
-      <View style={{ flex: 1 }} />
-      <Pressable accessibilityRole="button" accessibilityLabel="Help and support" onPress={() => router.push('/help')}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, height: 44, borderRadius: 12, paddingHorizontal: 12 }}>
-        <Ionicons name="help-circle-outline" size={22} color={C.ink2} />
-        <Text style={{ fontSize: 15, color: C.ink }}>Help and support</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 export default function TabsLayout() {
-  const wide = useWindowDimensions().width >= WIDE;
+  // On a computer screen the rail beside the whole app (ui/web/SideNav) replaces the tab bar.
+  const wide = useWide();
   return (
     <Tabs
-      tabBar={(props) => (wide ? <SideBar state={props.state} navigateToTab={props.navigateToTab} /> : <FloatingTabBar state={props.state} navigateToTab={props.navigateToTab} />)}
+      tabBar={(props) => (wide ? null : <FloatingTabBar state={props.state} navigateToTab={props.navigateToTab} />)}
       screenOptions={{
-        tabBarPosition: wide ? 'left' : 'bottom',
         headerStyle: { backgroundColor: C.bg },
-        headerShadowVisible: false,
+        headerShadowVisible: wide,
         headerTintColor: C.ink,
         headerTitleStyle: { fontWeight: '600', fontSize: 17 },
-        headerTitle: ({ children }) => <Text numberOfLines={1} style={{ fontWeight: '600', fontSize: 17, color: C.ink }}>{children}</Text>,
+        headerTitle: ({ children }) => <Text numberOfLines={1} style={wide ? { fontWeight: '700', fontSize: 20, letterSpacing: -0.2, color: C.ink } : { fontWeight: '600', fontSize: 17, color: C.ink }}>{children}</Text>,
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: { fontWeight: '600', fontSize: 12 },
@@ -120,11 +82,11 @@ export default function TabsLayout() {
           </View>
         ),
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Studwise AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
+      <Tabs.Screen name="index" options={{ title: wide ? 'Home' : 'Studwise AI', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
       <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarLabel: 'Jobs', tabBarIcon: icon('briefcase-outline', 'briefcase') }} />
       <Tabs.Screen name="new" options={{ title: 'New estimate', tabBarLabel: '', tabBarButton: () => <PlusButton /> }} />
       <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: icon('calendar-outline', 'calendar') }} />
-      <Tabs.Screen name="me" options={{ title: 'Me', headerRight: () => null }} />
+      <Tabs.Screen name="me" options={{ title: wide ? 'Settings' : 'Me', headerRight: () => null }} />
     </Tabs>
   );
 }

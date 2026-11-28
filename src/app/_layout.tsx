@@ -18,6 +18,8 @@ import { LoginScreen } from '@/ui/LoginScreen';
 import { SUPPORT_EMAIL } from '@/engine/legal';
 import { clearFreshSetup, isWelcomed, markWelcomed } from '@/ui/welcome';
 import { Button, C } from '@/ui/kit';
+import { SideNav } from '@/ui/web/SideNav';
+import { useWide } from '@/ui/wide';
 import { Text } from '@/ui/text';
 
 /** Shown on every screen when the app could not save (storage full), so no change is lost silently. */
@@ -86,6 +88,11 @@ function HeaderTitle({ children }: { children: string }) {
   return <Text numberOfLines={1} style={{ fontWeight: '700', color: C.ink, fontSize: 17 }}>{children}</Text>;
 }
 
+/** The page title on a computer screen: larger, like the heading of a web page. */
+function WideHeaderTitle({ children }: { children: string }) {
+  return <Text numberOfLines={1} style={{ fontWeight: '700', color: C.ink, fontSize: 20, letterSpacing: -0.2 }}>{children}</Text>;
+}
+
 function PlanGate({ plan, onChanged }: { plan: Parameters<typeof PlanPicker>[0]['plan']; onChanged: () => void }) {
   const insets = useSafeAreaInsets();
   const cloud = useCloud();
@@ -108,6 +115,7 @@ function RootStack() {
   const cloud = useCloud();
   const lang = useLanguage();
   const t = useT();
+  const wide = useWide();
   useTranslationAI();
   useEffect(() => { void initLanguage(); }, []);
   // Inside the Claude app the AI comes from Claude itself, so the account is optional there; everywhere else you log in first.
@@ -145,14 +153,19 @@ function RootStack() {
   if (cloud.user && cloud.firstSync !== 'done') return <FirstSync />;
   // Once plans are switched on: a new account picks Starter, Pro or Team (card first, 14 days free) before using the app.
   if (cloud.user && termsOk && profile && plan?.plan === 'none') return <PlanGate plan={plan} onChanged={refreshPlan} />;
+  // On a computer screen the whole app sits beside a rail of links (ui/web/SideNav); phones keep the tab bar.
+  const rail = wide && in_ && termsOk && !!profile;
   return (
+    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: C.bg }}>
+    {rail ? <SideNav /> : null}
+    <View style={{ flex: 1, minWidth: 0 }}>
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: C.bg },
         headerTintColor: C.ink,
         headerTitleStyle: { fontWeight: '700', color: C.ink },
-        headerTitle: HeaderTitle,
-        headerShadowVisible: false,
+        headerTitle: wide ? WideHeaderTitle : HeaderTitle,
+        headerShadowVisible: wide,
         headerBackTitle: t('Back'),
         contentStyle: { backgroundColor: C.bg },
       }}>
@@ -210,6 +223,8 @@ function RootStack() {
         <Stack.Screen name="login" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack.Protected>
     </Stack>
+    </View>
+    </View>
   );
 }
 

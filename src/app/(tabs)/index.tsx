@@ -20,6 +20,11 @@ import { confirmAction, notify } from '@/ui/notify';
 import { startEstimateFromChat } from '@/ui/startEstimate';
 import { Text } from '@/ui/text';
 import { speak, stopSpeaking } from '@/ui/voice';
+import { DashboardWide } from '@/ui/web/DashboardWide';
+import { D, hoverStyle, useRoomy, useWide } from '@/ui/wide';
+
+/** What the empty chat column offers on a computer screen: one click asks it. */
+const ASKS = ['Which invoices are overdue?', 'What should I follow up on this week?', 'Start an estimate for a bathroom remodel'];
 
 /**
  * Home: what needs you today, and Studwise at the bottom. Asking something opens the chat; "Home" brings the
@@ -35,6 +40,8 @@ export default function Assistant() {
   const busyRef = useRef(false);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const cloud = useCloud();
+  const wide = useWide();
+  const roomy = useRoomy();
   const claudeOn = aiAllowed && (inClaudeApp || !!apiKey || !!cloud.user);
 
   useEffect(() => () => { stopSpeaking(); }, []);
@@ -83,9 +90,95 @@ export default function Assistant() {
   };
 
 
+  const thread = (
+    <>
+      {messages.map((m) => (
+        <View key={m.id} style={{ alignItems: m.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
+          <View style={{
+            maxWidth: '88%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10,
+            backgroundColor: m.role === 'user' ? C.accent : m.error ? C.warnBg : C.card,
+            borderWidth: m.role === 'user' ? 0 : 1, borderColor: C.line,
+          }}>
+            <Text raw={!m.error} selectable style={{ color: m.role === 'user' ? C.onAccent : m.error ? C.warnInk : C.ink, fontSize: 16, lineHeight: 23 }}>{m.text}</Text>
+          </View>
+          {m.role === 'assistant' && !m.error ? (
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+              {m.action ? (
+                <Pressable accessibilityRole="button" disabled={!!starting} onPress={() => start(m)}
+                  style={{ backgroundColor: C.accent, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, opacity: starting ? 0.6 : 1 }}>
+                  <Text style={{ color: C.onAccent, fontWeight: '700' }}>
+                    {starting === m.id ? 'Opening…' : `Start this estimate${m.action.title ? `: ${m.action.title}` : ''}`}
+                  </Text>
+                </Pressable>
+              ) : null}
+              <Pressable accessibilityRole="button" accessibilityLabel="Read this answer aloud" onPress={() => speak(m.text)} hitSlop={8}>
+                <Ionicons name="volume-medium-outline" size={18} color={C.muted} />
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      ))}
+      {busy ? (
+        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: C.card, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line }}>
+          <TypingDots />
+        </View>
+      ) : null}
+    </>
+  );
+  const chatTools = (
+    <>
+      <Pressable accessibilityRole="switch" accessibilityState={{ checked: settings.speak }} accessibilityLabel="Read answers aloud"
+        onPress={() => { if (settings.speak) stopSpeaking(); setSettings({ ...settings, speak: !settings.speak }); }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8 }}>
+        <Ionicons name={settings.speak ? 'volume-high' : 'volume-mute'} size={20} color={settings.speak ? C.accent : C.muted} />
+        <Text style={{ color: settings.speak ? C.accent : C.muted, fontSize: 13, fontWeight: '600' }}>{settings.speak ? 'Voice on' : 'Voice off'}</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Clear chat" style={{ padding: 8 }}
+        onPress={() => confirmAction('Clear the chat?', 'Your jobs are not affected.', 'Clear', () => { stopSpeaking(); clear(); setChatOpen(false); })}>
+        <Ionicons name="trash-outline" size={19} color={C.muted} />
+      </Pressable>
+    </>
+  );
+
+  // A computer screen with room: the day on the left, Studwise in its own column on the right, both always in view.
+  if (roomy) {
+    return (
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: D.canvas }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 28, paddingBottom: 40 }}>
+          <View style={{ width: '100%', maxWidth: 1080, alignSelf: 'center' }}><DashboardWide claudeOn={claudeOn} /></View>
+        </ScrollView>
+        <View style={{ width: 380, backgroundColor: C.card, borderLeftWidth: 1, borderColor: C.line }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 20, paddingRight: 8, height: 56, borderBottomWidth: 1, borderColor: C.line }}>
+            <Ionicons name="sparkles" size={18} color={C.accent} />
+            <Text style={{ flex: 1, color: C.ink, fontSize: 16, fontWeight: '700' }}>Ask Studwise</Text>
+            {messages.length ? chatTools : null}
+          </View>
+          <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}
+            onContentSizeChange={() => { if (messages.length) scrollRef.current?.scrollToEnd({ animated: true }); }}
+            contentContainerStyle={{ padding: 16, gap: 10, flexGrow: 1 }}>
+            {messages.length ? thread : (
+              <View style={{ flex: 1, justifyContent: 'flex-end', gap: 10 }}>
+                <Text style={{ color: C.muted, fontSize: 14, lineHeight: 21 }}>Ask about a price, a job or what to do next. Studwise knows your prices and your jobs.</Text>
+                {ASKS.map((q) => (
+                  <Pressable key={q} accessibilityRole="button" onPress={() => send(q)} disabled={busy}
+                    style={hoverStyle((hovered) => ({ borderWidth: 1, borderColor: hovered ? '#C9D2E0' : C.line, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: C.card }))}>
+                    <Text style={{ color: C.ink, fontSize: 14.5, lineHeight: 20 }}>{q}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+          <View style={{ paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderColor: C.line }}>
+            <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} inputLabel="Ask Studwise" placeholder="Ask Studwise anything…" />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   const showChat = chatOpen && messages.length > 0;
   return (
-    <KeyboardSafe style={{ backgroundColor: C.bg }}>
+    <KeyboardSafe style={{ backgroundColor: wide ? D.canvas : C.bg }}>
       {showChat ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingTop: 4 }}>
           <Pressable accessibilityRole="button" accessibilityLabel="Back to Home" onPress={() => { stopSpeaking(); setChatOpen(false); }}
@@ -93,62 +186,23 @@ export default function Assistant() {
             <Ionicons name="chevron-back" size={20} color={C.accent} />
             <Text style={{ color: C.accent, fontSize: 16, fontWeight: '600' }}>Home</Text>
           </Pressable>
-          <Pressable accessibilityRole="switch" accessibilityState={{ checked: settings.speak }} accessibilityLabel="Read answers aloud"
-            onPress={() => { if (settings.speak) stopSpeaking(); setSettings({ ...settings, speak: !settings.speak }); }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8 }}>
-            <Ionicons name={settings.speak ? 'volume-high' : 'volume-mute'} size={20} color={settings.speak ? C.accent : C.muted} />
-            <Text style={{ color: settings.speak ? C.accent : C.muted, fontSize: 13, fontWeight: '600' }}>{settings.speak ? 'Voice on' : 'Voice off'}</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Clear chat" style={{ padding: 8 }}
-            onPress={() => confirmAction('Clear the chat?', 'Your jobs are not affected.', 'Clear', () => { stopSpeaking(); clear(); setChatOpen(false); })}>
-            <Ionicons name="trash-outline" size={19} color={C.muted} />
-          </Pressable>
+          {chatTools}
         </View>
       ) : null}
 
       <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
         onContentSizeChange={() => { if (showChat) scrollRef.current?.scrollToEnd({ animated: true }); }}
-        contentContainerStyle={{ padding: 16, gap: 10, width: '100%', maxWidth: 760, alignSelf: 'center', flexGrow: 1 }}>
+        contentContainerStyle={{ padding: wide ? 28 : 16, gap: 10, width: '100%', maxWidth: wide && !showChat ? 1080 : 760, alignSelf: 'center', flexGrow: 1 }}>
         {showChat ? (
           <>
-            {messages.map((m) => (
-              <View key={m.id} style={{ alignItems: m.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
-                <View style={{
-                  maxWidth: '88%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10,
-                  backgroundColor: m.role === 'user' ? C.accent : m.error ? C.warnBg : C.card,
-                  borderWidth: m.role === 'user' ? 0 : 1, borderColor: C.line,
-                }}>
-                  <Text raw={!m.error} selectable style={{ color: m.role === 'user' ? C.onAccent : m.error ? C.warnInk : C.ink, fontSize: 16, lineHeight: 23 }}>{m.text}</Text>
-                </View>
-                {m.role === 'assistant' && !m.error ? (
-                  <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-                    {m.action ? (
-                      <Pressable accessibilityRole="button" disabled={!!starting} onPress={() => start(m)}
-                        style={{ backgroundColor: C.accent, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, opacity: starting ? 0.6 : 1 }}>
-                        <Text style={{ color: C.onAccent, fontWeight: '700' }}>
-                          {starting === m.id ? 'Opening…' : `Start this estimate${m.action.title ? `: ${m.action.title}` : ''}`}
-                        </Text>
-                      </Pressable>
-                    ) : null}
-                    <Pressable accessibilityRole="button" accessibilityLabel="Read this answer aloud" onPress={() => speak(m.text)} hitSlop={8}>
-                      <Ionicons name="volume-medium-outline" size={18} color={C.muted} />
-                    </Pressable>
-                  </View>
-                ) : null}
-              </View>
-            ))}
-            {busy ? (
-              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: C.card, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line }}>
-                <TypingDots />
-              </View>
-            ) : null}
+            {thread}
           </>
         ) : (
-          <Dashboard claudeOn={claudeOn} chatCount={messages.length} onOpenChat={() => setChatOpen(true)} />
+          wide ? <DashboardWide claudeOn={claudeOn} /> : <Dashboard claudeOn={claudeOn} chatCount={messages.length} onOpenChat={() => setChatOpen(true)} />
         )}
       </ScrollView>
 
-      <View style={{ backgroundColor: C.bg, paddingHorizontal: 12, paddingVertical: 8 }}>
+      <View style={{ backgroundColor: wide ? D.canvas : C.bg, paddingHorizontal: 12, paddingVertical: 8 }}>
         <View style={{ width: '100%', maxWidth: 740, alignSelf: 'center' }}>
           <Composer value={text} onChange={setText} onSend={() => send(text)} sending={busy} inputLabel="Ask Studwise"
             placeholder="Ask Studwise anything…" />

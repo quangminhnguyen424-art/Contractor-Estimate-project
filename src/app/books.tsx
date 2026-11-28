@@ -9,13 +9,14 @@ import { Banner, Button, C, Card, Chip, H2, Muted, Screen, Segmented, Stat, mono
 import { shareTextFile } from '@/ui/shareFile';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
+import { useWide } from '@/ui/wide';
 
 const PERIODS: { value: SheetPeriod; label: string }[] = [
   { value: 'month', label: 'This month' }, { value: 'quarter', label: 'This quarter' }, { value: 'year', label: 'This year' }, { value: 'all', label: 'All time' },
 ];
 type Which = 'all' | 'active' | 'done';
 const ROW = 54;
-const JOB_W = 112;
+const JOB_W_PHONE = 112;
 // The three numbers a contractor asks for first sit beside the job; the rest are a swipe away.
 const COLS: { key: keyof SheetRow; label: string }[] = [
   { key: 'revenue', label: 'Revenue' }, { key: 'cost', label: 'Cost' }, { key: 'profit', label: 'Profit' }, { key: 'marginPct', label: 'Margin' },
@@ -34,6 +35,8 @@ export default function Books() {
   const [which, setWhich] = useState<Which>('all');
   const [note, setNote] = useState<string | null>(null);
   const [wide, setWide] = useState(0);
+  // On a computer screen the job's name gets room to be read.
+  const JOB_W = useWide() ? 240 : JOB_W_PHONE;
   // On a phone exactly three number columns fit; on a wide screen all of them do.
   const room = Math.max(0, wide - JOB_W - 2);
   const fitsAll = room >= COLS.length * 92;
@@ -60,7 +63,7 @@ export default function Books() {
   const tint = (r: SheetRow, key: keyof SheetRow) => (key === 'profit' && r.profit < 0 ? C.danger : key === 'profit' || key === 'cost' || key === 'revenue' ? C.ink : C.ink2);
 
   return (
-    <Screen>
+    <Screen size="sheet">
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {PERIODS.map((p) => <Chip key={p.value} label={p.label} selected={period === p.value} onPress={() => setPeriod(p.value)} />)}
       </View>

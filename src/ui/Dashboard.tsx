@@ -24,9 +24,10 @@ import { useToday } from './useToday';
 
 /** Home screen before the chat starts: one clear action, then today, money and recent photos. */
 /** Opens the Jobs tab filtered. `n` makes every tap a new request, so the same filter can be asked for twice. */
-const showJobs = (show: 'all' | 'quote' | 'active') => router.push(`/jobs?show=${show}&n=${Date.now()}`);
+export const showJobs = (show: 'all' | 'quote' | 'active') => router.push(`/jobs?show=${show}&n=${Date.now()}`);
 
-export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
+/** What Home shows, worked out once: the phone's Home and the computer's Home lay the same facts out differently. */
+export function useDashboard() {
   useLanguage(); // dates on this screen are written here, so redraw when the language changes
   const { profile, events, contracts, estimates, projects, team = [], followups = [], inbox = [] } = useApp();
   const today = useToday();
@@ -53,7 +54,6 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   const photos: { ph: SitePhoto; pid: string; rid: string }[] = projects.flatMap((p) => p.rooms.flatMap((r) => r.photos.map((ph) => ({ ph, pid: p.id, rid: r.id }))))
     .sort((a, b) => b.ph.takenAt.localeCompare(a.ph.takenAt)).slice(0, 12);
   // One list of what needs you today: Studwise's check-ins first, then today's (or the next) appointments.
-  const [allItems, setAllItems] = useState(false);
   const receiptsWaiting = inboxCounts(inbox).waiting;
   const rows: Row[] = [
     ...(receiptsWaiting ? [{ id: 'receipts', icon: 'receipt-outline' as IconName, color: C.accent, action: 'Sort', route: '/receipts',
@@ -64,6 +64,13 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
       sub: `${e.date === today ? 'Today' : new Date(`${e.date}T12:00:00`).toLocaleDateString(dateLocale(), { weekday: 'short' })} · ${timeLabel(e)}${e.address ? ` · ${e.address}` : ''}`,
     })),
   ];
+  return { profile, events, visits, today, first, hello, due, overdue, jobs, waiting, activeJobs, photos, rows };
+}
+
+export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boolean; chatCount: number; onOpenChat: () => void }) {
+  const { first, hello, due, overdue, jobs, waiting, activeJobs, photos, rows } = useDashboard();
+  const { projects } = useApp();
+  const [allItems, setAllItems] = useState(false);
   const shown = allItems ? rows : rows.slice(0, 4);
 
   return (
@@ -171,7 +178,7 @@ export function Dashboard({ claudeOn, chatCount, onOpenChat }: { claudeOn: boole
   );
 }
 
-interface Row { id: string; icon: IconName; color: string; title: string; sub?: string; action?: string; route: string }
+export interface Row { id: string; icon: IconName; color: string; title: string; sub?: string; action?: string; route: string }
 
 /** One number in the glance card. */
 function Glance({ label, value, sub, bad, divider, onPress }: { label: string; value: string; sub?: string; bad?: boolean; divider?: boolean; onPress: () => void }) {
@@ -190,7 +197,7 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 
 /** Shown until the AI is on: create a free Studwise account (no key needed), or use your own Claude key. */
-function ConnectClaude() {
+export function ConnectClaude() {
   const { aiAllowed } = useApp();
   const cloud = useCloud();
   if (!aiAllowed) {

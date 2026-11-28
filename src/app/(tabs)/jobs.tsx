@@ -8,7 +8,11 @@ import { listJobs, type Job, type JobStage } from '@/engine/job';
 import { estimateJob } from '@/engine/jobTypes';
 import { emptyRoom, projectProgress, type SiteProject } from '@/engine/site';
 import { useApp } from '@/store/AppContext';
-import { Button, C, Empty, Field } from '@/ui/kit';
+import { dateLocale } from '@/engine/locale';
+import { Button, C, Empty, Field, Screen } from '@/ui/kit';
+import { Sheet } from '@/ui/Sheet';
+import { Panel, StagePill, TableHead, TableRow, type Col } from '@/ui/web/parts';
+import { useWide } from '@/ui/wide';
 import { PressScale, Reveal } from '@/ui/motion';
 import { PhotoView } from '@/ui/SitePhotoView';
 import { NUM, Text, TextInput } from '@/ui/text';
@@ -50,6 +54,7 @@ export default function Jobs() {
     const show = params.show;
     if (show === 'quote' || show === 'active' || show === 'closed' || show === 'all') { setFilter(show); setQ(''); }
   }
+  const wide = useWide();
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
@@ -69,6 +74,73 @@ export default function Jobs() {
     setAdding(false); setTitle(''); setAddress('');
     router.push(`/job/${p.id}`);
   };
+
+  // A computer screen: the jobs as a table, with the search and filters in one line above it.
+  if (wide) {
+    return (
+      <Screen size="page">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 12, height: 42, width: 340 }}>
+            <Ionicons name="search" size={17} color={C.muted} />
+            <TextInput value={q} onChangeText={setQ} placeholder="Search jobs, clients, addresses" placeholderTextColor={C.muted}
+              accessibilityLabel="Search jobs" style={{ flex: 1, fontSize: 15, color: C.ink, height: 40, ...({ outlineStyle: 'none' } as object) }} />
+            {q ? <Pressable accessibilityLabel="Clear search" onPress={() => setQ('')}><Ionicons name="close-circle" size={17} color={C.muted} /></Pressable> : null}
+          </View>
+          <View style={{ flexDirection: 'row', backgroundColor: '#E6EAF1', borderRadius: 12, padding: 3 }}>
+            {FILTERS.map((f) => {
+              const on = filter === f.value;
+              return (
+                <Pressable key={f.value} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setFilter(f.value)}
+                  style={{ paddingHorizontal: 16, height: 36, justifyContent: 'center', borderRadius: 9, backgroundColor: on ? C.card : 'transparent' }}>
+                  <Text style={{ color: on ? C.ink : C.ink2, fontWeight: on ? '700' : '500', fontSize: 14 }}>{f.label} {count(f.value) ? <Text style={{ color: C.muted, fontWeight: '400' }}>{count(f.value)}</Text> : null}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={{ flex: 1 }} />
+          <Button kind="secondary" title="Photo-only job" icon="camera-outline" onPress={() => setAdding(true)} style={{ height: 42, backgroundColor: C.card, borderWidth: 1, borderColor: C.line }} />
+          <Button title="New estimate" icon="add" onPress={() => router.push('/new')} style={{ height: 42 }} />
+        </View>
+
+        {jobs.length === 0 ? (
+          <Panel><View style={{ paddingTop: 18 }}><Empty art="jobs" title="No jobs yet" text="Start with New estimate. Each job keeps its quote, signature, photos and money on one page." /></View></Panel>
+        ) : (
+          <Panel flush>
+            <TableHead cols={COLS} />
+            {shown.length === 0 ? <Text style={{ color: C.muted, textAlign: 'center', padding: 28 }}>No jobs match.</Text> : null}
+            {shown.map((j, i) => (
+              <TableRow key={j.key} cols={COLS} first={!i} label={`${j.title}, ${j.label}`} onPress={() => router.push(`/job/${j.key}`)} cells={[
+                <View key="job" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'stretch' }}>
+                  {j.cover ? <View style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden' }}><PhotoView photo={j.cover} width={40} /></View> : null}
+                  <View style={{ flex: 1, gap: 1 }}>
+                    <Text raw style={{ color: C.ink, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>{j.title}</Text>
+                    <Text style={{ color: C.muted, fontSize: 12.5 }} numberOfLines={1}>{j.est ? estimateJob(j.est).name : 'Photo-only job'}</Text>
+                  </View>
+                </View>,
+                <Text key="client" raw style={{ color: C.ink2, fontSize: 14 }} numberOfLines={1}>{j.client}</Text>,
+                <Text key="address" raw style={{ color: C.ink2, fontSize: 14 }} numberOfLines={1}>{j.address}</Text>,
+                <StagePill key="stage" stage={j.stage} label={j.label} />,
+                <Text key="total" raw style={{ color: C.ink, fontSize: 15, fontWeight: '600', fontFamily: NUM }}>{j.total ? money(j.total) : ''}</Text>,
+                <Paid key="paid" job={j} />,
+                <Text key="updated" raw style={{ color: C.muted, fontSize: 13.5 }} numberOfLines={1}>{new Date(j.updated).toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })}</Text>,
+              ]} />
+            ))}
+          </Panel>
+        )}
+
+        <Sheet visible={adding} onClose={() => setAdding(false)} title="Photo-only job">
+          <View style={{ padding: 8, gap: 12 }}>
+            <Field label="Job name" value={title} onChangeText={setTitle} placeholder="e.g. Kim bathroom" maxLength={80} />
+            <Field label="Address" value={address} onChangeText={setAddress} placeholder="Street, city" />
+            <View style={{ flexDirection: 'row', gap: 8, paddingTop: 4 }}>
+              <Button kind="secondary" title="Cancel" onPress={() => setAdding(false)} style={{ flex: 1 }} />
+              <Button title="Create" disabled={!title.trim()} onPress={createSite} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </Sheet>
+      </Screen>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
@@ -141,6 +213,24 @@ export default function Jobs() {
           )}
         </ScrollList>
       </View>
+    </View>
+  );
+}
+
+const COLS: Col[] = [
+  { key: 'job', label: 'Job', flex: 2.4 }, { key: 'client', label: 'Client', flex: 1.3 }, { key: 'address', label: 'Address', flex: 2 },
+  { key: 'stage', label: 'Status', width: 112 }, { key: 'total', label: 'Total', width: 116, right: true }, { key: 'paid', label: 'Paid', width: 132 },
+  { key: 'updated', label: 'Updated', width: 96 },
+];
+
+/** How much of a job's total has come in: a thin bar and the amount. Empty until the job has a total and a payment. */
+function Paid({ job }: { job: Job }) {
+  if (!job.total || job.paid <= 0) return <Text raw style={{ color: C.muted, fontSize: 13.5 }}>{job.total && (job.stage === 'won' || job.stage === 'site') ? money(0) : ''}</Text>;
+  const share = Math.max(0, Math.min(1, job.paid / job.total));
+  return (
+    <View style={{ alignSelf: 'stretch', gap: 5 }}>
+      <Text raw style={{ color: C.ink2, fontSize: 13.5, fontFamily: NUM }}>{money(job.paid)}</Text>
+      <View style={{ height: 4, borderRadius: 2, backgroundColor: C.lineSoft }}><View style={{ width: `${Math.round(share * 100)}%`, height: 4, borderRadius: 2, backgroundColor: C.okInk }} /></View>
     </View>
   );
 }

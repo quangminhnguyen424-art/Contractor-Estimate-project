@@ -94,6 +94,32 @@ export function dayLabel(ymd: string, today: string): string {
   return new Date(`${ymd}T12:00:00`).toLocaleDateString(dateLocale(), { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+/** The weeks a month's calendar shows (YYYY-MM): whole weeks from Sunday, so the days around the month fill the corners. */
+export function monthWeeks(ym: string): string[][] {
+  const first = `${ym}-01`;
+  let day = addDays(first, -new Date(`${first}T12:00:00`).getDay());
+  const weeks: string[][] = [];
+  do {
+    weeks.push(Array.from({ length: 7 }, (_, i) => addDays(day, i)));
+    day = addDays(day, 7);
+  } while (day.slice(0, 7) === ym);
+  return weeks;
+}
+
+/** The month `n` months after (or before) a month, as YYYY-MM. */
+export function shiftMonth(ym: string, n: number): string {
+  const [y, m] = ym.split('-').map(Number);
+  const at = y * 12 + (m - 1) + n;
+  return `${Math.floor(at / 12)}-${pad(((at % 12) + 12) % 12 + 1)}`;
+}
+
+/** A start time short enough for a calendar square: "8 AM", "1:30 PM". Empty for all day. */
+export function startTime(time: string): string {
+  if (!time) return '';
+  const [h, m] = time.split(':').map(Number);
+  return `${((h + 11) % 12) + 1}${m ? `:${pad(m)}` : ''} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
 /** A calendar file (.ics) for one event, so it can be added to the phone's own calendar or sent to the crew. */
 export function eventIcs(e: CalEvent, company: string): string {
   const s = startOf(e);

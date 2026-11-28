@@ -12,6 +12,7 @@ import { PressScale, Reveal } from './motion';
 import { Sheet } from './Sheet';
 import { NUM, Text, TextInput } from './text';
 import { C } from './theme';
+import { D, useWide } from './wide';
 
 export { C, P } from './theme';
 
@@ -44,11 +45,15 @@ export function KeyboardSafe({ children, style }: { children: React.ReactNode; s
   );
 }
 
-export function Screen({ children, scroll = true, padded = true, footer, scrollEnabled = true }: {
+export function Screen({ children, scroll = true, padded = true, footer, scrollEnabled = true, size = 'doc' }: {
   children: React.ReactNode; scroll?: boolean; padded?: boolean; footer?: React.ReactNode; scrollEnabled?: boolean;
+  /** On a computer screen: 'doc' is a white sheet at reading width (forms, settings); 'sheet' is a wide one (a big table); 'page' is the bare canvas for a page that lays out its own boxes. */
+  size?: 'doc' | 'sheet' | 'page';
 }) {
   const insets = useSafeAreaInsets();
-  // On a computer screen, keep content at a comfortable reading width.
+  const wide = useWide();
+  if (wide) return <WideScreen scroll={scroll} padded={padded} footer={footer} scrollEnabled={scrollEnabled} size={size}>{children}</WideScreen>;
+  // A phone, or a narrow browser window: one column.
   const pad = padded ? { padding: 20, paddingTop: 12, gap: 16, width: '100%' as const, maxWidth: 760, alignSelf: 'center' as const } : null;
   return (
     <KeyboardSafe style={{ backgroundColor: C.bg }}>
@@ -67,6 +72,48 @@ export function Screen({ children, scroll = true, padded = true, footer, scrollE
       ) : null}
     </KeyboardSafe>
   );
+}
+
+/** How wide a page's content runs on a computer screen. */
+export const PAGE_W = { doc: 820, sheet: 1240, page: 1240 } as const;
+
+/**
+ * A screen on a computer: a pale canvas with the content on a white sheet in the middle, and the screen's main
+ * buttons in a bar along the bottom, at their own width on the right (not stretched edge to edge like on a phone).
+ */
+function WideScreen({ children, scroll, padded, footer, scrollEnabled, size }: {
+  children: React.ReactNode; scroll: boolean; padded: boolean; footer?: React.ReactNode; scrollEnabled: boolean; size: 'doc' | 'sheet' | 'page';
+}) {
+  const max = PAGE_W[size];
+  const sheet = size !== 'page' && padded
+    ? { backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 28, gap: 16 }
+    : padded ? { gap: 20 } : null;
+  const body = <View style={[{ width: '100%', maxWidth: max, alignSelf: 'center' }, sheet, scroll ? null : { flex: 1 }]}>{children}</View>;
+  return (
+    <View style={{ flex: 1, backgroundColor: D.canvas }}>
+      {scroll ? (
+        <ScrollView contentContainerStyle={{ padding: padded ? 28 : 0, paddingBottom: padded ? 40 : 0 }} keyboardShouldPersistTaps="handled" scrollEnabled={scrollEnabled}>
+          {body}
+        </ScrollView>
+      ) : (
+        <View style={{ flex: 1, padding: padded ? 28 : 0 }}>{body}</View>
+      )}
+      {footer ? (
+        <View style={{ paddingHorizontal: 28, paddingVertical: 12, backgroundColor: C.card, borderTopWidth: 1, borderColor: C.line }}>
+          <View style={{ width: '100%', maxWidth: max, alignSelf: 'center', flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+            <WideFooter>{footer}</WideFooter>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Footer buttons at a button's width (a lone button would otherwise shrink to its words); anything else, such as a message box, keeps the full line. */
+function WideFooter({ children }: { children: React.ReactNode }) {
+  const flat = (n: React.ReactNode): React.ReactNode[] => React.Children.toArray(n).flatMap((c) =>
+    React.isValidElement<{ children?: React.ReactNode }>(c) && c.type === React.Fragment ? flat(c.props.children) : [c]);
+  return <>{flat(children).map((c, i) => <View key={i} style={React.isValidElement(c) && c.type === Button ? { minWidth: 200, flexShrink: 1 } : { width: '100%' }}>{c}</View>)}</>;
 }
 
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {

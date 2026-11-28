@@ -14,11 +14,18 @@ import { PressScale, Reveal } from '@/ui/motion';
 import { remindersAvailable } from '@/ui/reminders';
 import { Text } from '@/ui/text';
 import { useToday } from '@/ui/useToday';
+import { ScheduleWide } from '@/ui/web/ScheduleWide';
+import { useWide } from '@/ui/wide';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 /** The calendar: pick a day on the strip, see what's on, add site visits, crew days, calls and inspections. */
+/** A computer screen gets a month calendar; a phone gets the day strip below. */
 export default function ScheduleScreen() {
+  return useWide() ? <ScheduleWide /> : <ScheduleStrip />;
+}
+
+function ScheduleStrip() {
   useLanguage(); // dates on this screen are written here, so redraw when the language changes
   const { events, estimates, contracts, projects, profile } = useApp();
   const today = useToday();

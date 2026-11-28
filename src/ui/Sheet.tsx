@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C } from './theme';
 import { Text } from './text';
+import { useWide } from './wide';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 export interface SheetAction { icon: IconName; label: string; sub?: string; onPress: () => void; disabled?: boolean; danger?: boolean }
@@ -21,14 +22,19 @@ export function Sheet({ visible, onClose, title, children, scroll, listRef, onSh
   scroll?: boolean; listRef?: React.RefObject<ScrollViewInstance | null>; onShow?: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const wide = useWide();
+  // On a computer screen the same thing is a dialog in the middle of the window.
+  const box = wide
+    ? { backgroundColor: C.card, borderRadius: 18, maxHeight: '82%' as const, paddingBottom: 14, width: '100%' as const, maxWidth: 520, alignSelf: 'center' as const, shadowColor: '#0B1324', shadowOpacity: 0.22, shadowRadius: 40, shadowOffset: { width: 0, height: 16 } }
+    : { backgroundColor: C.card, borderTopLeftRadius: 26, borderTopRightRadius: 26, maxHeight: '80%' as const, paddingBottom: insets.bottom + 12, width: '100%' as const, maxWidth: 640, alignSelf: 'center' as const };
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onShow={onShow}>
+    <Modal visible={visible} transparent animationType={wide ? 'fade' : 'slide'} onRequestClose={onClose} onShow={onShow}>
       {/* A sheet with text boxes (a small form) rides up with the keyboard instead of hiding under it. */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Pressable accessibilityLabel="Close" onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(11,19,36,0.45)', justifyContent: 'flex-end' }}>
-        <Pressable onPress={() => {}} style={{ backgroundColor: C.card, borderTopLeftRadius: 26, borderTopRightRadius: 26, maxHeight: '80%', paddingBottom: insets.bottom + 12, width: '100%', maxWidth: 640, alignSelf: 'center' }}>
-          <View style={{ alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: C.line, marginTop: 10 }} />
-          {title ? <Text style={{ color: C.ink, fontSize: 18, fontWeight: '700', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 4 }}>{title}</Text> : null}
+      <Pressable accessibilityLabel="Close" onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(11,19,36,0.45)', justifyContent: wide ? 'center' : 'flex-end', padding: wide ? 24 : 0 }}>
+        <Pressable onPress={() => {}} style={[box, wide ? ({ cursor: 'auto' } as object) : null]}>
+          {wide ? null : <View style={{ alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: C.line, marginTop: 10 }} />}
+          {title ? <Text style={{ color: C.ink, fontSize: 18, fontWeight: '700', paddingHorizontal: 20, paddingTop: wide ? 20 : 14, paddingBottom: 4 }}>{title}</Text> : null}
           {scroll ? (
             <ScrollView ref={listRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, gap: 6 }}>{children}</ScrollView>
           ) : (
